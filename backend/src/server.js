@@ -17,7 +17,7 @@ async function startServer() {
   // Connect to MongoDB before accepting requests.
   await connectDatabase();
 
-  httpServer = app.listen(PORT, () => {
+  httpServer = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Study OS API listening on port ${PORT}`);
     console.log(`Health check: http://localhost:${PORT}/api/health`);
   });
