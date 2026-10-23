@@ -105,12 +105,14 @@ router.post("/google", async (req, res) => {
             googleId: payload.sub,
           },
         },
-        {
-          new: true,
-          upsert: true,
-          runValidators: true,
-          setDefaultsOnInsert: true,
-        }
+        
+{
+  returnDocument: "after",
+  upsert: true,
+  runValidators: true,
+  setDefaultsOnInsert: true,
+}
+
       );
     } catch (error) {
       if (error.code === 11000) {
