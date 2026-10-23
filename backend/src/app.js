@@ -15,6 +15,8 @@ const { isDatabaseConnected } = require("./config/database");
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.disable("x-powered-by");
 
 const allowedOrigins = [
