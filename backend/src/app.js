@@ -16,7 +16,6 @@ const { isDatabaseConnected } = require("./config/database");
 const app = express();
 
 app.set("trust proxy", 1);
-
 app.disable("x-powered-by");
 
 const allowedOrigins = [
@@ -26,22 +25,26 @@ const allowedOrigins = [
   "https://study-os-66bo.vercel.app",
 ];
 
-app.use(
-  helmet({
-    crossOriginOpenerPolicy: {
-      policy: "same-origin-allow-popups",
-    },
-  })
-);
+// app.use(
+//   helmet({
+//     crossOriginOpenerPolicy: {
+//       policy: "same-origin-allow-popups",
+//     },
+//   })
+// );
 
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+const corsOptions = {
+  origin: [
+    "https://study-os-66bo.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:5176",
+  ],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json({ limit: "20kb" }));
 
