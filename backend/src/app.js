@@ -12,7 +12,10 @@ const noteRoutes = require("./routes/notes");
 const focusSessionsRouter = require("./routes/focusSessions");
 const plannerRoutes = require("./routes/planner");
 const settingsRoutes = require("./routes/settings");
-const { isDatabaseConnected } = require("./config/database");
+const {
+  connectDatabase,
+  isDatabaseConnected,
+} = require("./config/database");
 
 const app = express();
 
@@ -54,6 +57,24 @@ const apiLimiter = rateLimit({
 });
 
 app.use("/api", apiLimiter);
+
+app.use("/api", async (req, res, next) => {
+  try {
+    await connectDatabase();
+    next();
+  } catch (err) {
+    if (req.log) {
+      req.log.error(
+        { err },
+        "Database connection failed"
+      );
+    }
+
+    return res.status(503).json({
+      error: "Database is temporarily unavailable. Please try again.",
+    });
+  }
+});
 
 // Register API routes once.
 app.use("/api/auth", authRoutes);

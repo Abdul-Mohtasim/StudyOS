@@ -1,37 +1,45 @@
 
 const mongoose = require("mongoose");
 
+let connectionPromise = null;
+
 async function connectDatabase() {
   if (!process.env.MONGODB_URI) {
     throw new Error("MONGODB_URI is not configured.");
   }
 
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+
+  if (connectionPromise) {
+    return connectionPromise;
+  }
+
   mongoose.set("strictQuery", true);
 
-  mongoose.connection.on("connected", () => {
-    console.log("MongoDB connection established.");
-  });
+  connectionPromise = mongoose
+    .connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      maxPoolSize: 10,
+      minPoolSize: 0,
+      autoIndex: process.env.NODE_ENV !== "production",
+    })
+    .then(() => {
+      console.log("MongoDB is ready.");
+      return mongoose.connection;
+    })
+    .catch((err) => {
+      connectionPromise = null;
+      throw err;
+    });
 
-  mongoose.connection.on("disconnected", () => {
-    console.warn("MongoDB disconnected.");
-  });
-
-  mongoose.connection.on("error", () => {
-    console.error("MongoDB connection error.");
-  });
-
-  await mongoose.connect(process.env.MONGODB_URI, {
-    serverSelectionTimeoutMS: 10000,
-    connectTimeoutMS: 10000,
-    maxPoolSize: 10,
-    minPoolSize: 0,
-    autoIndex: process.env.NODE_ENV !== "production",
-  });
-
-  console.log("MongoDB is ready.");
+  return connectionPromise;
 }
 
 async function closeDatabase() {
+  connectionPromise = null;
   await mongoose.disconnect();
 }
 
