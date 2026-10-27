@@ -688,6 +688,73 @@ const [authPassword, setAuthPassword] = useState("");
   }, [isRunning, endTime, durationMinutes, authToken]);
 
   // ---------- Auth handlers ----------
+  async function handleEmailAuth(event) {
+    event.preventDefault();
+    setAuthError("");
+
+    const email = authEmail.trim().toLowerCase();
+    const password = authPassword;
+
+    if (authMode === "register" && authName.trim().length < 2) {
+      setAuthError("Please enter your name (at least 2 characters).");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setAuthError("Please enter a valid email address.");
+      return;
+    }
+    if (password.length < 8 || password.length > 128) {
+      setAuthError("Your password must be between 8 and 128 characters.");
+      return;
+    }
+
+    setAuthLoading(true);
+    try {
+      const endpoint = authMode === "register" ? "register" : "login";
+      const payload = authMode === "register"
+        ? { name: authName.trim(), email, password }
+        : { email, password };
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const responseText = await response.text();
+      let data = {};
+      if (responseText.trim()) {
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          throw new Error(`Server returned an invalid response (HTTP ${response.status}).`);
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || `Authentication failed (HTTP ${response.status}).`);
+      }
+      if (!data.student || !data.token) {
+        throw new Error("The server response is missing account or session data.");
+      }
+
+      localStorage.setItem("studyos_auth_token", data.token);
+      setStudent(data.student);
+      setAuthToken(data.token);
+      setAuthPassword("");
+      setAuthError("");
+    } catch (error) {
+      console.error("StudyOS email authentication error:", error);
+      if (error instanceof TypeError && /fetch/i.test(error.message)) {
+        setAuthError("Cannot reach the login API. Check the API URL, backend availability, and CORS settings.");
+      } else {
+        setAuthError(error.message || "Unable to authenticate. Please try again.");
+      }
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
   async function handleGoogleSuccess(googleResponse) {
     if (!googleResponse?.credential) {
       setAuthError("Google did not return a credential. Please try again.");
@@ -1750,18 +1817,107 @@ const [authPassword, setAuthPassword] = useState("");
             Your personal space to plan, focus, and learn.
           </p>
 
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => {
-              setAuthError("Google sign-in failed. Please try again.");
-            }}
-            text="continue_with"
-            theme="outline"
-            size="large"
-            shape="pill"
-          />
+          <div className="auth-mode-switch" role="tablist" aria-label="Authentication options">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={authMode === "login"}
+              className={authMode === "login" ? "auth-mode-active" : ""}
+              onClick={() => {
+                setAuthMode("login");
+                setAuthError("");
+              }}
+              disabled={authLoading}
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={authMode === "register"}
+              className={authMode === "register" ? "auth-mode-active" : ""}
+              onClick={() => {
+                setAuthMode("register");
+                setAuthError("");
+              }}
+              disabled={authLoading}
+            >
+              Create account
+            </button>
+          </div>
 
-          {authLoading && <p role="status">Signing in...</p>}
+          <form className="email-auth-form" onSubmit={handleEmailAuth}>
+            {authMode === "register" && (
+              <label>
+                Full name
+                <input
+                  type="text"
+                  name="name"
+                  autoComplete="name"
+                  value={authName}
+                  onChange={(event) => setAuthName(event.target.value)}
+                  minLength={2}
+                  maxLength={100}
+                  required
+                  disabled={authLoading}
+                  placeholder="Enter your name"
+                />
+              </label>
+            )}
+            <label>
+              Email address
+              <input
+                type="email"
+                name="email"
+                autoComplete="email"
+                value={authEmail}
+                onChange={(event) => setAuthEmail(event.target.value)}
+                maxLength={254}
+                required
+                disabled={authLoading}
+                placeholder="you@example.com"
+              />
+            </label>
+            <label>
+              Password
+              <input
+                type="password"
+                name="password"
+                autoComplete={authMode === "register" ? "new-password" : "current-password"}
+                value={authPassword}
+                onChange={(event) => setAuthPassword(event.target.value)}
+                minLength={8}
+                maxLength={128}
+                required
+                disabled={authLoading}
+                placeholder="At least 8 characters"
+              />
+            </label>
+            <button className="email-auth-submit" type="submit" disabled={authLoading}>
+              {authLoading
+                ? "Please wait..."
+                : authMode === "register"
+                  ? "Create account"
+                  : "Sign in with email"}
+            </button>
+          </form>
+
+          <div className="auth-divider"><span>or continue with</span></div>
+
+          <div className="google-button-container">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => {
+                setAuthError("Google sign-in failed. Please try again.");
+              }}
+              text="continue_with"
+              theme="outline"
+              size="large"
+              shape="pill"
+            />
+          </div>
+
+          {authLoading && <p role="status">Authenticating securely...</p>}
 
           {authError && (
             <p className="auth-error" role="alert">
@@ -1769,7 +1925,11 @@ const [authPassword, setAuthPassword] = useState("");
             </p>
           )}
 
-          <p className="auth-footer">Sign in with your Google account.</p>
+          <p className="auth-footer">
+            {authMode === "register"
+              ? "Create an account with email and password, or use Google."
+              : "Sign in with your email and password, or use Google."}
+          </p>
         </section>
       </main>
     );
