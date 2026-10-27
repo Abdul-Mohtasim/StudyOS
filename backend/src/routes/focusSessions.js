@@ -1,9 +1,11 @@
 
 const express = require("express");
+const mongoose = require("mongoose");
 const FocusSession = require("../models/FocusSession");
 const requireAuth = require("../middleware/auth");
 
 const router = express.Router();
+const FOCUS_SESSION_PAGE_SIZE = 500;
 
 // Every focus-session request requires authentication.
 router.use(requireAuth);
@@ -12,14 +14,70 @@ router.use(requireAuth);
 // Return the authenticated student's sessions.
 router.get("/", async (req, res) => {
   try {
-    const sessions = await FocusSession.find({
+    const filter = {
       student: req.student._id,
-    })
-      .sort({ completedAt: -1 })
-      .limit(500)
-      .lean();
+    };
+    const { before } = req.query;
 
-    return res.status(200).json({ sessions });
+    if (before !== undefined) {
+      if (typeof before !== "string" || !mongoose.isValidObjectId(before)) {
+        return res.status(400).json({
+          message: "Invalid focus session cursor.",
+        });
+      }
+
+      const cursor = await FocusSession.findOne({
+        _id: before,
+        student: req.student._id,
+      })
+        .select("completedAt")
+        .lean();
+
+      if (!cursor) {
+        return res.status(400).json({
+          message: "Focus session cursor was not found.",
+        });
+      }
+
+      filter.$or = [
+        { completedAt: { $lt: cursor.completedAt } },
+        {
+          completedAt: cursor.completedAt,
+          _id: { $lt: cursor._id },
+        },
+      ];
+    }
+
+    const [results, totals] = await Promise.all([
+      FocusSession.find(filter)
+        .sort({ completedAt: -1, _id: -1 })
+        .limit(FOCUS_SESSION_PAGE_SIZE + 1)
+        .lean(),
+      before === undefined
+        ? FocusSession.aggregate([
+            { $match: { student: req.student._id } },
+            {
+              $group: {
+                _id: null,
+                totalMinutes: { $sum: "$durationMinutes" },
+                totalSessions: { $sum: 1 },
+              },
+            },
+          ])
+        : Promise.resolve(null),
+    ]);
+
+    const hasMore = results.length > FOCUS_SESSION_PAGE_SIZE;
+    const sessions = results.slice(0, FOCUS_SESSION_PAGE_SIZE);
+
+    return res.status(200).json({
+      sessions,
+      hasMore,
+      ...(totals && {
+        totalFocusMinutes: totals[0]?.totalMinutes || 0,
+        totalFocusSessionCount: totals[0]?.totalSessions || 0,
+      }),
+    });
   } catch (error) {
     console.error("Could not retrieve focus sessions:", error);
 

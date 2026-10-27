@@ -3,7 +3,6 @@ const allowedOrigins = new Set([
   "http://localhost:5174",
   "http://localhost:5175",
   "http://localhost:5176",
-  "https://study-os-66bo.vercel.app",
 ]);
 
 const corsOptions = {

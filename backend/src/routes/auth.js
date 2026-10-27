@@ -11,6 +11,7 @@ const googleClient = new OAuth2Client();
 
 router.post("/google", async (req, res) => {
   try {
+    console.log("sadasdsad")
     // 1. Validate server configuration.
     const googleClientId = process.env.GOOGLE_CLIENT_ID;
     const jwtSecret = process.env.JWT_SECRET;

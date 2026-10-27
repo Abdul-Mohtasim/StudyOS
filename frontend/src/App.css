@@ -1495,6 +1495,23 @@ button:disabled {
 
 }
 
+.data-load-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--danger, #f08080);
+  border-radius: 10px;
+  color: var(--danger, #f08080);
+  background: color-mix(in srgb, var(--danger, #f08080) 8%, var(--surface, #171f1b));
+  font-size: 13px;
+}
+
+.data-load-error button {
+  flex: 0 0 auto;
+}
 
 
 .task-list {
@@ -2353,7 +2370,7 @@ button:disabled {
 
   gap: 12px;
 
-  padding: 24px 3px 5px;
+  padding: 24px 10px 5px;
 
   color: #f6f6f6;
 
@@ -2781,8 +2798,8 @@ button:disabled {
   .app-footer {
 
     flex-wrap: wrap;
-
     padding-top: 19px;
+    margin-bottom: 10px;
 
   }
 
@@ -4786,6 +4803,7 @@ button:disabled {
     grid-template-columns: minmax(0, 1fr);
     gap: 9px;
     margin-bottom: 20px;
+    margin-top: 10px;
   }
 
   .analytics-metric {
@@ -6086,7 +6104,7 @@ textarea {
 
 .settings-theme-options {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  
   gap: 10px;
 }
 
@@ -6884,9 +6902,7 @@ body,
   box-shadow: var(--shadow);
 }
 
-.auth-card :is(h1, p, span) {
-  color: var(--text);
-}
+
 
 .auth-card :is(.auth-subtitle, .auth-footer) {
   color: var(--text-muted);
@@ -8238,10 +8254,6 @@ body,
     padding: 9px 10px;
   }
 
-  .study-app button {
-    min-height: 36px;
-    padding: 8px 10px;
-  }
 
   .study-app .planner-day-tabs {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -8692,3 +8704,471 @@ html[data-theme="light"] .study-app .profile-detail-label {
   }
 }
 
+/* --------------------------------------------------------------------------
+   StudyOS responsive hardening layer
+   Appended intentionally so it overrides earlier component-specific rules.
+   -------------------------------------------------------------------------- */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body,
+#root {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
+}
+
+body {
+  overflow-x: clip;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+.study-app,
+.study-app * {
+  min-width: 0;
+}
+
+.study-app {
+  width: 100%;
+  overflow-x: clip;
+}
+
+.main-content {
+  width: calc(100% - 248px);
+  max-width: 1580px;
+  min-width: 0;
+}
+
+.main-content > *,
+.dashboard-grid > *,
+.stats-grid > *,
+.panel,
+.card,
+.settings-card,
+.notes-grid > *,
+.planner-grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+button,
+.button,
+.add-task-button,
+.primary-button,
+.secondary-button,
+.settings-profile-save,
+.focus-start-button,
+.focus-control-button,
+.task-delete,
+.icon-button,
+.nav-link {
+  touch-action: manipulation;
+}
+
+button,
+input,
+select,
+textarea {
+  line-height: 1.4;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+}
+
+textarea {
+  resize: vertical;
+  overflow-wrap: anywhere;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+label,
+span,
+strong,
+a {
+  overflow-wrap: anywhere;
+}
+
+.task-add-form input,
+.task-add-form select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.google-button-container {
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.google-button-container > div {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.auth-screen {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: clamp(16px, 4vw, 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: clip;
+}
+
+.auth-card {
+  width: min(100%, 440px);
+  max-width: 100%;
+  padding: clamp(22px, 5vw, 40px);
+  margin: auto;
+  box-sizing: border-box;
+}
+
+.auth-card h1 {
+  font-size: clamp(1.55rem, 5vw, 2.1rem);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.auth-subtitle,
+.auth-footer,
+.auth-error {
+  max-width: 100%;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 1101px) {
+  .mobile-menu,
+  .mobile-close,
+  .mobile-overlay {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1100px) {
+  .main-content {
+    width: calc(100% - 248px);
+    padding-left: clamp(16px, 2.5vw, 28px);
+    padding-right: clamp(16px, 2.5vw, 28px);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "tasks"
+      "focus"
+      "subjects"
+      "quote";
+  }
+
+  .task-add-form {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  }
+
+  .task-add-form .task-duration-input {
+    width: 100%;
+  }
+
+  .task-add-form .add-task-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    width: min(290px, 86vw);
+    max-width: 86vw;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .main-content {
+    width: 100%;
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 18px;
+  }
+
+  .topbar-left {
+    flex: 1 1 100%;
+    gap: 20px;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .search-box {
+    flex: 1 1 160px;
+    width: auto;
+    min-width: 0;
+  }
+
+  .mobile-menu {
+    display: grid;
+    flex: 0 0 auto;
+  }
+
+  .welcome-banner {
+    min-height: auto;
+    padding: 22px;
+    gap: 12px;
+  }
+
+  .banner-art {
+    width: clamp(90px, 25vw, 160px);
+    height: clamp(90px, 25vw, 130px);
+  }
+
+  .orbit-one {
+    width: 95%;
+    height: 65%;
+  }
+
+  .orbit-two {
+    width: 78%;
+    height: 90%;
+  }
+
+  .art-book {
+    width: clamp(54px, 14vw, 76px);
+    height: clamp(54px, 14vw, 76px);
+    border-radius: 18px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .dashboard-grid {
+    gap: 14px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .panel-heading {
+    flex-wrap: wrap;
+  }
+
+  .task-add-form {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .task-add-form input:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .task-add-form select {
+    max-width: none;
+  }
+
+  .task-row {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .task-status {
+    white-space: normal;
+    text-align: center;
+  }
+
+  .focus-ring {
+    width: min(180px, 62vw);
+  }
+
+  .topbar h1 {
+    font-size: clamp(1.35rem, 5vw, 1.8rem);
+    letter-spacing: -0.04em;
+  }
+
+  .modal,
+  .dialog,
+  .popover,
+  .notification-panel,
+  .dropdown-menu {
+    max-width: calc(100vw - 24px);
+  }
+
+  table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 12px;
+  }
+
+  .topbar-actions {
+    gap: 7px;
+  }
+
+
+
+  .topbar-actions .icon-button {
+    width: 42px;
+    height: 42px;
+  }
+
+  .welcome-banner {
+    padding: 18px;
+  }
+
+  .welcome-copy {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .banner-art {
+    display: none;
+  }
+
+  .stats-grid {
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-value {
+    font-size: clamp(1.35rem, 7vw, 1.8rem);
+  }
+
+  .stat-tag {
+    letter-spacing: 0.04em;
+    overflow-wrap: anywhere;
+  }
+
+  .panel {
+    padding: 13px;
+    border-radius: 12px;
+  }
+
+  .panel-heading {
+    gap: 8px;
+  }
+
+  .task-add-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .task-add-form input:first-child {
+    grid-column: auto;
+  }
+
+  .task-row {
+    flex-wrap: wrap;
+  }
+
+  .task-main {
+    flex: 1 1 calc(100% - 70px);
+  }
+
+  .task-status {
+    margin-left: 28px;
+  }
+
+  .task-summary {
+    flex-wrap: wrap;
+  }
+
+  .auth-screen {
+    padding: 16px;
+  }
+
+  .auth-card {
+    padding: 22px 18px;
+  }
+
+  .google-button-container iframe {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .main-content {
+    padding: 10px;
+  }
+
+  .stats-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stat-card {
+    padding: 13px;
+  }
+
+  .task-add-form {
+    gap: 7px;
+  }
+
+  .auth-card {
+    padding: 20px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
