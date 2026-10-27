@@ -16,17 +16,21 @@ const studentSchema = new mongoose.Schema(
       maxlength: 100,
     },
     displayName: {
-  type: String,
-  trim: true,
-  maxlength: 40,
-  default: "",
-},
+      type: String,
+      trim: true,
+      maxlength: 40,
+      default: "",
+    },
     email: {
       type: String,
       required: true,
       lowercase: true,
       trim: true,
       maxlength: 254,
+    },
+    passwordHash: {
+      type: String,
+      select: false,
     },
     picture: {
       type: String,

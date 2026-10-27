@@ -151,6 +151,13 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 
+  
+const [authMode, setAuthMode] = useState("login");
+const [authName, setAuthName] = useState("");
+const [authEmail, setAuthEmail] = useState("");
+const [authPassword, setAuthPassword] = useState("");
+
+
   // ---------- Tasks ----------
   const [tasks, setTasks] = useState([]);
   const [tasksLoading, setTasksLoading] = useState(false);
@@ -562,9 +569,9 @@ export default function App() {
           Number.isFinite(data.totalFocusMinutes)
             ? data.totalFocusMinutes
             : sessions.reduce(
-                (total, session) => total + session.durationMinutes,
-                0
-              )
+              (total, session) => total + session.durationMinutes,
+              0
+            )
         );
         setTotalFocusSessionCount(
           Number.isInteger(data.totalFocusSessionCount)
@@ -663,8 +670,7 @@ export default function App() {
 
           if (localStorage.getItem("studyos_auth_token") === authToken) {
             setNotice(
-              `Your session finished, but saving failed: ${
-                error.message || "Unknown error"
+              `Your session finished, but saving failed: ${error.message || "Unknown error"
               }`
             );
           }
@@ -714,8 +720,8 @@ export default function App() {
       if (!response.ok) {
         throw new Error(
           data.error ||
-            data.message ||
-            `Sign-in request failed (HTTP ${response.status}).`
+          data.message ||
+          `Sign-in request failed (HTTP ${response.status}).`
         );
       }
 
@@ -1507,7 +1513,7 @@ export default function App() {
     const matchesSubject =
       noteFilter === "All Subjects" ||
       (note.subject || "Personal").trim().toLowerCase() ===
-        noteFilter.trim().toLowerCase();
+      noteFilter.trim().toLowerCase();
 
     return matchesSearch && matchesSubject;
   });
@@ -2016,9 +2022,8 @@ export default function App() {
 
                   <p>
                     {remainingCount > 0
-                      ? `You have ${remainingCount} unfinished ${
-                          remainingCount === 1 ? "task" : "tasks"
-                        }. Keep going!`
+                      ? `You have ${remainingCount} unfinished ${remainingCount === 1 ? "task" : "tasks"
+                      }. Keep going!`
                       : "You're all caught up. Great work!"}
                   </p>
 
@@ -2176,9 +2181,9 @@ export default function App() {
                   {todayFocusMinutes >= dailyGoalMinutes
                     ? "Daily goal achieved. Great work!"
                     : `${Math.max(
-                        0,
-                        dailyGoalMinutes - todayFocusMinutes
-                      )} minutes to reach your goal`}
+                      0,
+                      dailyGoalMinutes - todayFocusMinutes
+                    )} minutes to reach your goal`}
                 </p>
               </div>
             </div>
@@ -2205,8 +2210,8 @@ export default function App() {
                 {dailyGoalLoading
                   ? "Loading goal..."
                   : goalSaving
-                  ? "Saving..."
-                  : "Save goal"}
+                    ? "Saving..."
+                    : "Save goal"}
               </button>
             </form>
 
@@ -2284,9 +2289,8 @@ export default function App() {
                   type="button"
                   role="tab"
                   aria-selected={plannerDay === day}
-                  className={`planner-day-tab ${
-                    plannerDay === day ? "selected" : ""
-                  }`}
+                  className={`planner-day-tab ${plannerDay === day ? "selected" : ""
+                    }`}
                   onClick={() => setPlannerDay(day)}
                 >
                   <span>{day.slice(0, 3)}</span>
@@ -2377,9 +2381,8 @@ export default function App() {
                   !task.completed;
                 return (
                   <article
-                    className={`planner-task-row ${
-                      task.completed ? "planner-task-completed" : ""
-                    }`}
+                    className={`planner-task-row ${task.completed ? "planner-task-completed" : ""
+                      }`}
                     key={task.id}
                   >
                     <button
@@ -2503,19 +2506,17 @@ export default function App() {
                   <span
                     className={`weekly-chart-bar ${day.isToday ? "today" : ""}`}
                     style={{
-                      height: `${
-                        day.minutes === 0
+                      height: `${day.minutes === 0
                           ? 4
                           : Math.max(8, (day.minutes / maxDailyMinutes) * 100)
-                      }%`,
+                        }%`,
                     }}
                   />
                 </div>
 
                 <span
-                  className={`weekly-chart-label ${
-                    day.isToday ? "today-label" : ""
-                  }`}
+                  className={`weekly-chart-label ${day.isToday ? "today-label" : ""
+                    }`}
                 >
                   {day.label}
                 </span>
@@ -2783,10 +2784,10 @@ export default function App() {
               {sessionCompleted
                 ? "Amazing work! Your focus session is complete."
                 : isRunning
-                ? "Stay focused. You're doing great!"
-                : secondsLeft < totalSeconds
-                ? "Resume whenever you're ready."
-                : "One thing at a time. You've got this."}
+                  ? "Stay focused. You're doing great!"
+                  : secondsLeft < totalSeconds
+                    ? "Resume whenever you're ready."
+                    : "One thing at a time. You've got this."}
             </p>
 
             <div className="focus-controls">
@@ -2971,12 +2972,12 @@ export default function App() {
                     subjectProgress >= 100
                       ? "progress-100"
                       : subjectProgress >= 75
-                      ? "progress-75"
-                      : subjectProgress >= 50
-                      ? "progress-50"
-                      : subjectProgress >= 25
-                      ? "progress-25"
-                      : "progress-low";
+                        ? "progress-75"
+                        : subjectProgress >= 50
+                          ? "progress-50"
+                          : subjectProgress >= 25
+                            ? "progress-25"
+                            : "progress-low";
 
                   return (
                     <article className="subject-row" key={subject.name}>
@@ -3113,8 +3114,8 @@ export default function App() {
                   {noteSaving
                     ? "Saving..."
                     : editingNoteId !== null
-                    ? "Update note"
-                    : "Save note"}
+                      ? "Update note"
+                      : "Save note"}
                 </button>
 
                 {editingNoteId !== null && (
@@ -3404,9 +3405,8 @@ export default function App() {
                 >
                   <button
                     type="button"
-                    className={`settings-theme-option ${
-                      settingsTheme === "dark" ? "selected" : ""
-                    }`}
+                    className={`settings-theme-option ${settingsTheme === "dark" ? "selected" : ""
+                      }`}
                     aria-pressed={settingsTheme === "dark"}
                     disabled={settingsLoading || settingsSaving}
                     onClick={() => saveSettings({ theme: "dark" })}
@@ -3418,9 +3418,8 @@ export default function App() {
 
                   <button
                     type="button"
-                    className={`settings-theme-option ${
-                      settingsTheme === "light" ? "selected" : ""
-                    }`}
+                    className={`settings-theme-option ${settingsTheme === "light" ? "selected" : ""
+                      }`}
                     aria-pressed={settingsTheme === "light"}
                     disabled={settingsLoading || settingsSaving}
                     onClick={() => saveSettings({ theme: "light" })}
