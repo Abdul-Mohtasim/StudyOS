@@ -1862,11 +1862,19 @@ async function handleNativeGoogleSignIn() {
     return (
       <main className="auth-screen">
         <section className="auth-card">
-          <div className="auth-logo">
-            <GraduationCap size={30} />
-          </div>
 
-          <h1>Welcome to StudyOS</h1>
+<div className="auth-brand">
+  <img
+    className="studyos-auth-logo"
+    src="/StudyOS%20Education%20Logo.png"
+    alt="StudyOS logo"
+  />
+
+  <span>
+    Study<span className="brand-accent">OS</span>
+  </span>
+</div>
+
 
           <p className="auth-subtitle">
             Your personal space to plan, focus, and learn.
@@ -2039,13 +2047,15 @@ async function handleNativeGoogleSignIn() {
 
       <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`}>
         <div className="brand">
-          <div className="brand-icon">
-            <GraduationCap size={23} />
-          </div>
+  <img
+    className="studyos-brand-logo"
+    src="/StudyOS%20Education%20Logo.png"
+    alt="StudyOS logo"
+  />
 
-          <span>
-            Study<span className="brand-accent">OS</span>
-          </span>
+  <span>
+    Study<span className="brand-accent">OS</span>
+  </span>
 
           <button
             className="icon-button mobile-close"
@@ -2054,7 +2064,7 @@ async function handleNativeGoogleSignIn() {
           >
             <X size={20} />
           </button>
-        </div>
+          </div>
 
         <div className="workspace-label">WORKSPACE</div>
 
