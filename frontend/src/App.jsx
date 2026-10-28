@@ -1,3 +1,5 @@
+import { Capacitor } from "@capacitor/core";
+import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 import React, { useEffect, useRef, useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 
@@ -150,12 +152,31 @@ export default function App() {
   const [authChecking, setAuthChecking] = useState(true);
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
-
-  
 const [authMode, setAuthMode] = useState("login");
 const [authName, setAuthName] = useState("");
 const [authEmail, setAuthEmail] = useState("");
 const [authPassword, setAuthPassword] = useState("");
+const [showAuthPassword, setShowAuthPassword] = useState(false);
+const [googleSignInReady, setGoogleSignInReady] = useState(false);
+
+useEffect(() => {
+  if (Capacitor.getPlatform() !== "android") {
+    return;
+  }
+
+  GoogleSignIn.initialize({
+    clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+  })
+    .then(() => {
+      console.log("Native Google Sign-In initialized.");
+    })
+    .catch((error) => {
+      console.error(
+        "Google Sign-In initialization failed:",
+        error
+      );
+    });
+}, []);
 
 
   // ---------- Tasks ----------
@@ -756,10 +777,44 @@ const [authPassword, setAuthPassword] = useState("");
   }
 
   async function handleGoogleSuccess(googleResponse) {
-    if (!googleResponse?.credential) {
-      setAuthError("Google did not return a credential. Please try again.");
+    const credential =
+  googleResponse?.credential || googleResponse?.idToken;
+
+if (!credential) {
+  setAuthError("Google did not return a credential. Please try again.");
+  return;
+}
+
+
+
+async function handleNativeGoogleSignIn() {
+  setAuthError("");
+
+  try {
+    const result = await GoogleSignIn.signIn();
+
+    if (!result?.idToken) {
+      throw new Error("Google did not return an ID token. Please try again.");
+    }
+
+    await handleGoogleSuccess({ idToken: result.idToken });
+  } catch (error) {
+    console.error("Native Google sign-in error:", error);
+
+    if (
+      error?.code === "SIGN_IN_CANCELED" ||
+      error?.message?.toLowerCase()?.includes("cancel")
+    ) {
       return;
     }
+
+    setAuthError(
+      error?.message || "Native Google sign-in failed. Please try again."
+    );
+  }
+}
+
+
 
     setAuthLoading(true);
     setAuthError("");
@@ -768,7 +823,7 @@ const [authPassword, setAuthPassword] = useState("");
       const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: googleResponse.credential }),
+        body: JSON.stringify({ credential }),
       });
 
       const responseText = await response.text();
@@ -1878,21 +1933,57 @@ const [authPassword, setAuthPassword] = useState("");
                 placeholder="you@example.com"
               />
             </label>
-            <label>
-              Password
-              <input
-                type="password"
-                name="password"
-                autoComplete={authMode === "register" ? "new-password" : "current-password"}
-                value={authPassword}
-                onChange={(event) => setAuthPassword(event.target.value)}
-                minLength={8}
-                maxLength={128}
-                required
-                disabled={authLoading}
-                placeholder="At least 8 characters"
-              />
-            </label>
+            
+<label className="auth-password-label">
+  Password
+
+  <div className="auth-password-wrapper">
+    <input
+      type={showAuthPassword ? "text" : "password"}
+      autoComplete={
+        authMode === "register"
+          ? "new-password"
+          : "current-password"
+      }
+      value={authPassword}
+      onChange={(event) => setAuthPassword(event.target.value)}
+      placeholder="Enter your password"
+      minLength={8}
+      required
+    />
+
+    
+
+
+<button
+  type="button"
+  className="password-toggle-button"
+  onClick={() => setShowAuthPassword((previous) => !previous)}
+  aria-label={showAuthPassword ? "Hide password" : "Show password"}
+  aria-pressed={showAuthPassword}
+>
+  <img
+    src={
+      showAuthPassword
+        ? "https://img.icons8.com/material-outlined/24/hide.png"
+        : "https://img.icons8.com/material-outlined/24/visible--v1.png"
+    }
+    alt={showAuthPassword ? "Hide password" : "Show password"}
+    width="24"
+    height="24"
+    style={{
+      display: "block",
+      width: "24px",
+      height: "24px",
+      objectFit: "contain",
+    }}
+  />
+</button>
+
+
+  </div>
+</label>
+
             <button className="email-auth-submit" type="submit" disabled={authLoading}>
               {authLoading
                 ? "Please wait..."

@@ -4547,6 +4547,7 @@ button:disabled {
   gap: 12px;
   min-width: 0;
   padding: 15px;
+  margin-top: 10px;
   border: 1px solid var(--border, #2c4039);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.018);
@@ -7142,6 +7143,7 @@ body,
   .study-app .analytics-metric {
     padding: 12px;
     gap: 9px;
+  
   }
 
   .study-app .analytics-metric-icon {
@@ -9188,13 +9190,14 @@ a {
 }
 
 .auth-mode-switch button {
-  border: none;
+  border: 1px solid var(--border, #d8dce5);
   border-radius: 9px;
   padding: 11px 8px;
   background: transparent;
   color: inherit;
   font: inherit;
   cursor: pointer;
+  color: var(--text-muted, #777);
 }
 
 .auth-mode-switch button.auth-mode-active {
@@ -9221,9 +9224,10 @@ a {
   width: 100%;
   min-width: 0;
   padding: 12px 13px;
+  background: var(--surface, #f1f3f8);
   border: 1px solid var(--border, #d8dce5);
   border-radius: 10px;
-  background: var(--card, #ffffff);
+  
   color: inherit;
   font: inherit;
 }
@@ -9238,8 +9242,11 @@ a {
 }
 
 .email-auth-submit {
-  width: 100%;
-  border: none;
+  width: 55%;
+  display: block;
+  margin: 0 auto;
+  margin-top: 5px;
+  border: 1px solid var(--border, #d8dce5);
   border-radius: 10px;
   padding: 13px 16px;
   background: var(--primary, #7161ef);
@@ -9274,4 +9281,81 @@ a {
 .google-button-container {
   display: flex;
   justify-content: center;
+}
+
+
+
+.password-toggle-button {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 0.4rem;
+  cursor: pointer;
+  line-height: 1;
+  z-index: 1;
+}
+
+.password-toggle-button img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.password-toggle-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+
+
+.auth-password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.auth-password-wrapper input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 48px;
+}
+
+.password-toggle-button {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 27px;
+  height: 32px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.password-toggle-button img {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+
+
+.password-toggle-button img {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
 }
