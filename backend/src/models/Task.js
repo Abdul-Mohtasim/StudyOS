@@ -35,6 +35,12 @@ const taskSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    // Supports temporarily deleting and restoring tasks.
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

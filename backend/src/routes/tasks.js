@@ -9,11 +9,12 @@ const router = express.Router();
 // All task routes require authentication.
 router.use(requireAuth);
 
-// GET /api/tasks — get the logged-in student's tasks.
+// GET /api/tasks — get the logged-in student's active tasks.
 router.get("/", async (req, res, next) => {
   try {
     const tasks = await Task.find({
       student: req.student._id,
+      deletedAt: null,
     }).sort({ createdAt: -1 });
 
     return res.status(200).json({ tasks });
@@ -83,7 +84,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-// PATCH /api/tasks/:id — update a task or mark it complete.
+// PATCH /api/tasks/:id — update an active task.
 router.patch("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -163,6 +164,7 @@ router.patch("/:id", async (req, res, next) => {
       {
         _id: id,
         student: req.student._id,
+        deletedAt: null,
       },
       { $set: updates },
       {
@@ -186,7 +188,7 @@ router.patch("/:id", async (req, res, next) => {
   }
 });
 
-// DELETE /api/tasks/:id — delete only the student's own task.
+// DELETE /api/tasks/:id — temporarily delete the student's task.
 router.delete("/:id", async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -197,10 +199,17 @@ router.delete("/:id", async (req, res, next) => {
       });
     }
 
-    const task = await Task.findOneAndDelete({
-      _id: id,
-      student: req.student._id,
-    });
+    const task = await Task.findOneAndUpdate(
+      {
+        _id: id,
+        student: req.student._id,
+        deletedAt: null,
+      },
+      {
+        $set: { deletedAt: new Date() },
+      },
+      { new: true }
+    );
 
     if (!task) {
       return res.status(404).json({
@@ -209,7 +218,49 @@ router.delete("/:id", async (req, res, next) => {
     }
 
     return res.status(200).json({
-      message: "Task deleted successfully.",
+      message: "Task deleted successfully. You can undo this action.",
+      task,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// POST /api/tasks/:id/restore — undo a task deletion.
+router.post("/:id/restore", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        message: "Invalid task ID.",
+      });
+    }
+
+    const task = await Task.findOneAndUpdate(
+      {
+        _id: id,
+        student: req.student._id,
+        deletedAt: { $ne: null },
+      },
+      {
+        $set: { deletedAt: null },
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+
+    if (!task) {
+      return res.status(404).json({
+        message: "Deleted task not found or it has already been restored.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Task restored successfully.",
+      task,
     });
   } catch (error) {
     next(error);

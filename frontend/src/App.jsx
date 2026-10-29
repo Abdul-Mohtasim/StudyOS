@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   CalendarDays,
   BookOpen,
+  BookMarked,
   Target,
   Settings,
   Search,
@@ -159,6 +160,9 @@ const [authPassword, setAuthPassword] = useState("");
 const [showAuthPassword, setShowAuthPassword] = useState(false);
 const [googleSignInReady, setGoogleSignInReady] = useState(false);
 
+const [deletedTasks, setDeletedTasks] = useState([]);
+const [undoLoading, setUndoLoading] = useState(false);
+
 useEffect(() => {
   if (Capacitor.getPlatform() !== "android") {
     return;
@@ -187,6 +191,8 @@ useEffect(() => {
   const [newSubject, setNewSubject] = useState("Personal");
   const [newTaskDuration, setNewTaskDuration] = useState("25");
   const [search, setSearch] = useState("");
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
 
   // ---------- Interface ----------
   const [menuOpen, setMenuOpen] = useState(false);
@@ -1132,9 +1138,21 @@ async function handleNativeGoogleSignIn() {
   const completionPercent =
     tasks.length === 0 ? 0 : Math.round((completedCount / tasks.length) * 100);
 
-  const visibleTasks = tasks.filter((task) =>
-    task.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const searchQuery = search.trim().toLowerCase();
+
+const visibleTasks = tasks.filter((task) => {
+  const searchableText = [
+    task.title,
+    task.subject,
+    task.time,
+    task.completed ? "completed done" : "pending todo incomplete",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return searchableText.includes(searchQuery);
+});
 
   // Subject list: defaults plus any subject the student actually uses.
   const subjects = (() => {
@@ -1168,6 +1186,88 @@ async function handleNativeGoogleSignIn() {
       return a.name.localeCompare(b.name);
     });
   })();
+
+  const globalSearchQuery = globalSearch.trim().toLowerCase();
+  const globalSearchResults = globalSearchQuery
+    ? [
+        ...tasks
+          .filter((task) =>
+            [task.title, task.subject, task.time, task.completed ? "completed done" : "pending incomplete"]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase()
+              .includes(globalSearchQuery)
+          )
+          .map((task) => ({
+            id: `task-${task.id}`,
+            type: "Task",
+            title: task.title,
+            detail: `${task.subject} · ${task.time}${task.completed ? " · Completed" : " · Pending"}`,
+            onSelect: () => {
+              setSearch(task.title);
+              document.getElementById("tasks")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            },
+          })),
+        ...subjectNotes
+          .filter((note) =>
+            [note.title, note.content, note.subject]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase()
+              .includes(globalSearchQuery)
+          )
+          .map((note) => ({
+            id: `note-${note.id}`,
+            type: "Note",
+            title: note.title,
+            detail: `${note.subject} · Saved note`,
+            onSelect: () => {
+              setGlobalSearchOpen(false);
+              setGlobalSearch("");
+              editSubjectNote(note);
+              document.getElementById("subject-notes")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            },
+          })),
+        ...subjects
+          .filter((subject) => subject.name.toLowerCase().includes(globalSearchQuery))
+          .map((subject) => ({
+            id: `subject-${subject.name}`,
+            type: "Subject",
+            title: subject.name,
+            detail: "Study subject",
+            onSelect: () => {
+              setGlobalSearchOpen(false);
+              document.getElementById("subjects")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            },
+          })),
+        ...weeklyPlan
+          .filter((item) =>
+            [item.title, item.subject, item.day, item.deadline, item.completed ? "completed done" : "pending incomplete"]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase()
+              .includes(globalSearchQuery)
+          )
+          .map((item) => ({
+            id: `planner-${item.id}`,
+            type: "Planner",
+            title: item.title,
+            detail: `${item.subject} · ${item.day}${item.completed ? " · Completed" : " · Pending"}`,
+            onSelect: () => {
+              if (plannerDays.includes(item.day)) setPlannerDay(item.day);
+              setGlobalSearchOpen(false);
+              document.getElementById("weekly-planner")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            },
+          })),
+      ].slice(0, 12)
+    : [];
+
+  function handleGlobalSearchKeyDown(event) {
+    if (event.key === "Escape") {
+      setGlobalSearchOpen(false);
+      setGlobalSearch("");
+    }
+  }
 
   const subjectSuggestions = Array.from(
     new Set([
@@ -1269,31 +1369,87 @@ async function handleNativeGoogleSignIn() {
     }
   }
 
-  async function deleteTask(id) {
-    if (!authToken) return;
 
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/tasks/${encodeURIComponent(id)}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${authToken}` },
-        }
-      );
+async function deleteTask(id) {
+  if (!authToken) return;
 
-      const data = await response.json().catch(() => ({}));
+  const task = tasks.find((item) => item.id === id);
+  if (!task) return;
 
-      if (!response.ok) {
-        throw new Error(data.message || "Could not delete the task.");
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/tasks/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       }
+    );
 
-      setTasks((current) => current.filter((task) => task.id !== id));
-      setNotice("Task deleted.");
-    } catch (error) {
-      console.error("Deleting StudyOS task:", error);
-      setNotice(error.message || "Could not delete the task.");
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.message || "Could not delete the task.");
     }
+
+    setTasks((current) => current.filter((item) => item.id !== id));
+    setDeletedTasks((current) => [
+      { ...task, deletedAt: Date.now() },
+      ...current,
+    ]);
+    setNotice("Task deleted. You can undo this action.");
+  } catch (error) {
+    console.error("Deleting StudyOS task:", error);
+    setNotice(error.message || "Could not delete the task.");
   }
+}
+
+
+
+async function undoDeleteTask() {
+  if (!authToken || undoLoading || deletedTasks.length === 0) return;
+
+  const taskToRestore = deletedTasks[0];
+
+  setUndoLoading(true);
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/tasks/${encodeURIComponent(taskToRestore.id)}/restore`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.message || "Could not restore the task.");
+    }
+
+    setTasks((current) => [
+      normalizeTask(data.task),
+      ...current.filter((task) => task.id !== taskToRestore.id),
+    ]);
+
+    setDeletedTasks((current) =>
+      current.filter((task) => task.id !== taskToRestore.id)
+    );
+
+    setNotice("Task restored successfully.");
+  } catch (error) {
+    console.error("Restoring StudyOS task:", error);
+    setNotice(error.message || "Could not restore the task.");
+  } finally {
+    setUndoLoading(false);
+  }
+}
+
+
 
   async function clearCompleted() {
     if (!authToken) return;
@@ -1866,7 +2022,7 @@ async function handleNativeGoogleSignIn() {
 <div className="auth-brand">
   <img
     className="studyos-auth-logo"
-    src="/StudyOS%20Education%20Logo.png"
+    src="/Gradient%20Graduation%20Cube%20Emblem.png"
     alt="StudyOS logo"
   />
 
@@ -2049,7 +2205,7 @@ async function handleNativeGoogleSignIn() {
         <div className="brand">
   <img
     className="studyos-brand-logo"
-    src="/StudyOS%20Education%20Logo.png"
+    src="/Gradient%20Graduation%20Cube%20Emblem.png"
     alt="StudyOS logo"
   />
 
@@ -2120,16 +2276,6 @@ async function handleNativeGoogleSignIn() {
         </nav>
 
         <div className="sidebar-bottom">
-          <div className="help-card">
-            <div className="help-icon">
-              <CircleHelp size={18} />
-            </div>
-
-            <strong>Keep going!</strong>
-
-            <p>Every small step brings you closer to your goals.</p>
-          </div>
-
           <a
             className={`nav-link ${activeSection === "settings" ? "active" : ""}`}
             href="#settings"
@@ -2219,26 +2365,109 @@ async function handleNativeGoogleSignIn() {
           </div>
 
           <div className="topbar-actions">
-            <label className="search-box">
-              <Search size={17} />
+            <div className="global-search-wrapper" style={{ position: "relative" }}>
+              <label className="search-box">
+                <Search size={17} />
+                <input
+                  value={globalSearch}
+                  onChange={(event) => {
+                    setGlobalSearch(event.target.value);
+                    setGlobalSearchOpen(true);
+                  }}
+                  onFocus={() => setGlobalSearchOpen(true)}
+                  onKeyDown={handleGlobalSearchKeyDown}
+                  placeholder="Search everything..."
+                  aria-label="Search tasks, notes, subjects, and planner"
+                  aria-expanded={globalSearchOpen && Boolean(globalSearchQuery)}
+                  aria-controls="global-search-results"
+                  autoComplete="off"
+                />
+                {globalSearch && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGlobalSearch("");
+                      setGlobalSearchOpen(false);
+                    }}
+                    aria-label="Clear global search"
+                  >
+                    <X size={15} />
+                  </button>
+                )}
+              </label>
 
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search tasks..."
-                aria-label="Search tasks"
-              />
-
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  aria-label="Clear search"
+              {globalSearchOpen && globalSearchQuery && (
+                <div
+                  id="global-search-results"
+                  className="global-search-results"
+                  role="listbox"
+                  aria-label="Search results"
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 10px)",
+                    right: 0,
+                    width: "min(380px, 88vw)",
+                    maxHeight: "min(420px, 65vh)",
+                    overflowY: "auto",
+                    zIndex: 1000,
+                    padding: "8px",
+                    borderRadius: "14px",
+                    background: "var(--panel, #171525)",
+                    border: "1px solid var(--border, rgba(255,255,255,.12))",
+                    boxShadow: "0 18px 45px rgba(0,0,0,.28)",
+                  }}
                 >
-                  <X size={15} />
-                </button>
+                  {globalSearchResults.length ? (
+                    globalSearchResults.map((result) => (
+                      <button
+                        key={result.id}
+                        type="button"
+                        role="option"
+                        aria-selected="false"
+                        className="global-search-result"
+                        onClick={() => {
+                          result.onSelect();
+                          setGlobalSearchOpen(false);
+                        }}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          gap: "4px",
+                          width: "100%",
+                          padding: "11px 12px",
+                          border: 0,
+                          borderRadius: "9px",
+                          background: "transparent",
+                          color: "inherit",
+                          textAlign: "left",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <span style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%" }}>
+                          <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase", opacity: .72, flexShrink: 0 }}>
+                            {result.type}
+                          </span>
+                          <strong style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {result.title}
+                          </strong>
+                        </span>
+                        <span style={{ fontSize: "12px", opacity: .72, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" }}>
+                          {result.detail}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div style={{ padding: "18px 12px", textAlign: "center" }}>
+                      <strong>No results found</strong>
+                      <p style={{ margin: "5px 0 0", fontSize: "12px", opacity: .72 }}>
+                        Try another task, note, subject, or planner keyword.
+                      </p>
+                    </div>
+                  )}
+                </div>
               )}
-            </label>
+            </div>
 
             <div className="notification-wrapper">
               <button
@@ -2306,7 +2535,61 @@ async function handleNativeGoogleSignIn() {
                 </div>
               )}
             </div>
+          <div className="topbar-account-controls">
+            <a
+              className={`topbar-account-link ${activeSection === "settings" ? "active" : ""}`}
+              href="#settings"
+              onClick={() => {
+                setActiveSection("settings");
+                setMenuOpen(false);
+              }}
+              aria-label="Settings"
+              title="Settings"
+            >
+              <Settings size={18} />
+            </a>
+            <button
+              type="button"
+              className="topbar-account-link topbar-signout"
+              onClick={handleLogout}
+              title="Sign out"
+            >
+              <LogOut size={18} />
+            </button>
+            <div className="topbar-profile" title={student?.email || "StudyOS account"}>
+              <div className="avatar topbar-avatar">
+                {student?.picture ? (
+                  <img src={student.picture} alt="" referrerPolicy="no-referrer" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+                ) : (
+                  (student?.displayName?.trim()?.charAt(0) || student?.name?.trim()?.charAt(0) || student?.email?.trim()?.charAt(0) || "S").toUpperCase()
+                )}
+              </div>
+              <span>{student?.displayName?.trim() || student?.name?.trim() || "Account"}</span>
+            </div>
           </div>
+          </div>
+
+          <nav className="mobile-top-nav" aria-label="Main navigation">
+            <button
+              type="button"
+              className="icon-button mobile-nav-hamburger"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open navigation menu"
+              aria-expanded={menuOpen}
+            >
+              <Menu size={20} />
+            </button>
+            <a className="mobile-navbar-brand" href="#dashboard" aria-label="StudyOS home">
+              <img src="/Gradient%20Graduation%20Cube%20Emblem.png" alt="" />
+              <span>Study<span className="brand-accent">OS</span></span>
+            </a>
+            <div className="mobile-navbar-links">
+            <a className={`nav-link ${activeSection === "dashboard" ? "active" : ""}`} href="#dashboard" onClick={() => setActiveSection("dashboard")} aria-label="Dashboard" title="Dashboard"><LayoutDashboard size={17} /><span>Dashboard</span></a>
+            <a className={`nav-link ${activeSection === "tasks" ? "active" : ""}`} href="#tasks" onClick={() => setActiveSection("tasks")}><CalendarDays size={17} /><span>My Tasks</span><span className="nav-count">{remainingCount}</span></a>
+            <a className={`nav-link ${activeSection === "subjects" ? "active" : ""}`} href="#subjects" onClick={() => setActiveSection("subjects")}><BookOpen size={17} /><span>Subjects</span></a>
+            <a className={`nav-link ${activeSection === "focus" ? "active" : ""}`} href="#focus" onClick={() => setActiveSection("focus")} aria-label="Focus Room" title="Focus Room"><Target size={17} /><span>Focus Room</span></a>
+            </div>
+          </nav>
         </header>
 
         <section className="welcome-banner">
@@ -2328,7 +2611,12 @@ async function handleNativeGoogleSignIn() {
             <div className="art-orbit orbit-one" />
             <div className="art-orbit orbit-two" />
             <div className="art-book">
-              <BookOpen size={52} strokeWidth={1.3} />
+              <BookMarked
+  size={52}
+  strokeWidth={1.3}
+  color="#ffffff"
+  aria-hidden="true"
+/>
             </div>
             <Sparkles className="art-sparkle sparkle-one" size={24} />
             <Sparkles className="art-sparkle sparkle-two" size={16} />
@@ -2891,6 +3179,19 @@ async function handleNativeGoogleSignIn() {
                 {notice}
               </p>
             )}
+
+            
+{deletedTasks.length > 0 && (
+  <button
+    type="button"
+    onClick={undoDeleteTask}
+    disabled={undoLoading}
+    className="undo-task-button"
+  >
+    {undoLoading ? "Restoring..." : "↶ Undo"}
+  </button>
+)}
+
 
             <div className="task-list">
               {tasksLoading ? (
