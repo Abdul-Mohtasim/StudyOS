@@ -32,6 +32,19 @@ import {
   Quote,
   RefreshCw,
   LogOut,
+  Calculator,
+  Atom,
+  Languages,
+  FlaskConical,
+  Code2,
+  Globe2,
+  Palette,
+  Landmark,
+  Microscope,
+  Music2,
+  Brain,
+  ChartNoAxesCombined,
+  BookText,
 } from "lucide-react";
 
 import "./App.css";
@@ -40,10 +53,28 @@ const API_BASE_URL = import.meta.env.DEV
   ? ""
   : (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
-const defaultSubjects = [
-  { name: "Mathematics", detail: "Your mathematics tasks", color: "purple" },
-  { name: "Physics", detail: "Your physics tasks", color: "blue" },
-  { name: "English", detail: "Your English tasks", color: "orange" },
+const subjectIconMap = {
+  mathematics: Calculator,
+  math: Calculator,
+  physics: Atom,
+  chemistry: FlaskConical,
+  biology: Microscope,
+  english: Languages,
+  programming: Code2,
+  computer: Code2,
+  "computer science": Code2,
+  geography: Globe2,
+  art: Palette,
+  history: Landmark,
+  music: Music2,
+  psychology: Brain,
+  economics: ChartNoAxesCombined,
+  literature: BookText,
+};
+
+const fallbackSubjectIcons = [
+  BookText, FlaskConical, Globe2, Brain, Landmark, Code2,
+  Microscope, Palette, Music2, ChartNoAxesCombined, Languages, Atom,
 ];
 
 const reminders = [
@@ -73,6 +104,28 @@ const reminders = [
     tip: "Stay curious, take breaks, and keep asking questions.",
   },
 ];
+
+function getGreetingName(student) {
+  const accountName =
+    student?.displayName?.trim() ||
+    student?.name?.trim() ||
+    student?.givenName?.trim() ||
+    student?.firstName?.trim();
+
+  if (accountName) {
+    return accountName.split(/\s+/)[0];
+  }
+
+  const emailName = student?.email?.trim()?.split("@")[0];
+  if (emailName) {
+    const firstPart = emailName.split(/[._-]+/).filter(Boolean)[0];
+    if (firstPart) {
+      return firstPart.charAt(0).toUpperCase() + firstPart.slice(1);
+    }
+  }
+
+  return "there";
+}
 
 function normalizeTask(task) {
   return {
@@ -153,34 +206,34 @@ export default function App() {
   const [authChecking, setAuthChecking] = useState(true);
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
-  const [authMode, setAuthMode] = useState("login");
-  const [authName, setAuthName] = useState("");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [showAuthPassword, setShowAuthPassword] = useState(false);
-  const [googleSignInReady, setGoogleSignInReady] = useState(false);
+const [authMode, setAuthMode] = useState("login");
+const [authName, setAuthName] = useState("");
+const [authEmail, setAuthEmail] = useState("");
+const [authPassword, setAuthPassword] = useState("");
+const [showAuthPassword, setShowAuthPassword] = useState(false);
+const [googleSignInReady, setGoogleSignInReady] = useState(false);
 
-  const [deletedTasks, setDeletedTasks] = useState([]);
-  const [undoLoading, setUndoLoading] = useState(false);
+const [deletedTasks, setDeletedTasks] = useState([]);
+const [undoLoading, setUndoLoading] = useState(false);
 
-  useEffect(() => {
-    if (Capacitor.getPlatform() !== "android") {
-      return;
-    }
+useEffect(() => {
+  if (Capacitor.getPlatform() !== "android") {
+    return;
+  }
 
-    GoogleSignIn.initialize({
-      clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+  GoogleSignIn.initialize({
+    clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+  })
+    .then(() => {
+      console.log("Native Google Sign-In initialized.");
     })
-      .then(() => {
-        console.log("Native Google Sign-In initialized.");
-      })
-      .catch((error) => {
-        console.error(
-          "Google Sign-In initialization failed:",
-          error
-        );
-      });
-  }, []);
+    .catch((error) => {
+      console.error(
+        "Google Sign-In initialization failed:",
+        error
+      );
+    });
+}, []);
 
 
   // ---------- Tasks ----------
@@ -201,6 +254,15 @@ export default function App() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [showNotifications, setShowNotifications] = useState(false);
   const [subjectsExpanded, setSubjectsExpanded] = useState(true);
+  const [selectedSubjectsForRemoval, setSelectedSubjectsForRemoval] = useState([]);
+  const [hiddenSubjectNames, setHiddenSubjectNames] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("studyos-hidden-subjects") || "[]");
+      return Array.isArray(saved) ? saved.filter((name) => typeof name === "string") : [];
+    } catch {
+      return [];
+    }
+  });
 
   // ---------- Settings ----------
   const [settingsTheme, setSettingsTheme] = useState(() => {
@@ -785,41 +847,41 @@ export default function App() {
 
   async function handleGoogleSuccess(googleResponse) {
     const credential =
-      googleResponse?.credential || googleResponse?.idToken;
+  googleResponse?.credential || googleResponse?.idToken;
 
-    if (!credential) {
-      setAuthError("Google did not return a credential. Please try again.");
+if (!credential) {
+  setAuthError("Google did not return a credential. Please try again.");
+  return;
+}
+
+
+
+async function handleNativeGoogleSignIn() {
+  setAuthError("");
+
+  try {
+    const result = await GoogleSignIn.signIn();
+
+    if (!result?.idToken) {
+      throw new Error("Google did not return an ID token. Please try again.");
+    }
+
+    await handleGoogleSuccess({ idToken: result.idToken });
+  } catch (error) {
+    console.error("Native Google sign-in error:", error);
+
+    if (
+      error?.code === "SIGN_IN_CANCELED" ||
+      error?.message?.toLowerCase()?.includes("cancel")
+    ) {
       return;
     }
 
-
-
-    async function handleNativeGoogleSignIn() {
-      setAuthError("");
-
-      try {
-        const result = await GoogleSignIn.signIn();
-
-        if (!result?.idToken) {
-          throw new Error("Google did not return an ID token. Please try again.");
-        }
-
-        await handleGoogleSuccess({ idToken: result.idToken });
-      } catch (error) {
-        console.error("Native Google sign-in error:", error);
-
-        if (
-          error?.code === "SIGN_IN_CANCELED" ||
-          error?.message?.toLowerCase()?.includes("cancel")
-        ) {
-          return;
-        }
-
-        setAuthError(
-          error?.message || "Native Google sign-in failed. Please try again."
-        );
-      }
-    }
+    setAuthError(
+      error?.message || "Native Google sign-in failed. Please try again."
+    );
+  }
+}
 
 
 
@@ -1141,126 +1203,164 @@ export default function App() {
 
   const searchQuery = search.trim().toLowerCase();
 
-  const visibleTasks = tasks.filter((task) => {
-    const searchableText = [
-      task.title,
-      task.subject,
-      task.time,
-      task.completed ? "completed done" : "pending todo incomplete",
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
+const visibleTasks = tasks.filter((task) => {
+  const searchableText = [
+    task.title,
+    task.subject,
+    task.time,
+    task.completed ? "completed done" : "pending todo incomplete",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
 
-    return searchableText.includes(searchQuery);
-  });
+  return searchableText.includes(searchQuery);
+});
 
-  // Subject list: defaults plus any subject the student actually uses.
+  // My Subjects is based ONLY on subjects used by tasks.
+  // Planner entries and notes never create a subject card on their own.
   const subjects = (() => {
     const byName = new Map();
-    defaultSubjects.forEach((subject) =>
-      byName.set(subject.name.toLowerCase(), subject)
-    );
-    const usedNames = [
-      ...tasks.map((item) => item.subject),
-      ...weeklyPlan.map((item) => item.subject),
-      ...subjectNotes.map((item) => item.subject),
-    ];
-    usedNames.forEach((rawName) => {
-      const name = typeof rawName === "string" ? rawName.trim() : "";
+    tasks.forEach((task) => {
+      const name = (typeof task.subject === "string" ? task.subject : "").trim();
       if (!name || name.toLowerCase() === "other") return;
       const key = name.toLowerCase();
       if (!byName.has(key)) {
-        const colors = ["blue", "orange", "purple"];
+        const colors = ["purple", "blue", "orange", "green"];
         byName.set(key, {
           name,
-          detail: `Your ${name} tasks and notes`,
+          detail: `Your ${name} tasks`,
           color: colors[byName.size % colors.length],
         });
       }
     });
-    return Array.from(byName.values()).sort((a, b) => {
-      const ai = defaultSubjects.findIndex((s) => s.name === a.name);
-      const bi = defaultSubjects.findIndex((s) => s.name === b.name);
-      if (ai !== -1 || bi !== -1)
-        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-      return a.name.localeCompare(b.name);
-    });
+    return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
   })();
+
+  // Give every visible subject its own distinct Lucide icon.
+  const subjectIconAssignments = new Map();
+  const usedSubjectIcons = new Set();
+  subjects.forEach((subject, index) => {
+    const preferredIcon = subjectIconMap[subject.name.toLowerCase()];
+    const SubjectIcon =
+      (preferredIcon && !usedSubjectIcons.has(preferredIcon) && preferredIcon) ||
+      fallbackSubjectIcons.find((Icon) => !usedSubjectIcons.has(Icon)) || BookText;
+    usedSubjectIcons.add(SubjectIcon);
+    subjectIconAssignments.set(subject.name, SubjectIcon);
+  });
+
+  // A subject is completed when it has at least one task and every task is done.
+  // Completed subjects remain available in the history area; their tasks and notes are untouched.
+  const getSubjectTaskStats = (subjectName) => {
+    const normalizedName = subjectName.trim().toLowerCase();
+    const relatedTasks = tasks.filter(
+      (task) => (task.subject || "Personal").trim().toLowerCase() === normalizedName
+    );
+    const completed = relatedTasks.filter((task) => task.completed).length;
+    return { total: relatedTasks.length, completed };
+  };
+  const completedSubjects = subjects.filter((subject) => {
+    const stats = getSubjectTaskStats(subject.name);
+    return stats.total > 0 && stats.completed === stats.total;
+  });
+  const activeSubjects = subjects.filter(
+    (subject) => !completedSubjects.includes(subject) &&
+      !hiddenSubjectNames.some((name) => name.toLowerCase() === subject.name.toLowerCase())
+  );
+
+  function toggleSubjectRemoval(subjectName) {
+    setSelectedSubjectsForRemoval((current) =>
+      current.includes(subjectName)
+        ? current.filter((name) => name !== subjectName)
+        : [...current, subjectName]
+    );
+  }
+
+  function removeSelectedSubjectsFromList() {
+    if (selectedSubjectsForRemoval.length === 0) return;
+    const nextHidden = Array.from(new Set([...hiddenSubjectNames, ...selectedSubjectsForRemoval]));
+    setHiddenSubjectNames(nextHidden);
+    try {
+      localStorage.setItem("studyos-hidden-subjects", JSON.stringify(nextHidden));
+    } catch (error) {
+      console.error("Could not save hidden subjects preference:", error);
+    }
+    setSelectedSubjectsForRemoval([]);
+  }
 
   const globalSearchQuery = globalSearch.trim().toLowerCase();
   const globalSearchResults = globalSearchQuery
     ? [
-      ...tasks
-        .filter((task) =>
-          [task.title, task.subject, task.time, task.completed ? "completed done" : "pending incomplete"]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase()
-            .includes(globalSearchQuery)
-        )
-        .map((task) => ({
-          id: `task-${task.id}`,
-          type: "Task",
-          title: task.title,
-          detail: `${task.subject} · ${task.time}${task.completed ? " · Completed" : " · Pending"}`,
-          onSelect: () => {
-            setSearch(task.title);
-            document.getElementById("tasks")?.scrollIntoView({ behavior: "smooth", block: "start" });
-          },
-        })),
-      ...subjectNotes
-        .filter((note) =>
-          [note.title, note.content, note.subject]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase()
-            .includes(globalSearchQuery)
-        )
-        .map((note) => ({
-          id: `note-${note.id}`,
-          type: "Note",
-          title: note.title,
-          detail: `${note.subject} · Saved note`,
-          onSelect: () => {
-            setGlobalSearchOpen(false);
-            setGlobalSearch("");
-            editSubjectNote(note);
-            document.getElementById("subject-notes")?.scrollIntoView({ behavior: "smooth", block: "start" });
-          },
-        })),
-      ...subjects
-        .filter((subject) => subject.name.toLowerCase().includes(globalSearchQuery))
-        .map((subject) => ({
-          id: `subject-${subject.name}`,
-          type: "Subject",
-          title: subject.name,
-          detail: "Study subject",
-          onSelect: () => {
-            setGlobalSearchOpen(false);
-            document.getElementById("subjects")?.scrollIntoView({ behavior: "smooth", block: "start" });
-          },
-        })),
-      ...weeklyPlan
-        .filter((item) =>
-          [item.title, item.subject, item.day, item.deadline, item.completed ? "completed done" : "pending incomplete"]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase()
-            .includes(globalSearchQuery)
-        )
-        .map((item) => ({
-          id: `planner-${item.id}`,
-          type: "Planner",
-          title: item.title,
-          detail: `${item.subject} · ${item.day}${item.completed ? " · Completed" : " · Pending"}`,
-          onSelect: () => {
-            if (plannerDays.includes(item.day)) setPlannerDay(item.day);
-            setGlobalSearchOpen(false);
-            document.getElementById("weekly-planner")?.scrollIntoView({ behavior: "smooth", block: "start" });
-          },
-        })),
-    ].slice(0, 12)
+        ...tasks
+          .filter((task) =>
+            [task.title, task.subject, task.time, task.completed ? "completed done" : "pending incomplete"]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase()
+              .includes(globalSearchQuery)
+          )
+          .map((task) => ({
+            id: `task-${task.id}`,
+            type: "Task",
+            title: task.title,
+            detail: `${task.subject} · ${task.time}${task.completed ? " · Completed" : " · Pending"}`,
+            onSelect: () => {
+              setSearch(task.title);
+              document.getElementById("tasks")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            },
+          })),
+        ...subjectNotes
+          .filter((note) =>
+            [note.title, note.content, note.subject]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase()
+              .includes(globalSearchQuery)
+          )
+          .map((note) => ({
+            id: `note-${note.id}`,
+            type: "Note",
+            title: note.title,
+            detail: `${note.subject} · Saved note`,
+            onSelect: () => {
+              setGlobalSearchOpen(false);
+              setGlobalSearch("");
+              editSubjectNote(note);
+              document.getElementById("subject-notes")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            },
+          })),
+        ...subjects
+          .filter((subject) => subject.name.toLowerCase().includes(globalSearchQuery))
+          .map((subject) => ({
+            id: `subject-${subject.name}`,
+            type: "Subject",
+            title: subject.name,
+            detail: "Study subject",
+            onSelect: () => {
+              setGlobalSearchOpen(false);
+              document.getElementById("subjects")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            },
+          })),
+        ...weeklyPlan
+          .filter((item) =>
+            [item.title, item.subject, item.day, item.deadline, item.completed ? "completed done" : "pending incomplete"]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase()
+              .includes(globalSearchQuery)
+          )
+          .map((item) => ({
+            id: `planner-${item.id}`,
+            type: "Planner",
+            title: item.title,
+            detail: `${item.subject} · ${item.day}${item.completed ? " · Completed" : " · Pending"}`,
+            onSelect: () => {
+              if (plannerDays.includes(item.day)) setPlannerDay(item.day);
+              setGlobalSearchOpen(false);
+              document.getElementById("weekly-planner")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            },
+          })),
+      ].slice(0, 12)
     : [];
 
   function handleGlobalSearchKeyDown(event) {
@@ -1371,84 +1471,84 @@ export default function App() {
   }
 
 
-  async function deleteTask(id) {
-    if (!authToken) return;
+async function deleteTask(id) {
+  if (!authToken) return;
 
-    const task = tasks.find((item) => item.id === id);
-    if (!task) return;
+  const task = tasks.find((item) => item.id === id);
+  if (!task) return;
 
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/tasks/${encodeURIComponent(id)}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data.message || "Could not delete the task.");
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/tasks/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       }
+    );
 
-      setTasks((current) => current.filter((item) => item.id !== id));
-      setDeletedTasks((current) => [
-        { ...task, deletedAt: Date.now() },
-        ...current,
-      ]);
-      setNotice("Task deleted. You can undo this action.");
-    } catch (error) {
-      console.error("Deleting StudyOS task:", error);
-      setNotice(error.message || "Could not delete the task.");
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.message || "Could not delete the task.");
     }
+
+    setTasks((current) => current.filter((item) => item.id !== id));
+    setDeletedTasks((current) => [
+      { ...task, deletedAt: Date.now() },
+      ...current,
+    ]);
+    setNotice("Task deleted. You can undo this action.");
+  } catch (error) {
+    console.error("Deleting StudyOS task:", error);
+    setNotice(error.message || "Could not delete the task.");
   }
+}
 
 
 
-  async function undoDeleteTask() {
-    if (!authToken || undoLoading || deletedTasks.length === 0) return;
+async function undoDeleteTask() {
+  if (!authToken || undoLoading || deletedTasks.length === 0) return;
 
-    const taskToRestore = deletedTasks[0];
+  const taskToRestore = deletedTasks[0];
 
-    setUndoLoading(true);
+  setUndoLoading(true);
 
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/tasks/${encodeURIComponent(taskToRestore.id)}/restore`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data.message || "Could not restore the task.");
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/tasks/${encodeURIComponent(taskToRestore.id)}/restore`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       }
+    );
 
-      setTasks((current) => [
-        normalizeTask(data.task),
-        ...current.filter((task) => task.id !== taskToRestore.id),
-      ]);
+    const data = await response.json().catch(() => ({}));
 
-      setDeletedTasks((current) =>
-        current.filter((task) => task.id !== taskToRestore.id)
-      );
-
-      setNotice("Task restored successfully.");
-    } catch (error) {
-      console.error("Restoring StudyOS task:", error);
-      setNotice(error.message || "Could not restore the task.");
-    } finally {
-      setUndoLoading(false);
+    if (!response.ok) {
+      throw new Error(data.message || "Could not restore the task.");
     }
+
+    setTasks((current) => [
+      normalizeTask(data.task),
+      ...current.filter((task) => task.id !== taskToRestore.id),
+    ]);
+
+    setDeletedTasks((current) =>
+      current.filter((task) => task.id !== taskToRestore.id)
+    );
+
+    setNotice("Task restored successfully.");
+  } catch (error) {
+    console.error("Restoring StudyOS task:", error);
+    setNotice(error.message || "Could not restore the task.");
+  } finally {
+    setUndoLoading(false);
   }
+}
 
 
 
@@ -2020,17 +2120,17 @@ export default function App() {
       <main className="auth-screen">
         <section className="auth-card">
 
-          <div className="auth-brand">
-            <img
-              className="studyos-auth-logo"
-              src="/Gradient%20Graduation%20Cube%20Emblem.png"
-              alt="StudyOS logo"
-            />
+<div className="auth-brand">
+  <img
+    className="studyos-auth-logo"
+    src="/Gradient%20Graduation%20Cube%20Emblem.png"
+    alt="StudyOS logo"
+  />
 
-            <span className="sidebar-brand-name">
-              Study<span className="brand-accent">OS</span>
-            </span>
-          </div>
+  <span className="sidebar-brand-name">
+    Study<span className="brand-accent">OS</span>
+  </span>
+</div>
 
 
           <p className="auth-subtitle">
@@ -2098,56 +2198,56 @@ export default function App() {
                 placeholder="you@example.com"
               />
             </label>
+            
+<label className="auth-password-label">
+  Password
 
-            <label className="auth-password-label">
-              Password
+  <div className="auth-password-wrapper">
+    <input
+      type={showAuthPassword ? "text" : "password"}
+      autoComplete={
+        authMode === "register"
+          ? "new-password"
+          : "current-password"
+      }
+      value={authPassword}
+      onChange={(event) => setAuthPassword(event.target.value)}
+      placeholder="Enter your password"
+      minLength={8}
+      required
+    />
 
-              <div className="auth-password-wrapper">
-                <input
-                  type={showAuthPassword ? "text" : "password"}
-                  autoComplete={
-                    authMode === "register"
-                      ? "new-password"
-                      : "current-password"
-                  }
-                  value={authPassword}
-                  onChange={(event) => setAuthPassword(event.target.value)}
-                  placeholder="Enter your password"
-                  minLength={8}
-                  required
-                />
-
-
-
-
-                <button
-                  type="button"
-                  className="password-toggle-button"
-                  onClick={() => setShowAuthPassword((previous) => !previous)}
-                  aria-label={showAuthPassword ? "Hide password" : "Show password"}
-                  aria-pressed={showAuthPassword}
-                >
-                  <img
-                    src={
-                      showAuthPassword
-                        ? "https://img.icons8.com/material-outlined/24/hide.png"
-                        : "https://img.icons8.com/material-outlined/24/visible--v1.png"
-                    }
-                    alt={showAuthPassword ? "Hide password" : "Show password"}
-                    width="24"
-                    height="24"
-                    style={{
-                      display: "block",
-                      width: "24px",
-                      height: "24px",
-                      objectFit: "contain",
-                    }}
-                  />
-                </button>
+    
 
 
-              </div>
-            </label>
+<button
+  type="button"
+  className="password-toggle-button"
+  onClick={() => setShowAuthPassword((previous) => !previous)}
+  aria-label={showAuthPassword ? "Hide password" : "Show password"}
+  aria-pressed={showAuthPassword}
+>
+  <img
+    src={
+      showAuthPassword
+        ? "https://img.icons8.com/material-outlined/24/hide.png"
+        : "https://img.icons8.com/material-outlined/24/visible--v1.png"
+    }
+    alt={showAuthPassword ? "Hide password" : "Show password"}
+    width="24"
+    height="24"
+    style={{
+      display: "block",
+      width: "24px",
+      height: "24px",
+      objectFit: "contain",
+    }}
+  />
+</button>
+
+
+  </div>
+</label>
 
             <button className="email-auth-submit" type="submit" disabled={authLoading}>
               {authLoading
@@ -2204,15 +2304,15 @@ export default function App() {
 
       <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`}>
         <div className="brand">
-          <img
-            className="studyos-brand-logo"
-            src="/Gradient%20Graduation%20Cube%20Emblem.png"
-            alt="StudyOS logo"
-          />
+  <img
+    className="studyos-brand-logo"
+    src="/Gradient%20Graduation%20Cube%20Emblem.png"
+    alt="StudyOS logo"
+  />
 
-          <span>
-            Study<span className="brand-accent">OS</span>
-          </span>
+  <span>
+    Study<span className="brand-accent">OS</span>
+  </span>
 
           <button
             className="icon-button mobile-close"
@@ -2221,7 +2321,7 @@ export default function App() {
           >
             <X size={20} />
           </button>
-        </div>
+          </div>
 
         <div className="workspace-label">WORKSPACE</div>
 
@@ -2283,6 +2383,7 @@ export default function App() {
             onClick={() => {
               setActiveSection("settings");
               setMenuOpen(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           >
             <Settings size={18} />
@@ -2337,7 +2438,7 @@ export default function App() {
         </div>
       </aside>
 
-      <main className="main-content" id="dashboard">
+      <main className={`main-content${activeSection === "settings" ? " settings-page" : ""}`} id="dashboard">
         <header className="topbar">
           <div className="topbar-left">
             <button
@@ -2350,18 +2451,18 @@ export default function App() {
 
             <div>
               <div className="breadcrumb">
-                Workspace <ChevronRight size={13} /> Dashboard
+                Workspace <ChevronRight size={13} /> {activeSection === "settings" ? "Settings" : "Dashboard"}
               </div>
 
               <h1>
-                Good day,{" "}
-                {student?.displayName?.trim()?.split(/\s+/)[0] ||
-                  student?.name?.trim()?.split(/\s+/)[0] ||
-                  "Student"}
-                <span className="wave"> ✦</span>
+                {activeSection === "settings" ? "Settings" : <>Good day, {getGreetingName(student)}<span className="wave"> ✦</span></>}
               </h1>
 
-              <p className="subtitle">A little progress every day adds up.</p>
+              <p className="subtitle">
+                {activeSection === "settings"
+                  ? "Personalize your StudyOS experience."
+                  : "A little progress every day adds up."}
+              </p>
             </div>
           </div>
 
@@ -2548,6 +2649,30 @@ export default function App() {
                 </div>
               )}
             </div>
+
+            <div className="topbar-account-controls" aria-label="Account actions">
+              <a
+                href="#settings"
+                className={`icon-button topbar-account-link ${activeSection === "settings" ? "active" : ""}`}
+                aria-label="Settings"
+                title="Settings"
+                onClick={() => {
+                  setActiveSection("settings");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
+                <Settings size={19} />
+              </a>
+              <button
+                type="button"
+                className="icon-button topbar-account-link"
+                aria-label="Sign out"
+                title="Sign out"
+                onClick={handleLogout}
+              >
+                <LogOut size={19} />
+              </button>
+            </div>
           </div>
 
           <nav className="mobile-top-nav" aria-label="Main navigation">
@@ -2565,14 +2690,15 @@ export default function App() {
               <span>Study<span className="brand-accent">OS</span></span>
             </a>
             <div className="mobile-navbar-links">
-              <a className={`nav-link ${activeSection === "dashboard" ? "active" : ""}`} href="#dashboard" onClick={() => setActiveSection("dashboard")} aria-label="Dashboard" title="Dashboard"><LayoutDashboard size={17} /><span>Dashboard</span></a>
-              <a className={`nav-link ${activeSection === "tasks" ? "active" : ""}`} href="#tasks" onClick={() => setActiveSection("tasks")}><CalendarDays size={17} /><span>My Tasks</span><span className="nav-count">{remainingCount}</span></a>
-              <a className={`nav-link ${activeSection === "subjects" ? "active" : ""}`} href="#subjects" onClick={() => setActiveSection("subjects")}><BookOpen size={17} /><span>Subjects</span></a>
-              <a className={`nav-link ${activeSection === "focus" ? "active" : ""}`} href="#focus" onClick={() => setActiveSection("focus")} aria-label="Focus Room" title="Focus Room"><Target size={17} /><span>Focus Room</span></a>
+            <a className={`nav-link ${activeSection === "dashboard" ? "active" : ""}`} href="#dashboard" onClick={() => setActiveSection("dashboard")} aria-label="Dashboard" title="Dashboard"><LayoutDashboard size={17} /><span>Dashboard</span></a>
+            <a className={`nav-link ${activeSection === "tasks" ? "active" : ""}`} href="#tasks" onClick={() => setActiveSection("tasks")}><CalendarDays size={17} /><span>My Tasks</span><span className="nav-count">{remainingCount}</span></a>
+            <a className={`nav-link ${activeSection === "subjects" ? "active" : ""}`} href="#subjects" onClick={() => setActiveSection("subjects")}><BookOpen size={17} /><span>Subjects</span></a>
+            <a className={`nav-link ${activeSection === "focus" ? "active" : ""}`} href="#focus" onClick={() => setActiveSection("focus")} aria-label="Focus Room" title="Focus Room"><Target size={17} /><span>Focus Room</span></a>
             </div>
           </nav>
         </header>
 
+        <div className="dashboard-page-content" hidden={activeSection === "settings"}>
         <section className="welcome-banner">
           <div className="welcome-copy">
             <span className="eyebrow">
@@ -2593,11 +2719,11 @@ export default function App() {
             <div className="art-orbit orbit-two" />
             <div className="art-book">
               <BookMarked
-                size={52}
-                strokeWidth={1.3}
-                color="#ffffff"
-                aria-hidden="true"
-              />
+  size={52}
+  strokeWidth={1.3}
+  color="#ffffff"
+  aria-hidden="true"
+/>
             </div>
             <Sparkles className="art-sparkle sparkle-one" size={24} />
             <Sparkles className="art-sparkle sparkle-two" size={16} />
@@ -3037,8 +3163,8 @@ export default function App() {
                     className={`weekly-chart-bar ${day.isToday ? "today" : ""}`}
                     style={{
                       height: `${day.minutes === 0
-                        ? 4
-                        : Math.max(8, (day.minutes / maxDailyMinutes) * 100)
+                          ? 4
+                          : Math.max(8, (day.minutes / maxDailyMinutes) * 100)
                         }%`,
                     }}
                   />
@@ -3161,17 +3287,17 @@ export default function App() {
               </p>
             )}
 
-
-            {deletedTasks.length > 0 && (
-              <button
-                type="button"
-                onClick={undoDeleteTask}
-                disabled={undoLoading}
-                className="undo-task-button"
-              >
-                {undoLoading ? "Restoring..." : "↶ Undo"}
-              </button>
-            )}
+            
+{deletedTasks.length > 0 && (
+  <button
+    type="button"
+    onClick={undoDeleteTask}
+    disabled={undoLoading}
+    className="undo-task-button"
+  >
+    {undoLoading ? "Restoring..." : "↶ Undo"}
+  </button>
+)}
 
 
             <div className="task-list">
@@ -3463,7 +3589,7 @@ export default function App() {
             <div className="panel-heading">
               <div>
                 <h2>My Subjects</h2>
-                <p>Keep your learning on track.</p>
+                <p>Subjects appear here when you use them in Tasks. Select any subject to remove it from this list.</p>
               </div>
 
               <button
@@ -3484,20 +3610,29 @@ export default function App() {
             </div>
 
             {subjectsExpanded && (
+              <>
+              {activeSubjects.length > 0 && (
+                <div className="subjects-actions">
+                  <span>{selectedSubjectsForRemoval.length} selected</span>
+                  <button
+                    type="button"
+                    className="subject-remove-button"
+                    onClick={removeSelectedSubjectsFromList}
+                    disabled={selectedSubjectsForRemoval.length === 0}
+                  >
+                    <Trash2 size={15} /> Remove selected
+                  </button>
+                </div>
+              )}
               <div className="subjects-list">
-                {subjects.map((subject) => {
-                  // Count both regular tasks and weekly-planner tasks for this subject.
+                {activeSubjects.map((subject) => {
+                  // Progress is based on Tasks section items only.
                   const subjectTasks = tasks.filter(
                     (task) =>
                       (task.subject || "Personal").trim().toLowerCase() ===
                       subject.name.toLowerCase()
                   );
-                  const subjectPlannerTasks = weeklyPlan.filter(
-                    (task) =>
-                      (task.subject || "Mathematics").trim().toLowerCase() ===
-                      subject.name.toLowerCase()
-                  );
-                  const allSubjectTasks = [...subjectTasks, ...subjectPlannerTasks];
+                  const allSubjectTasks = subjectTasks;
                   const completedSubjectTasks = allSubjectTasks.filter(
                     (task) => task.completed
                   ).length;
@@ -3522,10 +3657,20 @@ export default function App() {
                             ? "progress-25"
                             : "progress-low";
 
+                  const SubjectIcon = subjectIconAssignments.get(subject.name) || BookText;
+
                   return (
-                    <article className="subject-row" key={subject.name}>
+                    <article className={`subject-row${selectedSubjectsForRemoval.includes(subject.name) ? " is-selected" : ""}`} key={subject.name}>
+                      <label className="subject-select-control">
+                        <input
+                          type="checkbox"
+                          checked={selectedSubjectsForRemoval.includes(subject.name)}
+                          onChange={() => toggleSubjectRemoval(subject.name)}
+                          aria-label={`Select ${subject.name} for removal`}
+                        />
+                      </label>
                       <div className={`subject-icon ${subject.color}`} aria-hidden="true">
-                        <BookOpen size={19} />
+                        <SubjectIcon size={19} strokeWidth={1.8} />
                       </div>
 
                       <div className="subject-info">
@@ -3565,8 +3710,48 @@ export default function App() {
                     </article>
                   );
                 })}
+                {activeSubjects.length === 0 && (
+                  <p className="subjects-history-empty">No active subjects. Add a subject to a task to show it here.</p>
+                )}
               </div>
+              </>
             )}
+
+            <section className="subjects-completed" aria-label="Completed subjects history">
+              <div className="subjects-completed-heading">
+                <div>
+                  <h3>Subject Completed</h3>
+                  <p>Completed subjects are kept here as history. Removing a subject from My Subjects does not delete its tasks or notes.</p>
+                </div>
+                <span className="subjects-history-count">{completedSubjects.length}</span>
+              </div>
+              <div className="subjects-history">
+                <h4>Subjects History</h4>
+                {completedSubjects.length === 0 ? (
+                  <p className="subjects-history-empty">No completed subjects yet. Finish all tasks in a subject and it will appear here.</p>
+                ) : (
+                  completedSubjects.map((subject) => {
+                    const stats = getSubjectTaskStats(subject.name);
+                    const SubjectIcon = subjectIconAssignments.get(subject.name) || BookText;
+                    const notesCount = subjectNotes.filter((note) =>
+                      (note.subject || "Personal").trim().toLowerCase() === subject.name.toLowerCase()
+                    ).length;
+                    return (
+                      <article className="subject-history-row" key={`history-${subject.name}`}>
+                        <div className={`subject-icon ${subject.color}`} aria-hidden="true">
+                          <SubjectIcon size={18} strokeWidth={1.8} />
+                        </div>
+                        <div className="subject-history-info">
+                          <strong>{subject.name}</strong>
+                          <span>{stats.completed} of {stats.total} tasks completed · {notesCount} {notesCount === 1 ? "note" : "notes"}</span>
+                        </div>
+                        <span className="subject-history-status"><Check size={14} /> Completed</span>
+                      </article>
+                    );
+                  })
+                )}
+              </div>
+            </section>
 
             <div className="subjects-footer">
               <Sparkles size={15} /> Taking small steps leads to big results.
@@ -3805,13 +3990,18 @@ export default function App() {
             </p>
           </section>
 
-          {/* Account settings */}
+        </div>
+        </div>
+
+        {/* The dashboard quote reminder has been removed. Settings reminder preferences remain unchanged. */}
+
+        {activeSection === "settings" && (
           <section
             className="settings-section"
             id="settings"
             aria-labelledby="settings-title"
           >
-            <div className="section-heading settings-heading">
+            {/* <div className="section-heading settings-heading">
               <div>
                 <span className="section-kicker">PERSONALIZE STUDYOS</span>
                 <h2 id="settings-title">Settings</h2>
@@ -3820,7 +4010,7 @@ export default function App() {
               <span className="settings-heading-icon" aria-hidden="true">
                 <Settings size={23} />
               </span>
-            </div>
+            </div> */}
 
             {settingsLoading && (
               <p className="settings-status" role="status">
@@ -3930,6 +4120,76 @@ export default function App() {
                 </form>
               </article>
 
+
+              
+
+
+
+              <article className="settings-card settings-reminder-card">
+                <div className="settings-card-heading">
+                  <span className="settings-card-icon">
+                    <Sparkles size={19} />
+                  </span>
+                  <div>
+                    <h3>A Little Reminder</h3>
+                    <p>A little encouragement for your next study session.</p>
+                  </div>
+                </div>
+
+                <blockquote className="settings-reminder-quote">
+                  “{currentReminder.text}”
+                </blockquote>
+                <p className="settings-reminder-author">{currentReminder.author}</p>
+                <div className="settings-reminder-tip">
+                  <strong>Study tip</strong>
+                  <p>{currentReminder.tip}</p>
+                </div>
+                <button
+                  type="button"
+                  className="settings-save-button settings-reminder-next"
+                  onClick={nextReminder}
+                >
+                  <RefreshCw size={15} /> New reminder
+                </button>
+              </article>
+
+
+
+              <article className="settings-card settings-notifications-card">
+                <div className="settings-card-heading">
+                  <span className="settings-card-icon">
+                    <Bell size={19} />
+                  </span>
+                  <div>
+                    <h3>Notifications</h3>
+                    <p>Choose whether you want notifications about unfinished tasks.</p>
+                  </div>
+                </div>
+
+                <div className="settings-toggle-row">
+                  <div>
+                    <strong>Task notifications</strong>
+                    <p>Show notifications about unfinished tasks.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className={`settings-switch ${taskNotificationsEnabled ? "is-on" : ""}`}
+                    role="switch"
+                    aria-checked={taskNotificationsEnabled}
+                    aria-label="Task notifications"
+                    disabled={settingsLoading || settingsSaving}
+                    onClick={() =>
+                      saveSettings({
+                        taskNotificationsEnabled: !taskNotificationsEnabled,
+                      })
+                    }
+                  >
+                    <span />
+                  </button>
+                </div>
+              </article>
+
+
               <article className="settings-card">
                 <div className="settings-card-heading">
                   <span className="settings-card-icon">
@@ -3974,61 +4234,8 @@ export default function App() {
                 </div>
               </article>
 
-              <article className="settings-card settings-notifications-card">
-                <div className="settings-card-heading">
-                  <span className="settings-card-icon">
-                    <Bell size={19} />
-                  </span>
-                  <div>
-                    <h3>Notifications</h3>
-                    <p>Choose which study reminders you want enabled.</p>
-                  </div>
-                </div>
 
-                <div className="settings-toggle-row">
-                  <div>
-                    <strong>Study reminders</strong>
-                    <p>Helpful reminders to keep your study routine on track.</p>
-                  </div>
-                  <button
-                    type="button"
-                    className={`settings-switch ${studyRemindersEnabled ? "is-on" : ""}`}
-                    role="switch"
-                    aria-checked={studyRemindersEnabled}
-                    aria-label="Study reminders"
-                    disabled={settingsLoading || settingsSaving}
-                    onClick={() =>
-                      saveSettings({
-                        studyRemindersEnabled: !studyRemindersEnabled,
-                      })
-                    }
-                  >
-                    <span />
-                  </button>
-                </div>
-
-                <div className="settings-toggle-row">
-                  <div>
-                    <strong>Task notifications</strong>
-                    <p>Show notifications about unfinished tasks.</p>
-                  </div>
-                  <button
-                    type="button"
-                    className={`settings-switch ${taskNotificationsEnabled ? "is-on" : ""}`}
-                    role="switch"
-                    aria-checked={taskNotificationsEnabled}
-                    aria-label="Task notifications"
-                    disabled={settingsLoading || settingsSaving}
-                    onClick={() =>
-                      saveSettings({
-                        taskNotificationsEnabled: !taskNotificationsEnabled,
-                      })
-                    }
-                  >
-                    <span />
-                  </button>
-                </div>
-              </article>
+              
             </div>
 
             <p className="settings-footnote">
@@ -4037,55 +4244,7 @@ export default function App() {
             </p>
           </section>
 
-          {/* Interactive rectangular reminder */}
-          {studyRemindersEnabled && (
-            <section className="quote-panel" aria-label="Daily study reminder">
-              <div className="quote-sparkle">
-                <Quote size={22} />
-              </div>
-
-              <div className="quote-content">
-                <span className="quote-label">A LITTLE REMINDER</span>
-
-                <p key={reminderIndex} className="reminder-quote">
-                  "{currentReminder.text}"
-                </p>
-
-                <span className="quote-author">— {currentReminder.author}</span>
-
-                {showStudyTip && (
-                  <div className="reminder-tip">
-                    <Sparkles size={15} />
-                    <span>{currentReminder.tip}</span>
-                  </div>
-                )}
-
-                <div className="reminder-actions">
-                  <button
-                    type="button"
-                    className="reminder-button reminder-next"
-                    onClick={nextReminder}
-                  >
-                    <RefreshCw size={14} /> New reminder
-                  </button>
-
-                  <button
-                    type="button"
-                    className="reminder-button reminder-tip-button"
-                    onClick={() => setShowStudyTip((current) => !current)}
-                  >
-                    <Sparkles size={14} />
-                    {showStudyTip ? "Hide study tip" : "Study tip"}
-                  </button>
-                </div>
-              </div>
-
-              <div className="quote-decoration" aria-hidden="true">
-                ✦
-              </div>
-            </section>
-          )}
-        </div>
+        )}
 
         <footer className="app-footer">
           <span>

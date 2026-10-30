@@ -11428,3 +11428,715 @@ html[data-theme="light"] .study-app select {
     font-size: 21px !important;
   }
 }
+
+
+/* ===== Final top-right account actions: desktop only ===== */
+@media (min-width: 1025px) {
+  .study-app .topbar-actions {
+    display: flex !important;
+    flex-flow: row nowrap !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 12px !important;
+    min-width: 0 !important;
+  }
+
+  .study-app .topbar-account-controls {
+    display: flex !important;
+    flex-flow: row nowrap !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 10px !important;
+    flex: 0 0 auto !important;
+  }
+
+  .study-app .topbar-account-link {
+    display: grid !important;
+    place-items: center !important;
+    width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Tablets and phones: keep search + notifications; hide only settings + sign-out. */
+@media (max-width: 1024px) {
+  .study-app .topbar-account-controls {
+    display: none !important;
+  }
+
+  .study-app .topbar-actions {
+    display: flex !important;
+    flex-flow: row nowrap !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    width: auto !important;
+    min-width: max-content !important;
+  }
+}
+
+
+/* Settings is a genuinely separate view; the dashboard wrapper is hidden while it is open. */
+.study-app .dashboard-page-content[hidden] {
+  display: none !important;
+}
+
+.study-app .settings-page .settings-section {
+  display: block;
+  width: 100%;
+  margin-top: 22px;
+  scroll-margin-top: 24px;
+}
+
+.study-app .settings-page .topbar {
+  margin-bottom: 8px;
+}
+
+
+/* ===== Quote reminder: responsive layout across phones and tablets ===== */
+.study-app .quote-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(10px, 2vw, 18px);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: clamp(14px, 2.5vw, 24px);
+}
+
+.study-app .quote-content {
+  flex: 1 1 0%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.study-app .reminder-quote {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-size: clamp(14px, 1.35vw, 17px);
+  line-height: 1.6;
+}
+
+.study-app .reminder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.study-app .reminder-button {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.study-app .quote-decoration {
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .study-app .quote-panel {
+    gap: 11px;
+    padding: 15px;
+    border-radius: 14px;
+  }
+
+  .study-app .quote-sparkle {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+  }
+
+  .study-app .quote-sparkle svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .study-app .quote-label {
+    letter-spacing: 1px;
+  }
+
+  .study-app .reminder-actions {
+    gap: 7px;
+  }
+
+  .study-app .reminder-button {
+    min-height: 34px;
+    padding: 6px 9px;
+    font-size: 10px;
+  }
+
+  .study-app .quote-decoration {
+    right: 8px;
+    bottom: 3px;
+    font-size: 42px;
+  }
+}
+
+@media (max-width: 380px) {
+  .study-app .quote-panel {
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .study-app .quote-sparkle {
+    flex-basis: 30px;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+
+  .study-app .reminder-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+
+  .study-app .reminder-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+
+/* Daily quote reminder: responsive layout */
+.study-app .dashboard-grid {
+  min-width: 0;
+  width: 100%;
+}
+
+.study-app .quote-panel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: clamp(10px, 2vw, 18px);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.study-app .quote-content {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.study-app .reminder-quote {
+  max-width: 100%;
+  margin: 10px 0;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  line-height: 1.55;
+}
+
+.study-app .quote-author,
+.study-app .reminder-tip,
+.study-app .reminder-actions {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.study-app .reminder-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.study-app .reminder-tip span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.study-app .reminder-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.study-app .reminder-button {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.study-app .quote-decoration {
+  align-self: end;
+  justify-self: end;
+  pointer-events: none;
+}
+
+@media (max-width: 760px) {
+  .study-app .quote-panel {
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 10px;
+    padding: 15px;
+  }
+
+  .study-app .quote-decoration {
+    display: none;
+  }
+
+  .study-app .reminder-actions {
+    gap: 8px;
+  }
+
+  .study-app .reminder-button {
+    min-height: 36px;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .study-app .quote-panel {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .study-app .quote-sparkle {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+  }
+
+  .study-app .reminder-quote {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .study-app .reminder-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .study-app .reminder-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 320px) {
+  .study-app .quote-panel {
+    padding: 10px;
+    gap: 7px;
+  }
+
+  .study-app .quote-label {
+    font-size: 8px;
+    letter-spacing: .8px;
+  }
+
+  .study-app .reminder-button {
+    font-size: 11px;
+    padding-inline: 7px;
+  }
+}
+
+/* Quote reminder grid fix: the reminder has its own dashboard-grid wrapper.
+   Give that wrapper one fluid column so the reminder cannot be pushed into
+   a narrow second column on wide screens. */
+.study-app .dashboard-grid:has(> .quote-panel) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  grid-template-areas: none !important;
+  width: 100%;
+  min-width: 0;
+  gap: 18px;
+}
+
+.study-app .dashboard-grid:has(> .quote-panel)>.quote-panel {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+  justify-self: stretch;
+}
+
+@media (max-width: 760px) {
+  .study-app .dashboard-grid:has(> .quote-panel) {
+    gap: 14px;
+  }
+
+  .study-app .dashboard-grid:has(> .quote-panel)>.quote-panel {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 420px) {
+  .study-app .dashboard-grid:has(> .quote-panel)>.quote-panel {
+    padding: 12px;
+  }
+}
+
+
+/* My Subjects: balanced cards and reliable wrapping at every viewport. */
+.study-app .subjects-panel {
+  min-width: 0;
+}
+
+.study-app .subjects-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 22px 18px;
+  width: 100%;
+  min-width: 0;
+}
+
+.study-app .subject-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+}
+
+.study-app .subject-icon {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+}
+
+.study-app .subject-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.study-app .subject-info {
+  flex: 1 1 auto;
+  width: 0;
+  min-width: 0;
+}
+
+.study-app .subject-name-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.study-app .subject-name-line strong {
+  overflow-wrap: anywhere;
+}
+
+.study-app .subject-progress-details {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+@media (max-width: 900px) {
+  .study-app .subjects-list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 560px) {
+  .study-app .subjects-panel {
+    padding: 16px;
+  }
+
+  .study-app .subjects-list {
+    gap: 14px;
+  }
+
+  .study-app .subject-row {
+    gap: 10px;
+  }
+
+  .study-app .subject-icon {
+    flex-basis: 38px;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+
+  .study-app .subject-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .study-app .subject-name-line strong {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 360px) {
+  .study-app .subjects-panel {
+    padding: 13px;
+  }
+
+  .study-app .subject-row {
+    gap: 8px;
+  }
+
+  .study-app .subject-icon {
+    flex-basis: 34px;
+    width: 34px;
+    height: 34px;
+  }
+
+  .study-app .subject-progress-details {
+    font-size: 9px;
+  }
+}
+
+
+/* Completed subjects and retained subject history */
+.study-app .subjects-completed {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, .12));
+  min-width: 0;
+}
+
+.study-app .subjects-completed-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.study-app .subjects-completed-heading h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.study-app .subjects-completed-heading p {
+  margin: 5px 0 0;
+  color: var(--text-muted, #a7b5ac);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.study-app .subjects-history-count {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--surface-soft, rgba(255, 255, 255, .07));
+  font-size: 12px;
+}
+
+.study-app .subjects-history {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--border, rgba(255, 255, 255, .12));
+  border-radius: 14px;
+  min-width: 0;
+}
+
+.study-app .subjects-history h4 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: .02em;
+}
+
+.study-app .subjects-history-empty {
+  margin: 0;
+  color: var(--text-muted, #a7b5ac);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.study-app .subject-history-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 10px 0;
+}
+
+.study-app .subject-history-row+.subject-history-row {
+  border-top: 1px solid var(--border, rgba(255, 255, 255, .1));
+}
+
+.study-app .subject-history-info {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.study-app .subject-history-info strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.study-app .subject-history-info span {
+  color: var(--text-muted, #a7b5ac);
+  font-size: 10px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.study-app .subject-history-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  color: #45c98a;
+  font-size: 10px;
+}
+
+@media (max-width: 420px) {
+  .study-app .subjects-history {
+    padding: 11px;
+  }
+
+  .study-app .subject-history-row {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .study-app .subject-history-status {
+    font-size: 9px;
+  }
+}
+
+
+/* Subject selection and safe removal: hide cards only; keep task/note data intact. */
+.study-app .subjects-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 14px 0 16px;
+  min-width: 0;
+}
+
+.study-app .subjects-actions>span {
+  color: var(--text-muted, #a7b5ac);
+  font-size: 11px;
+}
+
+.study-app .subject-remove-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid var(--border, rgba(255, 255, 255, .16));
+  border-radius: 10px;
+  background: var(--surface-soft, rgba(255, 255, 255, .06));
+  color: var(--text-primary, inherit);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.study-app .subject-remove-button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+.study-app .subject-select-control {
+  display: flex;
+  flex: 0 0 20px;
+  align-items: flex-start;
+  padding-top: 12px;
+  cursor: pointer;
+}
+
+.study-app .subject-select-control input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent, #bd7cff);
+  cursor: pointer;
+}
+
+.study-app .subject-row.is-selected {
+  border-radius: 12px;
+  outline: 1px solid var(--accent, rgba(189, 124, 255, .7));
+  outline-offset: 7px;
+}
+
+@media (max-width: 420px) {
+  .study-app .subjects-actions {
+    align-items: stretch;
+  }
+
+  .study-app .subject-remove-button {
+    width: 100%;
+  }
+}
+
+
+/* A Little Reminder: shown only inside Settings */
+.study-app .settings-reminder-card {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.study-app .settings-reminder-quote {
+  margin: 0;
+  color: var(--main-text, #f4f1ff);
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.study-app .settings-reminder-author {
+  margin: 10px 0 18px;
+  color: var(--muted-text, #aaa1c5);
+  font-size: .88rem;
+  font-weight: 700;
+}
+
+.study-app .settings-reminder-tip {
+  padding: 13px 15px;
+  border: 1px solid rgba(167, 139, 250, .18);
+  border-radius: 12px;
+  background: rgba(127, 110, 165, .09);
+}
+
+.study-app .settings-reminder-tip strong {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.study-app .settings-reminder-tip p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.study-app .settings-reminder-next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  max-width: 100%;
+}
+
+@media (max-width: 520px) {
+  .study-app .settings-reminder-next {
+    width: 100%;
+  }
+}
