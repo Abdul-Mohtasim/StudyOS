@@ -2027,7 +2027,7 @@ export default function App() {
               alt="StudyOS logo"
             />
 
-            <span>
+            <span className="sidebar-brand-name">
               Study<span className="brand-accent">OS</span>
             </span>
           </div>

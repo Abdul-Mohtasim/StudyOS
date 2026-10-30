@@ -11333,3 +11333,98 @@ html[data-theme="light"] .study-app select {
     width: 27px !important;
   }
 }
+
+
+/* ===== Mobile drawer brand fix: keep the logo and StudyOS on one line ===== */
+@media (max-width: 1024px) {
+  .study-app>.sidebar {
+    width: min(320px, 86vw) !important;
+    max-width: 320px !important;
+    min-width: 0 !important;
+    padding: 24px 18px 18px !important;
+    overflow-x: hidden !important;
+  }
+
+  .study-app>.sidebar .brand {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 68px !important;
+    padding: 0 48px 0 2px !important;
+    white-space: nowrap !important;
+  }
+
+  .study-app>.sidebar .studyos-brand-logo {
+    display: block !important;
+    flex: 0 0 58px !important;
+    width: 58px !important;
+    height: 58px !important;
+    max-width: 58px !important;
+    object-fit: contain !important;
+  }
+
+  .study-app>.sidebar .sidebar-brand-name {
+    display: inline-flex !important;
+    flex: 0 1 auto !important;
+    align-items: baseline !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-family: "Manrope", sans-serif !important;
+    font-size: clamp(21px, 5vw, 25px) !important;
+    line-height: 1.15 !important;
+    font-weight: 800 !important;
+    letter-spacing: -1px !important;
+    white-space: nowrap !important;
+    writing-mode: horizontal-tb !important;
+    overflow-wrap: normal !important;
+    word-break: keep-all !important;
+  }
+
+  .study-app>.sidebar .mobile-close {
+    position: absolute !important;
+    top: 50% !important;
+    right: 0 !important;
+    transform: translateY(-50%) !important;
+    display: grid !important;
+    place-items: center !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .study-app>.sidebar .workspace-label {
+    margin-top: 24px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .study-app>.sidebar {
+    width: min(300px, 88vw) !important;
+    max-width: 300px !important;
+    padding-inline: 15px !important;
+  }
+
+  .study-app>.sidebar .studyos-brand-logo {
+    flex-basis: 50px !important;
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  .study-app>.sidebar .sidebar-brand-name {
+    font-size: 21px !important;
+  }
+}
