@@ -1,4 +1,3 @@
-
 import { Capacitor } from "@capacitor/core";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 import React, { useEffect, useRef, useState } from "react";
@@ -2452,8 +2451,22 @@ async function undoDeleteTask() {
             <a className={`nav-link ${activeSection === "focus" ? "active" : ""}`} href="#focus" onClick={() => setActiveSection("focus")} aria-label="Focus Room" title="Focus Room"><Target size={17} /><span>Focus Room</span></a>
             </div>
           <div className="topbar-actions">
+            <button
+              type="button"
+              className="icon-button mobile-search-toggle"
+              onClick={() => {
+                setMobileSearchOpen((current) => !current);
+                setGlobalSearchOpen(false);
+              }}
+              aria-label={mobileSearchOpen ? "Close search" : "Open search"}
+              aria-expanded={mobileSearchOpen}
+              title={mobileSearchOpen ? "Close search" : "Search"}
+            >
+              {mobileSearchOpen ? <X size={19} /> : <Search size={19} />}
+            </button>
             <div className={`global-search-wrapper${mobileSearchOpen ? " mobile-search-open" : ""}`} style={{ position: "relative" }}>
               <label className="search-box">
+                <Search className="desktop-search-icon" size={16} aria-hidden="true" />
                 <input
                   value={globalSearch}
                   onChange={(event) => {
@@ -2635,9 +2648,22 @@ async function undoDeleteTask() {
             <div className="topbar-account-controls" aria-label="Account actions">
               <button
                 type="button"
-                className="icon-button topbar-account-link"
+                className="icon-button topbar-settings-link"
+                aria-label="Open settings"
+                title="Settings"
+                onClick={() => {
+                  setActiveSection("settings");
+                  setMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
+                <Settings size={19} />
+              </button>
+              <button
+                type="button"
+                className="icon-button topbar-signout-link"
                 aria-label="Sign out"
-                title="Sign out"
+                title="Sign Out"
                 onClick={handleLogout}
               >
                 <LogOut size={19} />
@@ -3562,6 +3588,144 @@ async function undoDeleteTask() {
             )}
           </section>
 
+          <section className="panel notes-library" aria-labelledby="notebook-heading">
+              <div className="notes-library-heading">
+                <div>
+                  <h3 id="notebook-heading">Your notebook</h3>
+                  <p>Search and manage your saved notes.</p>
+                </div>
+              </div>
+
+              {/* Saved notes library */}
+              <div className="notes-library-content">
+              <div className="notes-toolbar">
+                <label className="notes-search">
+                  <Search size={16} />
+                  <input
+                    type="search"
+                    value={noteSearch}
+                    onChange={(event) => setNoteSearch(event.target.value)}
+                    placeholder="Search titles and content..."
+                    aria-label="Search subject notes"
+                  />
+                </label>
+
+                <select
+                  className="notes-filter"
+                  value={noteFilter}
+                  onChange={(event) => setNoteFilter(event.target.value)}
+                  aria-label="Filter notes by subject"
+                >
+                  <option>All Subjects</option>
+                  {subjectSuggestions.map((subjectName) => (
+                    <option key={subjectName}>{subjectName}</option>
+                  ))}
+                </select>
+              </div>
+
+              {notesLoading ? (
+                <div className="notes-empty" role="status">
+                  <span className="notes-empty-icon">
+                    <RefreshCw size={25} />
+                  </span>
+                  <strong>Loading your notes...</strong>
+                  <p>Your saved notes are being loaded from your account.</p>
+                </div>
+              ) : notesError ? (
+                <div className="data-load-error" role="alert">
+                  <span>{notesError}</span>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={retryDataLoads}
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : visibleNotes.length === 0 ? (
+                <div className="notes-empty">
+                  <span className="notes-empty-icon">
+                    <FileText size={25} />
+                  </span>
+
+                  <strong>
+                    {subjectNotes.length === 0
+                      ? "Your notebook is ready"
+                      : "No matching notes found"}
+                  </strong>
+
+                  <p>
+                    {subjectNotes.length === 0
+                      ? "Create your first note in the Subject Notes section."
+                      : "Try another search or choose a different subject."}
+                  </p>
+                </div>
+              ) : (
+                <div className="notes-list">
+                  {visibleNotes.map((note) => (
+                    <article className="note-card" key={note.id}>
+                      <div className="note-card-top">
+                        <span className="note-subject-tag">{note.subject}</span>
+
+                        <div className="note-card-actions">
+                          <button
+                            type="button"
+                            className="note-action-button"
+                            onClick={() => editSubjectNote(note)}
+                            aria-label={`Edit ${note.title}`}
+                            title="Edit note"
+                          >
+                            <Pencil size={15} />
+                          </button>
+
+                          <button
+                            type="button"
+                            className="note-action-button note-delete-button"
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  `Delete "${note.title}"? This cannot be undone.`
+                                )
+                              ) {
+                                deleteSubjectNote(note.id);
+                              }
+                            }}
+                            aria-label={`Delete ${note.title}`}
+                            title="Delete note"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <h3>{note.title}</h3>
+
+                      <p className="note-card-content">{note.content}</p>
+
+                      <div className="note-card-footer">
+                        <Clock3 size={13} />
+                        <span>
+                          Updated{" "}
+                          {new Date(
+                            note.updatedAt || note.createdAt || Date.now()
+                          ).toLocaleDateString([], {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+              </div>
+
+              <p className="analytics-note">
+                Your notes are saved to your StudyOS account and can sync across devices.
+              </p>
+          </section>
+
           <section className="panel subjects-panel" id="subjects">
             <div className="panel-heading">
               <div>
@@ -3730,11 +3894,6 @@ async function undoDeleteTask() {
               </div>
             </section>
 
-            <div className="subjects-footer">
-              <Sparkles size={15} /> Taking small steps leads to big results.
-            </div>
-          </section>
-
           <section className="panel notes-panel" id="subject-notes">
             <div className="panel-heading">
               <div>
@@ -3831,200 +3990,19 @@ async function undoDeleteTask() {
               </div>
             </form>
 
-            <div className="notes-library">
-              <div className="notes-library-heading">
-                <div>
-                  <h3>Your notebook</h3>
-                  <p>Search and manage your saved notes.</p>
-                </div>
-              </div>
-
-              <div className="notes-toolbar">
-                <label className="notes-search">
-                  <Search size={16} />
-                  <input
-                    type="search"
-                    value={noteSearch}
-                    onChange={(event) => setNoteSearch(event.target.value)}
-                    placeholder="Search titles and content..."
-                    aria-label="Search subject notes"
-                  />
-                </label>
-
-                <select
-                  className="notes-filter"
-                  value={noteFilter}
-                  onChange={(event) => setNoteFilter(event.target.value)}
-                  aria-label="Filter notes by subject"
-                >
-                  <option>All Subjects</option>
-                  {subjectSuggestions.map((subjectName) => (
-                    <option key={subjectName}>{subjectName}</option>
-                  ))}
-                </select>
-              </div>
-
-              {notesLoading ? (
-                <div className="notes-empty" role="status">
-                  <span className="notes-empty-icon">
-                    <RefreshCw size={25} />
-                  </span>
-                  <strong>Loading your notes...</strong>
-                  <p>Your saved notes are being loaded from your account.</p>
-                </div>
-              ) : notesError ? (
-                <div className="data-load-error" role="alert">
-                  <span>{notesError}</span>
-                  <button
-                    type="button"
-                    className="text-button"
-                    onClick={retryDataLoads}
-                  >
-                    Retry
-                  </button>
-                </div>
-              ) : visibleNotes.length === 0 ? (
-                <div className="notes-empty">
-                  <span className="notes-empty-icon">
-                    <FileText size={25} />
-                  </span>
-
-                  <strong>
-                    {subjectNotes.length === 0
-                      ? "Your notebook is ready"
-                      : "No matching notes found"}
-                  </strong>
-
-                  <p>
-                    {subjectNotes.length === 0
-                      ? "Create your first note using the form above."
-                      : "Try another search or choose a different subject."}
-                  </p>
-                </div>
-              ) : (
-                <div className="notes-list">
-                  {visibleNotes.map((note) => (
-                    <article className="note-card" key={note.id}>
-                      <div className="note-card-top">
-                        <span className="note-subject-tag">{note.subject}</span>
-
-                        <div className="note-card-actions">
-                          <button
-                            type="button"
-                            className="note-action-button"
-                            onClick={() => editSubjectNote(note)}
-                            aria-label={`Edit ${note.title}`}
-                            title="Edit note"
-                          >
-                            <Pencil size={15} />
-                          </button>
-
-                          <button
-                            type="button"
-                            className="note-action-button note-delete-button"
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  `Delete "${note.title}"? This cannot be undone.`
-                                )
-                              ) {
-                                deleteSubjectNote(note.id);
-                              }
-                            }}
-                            aria-label={`Delete ${note.title}`}
-                            title="Delete note"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </div>
-
-                      <h3>{note.title}</h3>
-
-                      <p className="note-card-content">{note.content}</p>
-
-                      <div className="note-card-footer">
-                        <Clock3 size={13} />
-                        <span>
-                          Updated{" "}
-                          {new Date(
-                            note.updatedAt || note.createdAt || Date.now()
-                          ).toLocaleDateString([], {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <p className="analytics-note">
-              Your notes are saved to your StudyOS account and can sync across devices.
-            </p>
           </section>
 
+            <div className="subjects-footer">
+              <Sparkles size={15} /> Taking small steps leads to big results.
+            </div>
+          </section>
+
+
+
         </div>
         </div>
 
-        {activeSection === "dashboard" && (
-          <footer className="studyos-footer" aria-label="StudyOS footer">
-            <div className="studyos-footer-main">
-              <div className="studyos-footer-brand">
-                <div className="studyos-footer-brand-mark"><GraduationCap size={23} aria-hidden="true" /></div>
-                <div>
-                  <strong>StudyOS</strong>
-                  <p>Your space to learn, focus, and make progress.</p>
-                </div>
-              </div>
-
-              <div className="studyos-footer-links">
-                <h3>Connect</h3>
-                <a href="https://github.com/Abdul-Mohtasim" target="_blank" rel="noreferrer">GitHub</a>
-                <a href="https://www.linkedin.com/in/abdul-mohtasim" target="_blank" rel="noreferrer">LinkedIn</a>
-                <a href="https://abdulmohtasimportfolio.netlify.app/" target="_blank" rel="noreferrer">Portfolio</a>
-                <a href="mailto:abdulmohtasim034@gmail.com">Email</a>
-              </div>
-
-              <form
-                className="studyos-feedback-form"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const form = event.currentTarget;
-                  const values = new FormData(form);
-                  const category = values.get("feedbackType");
-                  const message = values.get("feedbackMessage");
-                  const subject = encodeURIComponent(`StudyOS ${category} feedback`);
-                  const body = encodeURIComponent(
-                    `Feedback type: ${category}\n\nMessage:\n${message}\n\nSent from StudyOS.`
-                  );
-                  window.location.href = `mailto:abdulmohtasim034@gmail.com?subject=${subject}&body=${body}`;
-                }}
-              >
-                <h3>Student Feedback</h3>
-                <p>Found an issue or have an idea? Let us know.</p>
-                <label className="studyos-feedback-label" htmlFor="studyos-feedback-type">Feedback type</label>
-                <select id="studyos-feedback-type" name="feedbackType" defaultValue="Suggestion">
-                  <option>Suggestion</option>
-                  <option>Bug report</option>
-                  <option>Website feedback</option>
-                </select>
-                <label className="studyos-feedback-label" htmlFor="studyos-feedback-message">Your feedback</label>
-                <textarea id="studyos-feedback-message" name="feedbackMessage" rows={3} maxLength={3000} placeholder="Tell us what you noticed..." required />
-                <button type="submit">Send feedback</button>
-                <small>Opens your email app with the feedback ready to send.</small>
-              </form>
-            </div>
-            <div className="studyos-footer-bottom">
-              <span>© {new Date().getFullYear()} StudyOS</span>
-              <span>Created by Abdul Mohtasim</span>
-            
-            </div>
-          </footer>
-        )}
+        {/* The dashboard quote reminder has been removed. Settings reminder preferences remain unchanged. */}
 
         {activeSection === "settings" && (
           <section
@@ -4266,7 +4244,17 @@ async function undoDeleteTask() {
 
         )}
 
+        <footer className="app-footer">
+          <span>
+            <GraduationCap size={16} />
+            StudyOS
+          </span>
 
+          <span>
+            -Abdul Mohtasim-
+            <Sparkles size={13} />
+          </span>
+        </footer>
       </main>
     </div>
   );

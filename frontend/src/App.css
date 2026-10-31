@@ -12600,188 +12600,182 @@ html[data-theme="light"] .study-app .main-content>.mobile-top-nav {
 }
 
 
-/* ===== StudyOS dashboard footer ===== */
-.studyos-footer {
-  width: 100%;
-  margin: 34px 0 0;
-  padding: 28px;
-  border: 1px solid var(--border-color, rgba(160, 145, 210, .2));
-  border-radius: 22px;
-  background: var(--card-bg, rgba(255, 255, 255, .045));
-  color: var(--text-primary, inherit);
-  box-sizing: border-box;
+/* ===== Final desktop/mobile action adjustments ===== */
+/* Desktop and laptop: show the search symbol inside the search field. */
+.study-app .main-content>.mobile-top-nav .search-box>.desktop-search-icon {
+  display: block !important;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
 }
 
-.studyos-footer-main {
-  display: grid;
-  grid-template-columns: minmax(190px, 1fr) minmax(130px, .65fr) minmax(260px, 1.25fr);
-  gap: 30px;
-  align-items: start;
-}
-
-.studyos-footer-brand {
-  display: flex;
-  align-items: flex-start;
-  gap: 13px;
-  min-width: 0;
-}
-
-.studyos-footer-brand-mark {
-  display: grid;
+.study-app .main-content>.mobile-top-nav .topbar-settings-link {
+  display: grid !important;
   place-items: center;
-  flex: 0 0 44px;
-  height: 44px;
-  border-radius: 13px;
-  background: rgba(139, 108, 232, .16);
-  color: #a995ff;
 }
 
-.studyos-footer-brand strong {
-  display: block;
-  font-size: 19px;
-  letter-spacing: -.35px;
+.study-app .main-content>.mobile-top-nav .topbar-account-controls {
+  display: flex !important;
+  align-items: center !important;
 }
 
-.studyos-footer-brand p,
-.studyos-feedback-form p {
-  margin: 7px 0 0;
-  color: var(--text-secondary, #aaa);
-  font-size: 13px;
-  line-height: 1.55;
+@media (max-width: 760px) {
+
+  /* Phones/tablets: no separate search icon and no settings action icon. */
+  .study-app .main-content>.mobile-top-nav .search-box>.desktop-search-icon {
+    display: none !important;
+  }
+
+  .study-app .main-content>.mobile-top-nav .topbar-settings-link {
+    display: none !important;
+  }
 }
 
-.studyos-footer-links {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
+
+/* ===== Requested responsive search and account actions ===== */
+/* Desktop/laptop: Settings and Sign Out sit side-by-side; search remains an input. */
+.study-app .main-content>.mobile-top-nav .mobile-search-toggle {
+  display: none !important;
 }
 
-.studyos-footer-links h3,
-.studyos-feedback-form h3 {
-  margin: 0 0 4px;
-  font-size: 14px;
-  font-weight: 750;
+.study-app .main-content>.mobile-top-nav .topbar-signout-link {
+  display: grid !important;
+  place-items: center !important;
 }
 
-.studyos-footer-links a {
-  color: var(--text-secondary, #aaa);
-  font-size: 13px;
-  text-decoration: none;
-  transition: color .18s ease;
+.study-app .main-content>.mobile-top-nav .topbar-account-controls {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
 }
 
-.studyos-footer-links a:hover {
-  color: #a995ff;
-  text-decoration: underline;
+@media (max-width: 760px) {
+
+  /* Mobile: save space by showing a search icon that reveals the existing search field. */
+  .study-app .main-content>.mobile-top-nav .mobile-search-toggle {
+    display: grid !important;
+    place-items: center !important;
+    order: 2 !important;
+    flex: 0 0 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+  }
+
+  .study-app .main-content>.mobile-top-nav .global-search-wrapper {
+    display: none !important;
+  }
+
+  .study-app .main-content>.mobile-top-nav .global-search-wrapper.mobile-search-open {
+    display: block !important;
+    position: absolute !important;
+    top: calc(100% + 9px) !important;
+    right: 0 !important;
+    z-index: 1300 !important;
+    width: min(300px, calc(100vw - 28px)) !important;
+    max-width: calc(100vw - 28px) !important;
+  }
+
+  .study-app .main-content>.mobile-top-nav .global-search-wrapper.mobile-search-open .search-box {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .study-app .main-content>.mobile-top-nav .global-search-wrapper.mobile-search-open .desktop-search-icon {
+    display: block !important;
+  }
+
+  .study-app .main-content>.mobile-top-nav .topbar-signout-link {
+    display: none !important;
+  }
+
+  .study-app .main-content>.mobile-top-nav .topbar-account-controls {
+    gap: 0 !important;
+  }
 }
 
-.studyos-feedback-form {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  min-width: 0;
+@media (max-width: 420px) {
+  .study-app .main-content>.mobile-top-nav .mobile-search-toggle {
+    flex-basis: 31px !important;
+    width: 31px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+  }
 }
 
-.studyos-feedback-label {
-  color: var(--text-secondary, #aaa);
-  font-size: 12px;
-  font-weight: 650;
-  margin-bottom: -5px;
-}
 
-.studyos-feedback-form select,
-.studyos-feedback-form textarea {
+/* Subject Notes form and saved Notebook side by side */
+.study-app .notes-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 20px;
   width: 100%;
   min-width: 0;
-  box-sizing: border-box;
-  border: 1px solid var(--border-color, rgba(160, 145, 210, .25));
-  border-radius: 10px;
-  padding: 10px 12px;
-  background: var(--input-bg, rgba(10, 10, 20, .18));
-  color: var(--text-primary, inherit);
-  font: inherit;
-  font-size: 13px;
-  outline: none;
 }
 
-.studyos-feedback-form textarea {
-  resize: vertical;
-  min-height: 76px;
+.study-app .notes-workspace-grid>.notes-panel,
+.study-app .notes-workspace-grid>.notes-library {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
 }
 
-.studyos-feedback-form select:focus,
-.studyos-feedback-form textarea:focus {
-  border-color: #9a83ef;
-  box-shadow: 0 0 0 3px rgba(154, 131, 239, .13);
-}
-
-.studyos-feedback-form button {
-  align-self: flex-start;
-  border: 0;
-  border-radius: 10px;
-  padding: 10px 15px;
-  background: #8064dc;
-  color: #fff;
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.studyos-feedback-form button:hover {
-  background: #7053cd;
-}
-
-.studyos-feedback-form small {
-  color: var(--text-secondary, #999);
-  font-size: 11px;
-  line-height: 1.4;
-}
-
-.studyos-footer-bottom {
+.study-app .notes-workspace-grid>.notes-library {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 25px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color, rgba(160, 145, 210, .16));
-  color: var(--text-secondary, #999);
-  font-size: 11px;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.study-app .notes-library-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
 }
 
 @media (max-width: 900px) {
-  .studyos-footer-main {
-    grid-template-columns: minmax(0, 1fr) minmax(130px, .7fr);
-  }
-
-  .studyos-feedback-form {
-    grid-column: 1 / -1;
+  .study-app .notes-workspace-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
   }
 }
 
-@media (max-width: 560px) {
-  .studyos-footer {
-    margin-top: 24px;
-    padding: 20px 16px;
-    border-radius: 17px;
+@media (max-width: 520px) {
+  .study-app .notes-workspace-grid {
+    gap: 12px;
   }
 
-  .studyos-footer-main {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 22px;
+  .study-app .notes-workspace-grid>.notes-panel,
+  .study-app .notes-workspace-grid>.notes-library {
+    padding: 16px;
   }
+}
 
-  .studyos-feedback-form {
-    grid-column: auto;
-  }
+/* Corrected notebook placement: full-width sections in their requested locations. */
+.study-app .session-history-panel+.notes-library {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
-  .studyos-footer-bottom {
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 20px;
-  }
+.study-app .subjects-completed+.notes-panel {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 18px;
+}
 
-  .studyos-feedback-form button {
-    width: 100%;
-  }
+.study-app .notes-library-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
 }
