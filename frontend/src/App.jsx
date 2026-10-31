@@ -206,34 +206,34 @@ export default function App() {
   const [authChecking, setAuthChecking] = useState(true);
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
-const [authMode, setAuthMode] = useState("login");
-const [authName, setAuthName] = useState("");
-const [authEmail, setAuthEmail] = useState("");
-const [authPassword, setAuthPassword] = useState("");
-const [showAuthPassword, setShowAuthPassword] = useState(false);
-const [googleSignInReady, setGoogleSignInReady] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
+  const [authName, setAuthName] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [googleSignInReady, setGoogleSignInReady] = useState(false);
 
-const [deletedTasks, setDeletedTasks] = useState([]);
-const [undoLoading, setUndoLoading] = useState(false);
+  const [deletedTasks, setDeletedTasks] = useState([]);
+  const [undoLoading, setUndoLoading] = useState(false);
 
-useEffect(() => {
-  if (Capacitor.getPlatform() !== "android") {
-    return;
-  }
+  useEffect(() => {
+    if (Capacitor.getPlatform() !== "android") {
+      return;
+    }
 
-  GoogleSignIn.initialize({
-    clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-  })
-    .then(() => {
-      console.log("Native Google Sign-In initialized.");
+    GoogleSignIn.initialize({
+      clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
     })
-    .catch((error) => {
-      console.error(
-        "Google Sign-In initialization failed:",
-        error
-      );
-    });
-}, []);
+      .then(() => {
+        console.log("Native Google Sign-In initialized.");
+      })
+      .catch((error) => {
+        console.error(
+          "Google Sign-In initialization failed:",
+          error
+        );
+      });
+  }, []);
 
 
   // ---------- Tasks ----------
@@ -847,41 +847,41 @@ useEffect(() => {
 
   async function handleGoogleSuccess(googleResponse) {
     const credential =
-  googleResponse?.credential || googleResponse?.idToken;
+      googleResponse?.credential || googleResponse?.idToken;
 
-if (!credential) {
-  setAuthError("Google did not return a credential. Please try again.");
-  return;
-}
-
-
-
-async function handleNativeGoogleSignIn() {
-  setAuthError("");
-
-  try {
-    const result = await GoogleSignIn.signIn();
-
-    if (!result?.idToken) {
-      throw new Error("Google did not return an ID token. Please try again.");
-    }
-
-    await handleGoogleSuccess({ idToken: result.idToken });
-  } catch (error) {
-    console.error("Native Google sign-in error:", error);
-
-    if (
-      error?.code === "SIGN_IN_CANCELED" ||
-      error?.message?.toLowerCase()?.includes("cancel")
-    ) {
+    if (!credential) {
+      setAuthError("Google did not return a credential. Please try again.");
       return;
     }
 
-    setAuthError(
-      error?.message || "Native Google sign-in failed. Please try again."
-    );
-  }
-}
+
+
+    async function handleNativeGoogleSignIn() {
+      setAuthError("");
+
+      try {
+        const result = await GoogleSignIn.signIn();
+
+        if (!result?.idToken) {
+          throw new Error("Google did not return an ID token. Please try again.");
+        }
+
+        await handleGoogleSuccess({ idToken: result.idToken });
+      } catch (error) {
+        console.error("Native Google sign-in error:", error);
+
+        if (
+          error?.code === "SIGN_IN_CANCELED" ||
+          error?.message?.toLowerCase()?.includes("cancel")
+        ) {
+          return;
+        }
+
+        setAuthError(
+          error?.message || "Native Google sign-in failed. Please try again."
+        );
+      }
+    }
 
 
 
@@ -1203,19 +1203,19 @@ async function handleNativeGoogleSignIn() {
 
   const searchQuery = search.trim().toLowerCase();
 
-const visibleTasks = tasks.filter((task) => {
-  const searchableText = [
-    task.title,
-    task.subject,
-    task.time,
-    task.completed ? "completed done" : "pending todo incomplete",
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+  const visibleTasks = tasks.filter((task) => {
+    const searchableText = [
+      task.title,
+      task.subject,
+      task.time,
+      task.completed ? "completed done" : "pending todo incomplete",
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
 
-  return searchableText.includes(searchQuery);
-});
+    return searchableText.includes(searchQuery);
+  });
 
   // My Subjects is based ONLY on subjects used by tasks.
   // Planner entries and notes never create a subject card on their own.
@@ -1291,76 +1291,76 @@ const visibleTasks = tasks.filter((task) => {
   const globalSearchQuery = globalSearch.trim().toLowerCase();
   const globalSearchResults = globalSearchQuery
     ? [
-        ...tasks
-          .filter((task) =>
-            [task.title, task.subject, task.time, task.completed ? "completed done" : "pending incomplete"]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase()
-              .includes(globalSearchQuery)
-          )
-          .map((task) => ({
-            id: `task-${task.id}`,
-            type: "Task",
-            title: task.title,
-            detail: `${task.subject} · ${task.time}${task.completed ? " · Completed" : " · Pending"}`,
-            onSelect: () => {
-              setSearch(task.title);
-              document.getElementById("tasks")?.scrollIntoView({ behavior: "smooth", block: "start" });
-            },
-          })),
-        ...subjectNotes
-          .filter((note) =>
-            [note.title, note.content, note.subject]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase()
-              .includes(globalSearchQuery)
-          )
-          .map((note) => ({
-            id: `note-${note.id}`,
-            type: "Note",
-            title: note.title,
-            detail: `${note.subject} · Saved note`,
-            onSelect: () => {
-              setGlobalSearchOpen(false);
-              setGlobalSearch("");
-              editSubjectNote(note);
-              document.getElementById("subject-notes")?.scrollIntoView({ behavior: "smooth", block: "start" });
-            },
-          })),
-        ...subjects
-          .filter((subject) => subject.name.toLowerCase().includes(globalSearchQuery))
-          .map((subject) => ({
-            id: `subject-${subject.name}`,
-            type: "Subject",
-            title: subject.name,
-            detail: "Study subject",
-            onSelect: () => {
-              setGlobalSearchOpen(false);
-              document.getElementById("subjects")?.scrollIntoView({ behavior: "smooth", block: "start" });
-            },
-          })),
-        ...weeklyPlan
-          .filter((item) =>
-            [item.title, item.subject, item.day, item.deadline, item.completed ? "completed done" : "pending incomplete"]
-              .filter(Boolean)
-              .join(" ")
-              .toLowerCase()
-              .includes(globalSearchQuery)
-          )
-          .map((item) => ({
-            id: `planner-${item.id}`,
-            type: "Planner",
-            title: item.title,
-            detail: `${item.subject} · ${item.day}${item.completed ? " · Completed" : " · Pending"}`,
-            onSelect: () => {
-              if (plannerDays.includes(item.day)) setPlannerDay(item.day);
-              setGlobalSearchOpen(false);
-              document.getElementById("weekly-planner")?.scrollIntoView({ behavior: "smooth", block: "start" });
-            },
-          })),
-      ].slice(0, 12)
+      ...tasks
+        .filter((task) =>
+          [task.title, task.subject, task.time, task.completed ? "completed done" : "pending incomplete"]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase()
+            .includes(globalSearchQuery)
+        )
+        .map((task) => ({
+          id: `task-${task.id}`,
+          type: "Task",
+          title: task.title,
+          detail: `${task.subject} · ${task.time}${task.completed ? " · Completed" : " · Pending"}`,
+          onSelect: () => {
+            setSearch(task.title);
+            document.getElementById("tasks")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          },
+        })),
+      ...subjectNotes
+        .filter((note) =>
+          [note.title, note.content, note.subject]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase()
+            .includes(globalSearchQuery)
+        )
+        .map((note) => ({
+          id: `note-${note.id}`,
+          type: "Note",
+          title: note.title,
+          detail: `${note.subject} · Saved note`,
+          onSelect: () => {
+            setGlobalSearchOpen(false);
+            setGlobalSearch("");
+            editSubjectNote(note);
+            document.getElementById("subject-notes")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          },
+        })),
+      ...subjects
+        .filter((subject) => subject.name.toLowerCase().includes(globalSearchQuery))
+        .map((subject) => ({
+          id: `subject-${subject.name}`,
+          type: "Subject",
+          title: subject.name,
+          detail: "Study subject",
+          onSelect: () => {
+            setGlobalSearchOpen(false);
+            document.getElementById("subjects")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          },
+        })),
+      ...weeklyPlan
+        .filter((item) =>
+          [item.title, item.subject, item.day, item.deadline, item.completed ? "completed done" : "pending incomplete"]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase()
+            .includes(globalSearchQuery)
+        )
+        .map((item) => ({
+          id: `planner-${item.id}`,
+          type: "Planner",
+          title: item.title,
+          detail: `${item.subject} · ${item.day}${item.completed ? " · Completed" : " · Pending"}`,
+          onSelect: () => {
+            if (plannerDays.includes(item.day)) setPlannerDay(item.day);
+            setGlobalSearchOpen(false);
+            document.getElementById("weekly-planner")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          },
+        })),
+    ].slice(0, 12)
     : [];
 
   function handleGlobalSearchKeyDown(event) {
@@ -1471,84 +1471,84 @@ const visibleTasks = tasks.filter((task) => {
   }
 
 
-async function deleteTask(id) {
-  if (!authToken) return;
+  async function deleteTask(id) {
+    if (!authToken) return;
 
-  const task = tasks.find((item) => item.id === id);
-  if (!task) return;
+    const task = tasks.find((item) => item.id === id);
+    if (!task) return;
 
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/tasks/${encodeURIComponent(id)}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/tasks/${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.message || "Could not delete the task.");
       }
-    );
 
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      throw new Error(data.message || "Could not delete the task.");
+      setTasks((current) => current.filter((item) => item.id !== id));
+      setDeletedTasks((current) => [
+        { ...task, deletedAt: Date.now() },
+        ...current,
+      ]);
+      setNotice("Task deleted. You can undo this action.");
+    } catch (error) {
+      console.error("Deleting StudyOS task:", error);
+      setNotice(error.message || "Could not delete the task.");
     }
-
-    setTasks((current) => current.filter((item) => item.id !== id));
-    setDeletedTasks((current) => [
-      { ...task, deletedAt: Date.now() },
-      ...current,
-    ]);
-    setNotice("Task deleted. You can undo this action.");
-  } catch (error) {
-    console.error("Deleting StudyOS task:", error);
-    setNotice(error.message || "Could not delete the task.");
   }
-}
 
 
 
-async function undoDeleteTask() {
-  if (!authToken || undoLoading || deletedTasks.length === 0) return;
+  async function undoDeleteTask() {
+    if (!authToken || undoLoading || deletedTasks.length === 0) return;
 
-  const taskToRestore = deletedTasks[0];
+    const taskToRestore = deletedTasks[0];
 
-  setUndoLoading(true);
+    setUndoLoading(true);
 
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/tasks/${encodeURIComponent(taskToRestore.id)}/restore`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/tasks/${encodeURIComponent(taskToRestore.id)}/restore`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.message || "Could not restore the task.");
       }
-    );
 
-    const data = await response.json().catch(() => ({}));
+      setTasks((current) => [
+        normalizeTask(data.task),
+        ...current.filter((task) => task.id !== taskToRestore.id),
+      ]);
 
-    if (!response.ok) {
-      throw new Error(data.message || "Could not restore the task.");
+      setDeletedTasks((current) =>
+        current.filter((task) => task.id !== taskToRestore.id)
+      );
+
+      setNotice("Task restored successfully.");
+    } catch (error) {
+      console.error("Restoring StudyOS task:", error);
+      setNotice(error.message || "Could not restore the task.");
+    } finally {
+      setUndoLoading(false);
     }
-
-    setTasks((current) => [
-      normalizeTask(data.task),
-      ...current.filter((task) => task.id !== taskToRestore.id),
-    ]);
-
-    setDeletedTasks((current) =>
-      current.filter((task) => task.id !== taskToRestore.id)
-    );
-
-    setNotice("Task restored successfully.");
-  } catch (error) {
-    console.error("Restoring StudyOS task:", error);
-    setNotice(error.message || "Could not restore the task.");
-  } finally {
-    setUndoLoading(false);
   }
-}
 
 
 
@@ -2120,21 +2120,21 @@ async function undoDeleteTask() {
       <main className="auth-screen">
         <section className="auth-card">
 
-<div className="auth-brand">
-  <img
-    className="studyos-auth-logo"
-    src="/Gradient%20Graduation%20Cube%20Emblem.png"
-    alt="StudyOS logo"
-  />
+          <div className="auth-brand">
+            <img
+              className="studyos-auth-logo"
+              src="/Gradient%20Graduation%20Cube%20Emblem.png"
+              alt="StudyOS logo"
+            />
 
-  <span className="sidebar-brand-name">
-    Study<span className="brand-accent">OS</span>
-  </span>
-</div>
+            <span className="sidebar-brand-name">
+              Study<span className="brand-accent">OS</span>
+            </span>
+          </div>
 
 
           <p className="auth-subtitle">
-            Your personal space to plan, focus, and learn.
+            Adjust your study goal, appearance, and notifications.
           </p>
 
           <div className="auth-mode-switch" role="tablist" aria-label="Authentication options">
@@ -2198,56 +2198,56 @@ async function undoDeleteTask() {
                 placeholder="you@example.com"
               />
             </label>
-            
-<label className="auth-password-label">
-  Password
 
-  <div className="auth-password-wrapper">
-    <input
-      type={showAuthPassword ? "text" : "password"}
-      autoComplete={
-        authMode === "register"
-          ? "new-password"
-          : "current-password"
-      }
-      value={authPassword}
-      onChange={(event) => setAuthPassword(event.target.value)}
-      placeholder="Enter your password"
-      minLength={8}
-      required
-    />
+            <label className="auth-password-label">
+              Password
 
-    
+              <div className="auth-password-wrapper">
+                <input
+                  type={showAuthPassword ? "text" : "password"}
+                  autoComplete={
+                    authMode === "register"
+                      ? "new-password"
+                      : "current-password"
+                  }
+                  value={authPassword}
+                  onChange={(event) => setAuthPassword(event.target.value)}
+                  placeholder="Enter your password"
+                  minLength={8}
+                  required
+                />
 
 
-<button
-  type="button"
-  className="password-toggle-button"
-  onClick={() => setShowAuthPassword((previous) => !previous)}
-  aria-label={showAuthPassword ? "Hide password" : "Show password"}
-  aria-pressed={showAuthPassword}
->
-  <img
-    src={
-      showAuthPassword
-        ? "https://img.icons8.com/material-outlined/24/hide.png"
-        : "https://img.icons8.com/material-outlined/24/visible--v1.png"
-    }
-    alt={showAuthPassword ? "Hide password" : "Show password"}
-    width="24"
-    height="24"
-    style={{
-      display: "block",
-      width: "24px",
-      height: "24px",
-      objectFit: "contain",
-    }}
-  />
-</button>
 
 
-  </div>
-</label>
+                <button
+                  type="button"
+                  className="password-toggle-button"
+                  onClick={() => setShowAuthPassword((previous) => !previous)}
+                  aria-label={showAuthPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showAuthPassword}
+                >
+                  <img
+                    src={
+                      showAuthPassword
+                        ? "https://img.icons8.com/material-outlined/24/hide.png"
+                        : "https://img.icons8.com/material-outlined/24/visible--v1.png"
+                    }
+                    alt={showAuthPassword ? "Hide password" : "Show password"}
+                    width="24"
+                    height="24"
+                    style={{
+                      display: "block",
+                      width: "24px",
+                      height: "24px",
+                      objectFit: "contain",
+                    }}
+                  />
+                </button>
+
+
+              </div>
+            </label>
 
             <button className="email-auth-submit" type="submit" disabled={authLoading}>
               {authLoading
@@ -2304,15 +2304,15 @@ async function undoDeleteTask() {
 
       <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`}>
         <div className="brand">
-  <img
-    className="studyos-brand-logo"
-    src="/Gradient%20Graduation%20Cube%20Emblem.png"
-    alt="StudyOS logo"
-  />
+          <img
+            className="studyos-brand-logo"
+            src="/Gradient%20Graduation%20Cube%20Emblem.png"
+            alt="StudyOS logo"
+          />
 
-  <span>
-    Study<span className="brand-accent">OS</span>
-  </span>
+          <span>
+            Study<span className="brand-accent">OS</span>
+          </span>
 
           <button
             className="icon-button mobile-close"
@@ -2321,7 +2321,7 @@ async function undoDeleteTask() {
           >
             <X size={20} />
           </button>
-          </div>
+        </div>
 
         <div className="workspace-label">WORKSPACE</div>
 
@@ -2439,17 +2439,17 @@ async function undoDeleteTask() {
       </aside>
 
       <main className={`main-content${activeSection === "settings" ? " settings-page" : ""}`} id="dashboard">
-          <nav className={`mobile-top-nav${menuOpen ? " menu-open" : ""}`} aria-label="Main navigation">
-            <a className="mobile-navbar-brand" href="#dashboard" aria-label="StudyOS home">
-              <img src="/Gradient%20Graduation%20Cube%20Emblem.png" alt="" />
-              <span>Study<span className="brand-accent">OS</span></span>
-            </a>
-            <div className="mobile-navbar-links">
+        <nav className={`mobile-top-nav${menuOpen ? " menu-open" : ""}`} aria-label="Main navigation">
+          <a className="mobile-navbar-brand" href="#dashboard" aria-label="StudyOS home">
+            <img src="/Gradient%20Graduation%20Cube%20Emblem.png" alt="" />
+            <span>Study<span className="brand-accent">OS</span></span>
+          </a>
+          <div className="mobile-navbar-links">
             <a className={`nav-link ${activeSection === "dashboard" ? "active" : ""}`} href="#dashboard" onClick={() => setActiveSection("dashboard")} aria-label="Dashboard" title="Dashboard"><LayoutDashboard size={17} /><span>Dashboard</span></a>
             <a className={`nav-link ${activeSection === "tasks" ? "active" : ""}`} href="#tasks" onClick={() => setActiveSection("tasks")}><CalendarDays size={17} /><span>My Tasks</span><span className="nav-count">{remainingCount}</span></a>
             <a className={`nav-link ${activeSection === "subjects" ? "active" : ""}`} href="#subjects" onClick={() => setActiveSection("subjects")}><BookOpen size={17} /><span>Subjects</span></a>
             <a className={`nav-link ${activeSection === "focus" ? "active" : ""}`} href="#focus" onClick={() => setActiveSection("focus")} aria-label="Focus Room" title="Focus Room"><Target size={17} /><span>Focus Room</span></a>
-            </div>
+          </div>
           <div className="topbar-actions">
             <button
               type="button"
@@ -2670,8 +2670,8 @@ async function undoDeleteTask() {
               </button>
             </div>
           </div>
-          
-          </nav>
+
+        </nav>
 
         <header className="topbar">
           <div className="topbar-left">
@@ -2702,613 +2702,322 @@ async function undoDeleteTask() {
         </header>
 
         <div className="dashboard-page-content" hidden={activeSection === "settings"}>
-        <section className="welcome-banner">
-          <div className="welcome-copy">
-            <span className="eyebrow">
-              <Sparkles size={14} /> YOUR LEARNING JOURNEY
-            </span>
-
-            <h2>Make today count.</h2>
-
-            <p>Focus on what matters. You are making progress, one task at a time.</p>
-
-            <a href="#tasks" className="primary-link">
-              View my tasks <ChevronRight size={16} />
-            </a>
-          </div>
-
-          <div className="banner-art" aria-hidden="true">
-            <div className="art-orbit orbit-one" />
-            <div className="art-orbit orbit-two" />
-            <div className="art-book">
-              <BookMarked
-  size={52}
-  strokeWidth={1.3}
-  color="#ffffff"
-  aria-hidden="true"
-/>
-            </div>
-            <Sparkles className="art-sparkle sparkle-one" size={24} />
-            <Sparkles className="art-sparkle sparkle-two" size={16} />
-            <span className="art-star">✦</span>
-          </div>
-        </section>
-
-        <section className="stats-grid" aria-label="Study statistics">
-          <article className="stat-card">
-            <div className="stat-top">
-              <span className="stat-icon green">
-                <Check size={19} />
+          <section className="welcome-banner">
+            <div className="welcome-copy">
+              <span className="eyebrow">
+                <Sparkles size={14} /> YOUR LEARNING JOURNEY
               </span>
-              <span className="stat-tag">TASKS</span>
+
+              <h2>Make today count.</h2>
+
+              <p>Focus on what matters. You are making progress, one task at a time.</p>
+
+              <a href="#tasks" className="primary-link">
+                View my tasks <ChevronRight size={16} />
+              </a>
             </div>
 
-            <div className="stat-value">
-              {completedCount}
-              <span> / {tasks.length}</span>
-            </div>
-
-            <p>Tasks completed</p>
-
-            <div className="mini-progress">
-              <span style={{ width: `${completionPercent}%` }} />
-            </div>
-          </article>
-
-          <article className="stat-card">
-            <div className="stat-top">
-              <span className="stat-icon orange">
-                <Flame size={19} />
-              </span>
-              <span className="stat-tag">CONSISTENCY</span>
-            </div>
-
-            <div className="stat-value">
-              {studyStreak} <span>days</span>
-            </div>
-
-            <p>Study streak</p>
-
-            <div className="stat-foot">Keep your momentum going!</div>
-          </article>
-
-          <article className="stat-card">
-            <div className="stat-top">
-              <span className="stat-icon blue">
-                <Clock3 size={19} />
-              </span>
-              <span className="stat-tag">FOCUS</span>
-            </div>
-
-            <div className="stat-value">
-              {(weeklyFocusMinutes / 60).toFixed(1)} <span>hrs</span>
-            </div>
-
-            <p>Focus time this week</p>
-
-            <div className="stat-foot">Your study time summary</div>
-          </article>
-
-          <article className="stat-card">
-            <div className="stat-top">
-              <span className="stat-icon purple">
-                <BookOpen size={19} />
-              </span>
-              <span className="stat-tag">LEARNING</span>
-            </div>
-
-            <div className="stat-value">{subjects.length}</div>
-
-            <p>Subjects in progress</p>
-
-            <div className="stat-foot">Keep exploring new ideas</div>
-          </article>
-        </section>
-
-        <section
-          className="goals-grid"
-          id="daily-goals"
-          aria-label="Daily study goals and streaks"
-        >
-          <article className="panel daily-goal-panel">
-            <div className="panel-heading">
-              <div>
-                <h2>Daily Study Goal</h2>
-                <p>Small, consistent sessions add up.</p>
+            <div className="banner-art" aria-hidden="true">
+              <div className="art-orbit orbit-one" />
+              <div className="art-orbit orbit-two" />
+              <div className="art-book">
+                <BookMarked
+                  size={52}
+                  strokeWidth={1.3}
+                  color="#ffffff"
+                  aria-hidden="true"
+                />
               </div>
-              <span className="goal-flame">
-                <Flame size={19} />
-              </span>
+              <Sparkles className="art-sparkle sparkle-one" size={24} />
+              <Sparkles className="art-sparkle sparkle-two" size={16} />
+              <span className="art-star">✦</span>
             </div>
+          </section>
 
-            <div className="goal-progress-row">
-              <div
-                className="goal-ring"
-                style={{ "--goal-progress": `${dailyGoalPercent}%` }}
-              >
-                <div className="goal-ring-inner">
-                  <strong>{dailyGoalPercent}%</strong>
-                  <span>today</span>
-                </div>
-              </div>
-
-              <div className="goal-copy">
-                <strong>
-                  {todayFocusMinutes} <span>of {dailyGoalMinutes} min</span>
-                </strong>
-                <p>
-                  {todayFocusMinutes >= dailyGoalMinutes
-                    ? "Daily goal achieved. Great work!"
-                    : `${Math.max(
-                      0,
-                      dailyGoalMinutes - todayFocusMinutes
-                    )} minutes to reach your goal`}
-                </p>
-              </div>
-            </div>
-
-            <div className="goal-progress-track">
-              <span style={{ width: `${dailyGoalPercent}%` }} />
-            </div>
-
-            <form className="goal-setting-form" onSubmit={saveDailyGoal}>
-              <label htmlFor="dailyGoalMinutes">Daily target (minutes)</label>
-              <input
-                id="dailyGoalMinutes"
-                type="number"
-                min="1"
-                max="720"
-                value={goalDraft}
-                onChange={(event) => setGoalDraft(event.target.value)}
-              />
-              <button
-                className="add-task-button"
-                type="submit"
-                disabled={goalSaving || dailyGoalLoading}
-              >
-                {dailyGoalLoading
-                  ? "Loading goal..."
-                  : goalSaving
-                    ? "Saving..."
-                    : "Save goal"}
-              </button>
-            </form>
-
-            <div className="streak-strip">
-              <span className="streak-icon">
-                <Flame size={18} />
-              </span>
-              <div>
-                <strong>{studyStreak}-day study streak</strong>
-                <span>
-                  {studyStreak > 0
-                    ? "You've studied on consecutive days!"
-                    : "Finish a focus session today to start your streak."}
+          <section className="stats-grid" aria-label="Study statistics">
+            <article className="stat-card">
+              <div className="stat-top">
+                <span className="stat-icon green">
+                  <Check size={19} />
                 </span>
+                <span className="stat-tag">TASKS</span>
               </div>
-            </div>
-          </article>
 
-          <article className="panel planner-summary-panel">
-            <div className="panel-heading">
-              <div>
-                <h2>Weekly Plan Progress</h2>
-                <p>Keep your week moving forward.</p>
+              <div className="stat-value">
+                {completedCount}
+                <span> / {tasks.length}</span>
               </div>
-              <span className="planner-summary-icon">
-                <CalendarDays size={19} />
-              </span>
-            </div>
 
-            <div className="planner-total-row">
-              <strong>
-                {plannerCompletedCount}
-                <span> / {weeklyPlan.length}</span>
-              </strong>
-              <span>planned tasks done</span>
-            </div>
+              <p>Tasks completed</p>
 
-            <div className="goal-progress-track">
-              <span style={{ width: `${plannerCompletionPercent}%` }} />
-            </div>
-
-            <p className="planner-progress-note">
-              {plannerCompletionPercent}% of your planned tasks completed
-            </p>
-
-            <a className="primary-link" href="#weekly-planner">
-              Open weekly planner <ChevronRight size={16} />
-            </a>
-          </article>
-        </section>
-
-        <section
-          className="panel weekly-planner-panel"
-          id="weekly-planner"
-          aria-label="Weekly study planner"
-        >
-          <div className="panel-heading planner-heading">
-            <div>
-              <h2>Weekly Study Planner</h2>
-              <p>Organize subjects, assignments, deadlines, and completion status.</p>
-            </div>
-            <span className="analytics-period">
-              {weeklyPlan.length} TASK{weeklyPlan.length === 1 ? "" : "S"}
-            </span>
-          </div>
-
-          <div className="planner-day-tabs" role="tablist" aria-label="Choose a day">
-            {plannerDays.map((day) => {
-              const dayCount = weeklyPlan.filter(
-                (task) => task.day === day && !task.completed
-              ).length;
-              return (
-                <button
-                  key={day}
-                  type="button"
-                  role="tab"
-                  aria-selected={plannerDay === day}
-                  className={`planner-day-tab ${plannerDay === day ? "selected" : ""
-                    }`}
-                  onClick={() => setPlannerDay(day)}
-                >
-                  <span>{day.slice(0, 3)}</span>
-                  <small>{dayCount}</small>
-                </button>
-              );
-            })}
-          </div>
-
-          <form className="planner-add-form" onSubmit={addPlannerTask}>
-            <label className="planner-field planner-task-field">
-              <span>Study task</span>
-              <input
-                value={plannerTitle}
-                onChange={(event) => setPlannerTitle(event.target.value)}
-                placeholder="e.g. Revise chapter 4"
-                maxLength={120}
-                required
-              />
-            </label>
-
-            <label className="planner-field">
-              <span>Subject</span>
-              <input
-                list="studyos-subject-suggestions"
-                value={plannerSubject}
-                onChange={(event) => setPlannerSubject(event.target.value)}
-                placeholder="e.g. Islamiat"
-                maxLength={60}
-              />
-            </label>
-
-            <label className="planner-field">
-              <span>Day</span>
-              <select
-                value={plannerDay}
-                onChange={(event) => setPlannerDay(event.target.value)}
-              >
-                {plannerDays.map((day) => (
-                  <option key={day}>{day}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className="planner-field">
-              <span>Deadline</span>
-              <input
-                type="date"
-                value={plannerDeadline}
-                onChange={(event) => setPlannerDeadline(event.target.value)}
-              />
-            </label>
-
-            <button className="add-task-button planner-submit" type="submit">
-              <Plus size={17} /> Add task
-            </button>
-          </form>
-
-          <div className="planner-task-list">
-            {plannerLoading ? (
-              <div className="planner-empty" role="status">
-                <RefreshCw size={24} />
-                <strong>Loading your weekly planner...</strong>
-                <span>Retrieving your saved tasks from your account.</span>
+              <div className="mini-progress">
+                <span style={{ width: `${completionPercent}%` }} />
               </div>
-            ) : plannerError ? (
-              <div className="data-load-error" role="alert">
-                <span>{plannerError}</span>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={retryDataLoads}
-                >
-                  Retry
-                </button>
+            </article>
+
+            <article className="stat-card">
+              <div className="stat-top">
+                <span className="stat-icon orange">
+                  <Flame size={19} />
+                </span>
+                <span className="stat-tag">CONSISTENCY</span>
               </div>
-            ) : plannerTasksForDay.length === 0 ? (
-              <div className="planner-empty">
-                <CalendarDays size={24} />
-                <strong>No tasks planned for {plannerDay}</strong>
-                <span>Add a study task above to organize this day.</span>
+
+              <div className="stat-value">
+                {studyStreak} <span>days</span>
               </div>
-            ) : (
-              plannerTasksForDay.map((task) => {
-                const overdue =
-                  task.deadline &&
-                  task.deadline < getLocalDateKey(new Date()) &&
-                  !task.completed;
-                return (
-                  <article
-                    className={`planner-task-row ${task.completed ? "planner-task-completed" : ""
-                      }`}
-                    key={task.id}
-                  >
-                    <button
-                      type="button"
-                      className={`task-check ${task.completed ? "checked" : ""}`}
-                      onClick={() => togglePlannerTask(task.id)}
-                      aria-label={
-                        task.completed
-                          ? `Mark ${task.title} incomplete`
-                          : `Mark ${task.title} complete`
-                      }
-                    >
-                      {task.completed && <Check size={14} />}
-                    </button>
 
-                    <div className="planner-task-main">
-                      <strong>{task.title}</strong>
-                      <span>
-                        <BookOpen size={12} /> {task.subject}
-                      </span>
-                    </div>
+              <p>Study streak</p>
 
-                    <div className={`planner-deadline ${overdue ? "overdue" : ""}`}>
-                      {task.deadline ? (
-                        <>
-                          <Clock3 size={12} /> {overdue ? "Overdue · " : "Due "}
-                          {new Date(`${task.deadline}T00:00:00`).toLocaleDateString(
-                            [],
-                            { month: "short", day: "numeric" }
-                          )}
-                        </>
-                      ) : (
-                        <span>No deadline</span>
-                      )}
-                    </div>
+              <div className="stat-foot">Keep your momentum going!</div>
+            </article>
 
-                    <span
-                      className={`task-status ${task.completed ? "status-done" : ""}`}
-                    >
-                      {task.completed ? "Done" : "To do"}
-                    </span>
-
-                    <button
-                      type="button"
-                      className="task-delete"
-                      onClick={() => deletePlannerTask(task.id)}
-                      aria-label={`Delete ${task.title}`}
-                      title="Delete planned task"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </article>
-                );
-              })
-            )}
-          </div>
-
-          <p className="analytics-note">
-            Your weekly planner tasks are saved to your StudyOS account. Your
-            daily study goal is saved to your StudyOS account.
-          </p>
-        </section>
-
-        <section
-          className="panel analytics-panel"
-          id="analytics"
-          aria-label="Study analytics"
-        >
-          <div className="panel-heading analytics-heading">
-            <div>
-              <h2>Study Analytics</h2>
-              <p>Your focus activity over the last seven days.</p>
-            </div>
-            <span className="analytics-period">LAST 7 DAYS</span>
-          </div>
-
-          <div className="analytics-summary">
-            <div className="analytics-metric">
-              <span className="analytics-metric-icon">
-                <Clock3 size={17} />
-              </span>
-              <div>
-                <strong>{weeklyFocusMinutes} min</strong>
-                <span>Weekly focus time</span>
+            <article className="stat-card">
+              <div className="stat-top">
+                <span className="stat-icon blue">
+                  <Clock3 size={19} />
+                </span>
+                <span className="stat-tag">FOCUS</span>
               </div>
-            </div>
 
-            <div className="analytics-metric">
-              <span className="analytics-metric-icon">
-                <Check size={17} />
-              </span>
-              <div>
-                <strong>{weeklySessionCount}</strong>
-                <span>Weekly sessions</span>
+              <div className="stat-value">
+                {(weeklyFocusMinutes / 60).toFixed(1)} <span>hrs</span>
               </div>
-            </div>
 
-            <div className="analytics-metric">
-              <span className="analytics-metric-icon">
-                <Target size={17} />
-              </span>
-              <div>
-                <strong>{averageSessionMinutes} min</strong>
-                <span>Weekly average session</span>
+              <p>Focus time this week</p>
+
+              <div className="stat-foot">Your study time summary</div>
+            </article>
+
+            <article className="stat-card">
+              <div className="stat-top">
+                <span className="stat-icon purple">
+                  <BookOpen size={19} />
+                </span>
+                <span className="stat-tag">LEARNING</span>
               </div>
-            </div>
-          </div>
 
-          <div
-            className="weekly-chart"
-            role="img"
-            aria-label="Daily focus minutes over the last seven days"
+              <div className="stat-value">{subjects.length}</div>
+
+              <p>Subjects in progress</p>
+
+              <div className="stat-foot">Keep exploring new ideas</div>
+            </article>
+          </section>
+
+          <section
+            className="goals-grid"
+            id="daily-goals"
+            aria-label="Daily study goals and streaks"
           >
-            {weeklyActivity.map((day) => (
-              <div className="weekly-chart-day" key={day.dateKey}>
-                <span className="weekly-chart-value">
-                  {day.minutes > 0 ? `${day.minutes}m` : ""}
-                </span>
-
-                <div className="weekly-chart-track">
-                  <span
-                    className={`weekly-chart-bar ${day.isToday ? "today" : ""}`}
-                    style={{
-                      height: `${day.minutes === 0
-                          ? 4
-                          : Math.max(8, (day.minutes / maxDailyMinutes) * 100)
-                        }%`,
-                    }}
-                  />
+            <article className="panel daily-goal-panel">
+              <div className="panel-heading">
+                <div>
+                  <h2>Daily Study Goal</h2>
+                  <p>Small, consistent sessions add up.</p>
                 </div>
+                <span className="goal-flame">
+                  <Flame size={19} />
+                </span>
+              </div>
 
-                <span
-                  className={`weekly-chart-label ${day.isToday ? "today-label" : ""
-                    }`}
+              <div className="goal-progress-row">
+                <div
+                  className="goal-ring"
+                  style={{ "--goal-progress": `${dailyGoalPercent}%` }}
                 >
-                  {day.label}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="analytics-summary">
-            <div className="analytics-metric">
-              <span className="analytics-metric-icon">
-                <Flame size={17} />
-              </span>
-              <div>
-                <strong>
-                  {hasWeeklyActivity ? mostProductiveDay.label : "No activity"}
-                </strong>
-                <span>
-                  {hasWeeklyActivity
-                    ? `${mostProductiveDay.minutes} minutes · Most productive day`
-                    : "Complete a focus session to begin"}
-                </span>
-              </div>
-            </div>
-
-            <div className="analytics-metric">
-              <span className="analytics-metric-icon">
-                <BookOpen size={17} />
-              </span>
-              <div>
-                <strong>{(totalFocusMinutes / 60).toFixed(1)} hrs</strong>
-                <span>All-time focus hours</span>
-              </div>
-            </div>
-          </div>
-
-          <p className="analytics-note">
-            Weekly statistics cover the last seven calendar days, including
-            today. All-time focus hours use the completed sessions available in
-            your StudyOS account. Paused or reset sessions are not counted.
-          </p>
-        </section>
-
-        <div className="dashboard-grid">
-          <section className="panel tasks-panel" id="tasks">
-            <div className="panel-heading">
-              <div>
-                <div className="panel-title-row">
-                  <h2>My Tasks</h2>
-                  <span className="pill-count">{remainingCount} left</span>
+                  <div className="goal-ring-inner">
+                    <strong>{dailyGoalPercent}%</strong>
+                    <span>today</span>
+                  </div>
                 </div>
 
-                <p>Your next steps, all in one place.</p>
+                <div className="goal-copy">
+                  <strong>
+                    {todayFocusMinutes} <span>of {dailyGoalMinutes} min</span>
+                  </strong>
+                  <p>
+                    {todayFocusMinutes >= dailyGoalMinutes
+                      ? "Daily goal achieved. Great work!"
+                      : `${Math.max(
+                        0,
+                        dailyGoalMinutes - todayFocusMinutes
+                      )} minutes to reach your goal`}
+                  </p>
+                </div>
               </div>
 
-              <button
-                className="text-button"
-                onClick={clearCompleted}
-                disabled={completedCount === 0}
-              >
-                Clear completed
-              </button>
+              <div className="goal-progress-track">
+                <span style={{ width: `${dailyGoalPercent}%` }} />
+              </div>
+
+              <form className="goal-setting-form" onSubmit={saveDailyGoal}>
+                <label htmlFor="dailyGoalMinutes">Daily target (minutes)</label>
+                <input
+                  id="dailyGoalMinutes"
+                  type="number"
+                  min="1"
+                  max="720"
+                  value={goalDraft}
+                  onChange={(event) => setGoalDraft(event.target.value)}
+                />
+                <button
+                  className="add-task-button"
+                  type="submit"
+                  disabled={goalSaving || dailyGoalLoading}
+                >
+                  {dailyGoalLoading
+                    ? "Loading goal..."
+                    : goalSaving
+                      ? "Saving..."
+                      : "Save goal"}
+                </button>
+              </form>
+
+              <div className="streak-strip">
+                <span className="streak-icon">
+                  <Flame size={18} />
+                </span>
+                <div>
+                  <strong>{studyStreak}-day study streak</strong>
+                  <span>
+                    {studyStreak > 0
+                      ? "You've studied on consecutive days!"
+                      : "Finish a focus session today to start your streak."}
+                  </span>
+                </div>
+              </div>
+            </article>
+
+            <article className="panel planner-summary-panel">
+              <div className="panel-heading">
+                <div>
+                  <h2>Weekly Plan Progress</h2>
+                  <p>Keep your week moving forward.</p>
+                </div>
+                <span className="planner-summary-icon">
+                  <CalendarDays size={19} />
+                </span>
+              </div>
+
+              <div className="planner-total-row">
+                <strong>
+                  {plannerCompletedCount}
+                  <span> / {weeklyPlan.length}</span>
+                </strong>
+                <span>planned tasks done</span>
+              </div>
+
+              <div className="goal-progress-track">
+                <span style={{ width: `${plannerCompletionPercent}%` }} />
+              </div>
+
+              <p className="planner-progress-note">
+                {plannerCompletionPercent}% of your planned tasks completed
+              </p>
+
+              <a className="primary-link" href="#weekly-planner">
+                Open weekly planner <ChevronRight size={16} />
+              </a>
+            </article>
+          </section>
+
+          <section
+            className="panel weekly-planner-panel"
+            id="weekly-planner"
+            aria-label="Weekly study planner"
+          >
+            <div className="panel-heading planner-heading">
+              <div>
+                <h2>Weekly Study Planner</h2>
+                <p>Organize subjects, assignments, deadlines, and completion status.</p>
+              </div>
+              <span className="analytics-period">
+                {weeklyPlan.length} TASK{weeklyPlan.length === 1 ? "" : "S"}
+              </span>
             </div>
 
-            <form className="task-add-form" onSubmit={addTask}>
-              <input
-                value={newTask}
-                onChange={(event) => setNewTask(event.target.value)}
-                placeholder="What do you need to study?"
-                aria-label="New task title"
-                maxLength={120}
-              />
+            <div className="planner-day-tabs" role="tablist" aria-label="Choose a day">
+              {plannerDays.map((day) => {
+                const dayCount = weeklyPlan.filter(
+                  (task) => task.day === day && !task.completed
+                ).length;
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    role="tab"
+                    aria-selected={plannerDay === day}
+                    className={`planner-day-tab ${plannerDay === day ? "selected" : ""
+                      }`}
+                    onClick={() => setPlannerDay(day)}
+                  >
+                    <span>{day.slice(0, 3)}</span>
+                    <small>{dayCount}</small>
+                  </button>
+                );
+              })}
+            </div>
 
-              <input
-                className="task-subject-input"
-                list="studyos-subject-suggestions"
-                value={newSubject}
-                onChange={(event) => setNewSubject(event.target.value)}
-                aria-label="Task subject"
-                placeholder="Subject (e.g. Islamiat)"
-                maxLength={60}
-              />
+            <form className="planner-add-form" onSubmit={addPlannerTask}>
+              <label className="planner-field planner-task-field">
+                <span>Study task</span>
+                <input
+                  value={plannerTitle}
+                  onChange={(event) => setPlannerTitle(event.target.value)}
+                  placeholder="e.g. Revise chapter 4"
+                  maxLength={120}
+                  required
+                />
+              </label>
 
-              <input
-                className="task-duration-input"
-                type="number"
-                min="1"
-                max="720"
-                step="1"
-                value={newTaskDuration}
-                onChange={(event) => setNewTaskDuration(event.target.value)}
-                aria-label="Task duration in minutes"
-                title="Choose how many minutes you want to spend on this task (1–720)"
-                placeholder="Minutes"
-                required
-              />
+              <label className="planner-field">
+                <span>Subject</span>
+                <input
+                  list="studyos-subject-suggestions"
+                  value={plannerSubject}
+                  onChange={(event) => setPlannerSubject(event.target.value)}
+                  placeholder="e.g. Islamiat"
+                  maxLength={60}
+                />
+              </label>
 
-              <datalist id="studyos-subject-suggestions">
-                {subjectSuggestions.map((subjectName) => (
-                  <option key={subjectName} value={subjectName} />
-                ))}
-              </datalist>
+              <label className="planner-field">
+                <span>Day</span>
+                <select
+                  value={plannerDay}
+                  onChange={(event) => setPlannerDay(event.target.value)}
+                >
+                  {plannerDays.map((day) => (
+                    <option key={day}>{day}</option>
+                  ))}
+                </select>
+              </label>
 
-              <button className="add-task-button" type="submit" aria-label="Add task">
-                <Plus size={19} />
-                <span>Add</span>
+              <label className="planner-field">
+                <span>Deadline</span>
+                <input
+                  type="date"
+                  value={plannerDeadline}
+                  onChange={(event) => setPlannerDeadline(event.target.value)}
+                />
+              </label>
+
+              <button className="add-task-button planner-submit" type="submit">
+                <Plus size={17} /> Add task
               </button>
             </form>
 
-            {notice && (
-              <p className="task-notice" role="status">
-                {notice}
-              </p>
-            )}
-
-            
-{deletedTasks.length > 0 && (
-  <button
-    type="button"
-    onClick={undoDeleteTask}
-    disabled={undoLoading}
-    className="undo-task-button"
-  >
-    {undoLoading ? "Restoring..." : "↶ Undo"}
-  </button>
-)}
-
-
-            <div className="task-list">
-              {tasksLoading ? (
-                <p role="status">Loading your tasks...</p>
-              ) : tasksError ? (
+            <div className="planner-task-list">
+              {plannerLoading ? (
+                <div className="planner-empty" role="status">
+                  <RefreshCw size={24} />
+                  <strong>Loading your weekly planner...</strong>
+                  <span>Retrieving your saved tasks from your account.</span>
+                </div>
+              ) : plannerError ? (
                 <div className="data-load-error" role="alert">
-                  <span>{tasksError}</span>
+                  <span>{plannerError}</span>
                   <button
                     type="button"
                     className="text-button"
@@ -3317,278 +3026,569 @@ async function undoDeleteTask() {
                     Retry
                   </button>
                 </div>
-              ) : visibleTasks.length === 0 ? (
-                <div className="empty-tasks">
-                  <div className="empty-icon">
-                    <Check size={23} />
-                  </div>
-
-                  <strong>
-                    {search ? "No matching tasks" : "You're all caught up!"}
-                  </strong>
-
-                  <p>
-                    {search
-                      ? "Try a different search."
-                      : "Add a task above whenever you're ready."}
-                  </p>
+              ) : plannerTasksForDay.length === 0 ? (
+                <div className="planner-empty">
+                  <CalendarDays size={24} />
+                  <strong>No tasks planned for {plannerDay}</strong>
+                  <span>Add a study task above to organize this day.</span>
                 </div>
               ) : (
-                visibleTasks.map((task) => (
-                  <article
-                    className={`task-row ${task.completed ? "task-completed" : ""}`}
-                    key={task.id}
-                  >
-                    <button
-                      type="button"
-                      className={`task-check ${task.completed ? "checked" : ""}`}
-                      onClick={() => toggleTask(task.id)}
-                      aria-label={
-                        task.completed
-                          ? `Mark ${task.title} incomplete`
-                          : `Mark ${task.title} complete`
-                      }
-                      title={task.completed ? "Mark incomplete" : "Mark complete"}
+                plannerTasksForDay.map((task) => {
+                  const overdue =
+                    task.deadline &&
+                    task.deadline < getLocalDateKey(new Date()) &&
+                    !task.completed;
+                  return (
+                    <article
+                      className={`planner-task-row ${task.completed ? "planner-task-completed" : ""
+                        }`}
+                      key={task.id}
                     >
-                      {task.completed && <Check size={14} />}
-                    </button>
+                      <button
+                        type="button"
+                        className={`task-check ${task.completed ? "checked" : ""}`}
+                        onClick={() => togglePlannerTask(task.id)}
+                        aria-label={
+                          task.completed
+                            ? `Mark ${task.title} incomplete`
+                            : `Mark ${task.title} complete`
+                        }
+                      >
+                        {task.completed && <Check size={14} />}
+                      </button>
 
-                    <div className="task-main">
-                      <span className="task-title">{task.title}</span>
-
-                      <span className="task-meta">
-                        <BookOpen size={12} /> {task.subject || "Personal"}
-                        <span className="meta-dot">·</span>
-                        <Clock3 size={12} /> {task.time || "Anytime"}
-                      </span>
-                    </div>
-
-                    <span
-                      className={`task-status ${task.completed ? "status-done" : ""}`}
-                    >
-                      {task.completed ? "Done" : "To do"}
-                    </span>
-
-                    <button
-                      type="button"
-                      className="task-delete"
-                      onClick={() => deleteTask(task.id)}
-                      aria-label={`Delete ${task.title}`}
-                      title="Delete task"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </article>
-                ))
-              )}
-            </div>
-
-            <div className="task-summary">
-              <span>
-                {completedCount} of {tasks.length} tasks completed
-              </span>
-              <span>{completionPercent}%</span>
-            </div>
-
-            <div className="task-progress">
-              <span style={{ width: `${completionPercent}%` }} />
-            </div>
-          </section>
-
-          {/* Editable Focus Room timer */}
-          <section className="panel focus-panel" id="focus">
-            <div className="panel-heading">
-              <div>
-                <h2>Focus Room</h2>
-                <p>Make space for deep work.</p>
-              </div>
-
-              <span className={`focus-live ${isRunning ? "focus-active" : ""}`}>
-                <span />
-                {isRunning ? "FOCUSING" : sessionCompleted ? "COMPLETED" : "READY"}
-              </span>
-            </div>
-
-            <div className="timer-duration-setting">
-              <label htmlFor="focusDuration">Session length</label>
-
-              <div className="timer-duration-input">
-                <input
-                  id="focusDuration"
-                  type="number"
-                  min="1"
-                  max="180"
-                  step="1"
-                  value={durationMinutes}
-                  disabled={isRunning}
-                  onChange={changeDuration}
-                  aria-label="Focus session length in minutes"
-                />
-
-                <span>minutes</span>
-              </div>
-
-              <p>Choose between 1 and 180 minutes.</p>
-            </div>
-
-            <div className="focus-visual">
-              <div
-                className="focus-ring"
-                style={{ "--timer-progress": `${timerProgress}%` }}
-                role="timer"
-                aria-label={`${timerMinutes} minutes and ${timerSeconds} seconds remaining`}
-              >
-                <div className="focus-inner">
-                  <span className="focus-emoji">
-                    {sessionCompleted ? <Check size={23} /> : <Target size={21} />}
-                  </span>
-
-                  <strong>
-                    {timerMinutes}:{timerSeconds}
-                  </strong>
-
-                  <span>{sessionCompleted ? "COMPLETE" : "TIME LEFT"}</span>
-                </div>
-              </div>
-            </div>
-
-            <p className="focus-caption" aria-live="polite">
-              {sessionCompleted
-                ? "Amazing work! Your focus session is complete."
-                : isRunning
-                  ? "Stay focused. You're doing great!"
-                  : secondsLeft < totalSeconds
-                    ? "Resume whenever you're ready."
-                    : "One thing at a time. You've got this."}
-            </p>
-
-            <div className="focus-controls">
-              {isRunning ? (
-                <button
-                  type="button"
-                  className="focus-start-button"
-                  onClick={pauseTimer}
-                >
-                  <Pause size={16} /> Pause session
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="focus-start-button"
-                  onClick={startTimer}
-                  disabled={secondsLeft === 0}
-                >
-                  <Play size={16} fill="currentColor" />
-                  {secondsLeft < totalSeconds ? "Resume session" : "Start focus session"}
-                </button>
-              )}
-
-              <button
-                type="button"
-                className="focus-reset-button"
-                onClick={resetTimer}
-                title="Reset timer to selected duration"
-              >
-                <RotateCcw size={14} /> Reset
-              </button>
-            </div>
-
-            <div className="focus-duration">
-              <Clock3 size={14} />
-              <span>Custom Timer session · {durationMinutes} minutes</span>
-            </div>
-          </section>
-
-          <section className="panel session-history-panel" id="focus-history">
-            <div className="panel-heading">
-              <div>
-                <h2>Focus Session History</h2>
-                <p>Your completed focus sessions, saved to your StudyOS account.</p>
-              </div>
-              <span className="session-history-count">
-                {totalFocusSessionCount}
-              </span>
-            </div>
-
-            {focusSessionsLoading ? (
-              <div className="session-history-empty" role="status">
-                <RefreshCw size={21} />
-                <strong>Loading your focus history...</strong>
-                <p>Retrieving your saved sessions from your account.</p>
-              </div>
-            ) : focusSessionsError && focusSessions.length === 0 ? (
-              <div className="data-load-error" role="alert">
-                <span>{focusSessionsError}</span>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={retryDataLoads}
-                >
-                  Retry
-                </button>
-              </div>
-            ) : focusSessions.length === 0 ? (
-              <div className="session-history-empty">
-                <Clock3 size={21} />
-                <strong>No completed sessions yet</strong>
-                <p>When your focus timer reaches zero, your session will appear here.</p>
-              </div>
-            ) : (
-              <>
-                <div className="session-history-list">
-                  {focusSessions.map((session) => (
-                    <article className="session-history-row" key={session.id}>
-                      <div className="session-history-icon">
-                        <Check size={16} />
-                      </div>
-
-                      <div className="session-history-details">
-                        <strong>
-                          {session.durationMinutes} minute focus session
-                        </strong>
-
+                      <div className="planner-task-main">
+                        <strong>{task.title}</strong>
                         <span>
-                          {new Date(session.completedAt).toLocaleString([], {
-                            dateStyle: "medium",
-                            timeStyle: "short",
-                          })}
+                          <BookOpen size={12} /> {task.subject}
                         </span>
                       </div>
 
-                      <span className="session-history-status">Completed</span>
+                      <div className={`planner-deadline ${overdue ? "overdue" : ""}`}>
+                        {task.deadline ? (
+                          <>
+                            <Clock3 size={12} /> {overdue ? "Overdue · " : "Due "}
+                            {new Date(`${task.deadline}T00:00:00`).toLocaleDateString(
+                              [],
+                              { month: "short", day: "numeric" }
+                            )}
+                          </>
+                        ) : (
+                          <span>No deadline</span>
+                        )}
+                      </div>
+
+                      <span
+                        className={`task-status ${task.completed ? "status-done" : ""}`}
+                      >
+                        {task.completed ? "Done" : "To do"}
+                      </span>
+
+                      <button
+                        type="button"
+                        className="task-delete"
+                        onClick={() => deletePlannerTask(task.id)}
+                        aria-label={`Delete ${task.title}`}
+                        title="Delete planned task"
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </article>
-                  ))}
+                  );
+                })
+              )}
+            </div>
+
+            <p className="analytics-note">
+              Your weekly planner tasks are saved to your StudyOS account. Your
+              daily study goal is saved to your StudyOS account.
+            </p>
+          </section>
+
+          <section
+            className="panel analytics-panel"
+            id="analytics"
+            aria-label="Study analytics"
+          >
+            <div className="panel-heading analytics-heading">
+              <div>
+                <h2>Study Analytics</h2>
+                <p>Your focus activity over the last seven days.</p>
+              </div>
+              <span className="analytics-period">LAST 7 DAYS</span>
+            </div>
+
+            <div className="analytics-summary">
+              <div className="analytics-metric">
+                <span className="analytics-metric-icon">
+                  <Clock3 size={17} />
+                </span>
+                <div>
+                  <strong>{weeklyFocusMinutes} min</strong>
+                  <span>Weekly focus time</span>
                 </div>
-                {focusSessionsError && (
+              </div>
+
+              <div className="analytics-metric">
+                <span className="analytics-metric-icon">
+                  <Check size={17} />
+                </span>
+                <div>
+                  <strong>{weeklySessionCount}</strong>
+                  <span>Weekly sessions</span>
+                </div>
+              </div>
+
+              <div className="analytics-metric">
+                <span className="analytics-metric-icon">
+                  <Target size={17} />
+                </span>
+                <div>
+                  <strong>{averageSessionMinutes} min</strong>
+                  <span>Weekly average session</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="weekly-chart"
+              role="img"
+              aria-label="Daily focus minutes over the last seven days"
+            >
+              {weeklyActivity.map((day) => (
+                <div className="weekly-chart-day" key={day.dateKey}>
+                  <span className="weekly-chart-value">
+                    {day.minutes > 0 ? `${day.minutes}m` : ""}
+                  </span>
+
+                  <div className="weekly-chart-track">
+                    <span
+                      className={`weekly-chart-bar ${day.isToday ? "today" : ""}`}
+                      style={{
+                        height: `${day.minutes === 0
+                          ? 4
+                          : Math.max(8, (day.minutes / maxDailyMinutes) * 100)
+                          }%`,
+                      }}
+                    />
+                  </div>
+
+                  <span
+                    className={`weekly-chart-label ${day.isToday ? "today-label" : ""
+                      }`}
+                  >
+                    {day.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="analytics-summary">
+              <div className="analytics-metric">
+                <span className="analytics-metric-icon">
+                  <Flame size={17} />
+                </span>
+                <div>
+                  <strong>
+                    {hasWeeklyActivity ? mostProductiveDay.label : "No activity"}
+                  </strong>
+                  <span>
+                    {hasWeeklyActivity
+                      ? `${mostProductiveDay.minutes} minutes · Most productive day`
+                      : "Complete a focus session to begin"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="analytics-metric">
+                <span className="analytics-metric-icon">
+                  <BookOpen size={17} />
+                </span>
+                <div>
+                  <strong>{(totalFocusMinutes / 60).toFixed(1)} hrs</strong>
+                  <span>All-time focus hours</span>
+                </div>
+              </div>
+            </div>
+
+            <p className="analytics-note">
+              Weekly statistics cover the last seven calendar days, including
+              today. All-time focus hours use the completed sessions available in
+              your StudyOS account. Paused or reset sessions are not counted.
+            </p>
+          </section>
+
+          <div className="dashboard-grid">
+            <section className="panel tasks-panel" id="tasks">
+              <div className="panel-heading">
+                <div>
+                  <div className="panel-title-row">
+                    <h2>My Tasks</h2>
+                    <span className="pill-count">{remainingCount} left</span>
+                  </div>
+
+                  <p>Your next steps, all in one place.</p>
+                </div>
+
+                <button
+                  className="text-button"
+                  onClick={clearCompleted}
+                  disabled={completedCount === 0}
+                >
+                  Clear completed
+                </button>
+              </div>
+
+              <form className="task-add-form" onSubmit={addTask}>
+                <input
+                  value={newTask}
+                  onChange={(event) => setNewTask(event.target.value)}
+                  placeholder="What do you need to study?"
+                  aria-label="New task title"
+                  maxLength={120}
+                />
+
+                <input
+                  className="task-subject-input"
+                  list="studyos-subject-suggestions"
+                  value={newSubject}
+                  onChange={(event) => setNewSubject(event.target.value)}
+                  aria-label="Task subject"
+                  placeholder="Subject (e.g. Islamiat)"
+                  maxLength={60}
+                />
+
+                <input
+                  className="task-duration-input"
+                  type="number"
+                  min="1"
+                  max="720"
+                  step="1"
+                  value={newTaskDuration}
+                  onChange={(event) => setNewTaskDuration(event.target.value)}
+                  aria-label="Task duration in minutes"
+                  title="Choose how many minutes you want to spend on this task (1–720)"
+                  placeholder="Minutes"
+                  required
+                />
+
+                <datalist id="studyos-subject-suggestions">
+                  {subjectSuggestions.map((subjectName) => (
+                    <option key={subjectName} value={subjectName} />
+                  ))}
+                </datalist>
+
+                <button className="add-task-button" type="submit" aria-label="Add task">
+                  <Plus size={19} />
+                  <span>Add</span>
+                </button>
+              </form>
+
+              {notice && (
+                <p className="task-notice" role="status">
+                  {notice}
+                </p>
+              )}
+
+
+              {deletedTasks.length > 0 && (
+                <button
+                  type="button"
+                  onClick={undoDeleteTask}
+                  disabled={undoLoading}
+                  className="undo-task-button"
+                >
+                  {undoLoading ? "Restoring..." : "↶ Undo"}
+                </button>
+              )}
+
+
+              <div className="task-list">
+                {tasksLoading ? (
+                  <p role="status">Loading your tasks...</p>
+                ) : tasksError ? (
                   <div className="data-load-error" role="alert">
-                    <span>{focusSessionsError}</span>
+                    <span>{tasksError}</span>
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={retryDataLoads}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : visibleTasks.length === 0 ? (
+                  <div className="empty-tasks">
+                    <div className="empty-icon">
+                      <Check size={23} />
+                    </div>
+
+                    <strong>
+                      {search ? "No matching tasks" : "You're all caught up!"}
+                    </strong>
+
+                    <p>
+                      {search
+                        ? "Try a different search."
+                        : "Add a task above whenever you're ready."}
+                    </p>
+                  </div>
+                ) : (
+                  visibleTasks.map((task) => (
+                    <article
+                      className={`task-row ${task.completed ? "task-completed" : ""}`}
+                      key={task.id}
+                    >
+                      <button
+                        type="button"
+                        className={`task-check ${task.completed ? "checked" : ""}`}
+                        onClick={() => toggleTask(task.id)}
+                        aria-label={
+                          task.completed
+                            ? `Mark ${task.title} incomplete`
+                            : `Mark ${task.title} complete`
+                        }
+                        title={task.completed ? "Mark incomplete" : "Mark complete"}
+                      >
+                        {task.completed && <Check size={14} />}
+                      </button>
+
+                      <div className="task-main">
+                        <span className="task-title">{task.title}</span>
+
+                        <span className="task-meta">
+                          <BookOpen size={12} /> {task.subject || "Personal"}
+                          <span className="meta-dot">·</span>
+                          <Clock3 size={12} /> {task.time || "Anytime"}
+                        </span>
+                      </div>
+
+                      <span
+                        className={`task-status ${task.completed ? "status-done" : ""}`}
+                      >
+                        {task.completed ? "Done" : "To do"}
+                      </span>
+
+                      <button
+                        type="button"
+                        className="task-delete"
+                        onClick={() => deleteTask(task.id)}
+                        aria-label={`Delete ${task.title}`}
+                        title="Delete task"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </article>
+                  ))
+                )}
+              </div>
+
+              <div className="task-summary">
+                <span>
+                  {completedCount} of {tasks.length} tasks completed
+                </span>
+                <span>{completionPercent}%</span>
+              </div>
+
+              <div className="task-progress">
+                <span style={{ width: `${completionPercent}%` }} />
+              </div>
+            </section>
+
+            {/* Editable Focus Room timer */}
+            <section className="panel focus-panel" id="focus">
+              <div className="panel-heading">
+                <div>
+                  <h2>Focus Room</h2>
+                  <p>Make space for deep work.</p>
+                </div>
+
+                <span className={`focus-live ${isRunning ? "focus-active" : ""}`}>
+                  <span />
+                  {isRunning ? "FOCUSING" : sessionCompleted ? "COMPLETED" : "READY"}
+                </span>
+              </div>
+
+              <div className="timer-duration-setting">
+                <label htmlFor="focusDuration">Session length</label>
+
+                <div className="timer-duration-input">
+                  <input
+                    id="focusDuration"
+                    type="number"
+                    min="1"
+                    max="180"
+                    step="1"
+                    value={durationMinutes}
+                    disabled={isRunning}
+                    onChange={changeDuration}
+                    aria-label="Focus session length in minutes"
+                  />
+
+                  <span>minutes</span>
+                </div>
+
+                <p>Choose between 1 and 180 minutes.</p>
+              </div>
+
+              <div className="focus-visual">
+                <div
+                  className="focus-ring"
+                  style={{ "--timer-progress": `${timerProgress}%` }}
+                  role="timer"
+                  aria-label={`${timerMinutes} minutes and ${timerSeconds} seconds remaining`}
+                >
+                  <div className="focus-inner">
+                    <span className="focus-emoji">
+                      {sessionCompleted ? <Check size={23} /> : <Target size={21} />}
+                    </span>
+
+                    <strong>
+                      {timerMinutes}:{timerSeconds}
+                    </strong>
+
+                    <span>{sessionCompleted ? "COMPLETE" : "TIME LEFT"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="focus-caption" aria-live="polite">
+                {sessionCompleted
+                  ? "Amazing work! Your focus session is complete."
+                  : isRunning
+                    ? "Stay focused. You're doing great!"
+                    : secondsLeft < totalSeconds
+                      ? "Resume whenever you're ready."
+                      : "One thing at a time. You've got this."}
+              </p>
+
+              <div className="focus-controls">
+                {isRunning ? (
+                  <button
+                    type="button"
+                    className="focus-start-button"
+                    onClick={pauseTimer}
+                  >
+                    <Pause size={16} /> Pause session
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="focus-start-button"
+                    onClick={startTimer}
+                    disabled={secondsLeft === 0}
+                  >
+                    <Play size={16} fill="currentColor" />
+                    {secondsLeft < totalSeconds ? "Resume session" : "Start focus session"}
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className="focus-reset-button"
+                  onClick={resetTimer}
+                  title="Reset timer to selected duration"
+                >
+                  <RotateCcw size={14} /> Reset
+                </button>
+              </div>
+
+              <div className="focus-duration">
+                <Clock3 size={14} />
+                <span>Custom Timer session · {durationMinutes} minutes</span>
+              </div>
+            </section>
+
+            <section className="panel session-history-panel" id="focus-history">
+              <div className="panel-heading">
+                <div>
+                  <h2>Focus Session History</h2>
+                  <p>Your completed focus sessions, saved to your StudyOS account.</p>
+                </div>
+                <span className="session-history-count">
+                  {totalFocusSessionCount}
+                </span>
+              </div>
+
+              {focusSessionsLoading ? (
+                <div className="session-history-empty" role="status">
+                  <RefreshCw size={21} />
+                  <strong>Loading your focus history...</strong>
+                  <p>Retrieving your saved sessions from your account.</p>
+                </div>
+              ) : focusSessionsError && focusSessions.length === 0 ? (
+                <div className="data-load-error" role="alert">
+                  <span>{focusSessionsError}</span>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={retryDataLoads}
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : focusSessions.length === 0 ? (
+                <div className="session-history-empty">
+                  <Clock3 size={21} />
+                  <strong>No completed sessions yet</strong>
+                  <p>When your focus timer reaches zero, your session will appear here.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="session-history-list">
+                    {focusSessions.map((session) => (
+                      <article className="session-history-row" key={session.id}>
+                        <div className="session-history-icon">
+                          <Check size={16} />
+                        </div>
+
+                        <div className="session-history-details">
+                          <strong>
+                            {session.durationMinutes} minute focus session
+                          </strong>
+
+                          <span>
+                            {new Date(session.completedAt).toLocaleString([], {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })}
+                          </span>
+                        </div>
+
+                        <span className="session-history-status">Completed</span>
+                      </article>
+                    ))}
+                  </div>
+                  {focusSessionsError && (
+                    <div className="data-load-error" role="alert">
+                      <span>{focusSessionsError}</span>
+                      <button
+                        type="button"
+                        className="text-button"
+                        onClick={loadMoreFocusSessions}
+                        disabled={focusSessionsLoadingMore}
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
+                  {focusSessionsHasMore && (
                     <button
                       type="button"
                       className="text-button"
                       onClick={loadMoreFocusSessions}
                       disabled={focusSessionsLoadingMore}
                     >
-                      Retry
+                      {focusSessionsLoadingMore
+                        ? "Loading older sessions..."
+                        : "Load older sessions"}
                     </button>
-                  </div>
-                )}
-                {focusSessionsHasMore && (
-                  <button
-                    type="button"
-                    className="text-button"
-                    onClick={loadMoreFocusSessions}
-                    disabled={focusSessionsLoadingMore}
-                  >
-                    {focusSessionsLoadingMore
-                      ? "Loading older sessions..."
-                      : "Load older sessions"}
-                  </button>
-                )}
-              </>
-            )}
-          </section>
+                  )}
+                </>
+              )}
+            </section>
 
-          <section className="panel notes-library" aria-labelledby="notebook-heading">
+            <section className="panel notes-library" aria-labelledby="notebook-heading">
               <div className="notes-library-heading">
                 <div>
                   <h3 id="notebook-heading">Your notebook</h3>
@@ -3598,408 +3598,408 @@ async function undoDeleteTask() {
 
               {/* Saved notes library */}
               <div className="notes-library-content">
-              <div className="notes-toolbar">
-                <label className="notes-search">
-                  <Search size={16} />
-                  <input
-                    type="search"
-                    value={noteSearch}
-                    onChange={(event) => setNoteSearch(event.target.value)}
-                    placeholder="Search titles and content..."
-                    aria-label="Search subject notes"
-                  />
-                </label>
+                <div className="notes-toolbar">
+                  <label className="notes-search">
+                    <Search size={16} />
+                    <input
+                      type="search"
+                      value={noteSearch}
+                      onChange={(event) => setNoteSearch(event.target.value)}
+                      placeholder="Search titles and content..."
+                      aria-label="Search subject notes"
+                    />
+                  </label>
 
-                <select
-                  className="notes-filter"
-                  value={noteFilter}
-                  onChange={(event) => setNoteFilter(event.target.value)}
-                  aria-label="Filter notes by subject"
-                >
-                  <option>All Subjects</option>
-                  {subjectSuggestions.map((subjectName) => (
-                    <option key={subjectName}>{subjectName}</option>
-                  ))}
-                </select>
-              </div>
-
-              {notesLoading ? (
-                <div className="notes-empty" role="status">
-                  <span className="notes-empty-icon">
-                    <RefreshCw size={25} />
-                  </span>
-                  <strong>Loading your notes...</strong>
-                  <p>Your saved notes are being loaded from your account.</p>
-                </div>
-              ) : notesError ? (
-                <div className="data-load-error" role="alert">
-                  <span>{notesError}</span>
-                  <button
-                    type="button"
-                    className="text-button"
-                    onClick={retryDataLoads}
+                  <select
+                    className="notes-filter"
+                    value={noteFilter}
+                    onChange={(event) => setNoteFilter(event.target.value)}
+                    aria-label="Filter notes by subject"
                   >
-                    Retry
-                  </button>
+                    <option>All Subjects</option>
+                    {subjectSuggestions.map((subjectName) => (
+                      <option key={subjectName}>{subjectName}</option>
+                    ))}
+                  </select>
                 </div>
-              ) : visibleNotes.length === 0 ? (
-                <div className="notes-empty">
-                  <span className="notes-empty-icon">
-                    <FileText size={25} />
-                  </span>
 
-                  <strong>
-                    {subjectNotes.length === 0
-                      ? "Your notebook is ready"
-                      : "No matching notes found"}
-                  </strong>
+                {notesLoading ? (
+                  <div className="notes-empty" role="status">
+                    <span className="notes-empty-icon">
+                      <RefreshCw size={25} />
+                    </span>
+                    <strong>Loading your notes...</strong>
+                    <p>Your saved notes are being loaded from your account.</p>
+                  </div>
+                ) : notesError ? (
+                  <div className="data-load-error" role="alert">
+                    <span>{notesError}</span>
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={retryDataLoads}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : visibleNotes.length === 0 ? (
+                  <div className="notes-empty">
+                    <span className="notes-empty-icon">
+                      <FileText size={25} />
+                    </span>
 
-                  <p>
-                    {subjectNotes.length === 0
-                      ? "Create your first note in the Subject Notes section."
-                      : "Try another search or choose a different subject."}
-                  </p>
-                </div>
-              ) : (
-                <div className="notes-list">
-                  {visibleNotes.map((note) => (
-                    <article className="note-card" key={note.id}>
-                      <div className="note-card-top">
-                        <span className="note-subject-tag">{note.subject}</span>
+                    <strong>
+                      {subjectNotes.length === 0
+                        ? "Your notebook is ready"
+                        : "No matching notes found"}
+                    </strong>
 
-                        <div className="note-card-actions">
-                          <button
-                            type="button"
-                            className="note-action-button"
-                            onClick={() => editSubjectNote(note)}
-                            aria-label={`Edit ${note.title}`}
-                            title="Edit note"
-                          >
-                            <Pencil size={15} />
-                          </button>
+                    <p>
+                      {subjectNotes.length === 0
+                        ? "Create your first note in the Subject Notes section."
+                        : "Try another search or choose a different subject."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="notes-list">
+                    {visibleNotes.map((note) => (
+                      <article className="note-card" key={note.id}>
+                        <div className="note-card-top">
+                          <span className="note-subject-tag">{note.subject}</span>
 
-                          <button
-                            type="button"
-                            className="note-action-button note-delete-button"
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  `Delete "${note.title}"? This cannot be undone.`
-                                )
-                              ) {
-                                deleteSubjectNote(note.id);
-                              }
-                            }}
-                            aria-label={`Delete ${note.title}`}
-                            title="Delete note"
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                          <div className="note-card-actions">
+                            <button
+                              type="button"
+                              className="note-action-button"
+                              onClick={() => editSubjectNote(note)}
+                              aria-label={`Edit ${note.title}`}
+                              title="Edit note"
+                            >
+                              <Pencil size={15} />
+                            </button>
+
+                            <button
+                              type="button"
+                              className="note-action-button note-delete-button"
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    `Delete "${note.title}"? This cannot be undone.`
+                                  )
+                                ) {
+                                  deleteSubjectNote(note.id);
+                                }
+                              }}
+                              aria-label={`Delete ${note.title}`}
+                              title="Delete note"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
                         </div>
-                      </div>
 
-                      <h3>{note.title}</h3>
+                        <h3>{note.title}</h3>
 
-                      <p className="note-card-content">{note.content}</p>
+                        <p className="note-card-content">{note.content}</p>
 
-                      <div className="note-card-footer">
-                        <Clock3 size={13} />
-                        <span>
-                          Updated{" "}
-                          {new Date(
-                            note.updatedAt || note.createdAt || Date.now()
-                          ).toLocaleDateString([], {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
+                        <div className="note-card-footer">
+                          <Clock3 size={13} />
+                          <span>
+                            Updated{" "}
+                            {new Date(
+                              note.updatedAt || note.createdAt || Date.now()
+                            ).toLocaleDateString([], {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <p className="analytics-note">
                 Your notes are saved to your StudyOS account and can sync across devices.
               </p>
-          </section>
+            </section>
 
-          <section className="panel subjects-panel" id="subjects">
-            <div className="panel-heading">
-              <div>
-                <h2>My Subjects</h2>
-                <p>Subjects appear here when you use them in Tasks. Select any subject to remove it from this list.</p>
-              </div>
-
-              <button
-                type="button"
-                className="icon-button small-icon"
-                aria-label={subjectsExpanded ? "Collapse subjects" : "Expand subjects"}
-                aria-expanded={subjectsExpanded}
-                onClick={() => setSubjectsExpanded((current) => !current)}
-              >
-                <ChevronRight
-                  size={18}
-                  style={{
-                    transform: subjectsExpanded ? "rotate(90deg)" : "rotate(0deg)",
-                    transition: "transform 180ms ease",
-                  }}
-                />
-              </button>
-            </div>
-
-            {subjectsExpanded && (
-              <>
-              {activeSubjects.length > 0 && (
-                <div className="subjects-actions">
-                  <span>{selectedSubjectsForRemoval.length} selected</span>
-                  <button
-                    type="button"
-                    className="subject-remove-button"
-                    onClick={removeSelectedSubjectsFromList}
-                    disabled={selectedSubjectsForRemoval.length === 0}
-                  >
-                    <Trash2 size={15} /> Remove selected
-                  </button>
-                </div>
-              )}
-              <div className="subjects-list">
-                {activeSubjects.map((subject) => {
-                  // Progress is based on Tasks section items only.
-                  const subjectTasks = tasks.filter(
-                    (task) =>
-                      (task.subject || "Personal").trim().toLowerCase() ===
-                      subject.name.toLowerCase()
-                  );
-                  const allSubjectTasks = subjectTasks;
-                  const completedSubjectTasks = allSubjectTasks.filter(
-                    (task) => task.completed
-                  ).length;
-                  const totalSubjectTasks = allSubjectTasks.length;
-                  const subjectProgress =
-                    totalSubjectTasks > 0
-                      ? Math.round((completedSubjectTasks / totalSubjectTasks) * 100)
-                      : 0;
-                  const subjectNotesCount = subjectNotes.filter(
-                    (note) =>
-                      (note.subject || "Personal").trim().toLowerCase() ===
-                      subject.name.toLowerCase()
-                  ).length;
-                  const progressLevel =
-                    subjectProgress >= 100
-                      ? "progress-100"
-                      : subjectProgress >= 75
-                        ? "progress-75"
-                        : subjectProgress >= 50
-                          ? "progress-50"
-                          : subjectProgress >= 25
-                            ? "progress-25"
-                            : "progress-low";
-
-                  const SubjectIcon = subjectIconAssignments.get(subject.name) || BookText;
-
-                  return (
-                    <article className={`subject-row${selectedSubjectsForRemoval.includes(subject.name) ? " is-selected" : ""}`} key={subject.name}>
-                      <label className="subject-select-control">
-                        <input
-                          type="checkbox"
-                          checked={selectedSubjectsForRemoval.includes(subject.name)}
-                          onChange={() => toggleSubjectRemoval(subject.name)}
-                          aria-label={`Select ${subject.name} for removal`}
-                        />
-                      </label>
-                      <div className={`subject-icon ${subject.color}`} aria-hidden="true">
-                        <SubjectIcon size={19} strokeWidth={1.8} />
-                      </div>
-
-                      <div className="subject-info">
-                        <div className="subject-name-line">
-                          <strong>{subject.name}</strong>
-                          <span>{subjectProgress}%</span>
-                        </div>
-
-                        <p>{subject.detail}</p>
-
-                        <div
-                          className={`subject-progress ${subject.color} ${progressLevel}`}
-                          role="progressbar"
-                          aria-label={`${subject.name} task completion`}
-                          aria-valuemin={0}
-                          aria-valuemax={100}
-                          aria-valuenow={subjectProgress}
-                        >
-                          <span style={{ width: `${subjectProgress}%` }} />
-                        </div>
-
-                        <div className="subject-progress-details">
-                          <span>
-                            {completedSubjectTasks} of {totalSubjectTasks} tasks complete
-                          </span>
-                          <span>
-                            {subjectNotesCount} {subjectNotesCount === 1 ? "note" : "notes"}
-                          </span>
-                        </div>
-
-                        {totalSubjectTasks === 0 && (
-                          <p className="subject-progress-hint">
-                            Add a {subject.name} task to start tracking progress.
-                          </p>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })}
-                {activeSubjects.length === 0 && (
-                  <p className="subjects-history-empty">No active subjects. Add a subject to a task to show it here.</p>
-                )}
-              </div>
-              </>
-            )}
-
-            <section className="subjects-completed" aria-label="Completed subjects history">
-              <div className="subjects-completed-heading">
+            <section className="panel subjects-panel" id="subjects">
+              <div className="panel-heading">
                 <div>
-                  <h3>Subject Completed</h3>
-                  <p>Completed subjects are kept here as history. Removing a subject from My Subjects does not delete its tasks or notes.</p>
+                  <h2>My Subjects</h2>
+                  <p>Subjects appear here when you use them in Tasks. Select any subject to remove it from this list.</p>
                 </div>
-                <span className="subjects-history-count">{completedSubjects.length}</span>
+
+                <button
+                  type="button"
+                  className="icon-button small-icon"
+                  aria-label={subjectsExpanded ? "Collapse subjects" : "Expand subjects"}
+                  aria-expanded={subjectsExpanded}
+                  onClick={() => setSubjectsExpanded((current) => !current)}
+                >
+                  <ChevronRight
+                    size={18}
+                    style={{
+                      transform: subjectsExpanded ? "rotate(90deg)" : "rotate(0deg)",
+                      transition: "transform 180ms ease",
+                    }}
+                  />
+                </button>
               </div>
-              <div className="subjects-history">
-                <h4>Subjects History</h4>
-                {completedSubjects.length === 0 ? (
-                  <p className="subjects-history-empty">No completed subjects yet. Finish all tasks in a subject and it will appear here.</p>
-                ) : (
-                  completedSubjects.map((subject) => {
-                    const stats = getSubjectTaskStats(subject.name);
-                    const SubjectIcon = subjectIconAssignments.get(subject.name) || BookText;
-                    const notesCount = subjectNotes.filter((note) =>
-                      (note.subject || "Personal").trim().toLowerCase() === subject.name.toLowerCase()
-                    ).length;
-                    return (
-                      <article className="subject-history-row" key={`history-${subject.name}`}>
-                        <div className={`subject-icon ${subject.color}`} aria-hidden="true">
-                          <SubjectIcon size={18} strokeWidth={1.8} />
-                        </div>
-                        <div className="subject-history-info">
-                          <strong>{subject.name}</strong>
-                          <span>{stats.completed} of {stats.total} tasks completed · {notesCount} {notesCount === 1 ? "note" : "notes"}</span>
-                        </div>
-                        <span className="subject-history-status"><Check size={14} /> Completed</span>
-                      </article>
-                    );
-                  })
-                )}
+
+              {subjectsExpanded && (
+                <>
+                  {activeSubjects.length > 0 && (
+                    <div className="subjects-actions">
+                      <span>{selectedSubjectsForRemoval.length} selected</span>
+                      <button
+                        type="button"
+                        className="subject-remove-button"
+                        onClick={removeSelectedSubjectsFromList}
+                        disabled={selectedSubjectsForRemoval.length === 0}
+                      >
+                        <Trash2 size={15} /> Remove selected
+                      </button>
+                    </div>
+                  )}
+                  <div className="subjects-list">
+                    {activeSubjects.map((subject) => {
+                      // Progress is based on Tasks section items only.
+                      const subjectTasks = tasks.filter(
+                        (task) =>
+                          (task.subject || "Personal").trim().toLowerCase() ===
+                          subject.name.toLowerCase()
+                      );
+                      const allSubjectTasks = subjectTasks;
+                      const completedSubjectTasks = allSubjectTasks.filter(
+                        (task) => task.completed
+                      ).length;
+                      const totalSubjectTasks = allSubjectTasks.length;
+                      const subjectProgress =
+                        totalSubjectTasks > 0
+                          ? Math.round((completedSubjectTasks / totalSubjectTasks) * 100)
+                          : 0;
+                      const subjectNotesCount = subjectNotes.filter(
+                        (note) =>
+                          (note.subject || "Personal").trim().toLowerCase() ===
+                          subject.name.toLowerCase()
+                      ).length;
+                      const progressLevel =
+                        subjectProgress >= 100
+                          ? "progress-100"
+                          : subjectProgress >= 75
+                            ? "progress-75"
+                            : subjectProgress >= 50
+                              ? "progress-50"
+                              : subjectProgress >= 25
+                                ? "progress-25"
+                                : "progress-low";
+
+                      const SubjectIcon = subjectIconAssignments.get(subject.name) || BookText;
+
+                      return (
+                        <article className={`subject-row${selectedSubjectsForRemoval.includes(subject.name) ? " is-selected" : ""}`} key={subject.name}>
+                          <label className="subject-select-control">
+                            <input
+                              type="checkbox"
+                              checked={selectedSubjectsForRemoval.includes(subject.name)}
+                              onChange={() => toggleSubjectRemoval(subject.name)}
+                              aria-label={`Select ${subject.name} for removal`}
+                            />
+                          </label>
+                          <div className={`subject-icon ${subject.color}`} aria-hidden="true">
+                            <SubjectIcon size={19} strokeWidth={1.8} />
+                          </div>
+
+                          <div className="subject-info">
+                            <div className="subject-name-line">
+                              <strong>{subject.name}</strong>
+                              <span>{subjectProgress}%</span>
+                            </div>
+
+                            <p>{subject.detail}</p>
+
+                            <div
+                              className={`subject-progress ${subject.color} ${progressLevel}`}
+                              role="progressbar"
+                              aria-label={`${subject.name} task completion`}
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                              aria-valuenow={subjectProgress}
+                            >
+                              <span style={{ width: `${subjectProgress}%` }} />
+                            </div>
+
+                            <div className="subject-progress-details">
+                              <span>
+                                {completedSubjectTasks} of {totalSubjectTasks} tasks complete
+                              </span>
+                              <span>
+                                {subjectNotesCount} {subjectNotesCount === 1 ? "note" : "notes"}
+                              </span>
+                            </div>
+
+                            {totalSubjectTasks === 0 && (
+                              <p className="subject-progress-hint">
+                                Add a {subject.name} task to start tracking progress.
+                              </p>
+                            )}
+                          </div>
+                        </article>
+                      );
+                    })}
+                    {activeSubjects.length === 0 && (
+                      <p className="subjects-history-empty">No active subjects. Add a subject to a task to show it here.</p>
+                    )}
+                  </div>
+                </>
+              )}
+
+              <section className="subjects-completed" aria-label="Completed subjects history">
+                <div className="subjects-completed-heading">
+                  <div>
+                    <h3>Subject Completed</h3>
+                    <p>Completed subjects are kept here as history. Removing a subject from My Subjects does not delete its tasks or notes.</p>
+                  </div>
+                  <span className="subjects-history-count">{completedSubjects.length}</span>
+                </div>
+                <div className="subjects-history">
+                  <h4>Subjects History</h4>
+                  {completedSubjects.length === 0 ? (
+                    <p className="subjects-history-empty">No completed subjects yet. Finish all tasks in a subject and it will appear here.</p>
+                  ) : (
+                    completedSubjects.map((subject) => {
+                      const stats = getSubjectTaskStats(subject.name);
+                      const SubjectIcon = subjectIconAssignments.get(subject.name) || BookText;
+                      const notesCount = subjectNotes.filter((note) =>
+                        (note.subject || "Personal").trim().toLowerCase() === subject.name.toLowerCase()
+                      ).length;
+                      return (
+                        <article className="subject-history-row" key={`history-${subject.name}`}>
+                          <div className={`subject-icon ${subject.color}`} aria-hidden="true">
+                            <SubjectIcon size={18} strokeWidth={1.8} />
+                          </div>
+                          <div className="subject-history-info">
+                            <strong>{subject.name}</strong>
+                            <span>{stats.completed} of {stats.total} tasks completed · {notesCount} {notesCount === 1 ? "note" : "notes"}</span>
+                          </div>
+                          <span className="subject-history-status"><Check size={14} /> Completed</span>
+                        </article>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+
+              <section className="panel notes-panel" id="subject-notes">
+                <div className="panel-heading">
+                  <div>
+                    <h2>Subject Notes</h2>
+                    <p>Write, organize, and revisit what you learn.</p>
+                  </div>
+
+                  <span className="notes-count">
+                    <FileText size={16} />
+                    {subjectNotes.length} {subjectNotes.length === 1 ? "NOTE" : "NOTES"}
+                  </span>
+                </div>
+
+                <form
+                  className="notes-editor"
+                  id="subject-note-editor"
+                  onSubmit={saveSubjectNote}
+                >
+                  <div className="notes-form-heading">
+                    <span className="notes-form-icon">
+                      {editingNoteId !== null ? <Pencil size={18} /> : <Plus size={18} />}
+                    </span>
+
+                    <div>
+                      <h3>{editingNoteId !== null ? "Edit your note" : "Create a new note"}</h3>
+                      <p>
+                        {editingNoteId !== null
+                          ? "Make your changes and save them."
+                          : "Keep important concepts in one place."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <label className="notes-field">
+                    <span>Note title</span>
+                    <input
+                      type="text"
+                      value={noteTitle}
+                      onChange={(event) => setNoteTitle(event.target.value)}
+                      placeholder="e.g. Newton's Laws of Motion"
+                      maxLength={120}
+                      required
+                    />
+                  </label>
+
+                  <label className="notes-field">
+                    <span>Subject</span>
+                    <input
+                      list="studyos-subject-suggestions"
+                      value={noteSubject}
+                      onChange={(event) => setNoteSubject(event.target.value)}
+                      placeholder="e.g. Islamiat"
+                      maxLength={60}
+                    />
+                  </label>
+
+                  <label className="notes-field">
+                    <span>Note content</span>
+                    <textarea
+                      value={noteContent}
+                      onChange={(event) => setNoteContent(event.target.value)}
+                      placeholder="Write your explanation, definitions, formulas, or revision notes..."
+                      rows={6}
+                      maxLength={20000}
+                      required
+                    />
+                  </label>
+
+                  <div className="notes-form-actions">
+                    <button
+                      className="add-task-button"
+                      type="submit"
+                      disabled={noteSaving || notesLoading}
+                    >
+                      {noteSaving ? (
+                        <RefreshCw size={16} />
+                      ) : editingNoteId !== null ? (
+                        <Save size={16} />
+                      ) : (
+                        <Plus size={17} />
+                      )}
+                      {noteSaving
+                        ? "Saving..."
+                        : editingNoteId !== null
+                          ? "Update note"
+                          : "Save note"}
+                    </button>
+
+                    {editingNoteId !== null && (
+                      <button className="text-button" type="button" onClick={cancelNoteEdit}>
+                        Cancel editing
+                      </button>
+                    )}
+                  </div>
+                </form>
+
+              </section>
+
+              <div className="subjects-footer">
+                <Sparkles size={15} /> Taking small steps leads to big results.
               </div>
             </section>
 
-          <section className="panel notes-panel" id="subject-notes">
-            <div className="panel-heading">
-              <div>
-                <h2>Subject Notes</h2>
-                <p>Write, organize, and revisit what you learn.</p>
-              </div>
-
-              <span className="notes-count">
-                <FileText size={16} />
-                {subjectNotes.length} {subjectNotes.length === 1 ? "NOTE" : "NOTES"}
-              </span>
-            </div>
-
-            <form
-              className="notes-editor"
-              id="subject-note-editor"
-              onSubmit={saveSubjectNote}
-            >
-              <div className="notes-form-heading">
-                <span className="notes-form-icon">
-                  {editingNoteId !== null ? <Pencil size={18} /> : <Plus size={18} />}
-                </span>
-
-                <div>
-                  <h3>{editingNoteId !== null ? "Edit your note" : "Create a new note"}</h3>
-                  <p>
-                    {editingNoteId !== null
-                      ? "Make your changes and save them."
-                      : "Keep important concepts in one place."}
-                  </p>
-                </div>
-              </div>
-
-              <label className="notes-field">
-                <span>Note title</span>
-                <input
-                  type="text"
-                  value={noteTitle}
-                  onChange={(event) => setNoteTitle(event.target.value)}
-                  placeholder="e.g. Newton's Laws of Motion"
-                  maxLength={120}
-                  required
-                />
-              </label>
-
-              <label className="notes-field">
-                <span>Subject</span>
-                <input
-                  list="studyos-subject-suggestions"
-                  value={noteSubject}
-                  onChange={(event) => setNoteSubject(event.target.value)}
-                  placeholder="e.g. Islamiat"
-                  maxLength={60}
-                />
-              </label>
-
-              <label className="notes-field">
-                <span>Note content</span>
-                <textarea
-                  value={noteContent}
-                  onChange={(event) => setNoteContent(event.target.value)}
-                  placeholder="Write your explanation, definitions, formulas, or revision notes..."
-                  rows={6}
-                  maxLength={20000}
-                  required
-                />
-              </label>
-
-              <div className="notes-form-actions">
-                <button
-                  className="add-task-button"
-                  type="submit"
-                  disabled={noteSaving || notesLoading}
-                >
-                  {noteSaving ? (
-                    <RefreshCw size={16} />
-                  ) : editingNoteId !== null ? (
-                    <Save size={16} />
-                  ) : (
-                    <Plus size={17} />
-                  )}
-                  {noteSaving
-                    ? "Saving..."
-                    : editingNoteId !== null
-                      ? "Update note"
-                      : "Save note"}
-                </button>
-
-                {editingNoteId !== null && (
-                  <button className="text-button" type="button" onClick={cancelNoteEdit}>
-                    Cancel editing
-                  </button>
-                )}
-              </div>
-            </form>
-
-          </section>
-
-            <div className="subjects-footer">
-              <Sparkles size={15} /> Taking small steps leads to big results.
-            </div>
-          </section>
 
 
-
-        </div>
+          </div>
         </div>
 
         {/* The dashboard quote reminder has been removed. Settings reminder preferences remain unchanged. */}
@@ -4010,16 +4010,7 @@ async function undoDeleteTask() {
             id="settings"
             aria-labelledby="settings-title"
           >
-            <div className="section-heading settings-heading">
-              <div>
-                <span className="section-kicker">PERSONALIZE STUDYOS</span>
-                <h2 id="settings-title">Settings</h2>
-                <p>Adjust your study goal, appearance, and notifications.</p>
-              </div>
-              <span className="settings-heading-icon" aria-hidden="true">
-                <Settings size={23} />
-              </span>
-            </div>
+            
 
             {settingsLoading && (
               <p className="settings-status" role="status">
