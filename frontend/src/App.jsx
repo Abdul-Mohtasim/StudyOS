@@ -1,3 +1,4 @@
+
 import { Capacitor } from "@capacitor/core";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 import React, { useEffect, useRef, useState } from "react";
@@ -2439,49 +2440,20 @@ async function undoDeleteTask() {
       </aside>
 
       <main className={`main-content${activeSection === "settings" ? " settings-page" : ""}`} id="dashboard">
-        <header className="topbar">
-          <div className="topbar-left">
-            <button
-              className="icon-button mobile-menu"
-              onClick={() => setMenuOpen(true)}
-              aria-label="Open navigation"
-            >
-              <Menu size={22} />
-            </button>
-
-            <div>
-              <div className="breadcrumb">
-                Workspace <ChevronRight size={13} /> {activeSection === "settings" ? "Settings" : "Dashboard"}
-              </div>
-
-              <h1>
-                {activeSection === "settings" ? "Settings" : <>Good day, {getGreetingName(student)}<span className="wave"> ✦</span></>}
-              </h1>
-
-              <p className="subtitle">
-                {activeSection === "settings"
-                  ? "Personalize your StudyOS experience."
-                  : "A little progress every day adds up."}
-              </p>
+          <nav className={`mobile-top-nav${menuOpen ? " menu-open" : ""}`} aria-label="Main navigation">
+            <a className="mobile-navbar-brand" href="#dashboard" aria-label="StudyOS home">
+              <img src="/Gradient%20Graduation%20Cube%20Emblem.png" alt="" />
+              <span>Study<span className="brand-accent">OS</span></span>
+            </a>
+            <div className="mobile-navbar-links">
+            <a className={`nav-link ${activeSection === "dashboard" ? "active" : ""}`} href="#dashboard" onClick={() => setActiveSection("dashboard")} aria-label="Dashboard" title="Dashboard"><LayoutDashboard size={17} /><span>Dashboard</span></a>
+            <a className={`nav-link ${activeSection === "tasks" ? "active" : ""}`} href="#tasks" onClick={() => setActiveSection("tasks")}><CalendarDays size={17} /><span>My Tasks</span><span className="nav-count">{remainingCount}</span></a>
+            <a className={`nav-link ${activeSection === "subjects" ? "active" : ""}`} href="#subjects" onClick={() => setActiveSection("subjects")}><BookOpen size={17} /><span>Subjects</span></a>
+            <a className={`nav-link ${activeSection === "focus" ? "active" : ""}`} href="#focus" onClick={() => setActiveSection("focus")} aria-label="Focus Room" title="Focus Room"><Target size={17} /><span>Focus Room</span></a>
             </div>
-          </div>
-
           <div className="topbar-actions">
             <div className={`global-search-wrapper${mobileSearchOpen ? " mobile-search-open" : ""}`} style={{ position: "relative" }}>
-              <button
-                type="button"
-                className="mobile-search-toggle"
-                aria-label={mobileSearchOpen ? "Close search" : "Open search"}
-                aria-expanded={mobileSearchOpen}
-                onClick={() => {
-                  setMobileSearchOpen((open) => !open);
-                  setGlobalSearchOpen(false);
-                }}
-              >
-                {mobileSearchOpen ? <X size={20} /> : <Search size={20} />}
-              </button>
               <label className="search-box">
-                <Search size={17} />
                 <input
                   value={globalSearch}
                   onChange={(event) => {
@@ -2650,19 +2622,17 @@ async function undoDeleteTask() {
               )}
             </div>
 
+            <button
+              type="button"
+              className="icon-button mobile-nav-hamburger"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open navigation menu"
+              aria-expanded={menuOpen}
+              title="Open navigation menu"
+            >
+              <Menu size={20} />
+            </button>
             <div className="topbar-account-controls" aria-label="Account actions">
-              <a
-                href="#settings"
-                className={`icon-button topbar-account-link ${activeSection === "settings" ? "active" : ""}`}
-                aria-label="Settings"
-                title="Settings"
-                onClick={() => {
-                  setActiveSection("settings");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-              >
-                <Settings size={19} />
-              </a>
               <button
                 type="button"
                 className="icon-button topbar-account-link"
@@ -2674,28 +2644,35 @@ async function undoDeleteTask() {
               </button>
             </div>
           </div>
-
-          <nav className="mobile-top-nav" aria-label="Main navigation">
-            <button
-              type="button"
-              className="icon-button mobile-nav-hamburger"
-              onClick={() => setMenuOpen(true)}
-              aria-label="Open navigation menu"
-              aria-expanded={menuOpen}
-            >
-              <Menu size={20} />
-            </button>
-            <a className="mobile-navbar-brand" href="#dashboard" aria-label="StudyOS home">
-              <img src="/Gradient%20Graduation%20Cube%20Emblem.png" alt="" />
-              <span>Study<span className="brand-accent">OS</span></span>
-            </a>
-            <div className="mobile-navbar-links">
-            <a className={`nav-link ${activeSection === "dashboard" ? "active" : ""}`} href="#dashboard" onClick={() => setActiveSection("dashboard")} aria-label="Dashboard" title="Dashboard"><LayoutDashboard size={17} /><span>Dashboard</span></a>
-            <a className={`nav-link ${activeSection === "tasks" ? "active" : ""}`} href="#tasks" onClick={() => setActiveSection("tasks")}><CalendarDays size={17} /><span>My Tasks</span><span className="nav-count">{remainingCount}</span></a>
-            <a className={`nav-link ${activeSection === "subjects" ? "active" : ""}`} href="#subjects" onClick={() => setActiveSection("subjects")}><BookOpen size={17} /><span>Subjects</span></a>
-            <a className={`nav-link ${activeSection === "focus" ? "active" : ""}`} href="#focus" onClick={() => setActiveSection("focus")} aria-label="Focus Room" title="Focus Room"><Target size={17} /><span>Focus Room</span></a>
-            </div>
+          
           </nav>
+
+        <header className="topbar">
+          <div className="topbar-left">
+            <button
+              className="icon-button mobile-menu"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open navigation"
+            >
+              <Menu size={22} />
+            </button>
+
+            <div>
+              <div className="breadcrumb">
+                Workspace <ChevronRight size={13} /> {activeSection === "settings" ? "Settings" : "Dashboard"}
+              </div>
+
+              <h1>
+                {activeSection === "settings" ? "Settings" : <>Good day, {getGreetingName(student)}<span className="wave"> ✦</span></>}
+              </h1>
+
+              <p className="subtitle">
+                {activeSection === "settings"
+                  ? "Personalize your StudyOS experience."
+                  : "A little progress every day adds up."}
+              </p>
+            </div>
+          </div>
         </header>
 
         <div className="dashboard-page-content" hidden={activeSection === "settings"}>
@@ -3993,7 +3970,61 @@ async function undoDeleteTask() {
         </div>
         </div>
 
-        {/* The dashboard quote reminder has been removed. Settings reminder preferences remain unchanged. */}
+        {activeSection === "dashboard" && (
+          <footer className="studyos-footer" aria-label="StudyOS footer">
+            <div className="studyos-footer-main">
+              <div className="studyos-footer-brand">
+                <div className="studyos-footer-brand-mark"><GraduationCap size={23} aria-hidden="true" /></div>
+                <div>
+                  <strong>StudyOS</strong>
+                  <p>Your space to learn, focus, and make progress.</p>
+                </div>
+              </div>
+
+              <div className="studyos-footer-links">
+                <h3>Connect</h3>
+                <a href="https://github.com/Abdul-Mohtasim" target="_blank" rel="noreferrer">GitHub</a>
+                <a href="https://www.linkedin.com/in/abdul-mohtasim" target="_blank" rel="noreferrer">LinkedIn</a>
+                <a href="https://abdulmohtasimportfolio.netlify.app/" target="_blank" rel="noreferrer">Portfolio</a>
+                <a href="mailto:abdulmohtasim034@gmail.com">Email</a>
+              </div>
+
+              <form
+                className="studyos-feedback-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const form = event.currentTarget;
+                  const values = new FormData(form);
+                  const category = values.get("feedbackType");
+                  const message = values.get("feedbackMessage");
+                  const subject = encodeURIComponent(`StudyOS ${category} feedback`);
+                  const body = encodeURIComponent(
+                    `Feedback type: ${category}\n\nMessage:\n${message}\n\nSent from StudyOS.`
+                  );
+                  window.location.href = `mailto:abdulmohtasim034@gmail.com?subject=${subject}&body=${body}`;
+                }}
+              >
+                <h3>Student Feedback</h3>
+                <p>Found an issue or have an idea? Let us know.</p>
+                <label className="studyos-feedback-label" htmlFor="studyos-feedback-type">Feedback type</label>
+                <select id="studyos-feedback-type" name="feedbackType" defaultValue="Suggestion">
+                  <option>Suggestion</option>
+                  <option>Bug report</option>
+                  <option>Website feedback</option>
+                </select>
+                <label className="studyos-feedback-label" htmlFor="studyos-feedback-message">Your feedback</label>
+                <textarea id="studyos-feedback-message" name="feedbackMessage" rows={3} maxLength={3000} placeholder="Tell us what you noticed..." required />
+                <button type="submit">Send feedback</button>
+                <small>Opens your email app with the feedback ready to send.</small>
+              </form>
+            </div>
+            <div className="studyos-footer-bottom">
+              <span>© {new Date().getFullYear()} StudyOS</span>
+              <span>Created by Abdul Mohtasim</span>
+            
+            </div>
+          </footer>
+        )}
 
         {activeSection === "settings" && (
           <section
@@ -4001,7 +4032,7 @@ async function undoDeleteTask() {
             id="settings"
             aria-labelledby="settings-title"
           >
-            {/* <div className="section-heading settings-heading">
+            <div className="section-heading settings-heading">
               <div>
                 <span className="section-kicker">PERSONALIZE STUDYOS</span>
                 <h2 id="settings-title">Settings</h2>
@@ -4010,7 +4041,7 @@ async function undoDeleteTask() {
               <span className="settings-heading-icon" aria-hidden="true">
                 <Settings size={23} />
               </span>
-            </div> */}
+            </div>
 
             {settingsLoading && (
               <p className="settings-status" role="status">
@@ -4120,76 +4151,6 @@ async function undoDeleteTask() {
                 </form>
               </article>
 
-
-              
-
-
-
-              <article className="settings-card settings-reminder-card">
-                <div className="settings-card-heading">
-                  <span className="settings-card-icon">
-                    <Sparkles size={19} />
-                  </span>
-                  <div>
-                    <h3>A Little Reminder</h3>
-                    <p>A little encouragement for your next study session.</p>
-                  </div>
-                </div>
-
-                <blockquote className="settings-reminder-quote">
-                  “{currentReminder.text}”
-                </blockquote>
-                <p className="settings-reminder-author">{currentReminder.author}</p>
-                <div className="settings-reminder-tip">
-                  <strong>Study tip</strong>
-                  <p>{currentReminder.tip}</p>
-                </div>
-                <button
-                  type="button"
-                  className="settings-save-button settings-reminder-next"
-                  onClick={nextReminder}
-                >
-                  <RefreshCw size={15} /> New reminder
-                </button>
-              </article>
-
-
-
-              <article className="settings-card settings-notifications-card">
-                <div className="settings-card-heading">
-                  <span className="settings-card-icon">
-                    <Bell size={19} />
-                  </span>
-                  <div>
-                    <h3>Notifications</h3>
-                    <p>Choose whether you want notifications about unfinished tasks.</p>
-                  </div>
-                </div>
-
-                <div className="settings-toggle-row">
-                  <div>
-                    <strong>Task notifications</strong>
-                    <p>Show notifications about unfinished tasks.</p>
-                  </div>
-                  <button
-                    type="button"
-                    className={`settings-switch ${taskNotificationsEnabled ? "is-on" : ""}`}
-                    role="switch"
-                    aria-checked={taskNotificationsEnabled}
-                    aria-label="Task notifications"
-                    disabled={settingsLoading || settingsSaving}
-                    onClick={() =>
-                      saveSettings({
-                        taskNotificationsEnabled: !taskNotificationsEnabled,
-                      })
-                    }
-                  >
-                    <span />
-                  </button>
-                </div>
-              </article>
-
-
               <article className="settings-card">
                 <div className="settings-card-heading">
                   <span className="settings-card-icon">
@@ -4234,8 +4195,67 @@ async function undoDeleteTask() {
                 </div>
               </article>
 
+              <article className="settings-card settings-reminder-card">
+                <div className="settings-card-heading">
+                  <span className="settings-card-icon">
+                    <Sparkles size={19} />
+                  </span>
+                  <div>
+                    <h3>A Little Reminder</h3>
+                    <p>A little encouragement for your next study session.</p>
+                  </div>
+                </div>
 
-              
+                <blockquote className="settings-reminder-quote">
+                  “{currentReminder.text}”
+                </blockquote>
+                <p className="settings-reminder-author">{currentReminder.author}</p>
+                <div className="settings-reminder-tip">
+                  <strong>Study tip</strong>
+                  <p>{currentReminder.tip}</p>
+                </div>
+                <button
+                  type="button"
+                  className="settings-save-button settings-reminder-next"
+                  onClick={nextReminder}
+                >
+                  <RefreshCw size={15} /> New reminder
+                </button>
+              </article>
+
+              <article className="settings-card settings-notifications-card">
+                <div className="settings-card-heading">
+                  <span className="settings-card-icon">
+                    <Bell size={19} />
+                  </span>
+                  <div>
+                    <h3>Notifications</h3>
+                    <p>Choose whether you want notifications about unfinished tasks.</p>
+                  </div>
+                </div>
+
+                <div className="settings-toggle-row">
+                  <div>
+                    <strong>Task notifications</strong>
+                    <p>Show notifications about unfinished tasks.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className={`settings-switch ${taskNotificationsEnabled ? "is-on" : ""}`}
+                    role="switch"
+                    aria-checked={taskNotificationsEnabled}
+                    aria-label="Task notifications"
+                    disabled={settingsLoading || settingsSaving}
+                    onClick={() =>
+                      saveSettings({
+                        taskNotificationsEnabled: !taskNotificationsEnabled,
+                      })
+                    }
+                  >
+                    <span />
+                  </button>
+                </div>
+              </article>
             </div>
 
             <p className="settings-footnote">
@@ -4246,17 +4266,7 @@ async function undoDeleteTask() {
 
         )}
 
-        <footer className="app-footer">
-          <span>
-            <GraduationCap size={16} />
-            StudyOS
-          </span>
 
-          <span>
-            -Abdul Mohtasim-
-            <Sparkles size={13} />
-          </span>
-        </footer>
       </main>
     </div>
   );
