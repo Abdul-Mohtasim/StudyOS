@@ -33,19 +33,7 @@ import {
   Quote,
   RefreshCw,
   LogOut,
-  Calculator,
-  Atom,
-  Languages,
-  FlaskConical,
-  Code2,
-  Globe2,
-  Palette,
-  Landmark,
-  Microscope,
-  Music2,
-  Brain,
   ChartNoAxesCombined,
-  BookText,
   NotebookText,
   SlidersHorizontal,
   ArrowRight,
@@ -62,6 +50,23 @@ import {
   Eye,
   EyeOff,
   ChevronLeft,
+  Calculator,
+  Atom,
+  FlaskConical,
+  Dna,
+  Laptop,
+  Feather,
+  Languages,
+  Hourglass,
+  Globe,
+  Landmark,
+  Banknote,
+  Palette,
+  Music,
+  Dumbbell,
+  Brain,
+  Scale,
+  Microscope,
 } from "lucide-react";
 
 import "./App.css";
@@ -73,30 +78,6 @@ const API_BASE_URL = import.meta.env.DEV
 // StudyOS logo (inline SVG, so no extra file is needed).
 const STUDYOS_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -8 144 144" width="128" height="128" role="img" aria-label="StudyOS logo"><g fill="#E4585F" transform="translate(0 -5)"><path d="M64 24L124 54L64 84L4 54Z"/><path d="M28 74L64 92L100 74V96C100 106 84 114 64 114C44 114 28 106 28 96Z"/><path d="M112 60V97" stroke="#E4585F" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="112" cy="101" r="5"/></g></svg>`;
 const STUDYOS_LOGO_SRC = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(STUDYOS_LOGO_SVG)}`;
-
-const subjectIconMap = {
-  mathematics: Calculator,
-  math: Calculator,
-  physics: Atom,
-  chemistry: FlaskConical,
-  biology: Microscope,
-  english: Languages,
-  programming: Code2,
-  computer: Code2,
-  "computer science": Code2,
-  geography: Globe2,
-  art: Palette,
-  history: Landmark,
-  music: Music2,
-  psychology: Brain,
-  economics: ChartNoAxesCombined,
-  literature: BookText,
-};
-
-const fallbackSubjectIcons = [
-  BookText, FlaskConical, Globe2, Brain, Landmark, Code2,
-  Microscope, Palette, Music2, ChartNoAxesCombined, Languages, Atom,
-];
 
 const reminders = [
   {
@@ -216,6 +197,21 @@ function getLocalDateKey(date) {
     2,
     "0"
   )}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+// "Today", "Yesterday", weekday name or short date for the session history.
+function describeSessionDay(isoString) {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return "";
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfDay = new Date(date);
+  startOfDay.setHours(0, 0, 0, 0);
+  const diff = Math.round((startOfToday - startOfDay) / 86400000);
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  if (diff > 1 && diff < 7) return date.toLocaleDateString([], { weekday: "long" });
+  return date.toLocaleDateString([], { month: "short", day: "numeric" });
 }
 
 // ---------- Public landing page (shown to visitors who are not signed in) ----------
@@ -1059,6 +1055,581 @@ function AuthMascot({ mood, bubble, typed }) {
   );
 }
 
+// ---------- Dashboard motion helpers ----------
+
+// Counts a number up (or down) smoothly whenever the value changes.
+function CountUp({ value, decimals = 0, duration = 1000 }) {
+  const target = Number(value) || 0;
+  const [shown, setShown] = useState(0);
+  const fromRef = useRef(0);
+
+  useEffect(() => {
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduce) {
+      fromRef.current = target;
+      setShown(target);
+      return undefined;
+    }
+
+    const from = fromRef.current;
+    const startedAt = performance.now();
+    let frame = 0;
+
+    const tick = (now) => {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - progress, 4);
+      const next = from + (target - from) * eased;
+      fromRef.current = next;
+      setShown(next);
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [target, duration]);
+
+  return <>{shown.toFixed(decimals)}</>;
+}
+
+// A subject icon that is generated from the subject's own name, so nothing is
+// hard-coded: every subject gets its own colours, pattern and monogram.
+function hashString(text) {
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+// Same hue the subject badge uses, so notes can share their subject's colour.
+function getSubjectHue(name) {
+  const clean = String(name || "?").trim() || "?";
+  return hashString(clean.toLowerCase()) % 360;
+}
+
+// Picks an icon that matches the subject's meaning (Mathematics -> calculator,
+// Chemistry -> flask, Biology -> DNA ...). Unknown subjects get an open book.
+const SUBJECT_ICON_RULES = [
+  [/math|algebra|calcul|geometry|trigon|arithmetic/, Calculator],
+  [/physic|mechanic|quantum/, Atom],
+  [/chem/, FlaskConical],
+  [/bio|botany|zoology|genetic/, Dna],
+  [/comput|program|coding|software|informatic|\bit\b|\bics\b|web|cyber/, Laptop],
+  [/islam|quran|qur'an|deeniyat|religio|theolog|hadith|fiqh|seerah/, Moon],
+  [/urdu|poetry|poem/, Feather],
+  [/english|arabic|french|german|spanish|hindi|persian|punjabi|sindhi|language|literature|grammar|linguist/, Languages],
+  [/histor/, Hourglass],
+  [/geograph|geo\b|earth|environment/, Globe],
+  [/pakistan|civic|social|politic|govern|constitution|sociolog|study of/, Landmark],
+  [/econom|business|account|financ|commerce|banking/, Banknote],
+  [/statist|data|probabil/, ChartNoAxesCombined],
+  [/\bart\b|arts\b|drawing|design|paint|sketch/, Palette],
+  [/music|singing|piano|guitar/, Music],
+  [/sport|physical|\bpe\b|fitness|gym|health|exercise/, Dumbbell],
+  [/psycholog|mind|philosoph|logic/, Brain],
+  [/\blaw\b|legal|justice/, Scale],
+  [/science|lab|medic|anatom/, Microscope],
+  [/personal|self|general|life|routine/, User],
+];
+
+function getSubjectIcon(name) {
+  const text = String(name || "").toLowerCase();
+  const match = SUBJECT_ICON_RULES.find(([pattern]) => pattern.test(text));
+  return match ? match[1] : BookOpen;
+}
+
+function SubjectBadge({ name, mini = false }) {
+  const clean = String(name || "?").trim() || "?";
+  const hash = hashString(clean.toLowerCase());
+  const hue = hash % 360;
+  const hueTwo = (hue + 32 + ((hash >>> 9) % 44)) % 360;
+  const pattern = (hash >>> 5) % 4;
+  const spin = 7 + ((hash >>> 12) % 7);
+  const SubjectIcon = getSubjectIcon(clean);
+
+  return (
+    <span
+      className={`subject-icon sb-badge${mini ? " sb-mini" : ""}`}
+      aria-hidden="true"
+      style={{
+        background: `linear-gradient(135deg, hsl(${hue} 78% 58%), hsl(${hueTwo} 80% 44%))`,
+        "--sb-spin": `${spin}s`,
+        "--sb-delay": `${-(hash % 5000) / 1000}s`,
+        border: 0,
+        color: "#fff",
+      }}
+    >
+      <svg className="sb-art" viewBox="0 0 40 40" focusable="false">
+        {pattern === 0 && (
+          <g fill="none" stroke="#fff" strokeOpacity=".28" strokeWidth="2">
+            <circle cx="30" cy="10" r="9" />
+            <circle cx="30" cy="10" r="16" />
+            <circle cx="30" cy="10" r="23" />
+          </g>
+        )}
+        {pattern === 1 && (
+          <g stroke="#fff" strokeOpacity=".24" strokeWidth="3" strokeLinecap="round">
+            <path d="M-2 22L22 -2M-2 34L34 -2M4 42L42 4M18 44L44 18" />
+          </g>
+        )}
+        {pattern === 2 && (
+          <g fill="#fff" fillOpacity=".3">
+            {[8, 18, 28, 38].flatMap((x) =>
+              [8, 18, 28, 38].map((y) => (
+                <circle key={`${x}-${y}`} cx={x} cy={y} r="1.8" />
+              ))
+            )}
+          </g>
+        )}
+        {pattern === 3 && (
+          <g fill="none" stroke="#fff" strokeOpacity=".3" strokeWidth="2.4" strokeLinecap="round">
+            <path d="M-2 14q7-8 14 0t14 0t14 0" />
+            <path d="M-2 26q7-8 14 0t14 0t14 0" />
+            <path d="M-2 38q7-8 14 0t14 0t14 0" />
+          </g>
+        )}
+        <g className="sb-orbit">
+          <circle cx="34" cy="6" r="2.2" fill="#fff" fillOpacity=".95" />
+        </g>
+      </svg>
+      <span className="sb-letters">
+        <SubjectIcon size={mini ? 10 : 21} strokeWidth={2.2} aria-hidden="true" />
+      </span>
+    </span>
+  );
+}
+
+// Duolingo-style streak flame: three flickering layers, a morphing outline,
+// rising embers, a glow, and a burst when the streak changes.
+let flameInstance = 0;
+
+const FLAME_OUTER = [
+  [32, 3, 35, 17, 53, 27, 53, 50, 53, 66, 44, 77, 32, 77, 20, 77, 11, 66, 11, 50, 11, 39, 17, 32, 23, 26, 23, 33, 26, 37, 30, 38, 27, 27, 28, 14, 32, 3],
+  [36, 3, 38, 16, 54, 28, 53, 50, 53, 66, 44, 77, 32, 77, 20, 77, 11, 66, 11, 50, 11, 41, 15, 34, 20, 28, 22, 34, 27, 38, 31, 38, 31, 27, 34, 14, 36, 3],
+  [28, 4, 31, 17, 52, 26, 53, 50, 53, 66, 44, 77, 32, 77, 20, 77, 11, 66, 11, 50, 11, 38, 19, 30, 26, 24, 24, 32, 26, 36, 29, 38, 24, 28, 24, 15, 28, 4],
+];
+
+const FLAME_MID = [
+  [32, 24, 34, 33, 44, 39, 44, 54, 44, 65, 38, 72, 32, 72, 26, 72, 20, 65, 20, 54, 20, 47, 24, 43, 27, 40, 27, 45, 29, 48, 31, 48, 30, 40, 30, 31, 32, 24],
+  [34, 23, 36, 32, 45, 40, 44, 54, 44, 65, 38, 72, 32, 72, 26, 72, 20, 65, 20, 54, 20, 48, 23, 44, 26, 41, 28, 46, 30, 48, 32, 48, 32, 40, 33, 30, 34, 23],
+  [30, 25, 33, 34, 43, 38, 44, 54, 44, 65, 38, 72, 32, 72, 26, 72, 20, 65, 20, 54, 20, 46, 25, 42, 28, 39, 26, 44, 28, 48, 30, 48, 29, 40, 29, 32, 30, 25],
+];
+
+function buildFlamePath(n) {
+  return `M${n[0]} ${n[1]}C${n[2]} ${n[3]} ${n[4]} ${n[5]} ${n[6]} ${n[7]}C${n[8]} ${n[9]} ${n[10]} ${n[11]} ${n[12]} ${n[13]}C${n[14]} ${n[15]} ${n[16]} ${n[17]} ${n[18]} ${n[19]}C${n[20]} ${n[21]} ${n[22]} ${n[23]} ${n[24]} ${n[25]}C${n[26]} ${n[27]} ${n[28]} ${n[29]} ${n[30]} ${n[31]}C${n[32]} ${n[33]} ${n[34]} ${n[35]} ${n[36]} ${n[37]}Z`;
+}
+
+const EMBERS = [
+  { x: 24, dx: -9, delay: 0, dur: 2.4, r: 1.9 },
+  { x: 38, dx: 8, delay: 0.7, dur: 2.9, r: 1.5 },
+  { x: 30, dx: -3, delay: 1.3, dur: 2.2, r: 2.1 },
+  { x: 42, dx: 12, delay: 1.9, dur: 3.1, r: 1.3 },
+  { x: 20, dx: -13, delay: 2.4, dur: 2.7, r: 1.4 },
+  { x: 34, dx: 4, delay: 0.3, dur: 3.3, r: 1.1 },
+];
+
+function StreakFlame({ streak = 0, size = 48, rich = false }) {
+  const idRef = useRef(null);
+  if (idRef.current === null) {
+    flameInstance += 1;
+    idRef.current = flameInstance;
+  }
+  const id = idRef.current;
+  const lit = streak > 0;
+  const tier = !lit ? "off" : streak >= 30 ? "blue" : streak >= 7 ? "hot" : "warm";
+  const reduce =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const morph = lit && !reduce;
+  const embers = lit ? (rich ? EMBERS : EMBERS.slice(0, 3)) : [];
+
+  const outerValues = [...FLAME_OUTER, FLAME_OUTER[0]].map(buildFlamePath).join(";");
+  const midValues = [...FLAME_MID, FLAME_MID[0]].map(buildFlamePath).join(";");
+
+  return (
+    <span
+      key={`${tier}-${streak}`}
+      className={`sf-wrap sf-${tier}${rich ? " sf-rich" : ""}`}
+      style={{ width: size * 0.8, height: size, fontSize: size }}
+      aria-hidden="true"
+    >
+      <span className="sf-glow" />
+      {lit && (
+        <span className="sf-burst">
+          <span className="sf-shock" />
+          {[0, 60, 120, 180, 240, 300].map((angle) => (
+            <i key={angle} style={{ "--a": `${angle}deg` }} />
+          ))}
+        </span>
+      )}
+      <svg className="sf-svg" viewBox="0 0 64 80" focusable="false">
+        <defs>
+          <linearGradient id={`sfo${id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="var(--sf-o1)" />
+            <stop offset="1" stopColor="var(--sf-o2)" />
+          </linearGradient>
+          <linearGradient id={`sfm${id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="var(--sf-m1)" />
+            <stop offset="1" stopColor="var(--sf-m2)" />
+          </linearGradient>
+          <linearGradient id={`sfc${id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="var(--sf-c1)" />
+            <stop offset="1" stopColor="var(--sf-c2)" />
+          </linearGradient>
+        </defs>
+
+        <g className="sf-flame">
+          <path className="sf-outer" fill={`url(#sfo${id})`} d={buildFlamePath(FLAME_OUTER[0])}>
+            {morph && (
+              <animate attributeName="d" dur="2.4s" repeatCount="indefinite" values={outerValues} />
+            )}
+          </path>
+          <path className="sf-mid" fill={`url(#sfm${id})`} d={buildFlamePath(FLAME_MID[0])}>
+            {morph && (
+              <animate attributeName="d" dur="1.7s" repeatCount="indefinite" values={midValues} />
+            )}
+          </path>
+          <path
+            className="sf-core"
+            fill={`url(#sfc${id})`}
+            d="M32 46C34 51 38 54 38 60C38 66 35 69 32 69C29 69 26 66 26 60C26 55 29 52 32 46Z"
+          />
+          <ellipse className="sf-shine" cx="19" cy="52" rx="2.4" ry="6" transform="rotate(14 19 52)" />
+        </g>
+
+        {embers.map((ember, index) => (
+          <circle
+            key={index}
+            className="sf-ember"
+            cx={ember.x}
+            cy="64"
+            r={ember.r}
+            style={{
+              "--dx": `${ember.dx}px`,
+              animationDelay: `${ember.delay}s`,
+              animationDuration: `${ember.dur}s`,
+            }}
+          />
+        ))}
+      </svg>
+    </span>
+  );
+}
+
+// ---------- Welcome banner: animated "study universe" scene ----------
+// Layers: a pointer-reactive particle network (canvas), a 3D tilted orbit
+// system with subject icons, a pulsing core, comets, and live glass cards.
+const BANNER_RINGS = [
+  { d: 44, t: 26, nodes: [[Timer, 0], [Flame, 120], [Check, 240]] },
+  { d: 68, t: 38, nodes: [[NotebookText, 40], [Calculator, 160], [Atom, 280]] },
+  { d: 92, t: 54, nodes: [[GraduationCap, 0], [Brain, 90], [Languages, 180], [Target, 270]] },
+];
+
+function BannerScene({ done, total, streak, minutes, goalPercent }) {
+  const stageRef = useRef(null);
+  const canvasRef = useRef(null);
+
+  // Pointer parallax for the whole stage.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return undefined;
+    const host = stage.closest(".welcome-banner") || stage;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return undefined;
+
+    let frame = 0;
+    const onMove = (event) => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const box = host.getBoundingClientRect();
+        const x = ((event.clientX - box.left) / box.width - 0.5) * 2;
+        const y = ((event.clientY - box.top) / box.height - 0.5) * 2;
+        stage.style.setProperty("--px", Math.max(-1, Math.min(1, x)).toFixed(3));
+        stage.style.setProperty("--py", Math.max(-1, Math.min(1, y)).toFixed(3));
+      });
+    };
+    const onLeave = () => {
+      stage.style.setProperty("--px", "0");
+      stage.style.setProperty("--py", "0");
+    };
+
+    host.addEventListener("pointermove", onMove, { passive: true });
+    host.addEventListener("pointerleave", onLeave);
+    return () => {
+      cancelAnimationFrame(frame);
+      host.removeEventListener("pointermove", onMove);
+      host.removeEventListener("pointerleave", onLeave);
+    };
+  }, []);
+
+  // Particle constellation: drifts, links nearby dots, reacts to the pointer,
+  // bursts outward on click, pauses when off-screen or the tab is hidden.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return undefined;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return undefined;
+
+    const host = canvas.parentElement;
+    const banner = canvas.closest(".welcome-banner") || host;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    let width = 0;
+    let height = 0;
+    let raf = 0;
+    let visible = true;
+    let particles = [];
+    const pointer = { x: -9999, y: -9999 };
+
+    function resize() {
+      const box = host.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = Math.max(1, box.width);
+      height = Math.max(1, box.height);
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const count = Math.max(16, Math.min(56, Math.round((width * height) / 8500)));
+      particles = Array.from({ length: count }, () => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        r: Math.random() * 1.5 + 0.7,
+        tw: Math.random() * Math.PI * 2,
+      }));
+      if (reduce) draw(0);
+    }
+
+    function draw(time) {
+      ctx.clearRect(0, 0, width, height);
+      const link = Math.min(125, width * 0.28);
+
+      for (let i = 0; i < particles.length; i += 1) {
+        const p = particles[i];
+
+        if (!reduce) {
+          const dx = p.x - pointer.x;
+          const dy = p.y - pointer.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 150 && dist > 0.1) {
+            const force = (1 - dist / 150) * 0.05;
+            p.vx += (dx / dist) * force;
+            p.vy += (dy / dist) * force;
+          }
+          p.vx *= 0.985;
+          p.vy *= 0.985;
+          const speed = Math.hypot(p.vx, p.vy);
+          if (speed < 0.12) {
+            p.vx += (Math.random() - 0.5) * 0.02;
+            p.vy += (Math.random() - 0.5) * 0.02;
+          }
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x < -10) p.x = width + 10;
+          if (p.x > width + 10) p.x = -10;
+          if (p.y < -10) p.y = height + 10;
+          if (p.y > height + 10) p.y = -10;
+        }
+
+        const glow = 0.45 + 0.4 * Math.sin(time / 700 + p.tw);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${glow.toFixed(3)})`;
+        ctx.fill();
+
+        for (let j = i + 1; j < particles.length; j += 1) {
+          const q = particles[j];
+          const d = Math.hypot(p.x - q.x, p.y - q.y);
+          if (d < link) {
+            ctx.strokeStyle = `rgba(255,255,255,${((1 - d / link) * 0.22).toFixed(3)})`;
+            ctx.lineWidth = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(q.x, q.y);
+            ctx.stroke();
+          }
+        }
+
+        const pd = Math.hypot(p.x - pointer.x, p.y - pointer.y);
+        if (pd < 130) {
+          ctx.strokeStyle = `rgba(255,214,200,${((1 - pd / 130) * 0.55).toFixed(3)})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(pointer.x, pointer.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    function loop(time) {
+      if (!visible || document.hidden) {
+        raf = 0;
+        return;
+      }
+      draw(time);
+      raf = requestAnimationFrame(loop);
+    }
+
+    function start() {
+      if (reduce || raf) return;
+      raf = requestAnimationFrame(loop);
+    }
+
+    function onMove(event) {
+      const box = canvas.getBoundingClientRect();
+      pointer.x = event.clientX - box.left;
+      pointer.y = event.clientY - box.top;
+    }
+    function onLeave() {
+      pointer.x = -9999;
+      pointer.y = -9999;
+    }
+    function onDown(event) {
+      const box = canvas.getBoundingClientRect();
+      const cx = event.clientX - box.left;
+      const cy = event.clientY - box.top;
+      particles.forEach((p) => {
+        const dx = p.x - cx;
+        const dy = p.y - cy;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 220 && dist > 0.1) {
+          const push = (1 - dist / 220) * 4.2;
+          p.vx += (dx / dist) * push;
+          p.vy += (dy / dist) * push;
+        }
+      });
+    }
+    function onVisibility() {
+      if (!document.hidden) start();
+    }
+
+    resize();
+
+    const resizeObserver =
+      "ResizeObserver" in window ? new ResizeObserver(resize) : null;
+    resizeObserver?.observe(host);
+
+    const io =
+      "IntersectionObserver" in window
+        ? new IntersectionObserver(
+            ([entry]) => {
+              visible = entry.isIntersecting;
+              if (visible) start();
+            },
+            { threshold: 0.01 }
+          )
+        : null;
+    io?.observe(host);
+
+    banner.addEventListener("pointermove", onMove, { passive: true });
+    banner.addEventListener("pointerleave", onLeave);
+    banner.addEventListener("pointerdown", onDown, { passive: true });
+    document.addEventListener("visibilitychange", onVisibility);
+    start();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      resizeObserver?.disconnect();
+      io?.disconnect();
+      banner.removeEventListener("pointermove", onMove);
+      banner.removeEventListener("pointerleave", onLeave);
+      banner.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
+  const weekHours = minutes / 60;
+
+  return (
+    <div className="banner-stage" ref={stageRef} aria-hidden="true">
+      <canvas ref={canvasRef} className="bs-canvas" />
+
+      <span className="bs-comet bs-comet-a" />
+      <span className="bs-comet bs-comet-b" />
+      <span className="bs-comet bs-comet-c" />
+
+      <div className="bs-scene">
+        <div className="bs-plane">
+          {BANNER_RINGS.map((ring, ringIndex) => (
+            <div
+              className="bs-ring"
+              key={ring.d}
+              style={{ "--d": `${ring.d}cqmin`, "--t": `${ring.t}s`, "--r": ringIndex }}
+            >
+              {ring.nodes.map(([NodeIcon, angle]) => (
+                <span className="bs-node" key={angle} style={{ "--a": `${angle}deg` }}>
+                  <span className="bs-node-spin">
+                    <span className="bs-node-face">
+                      <NodeIcon size={16} strokeWidth={2.2} />
+                    </span>
+                  </span>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <div className="bs-core">
+          <span className="bs-pulse" />
+          <span className="bs-pulse" />
+          <span className="bs-pulse" />
+          <span className="bs-core-orb">
+            <BookMarked size={38} strokeWidth={1.5} />
+          </span>
+          <Sparkles className="bs-spark bs-spark-a" size={20} />
+          <Sparkles className="bs-spark bs-spark-b" size={14} />
+          <Sparkles className="bs-spark bs-spark-c" size={16} />
+        </div>
+      </div>
+
+      <div className="bs-card bs-card-tasks" style={{ "--k": 14 }}>
+        <span className="bs-card-icon">
+          <Check size={16} strokeWidth={3} />
+        </span>
+        <div>
+          <strong>
+            <CountUp value={done} /> / {total}
+          </strong>
+          <small>Tasks done</small>
+        </div>
+      </div>
+
+      <div className="bs-card bs-card-streak" style={{ "--k": -18 }}>
+        <StreakFlame streak={streak} size={34} />
+        <div>
+          <strong>
+            <CountUp value={streak} /> {streak === 1 ? "day" : "days"}
+          </strong>
+          <small>Study streak</small>
+        </div>
+      </div>
+
+      <div className="bs-card bs-card-goal" style={{ "--k": 22 }}>
+        <div className="bs-goal-head">
+          <small>Daily goal</small>
+          <strong>
+            <CountUp value={goalPercent} />%
+          </strong>
+        </div>
+        <div className="bs-goal-track">
+          <span style={{ width: `${goalPercent}%` }} />
+        </div>
+        <div className="bs-goal-foot">
+          <Clock3 size={12} />
+          <CountUp value={weekHours} decimals={1} /> hrs this week
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 export default function App() {
   // ---------- Authentication ----------
   const [student, setStudent] = useState(null);
@@ -1192,10 +1763,37 @@ useEffect(() => {
   const [showStudyTip, setShowStudyTip] = useState(false);
   const [reloadVersion, setReloadVersion] = useState(0);
 
+  // ---------- Streak calendar popup ----------
+  const [streakCalendarOpen, setStreakCalendarOpen] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const first = new Date();
+    first.setDate(1);
+    first.setHours(0, 0, 0, 0);
+    return first;
+  });
+
   // ---------- Effects ----------
   useEffect(() => {
     setDisplayNameDraft(student?.displayName || student?.name || "");
   }, [student?.displayName, student?.name]);
+
+  // Streak calendar: close with Escape and keep the page from scrolling behind it.
+  useEffect(() => {
+    if (!streakCalendarOpen) return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setStreakCalendarOpen(false);
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [streakCalendarOpen]);
 
   // Restore a saved login session.
   useEffect(() => {
@@ -1429,6 +2027,79 @@ useEffect(() => {
       // The active theme still works for this session if storage is unavailable.
     }
   }, [settingsTheme]);
+
+  // Dashboard motion: click ripples on buttons. (The cursor-following
+  // spotlight and 3D tilt effects were removed.)
+  useEffect(() => {
+    const reduceMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    function onPointerDown(event) {
+      if (reduceMotion) return;
+      const button = event.target.closest?.(
+        ".study-app .add-task-button, .study-app .primary-link, .study-app .focus-start-button, .study-app .focus-reset-button, .study-app .settings-save-button, .study-app .primary-button"
+      );
+      if (!button || button.disabled) return;
+
+      const box = button.getBoundingClientRect();
+      const size = Math.max(box.width, box.height) * 1.6;
+      const ripple = document.createElement("span");
+      ripple.className = "sm-ripple";
+      ripple.style.width = `${size}px`;
+      ripple.style.height = `${size}px`;
+      ripple.style.left = `${event.clientX - box.left - size / 2}px`;
+      ripple.style.top = `${event.clientY - box.top - size / 2}px`;
+      button.appendChild(ripple);
+      window.setTimeout(() => ripple.remove(), 700);
+    }
+
+    document.addEventListener("pointerdown", onPointerDown, { passive: true });
+
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
+  }, []);
+
+  // Scroll-reveal fallback (only used where CSS scroll-driven animation is missing).
+  useEffect(() => {
+    if (!student) return undefined;
+
+    const nativeReveal = window.CSS?.supports?.("animation-timeline: view()");
+    const reduceMotion = window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    if (nativeReveal || reduceMotion || !("IntersectionObserver" in window)) {
+      return undefined;
+    }
+
+    const root = document.documentElement;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("sm-in");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.08, rootMargin: "0px 0px -30px 0px" }
+    );
+
+    const timer = window.setTimeout(() => {
+      document
+        .querySelectorAll(".study-app .panel, .study-app .stat-card")
+        .forEach((node) => observer.observe(node));
+      root.classList.add("sm-js-reveal");
+    }, 60);
+
+    return () => {
+      window.clearTimeout(timer);
+      observer.disconnect();
+      root.classList.remove("sm-js-reveal");
+    };
+  }, [student]);
 
   // Load weekly planner tasks.
   useEffect(() => {
@@ -1709,45 +2380,43 @@ useEffect(() => {
     }
   }
 
+  // Native (Capacitor / Android) Google sign-in. This lives OUTSIDE
+  // handleGoogleSuccess so it can actually be called from the button.
+  async function handleNativeGoogleSignIn() {
+    setAuthError("");
+
+    try {
+      const result = await GoogleSignIn.signIn();
+
+      if (!result?.idToken) {
+        throw new Error("Google did not return an ID token. Please try again.");
+      }
+
+      await handleGoogleSuccess({ idToken: result.idToken });
+    } catch (error) {
+      console.error("Native Google sign-in error:", error);
+
+      if (
+        error?.code === "SIGN_IN_CANCELED" ||
+        error?.message?.toLowerCase()?.includes("cancel")
+      ) {
+        return;
+      }
+
+      setAuthError(
+        error?.message || "Native Google sign-in failed. Please try again."
+      );
+    }
+  }
+
   async function handleGoogleSuccess(googleResponse) {
     const credential =
-  googleResponse?.credential || googleResponse?.idToken;
+      googleResponse?.credential || googleResponse?.idToken;
 
-if (!credential) {
-  setAuthError("Google did not return a credential. Please try again.");
-  return;
-}
-
-
-
-async function handleNativeGoogleSignIn() {
-  setAuthError("");
-
-  try {
-    const result = await GoogleSignIn.signIn();
-
-    if (!result?.idToken) {
-      throw new Error("Google did not return an ID token. Please try again.");
-    }
-
-    await handleGoogleSuccess({ idToken: result.idToken });
-  } catch (error) {
-    console.error("Native Google sign-in error:", error);
-
-    if (
-      error?.code === "SIGN_IN_CANCELED" ||
-      error?.message?.toLowerCase()?.includes("cancel")
-    ) {
+    if (!credential) {
+      setAuthError("Google did not return a credential. Please try again.");
       return;
     }
-
-    setAuthError(
-      error?.message || "Native Google sign-in failed. Please try again."
-    );
-  }
-}
-
-
 
     setAuthLoading(true);
     setAuthError("");
@@ -1904,6 +2573,14 @@ async function handleNativeGoogleSignIn() {
     setEndTime(null);
   }
 
+  function applyPreset(minutes) {
+    if (isRunning) return;
+    setDurationMinutes(minutes);
+    setSecondsLeft(minutes * 60);
+    setSessionCompleted(false);
+    setEndTime(null);
+  }
+
   function startTimer() {
     if (focusSessionsLoading) {
       setNotice("Loading your focus history. Please wait a moment.");
@@ -1915,12 +2592,19 @@ async function handleNativeGoogleSignIn() {
       return;
     }
 
-    if (secondsLeft <= 0 || isRunning) return;
+    if (isRunning) return;
+
+    // After a finished session the clock sits at 0; start a fresh one.
+    let remaining = secondsLeft;
+    if (remaining <= 0) {
+      remaining = durationMinutes * 60;
+      setSecondsLeft(remaining);
+    }
 
     completionRecordedRef.current = false;
     setSessionCompleted(false);
 
-    setEndTime(Date.now() + secondsLeft * 1000);
+    setEndTime(Date.now() + remaining * 1000);
     setIsRunning(true);
   }
 
@@ -2063,6 +2747,43 @@ async function handleNativeGoogleSignIn() {
 
   const maxDailyMinutes = Math.max(1, ...weeklyActivity.map((day) => day.minutes));
 
+  // Streak calendar (Sunday-first month grid). A day is "studied" when at least
+  // one focus session was completed on it.
+  const calendarYear = calendarMonth.getFullYear();
+  const calendarMonthIndex = calendarMonth.getMonth();
+  const calendarLeadingBlanks = new Date(calendarYear, calendarMonthIndex, 1).getDay();
+  const calendarDaysInMonth = new Date(calendarYear, calendarMonthIndex + 1, 0).getDate();
+  const calendarCells = [
+    ...Array.from({ length: calendarLeadingBlanks }, () => null),
+    ...Array.from({ length: calendarDaysInMonth }, (_, index) => {
+      const key = getLocalDateKey(new Date(calendarYear, calendarMonthIndex, index + 1));
+      return {
+        day: index + 1,
+        key,
+        done: sessionDateKeys.has(key),
+        isToday: key === todayKey,
+      };
+    }),
+  ];
+  const calendarStudiedDays = calendarCells.filter((cell) => cell && cell.done).length;
+  const isCurrentCalendarMonth =
+    calendarYear === today.getFullYear() && calendarMonthIndex === today.getMonth();
+  const calendarTitle = calendarMonth.toLocaleDateString([], {
+    month: "long",
+    year: "numeric",
+  });
+
+  const longestSessionMinutes = focusSessions.reduce(
+    (best, session) => Math.max(best, Number(session.durationMinutes) || 0),
+    0
+  );
+
+  function shiftCalendarMonth(delta) {
+    setCalendarMonth(
+      (current) => new Date(current.getFullYear(), current.getMonth() + delta, 1)
+    );
+  }
+
   const completionPercent =
     tasks.length === 0 ? 0 : Math.round((completedCount / tasks.length) * 100);
 
@@ -2101,18 +2822,6 @@ const visibleTasks = tasks.filter((task) => {
     });
     return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
   })();
-
-  // Give every visible subject its own distinct Lucide icon.
-  const subjectIconAssignments = new Map();
-  const usedSubjectIcons = new Set();
-  subjects.forEach((subject, index) => {
-    const preferredIcon = subjectIconMap[subject.name.toLowerCase()];
-    const SubjectIcon =
-      (preferredIcon && !usedSubjectIcons.has(preferredIcon) && preferredIcon) ||
-      fallbackSubjectIcons.find((Icon) => !usedSubjectIcons.has(Icon)) || BookText;
-    usedSubjectIcons.add(SubjectIcon);
-    subjectIconAssignments.set(subject.name, SubjectIcon);
-  });
 
   // A subject is completed when it has at least one task and every task is done.
   // Completed subjects remain available in the history area; their tasks and notes are untouched.
@@ -3179,16 +3888,33 @@ async function undoDeleteTask() {
             </div>
 
             <div className="as-google">
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={() => {
-                  setAuthError("Google sign-in failed. Please try again.");
-                }}
-                text="continue_with"
-                theme={settingsTheme === "dark" ? "filled_black" : "outline"}
-                size="large"
-                shape="pill"
-              />
+              {Capacitor.getPlatform() === "android" ? (
+                <button
+                  type="button"
+                  className="as-google-native"
+                  onClick={handleNativeGoogleSignIn}
+                  disabled={authLoading}
+                >
+                  <svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true">
+                    <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z" />
+                    <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z" />
+                    <path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z" />
+                    <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z" />
+                  </svg>
+                  Continue with Google
+                </button>
+              ) : (
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => {
+                    setAuthError("Google sign-in failed. Please try again.");
+                  }}
+                  text="continue_with"
+                  theme={settingsTheme === "dark" ? "filled_black" : "outline"}
+                  size="large"
+                  shape="pill"
+                />
+              )}
             </div>
 
             {authLoading && (
@@ -3642,7 +4368,9 @@ async function undoDeleteTask() {
               </div>
 
               <h1>
-                {activeSection === "settings" ? "Settings" : <>Good day, {getGreetingName(student)}<span className="wave"> ✦</span></>}
+                {activeSection === "settings"
+                  ? "Settings"
+                  : <>Good day, {getGreetingName(student)}</>}
               </h1>
 
               <p className="subtitle">
@@ -3656,12 +4384,40 @@ async function undoDeleteTask() {
 
         <div className="dashboard-page-content" hidden={activeSection === "settings"}>
         <section className="welcome-banner">
+          <span className="wb-grid" aria-hidden="true" />
+          <span className="wb-aurora wb-aurora-a" aria-hidden="true" />
+          <span className="wb-aurora wb-aurora-b" aria-hidden="true" />
+
           <div className="welcome-copy">
             <span className="eyebrow">
               <Sparkles size={14} /> YOUR LEARNING JOURNEY
             </span>
 
-            <h2>Make today count.</h2>
+            <h2 className="wb-title" aria-label="Make today count.">
+              {["Make", "today", "count."].map((word, wordIndex) => (
+                <span className="wb-word" key={word} aria-hidden="true">
+                  {word.split("").map((letter, letterIndex) => (
+                    <span
+                      className="wb-ch"
+                      key={`${word}-${letterIndex}`}
+                      style={{ "--i": wordIndex * 6 + letterIndex }}
+                    >
+                      {letter}
+                    </span>
+                  ))}
+                </span>
+              ))}
+            </h2>
+
+            <p className="wb-ticker" aria-hidden="true">
+              Study
+              <span className="wb-slot">
+                <i>smarter</i>
+                <i>calmer</i>
+                <i>longer</i>
+                <i>smarter</i>
+              </span>
+            </p>
 
             <p>Focus on what matters. You are making progress, one task at a time.</p>
 
@@ -3670,21 +4426,13 @@ async function undoDeleteTask() {
             </a>
           </div>
 
-          <div className="banner-art" aria-hidden="true">
-            <div className="art-orbit orbit-one" />
-            <div className="art-orbit orbit-two" />
-            <div className="art-book">
-              <BookMarked
-  size={52}
-  strokeWidth={1.3}
-  color="#ffffff"
-  aria-hidden="true"
-/>
-            </div>
-            <Sparkles className="art-sparkle sparkle-one" size={24} />
-            <Sparkles className="art-sparkle sparkle-two" size={16} />
-            <span className="art-star">✦</span>
-          </div>
+          <BannerScene
+            done={completedCount}
+            total={tasks.length}
+            streak={studyStreak}
+            minutes={weeklyFocusMinutes}
+            goalPercent={dailyGoalPercent}
+          />
         </section>
 
         <section className="stats-grid" aria-label="Study statistics">
@@ -3697,7 +4445,7 @@ async function undoDeleteTask() {
             </div>
 
             <div className="stat-value">
-              {completedCount}
+              <CountUp value={completedCount} />
               <span> / {tasks.length}</span>
             </div>
 
@@ -3711,13 +4459,13 @@ async function undoDeleteTask() {
           <article className="stat-card">
             <div className="stat-top">
               <span className="stat-icon orange">
-                <Flame size={19} />
+                <StreakFlame streak={studyStreak} size={30} />
               </span>
               <span className="stat-tag">CONSISTENCY</span>
             </div>
 
             <div className="stat-value">
-              {studyStreak} <span>days</span>
+              <CountUp value={studyStreak} /> <span>days</span>
             </div>
 
             <p>Study streak</p>
@@ -3734,7 +4482,7 @@ async function undoDeleteTask() {
             </div>
 
             <div className="stat-value">
-              {(weeklyFocusMinutes / 60).toFixed(1)} <span>hrs</span>
+              <CountUp value={weeklyFocusMinutes / 60} decimals={1} /> <span>hrs</span>
             </div>
 
             <p>Focus time this week</p>
@@ -3750,7 +4498,9 @@ async function undoDeleteTask() {
               <span className="stat-tag">LEARNING</span>
             </div>
 
-            <div className="stat-value">{subjects.length}</div>
+            <div className="stat-value">
+              <CountUp value={subjects.length} />
+            </div>
 
             <p>Subjects in progress</p>
 
@@ -3770,7 +4520,7 @@ async function undoDeleteTask() {
                 <p>Small, consistent sessions add up.</p>
               </div>
               <span className="goal-flame">
-                <Flame size={19} />
+                <StreakFlame streak={studyStreak} size={30} />
               </span>
             </div>
 
@@ -3780,7 +4530,9 @@ async function undoDeleteTask() {
                 style={{ "--goal-progress": `${dailyGoalPercent}%` }}
               >
                 <div className="goal-ring-inner">
-                  <strong>{dailyGoalPercent}%</strong>
+                  <strong>
+                    <CountUp value={dailyGoalPercent} />%
+                  </strong>
                   <span>today</span>
                 </div>
               </div>
@@ -3827,17 +4579,38 @@ async function undoDeleteTask() {
               </button>
             </form>
 
-            <div className="streak-strip">
-              <span className="streak-icon">
-                <Flame size={18} />
-              </span>
-              <div>
-                <strong>{studyStreak}-day study streak</strong>
+            <div className={`streak-strip streak-hero${studyStreak > 0 ? " is-lit" : ""}`}>
+              <button
+                type="button"
+                className="streak-calendar-button"
+                onClick={() => setStreakCalendarOpen(true)}
+                aria-label="Open streak calendar"
+                title="Streak calendar"
+              >
+                <CalendarDays size={18} />
+              </button>
+              <StreakFlame streak={studyStreak} size={72} rich />
+              <div className="streak-body">
+                <strong>
+                  <CountUp value={studyStreak} />-day study streak
+                </strong>
                 <span>
                   {studyStreak > 0
                     ? "You've studied on consecutive days!"
                     : "Finish a focus session today to start your streak."}
                 </span>
+                <div className="streak-week" aria-label="Study activity for the last seven days">
+                  {weeklyActivity.map((day, index) => (
+                    <span
+                      key={day.dateKey}
+                      className={`streak-day${day.minutes > 0 ? " is-done" : ""}${day.isToday ? " is-today" : ""}`}
+                      style={{ "--i": index }}
+                    >
+                      <i>{day.minutes > 0 && <Flame size={13} strokeWidth={2.4} />}</i>
+                      <em>{String(day.label).slice(0, 3)}</em>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </article>
@@ -4114,36 +4887,60 @@ async function undoDeleteTask() {
           </div>
 
           <div
-            className="weekly-chart"
+            className="wc-chart"
             role="img"
             aria-label="Daily focus minutes over the last seven days"
           >
-            {weeklyActivity.map((day) => (
-              <div className="weekly-chart-day" key={day.dateKey}>
-                <span className="weekly-chart-value">
-                  {day.minutes > 0 ? `${day.minutes}m` : ""}
-                </span>
+            <div className="wc-lines" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+              <i />
+            </div>
 
-                <div className="weekly-chart-track">
-                  <span
-                    className={`weekly-chart-bar ${day.isToday ? "today" : ""}`}
-                    style={{
-                      height: `${day.minutes === 0
-                          ? 4
-                          : Math.max(8, (day.minutes / maxDailyMinutes) * 100)
-                        }%`,
-                    }}
-                  />
-                </div>
+            <div className="wc-cols">
+              {weeklyActivity.map((day, index) => {
+                const heightPercent =
+                  day.minutes === 0
+                    ? 0
+                    : Math.max(12, Math.round((day.minutes / maxDailyMinutes) * 100));
+                const isBest =
+                  hasWeeklyActivity && day.dateKey === mostProductiveDay.dateKey;
 
-                <span
-                  className={`weekly-chart-label ${day.isToday ? "today-label" : ""
-                    }`}
-                >
-                  {day.label}
-                </span>
-              </div>
-            ))}
+                return (
+                  <div
+                    className={`wc-col${day.isToday ? " is-today" : ""}${
+                      isBest ? " is-best" : ""
+                    }${day.minutes === 0 ? " is-empty" : ""}`}
+                    key={day.dateKey}
+                    style={{ "--i": index }}
+                    tabIndex={0}
+                  >
+                    <span className="wc-tip">
+                      {day.minutes > 0 ? `${day.minutes} min` : "No focus"}
+                    </span>
+
+                    <div className="wc-track">
+                      {day.minutes === 0 ? (
+                        <span className="wc-dot" />
+                      ) : (
+                        <span
+                          className="wc-bar"
+                          style={{ "--h": `${heightPercent}%` }}
+                        >
+                          {isBest && (
+                            <Flame className="wc-crown" size={17} strokeWidth={2.4} />
+                          )}
+                          <em className="wc-val">{day.minutes}m</em>
+                        </span>
+                      )}
+                    </div>
+
+                    <span className="wc-label">{day.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="analytics-summary">
@@ -4320,7 +5117,7 @@ async function undoDeleteTask() {
                       <span className="task-title">{task.title}</span>
 
                       <span className="task-meta">
-                        <BookOpen size={12} /> {task.subject || "Personal"}
+                        <SubjectBadge name={task.subject || "Personal"} mini /> {task.subject || "Personal"}
                         <span className="meta-dot">·</span>
                         <Clock3 size={12} /> {task.time || "Anytime"}
                       </span>
@@ -4394,9 +5191,47 @@ async function undoDeleteTask() {
               <p>Choose between 1 and 180 minutes.</p>
             </div>
 
-            <div className="focus-visual">
+            <div className="fr-presets" role="group" aria-label="Quick session lengths">
+              {[5, 15, 25, 45, 60, 90].map((minutes) => (
+                <button
+                  type="button"
+                  key={minutes}
+                  className={`fr-preset${durationMinutes === minutes ? " is-active" : ""}`}
+                  onClick={() => applyPreset(minutes)}
+                  disabled={isRunning}
+                >
+                  {minutes}m
+                </button>
+              ))}
+            </div>
+
+            <div
+              className={`focus-visual fr-stage${isRunning ? " is-running" : ""}${
+                sessionCompleted ? " is-complete" : ""
+              }`}
+            >
+              <span className="fr-orbit" aria-hidden="true" />
+              <span className="fr-orbit fr-orbit-two" aria-hidden="true" />
+              <span className="fr-wave" aria-hidden="true" />
+              <span className="fr-wave fr-wave-two" aria-hidden="true" />
+              <span className="fr-wave fr-wave-three" aria-hidden="true" />
+              {[0, 1, 2, 3, 4, 5].map((spark) => (
+                <i
+                  key={spark}
+                  className="fr-spark"
+                  style={{ "--k": spark }}
+                  aria-hidden="true"
+                />
+              ))}
+              {sessionCompleted && (
+                <div className="fr-confetti" aria-hidden="true">
+                  {Array.from({ length: 14 }, (_, index) => (
+                    <i key={index} style={{ "--a": `${index * (360 / 14)}deg`, "--d": `${(index % 4) * 0.06}s` }} />
+                  ))}
+                </div>
+              )}
               <div
-                className="focus-ring"
+                className={`focus-ring${isRunning ? " is-running" : ""}${sessionCompleted ? " is-complete" : ""}`}
                 style={{ "--timer-progress": `${timerProgress}%` }}
                 role="timer"
                 aria-label={`${timerMinutes} minutes and ${timerSeconds} seconds remaining`}
@@ -4407,7 +5242,7 @@ async function undoDeleteTask() {
                   </span>
 
                   <strong>
-                    {timerMinutes}:{timerSeconds}
+                    {timerMinutes}<i className="fr-colon">:</i>{timerSeconds}
                   </strong>
 
                   <span>{sessionCompleted ? "COMPLETE" : "TIME LEFT"}</span>
@@ -4439,10 +5274,13 @@ async function undoDeleteTask() {
                   type="button"
                   className="focus-start-button"
                   onClick={startTimer}
-                  disabled={secondsLeft === 0}
                 >
                   <Play size={16} fill="currentColor" />
-                  {secondsLeft < totalSeconds ? "Resume session" : "Start focus session"}
+                  {sessionCompleted
+                    ? "Start another session"
+                    : secondsLeft < totalSeconds
+                      ? "Resume session"
+                      : "Start focus session"}
                 </button>
               )}
 
@@ -4473,6 +5311,26 @@ async function undoDeleteTask() {
               </span>
             </div>
 
+            {!focusSessionsLoading && focusSessions.length > 0 && (
+              <div className="fh-stats">
+                <div className="fh-stat">
+                  <span className="fh-stat-icon"><Check size={16} /></span>
+                  <strong><CountUp value={totalFocusSessionCount} /></strong>
+                  <small>Sessions</small>
+                </div>
+                <div className="fh-stat">
+                  <span className="fh-stat-icon"><Clock3 size={16} /></span>
+                  <strong><CountUp value={totalFocusMinutes / 60} decimals={1} /></strong>
+                  <small>Hours focused</small>
+                </div>
+                <div className="fh-stat">
+                  <span className="fh-stat-icon"><Flame size={16} /></span>
+                  <strong><CountUp value={longestSessionMinutes} /></strong>
+                  <small>Longest (min)</small>
+                </div>
+              </div>
+            )}
+
             {focusSessionsLoading ? (
               <div className="session-history-empty" role="status">
                 <RefreshCw size={21} />
@@ -4499,8 +5357,12 @@ async function undoDeleteTask() {
             ) : (
               <>
                 <div className="session-history-list">
-                  {focusSessions.map((session) => (
-                    <article className="session-history-row" key={session.id}>
+                  {focusSessions.map((session, index) => (
+                    <article
+                      className="session-history-row"
+                      key={session.id}
+                      style={{ "--i": Math.min(index, 14) }}
+                    >
                       <div className="session-history-icon">
                         <Check size={16} />
                       </div>
@@ -4516,9 +5378,27 @@ async function undoDeleteTask() {
                             timeStyle: "short",
                           })}
                         </span>
+
+                        <div className="fh-bar" aria-hidden="true">
+                          <i
+                            style={{
+                              "--w": `${Math.max(
+                                6,
+                                Math.round(
+                                  ((Number(session.durationMinutes) || 0) /
+                                    Math.max(1, longestSessionMinutes)) *
+                                    100
+                                )
+                              )}%`,
+                            }}
+                          />
+                        </div>
                       </div>
 
-                      <span className="session-history-status">Completed</span>
+                      <div className="fh-side">
+                        <span className="fh-day">{describeSessionDay(session.completedAt)}</span>
+                        <span className="session-history-status">Completed</span>
+                      </div>
                     </article>
                   ))}
                 </div>
@@ -4629,10 +5509,19 @@ async function undoDeleteTask() {
                 </div>
               ) : (
                 <div className="notes-list">
-                  {visibleNotes.map((note) => (
-                    <article className="note-card" key={note.id}>
+                  {visibleNotes.map((note, noteIndex) => (
+                    <article
+                      className="note-card"
+                      key={note.id}
+                      style={{
+                        "--nh": getSubjectHue(note.subject),
+                        "--i": Math.min(noteIndex, 12),
+                      }}
+                    >
                       <div className="note-card-top">
-                        <span className="note-subject-tag">{note.subject}</span>
+                        <span className="note-subject-tag">
+                          <SubjectBadge name={note.subject} mini /> {note.subject}
+                        </span>
 
                         <div className="note-card-actions">
                           <button
@@ -4670,6 +5559,9 @@ async function undoDeleteTask() {
                       <p className="note-card-content">{note.content}</p>
 
                       <div className="note-card-footer">
+                        <span className="note-words">
+                          {note.content.trim().split(/\s+/).filter(Boolean).length} words
+                        </span>
                         <Clock3 size={13} />
                         <span>
                           Updated{" "}
@@ -4761,8 +5653,6 @@ async function undoDeleteTask() {
                             ? "progress-25"
                             : "progress-low";
 
-                  const SubjectIcon = subjectIconAssignments.get(subject.name) || BookText;
-
                   return (
                     <article className={`subject-row${selectedSubjectsForRemoval.includes(subject.name) ? " is-selected" : ""}`} key={subject.name}>
                       <label className="subject-select-control">
@@ -4773,9 +5663,7 @@ async function undoDeleteTask() {
                           aria-label={`Select ${subject.name} for removal`}
                         />
                       </label>
-                      <div className={`subject-icon ${subject.color}`} aria-hidden="true">
-                        <SubjectIcon size={19} strokeWidth={1.8} />
-                      </div>
+                      <SubjectBadge name={subject.name} />
 
                       <div className="subject-info">
                         <div className="subject-name-line">
@@ -4836,15 +5724,12 @@ async function undoDeleteTask() {
                 ) : (
                   completedSubjects.map((subject) => {
                     const stats = getSubjectTaskStats(subject.name);
-                    const SubjectIcon = subjectIconAssignments.get(subject.name) || BookText;
                     const notesCount = subjectNotes.filter((note) =>
                       (note.subject || "Personal").trim().toLowerCase() === subject.name.toLowerCase()
                     ).length;
                     return (
                       <article className="subject-history-row" key={`history-${subject.name}`}>
-                        <div className={`subject-icon ${subject.color}`} aria-hidden="true">
-                          <SubjectIcon size={18} strokeWidth={1.8} />
-                        </div>
+                        <SubjectBadge name={subject.name} />
                         <div className="subject-history-info">
                           <strong>{subject.name}</strong>
                           <span>{stats.completed} of {stats.total} tasks completed · {notesCount} {notesCount === 1 ? "note" : "notes"}</span>
@@ -5150,11 +6035,11 @@ async function undoDeleteTask() {
                   </div>
                 </div>
 
-                <blockquote className="settings-reminder-quote">
+                <blockquote key={`q-${reminderIndex}`} className="settings-reminder-quote">
                   “{currentReminder.text}”
                 </blockquote>
-                <p className="settings-reminder-author">{currentReminder.author}</p>
-                <div className="settings-reminder-tip">
+                <p key={`a-${reminderIndex}`} className="settings-reminder-author">{currentReminder.author}</p>
+                <div key={`t-${reminderIndex}`} className="settings-reminder-tip">
                   <strong>Study tip</strong>
                   <p>{currentReminder.tip}</p>
                 </div>
@@ -5208,6 +6093,96 @@ async function undoDeleteTask() {
             </p>
           </section>
 
+        )}
+
+        {streakCalendarOpen && (
+          <div
+            className="streak-modal-overlay"
+            role="presentation"
+            onClick={() => setStreakCalendarOpen(false)}
+          >
+            <div
+              className="streak-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="streak-modal-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="streak-modal-head">
+                <h3 id="streak-modal-title">Streak Calendar</h3>
+                <button
+                  type="button"
+                  className="streak-modal-close"
+                  onClick={() => setStreakCalendarOpen(false)}
+                  aria-label="Close streak calendar"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="streak-modal-summary">
+                <StreakFlame streak={studyStreak} size={46} />
+                <div>
+                  <strong>
+                    {studyStreak}-day streak
+                  </strong>
+                  <span>
+                    {calendarStudiedDays} {calendarStudiedDays === 1 ? "day" : "days"} studied in {calendarTitle}
+                  </span>
+                </div>
+              </div>
+
+              <div className="streak-cal">
+                <div className="streak-cal-nav">
+                  <button
+                    type="button"
+                    onClick={() => shiftCalendarMonth(-1)}
+                    aria-label="Previous month"
+                  >
+                    <ChevronLeft size={22} />
+                  </button>
+                  <strong>{calendarTitle}</strong>
+                  <button
+                    type="button"
+                    onClick={() => shiftCalendarMonth(1)}
+                    disabled={isCurrentCalendarMonth}
+                    aria-label="Next month"
+                  >
+                    <ChevronRight size={22} />
+                  </button>
+                </div>
+
+                <div className="streak-cal-weekdays" aria-hidden="true">
+                  {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((weekday) => (
+                    <span key={weekday}>{weekday}</span>
+                  ))}
+                </div>
+
+                <div className="streak-cal-grid" key={`${calendarYear}-${calendarMonthIndex}`}>
+                  {calendarCells.map((cell, index) =>
+                    cell ? (
+                      <span
+                        key={cell.key}
+                        className={`streak-cal-day${cell.done ? " is-done" : ""}${
+                          cell.isToday ? " is-today" : ""
+                        }`}
+                        style={{ "--i": index }}
+                        title={cell.done ? "Focus session completed" : undefined}
+                      >
+                        {cell.day}
+                      </span>
+                    ) : (
+                      <span key={`blank-${index}`} className="streak-cal-blank" />
+                    )
+                  )}
+                </div>
+              </div>
+
+              <p className="streak-cal-note">
+                Days with a completed focus session are marked in red.
+              </p>
+            </div>
+          </div>
         )}
 
         <footer className="app-footer">
