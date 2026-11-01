@@ -56,6 +56,12 @@ import {
   Smartphone,
   Moon,
   Zap,
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  ChevronLeft,
 } from "lucide-react";
 
 import "./App.css";
@@ -781,14 +787,277 @@ function PublicLanding({ onLogin, onRegister, theme, onThemeChange }) {
               Study<span className="pl-brand-accent">OS</span>
             </span>
           </a>
-
-          <span className="pl-copy">© 2026 Abdul Mohtasim. All rights reserved.</span>
+          <nav className="pl-footer-links" aria-label="Footer">
+            <a href="#features">Features</a>
+            <a href="#how">How it works</a>
+            <button type="button" onClick={onLogin}>Log in</button>
+          </nav>
+          <span className="pl-copy">© 2026 StudyOS</span>
         </div>
       </footer>
     </main>
   );
 }
 
+
+// ---------- Login / sign-up screen: animated mascot and falling leaves ----------
+const AUTH_LEAVES = Array.from({ length: 14 }, (_, index) => ({
+  left: (index * 37 + 7) % 100,
+  size: 16 + ((index * 11) % 18),
+  delay: -((index * 1.9) % 16),
+  duration: 11 + ((index * 3) % 9),
+  sway: 30 + ((index * 17) % 50),
+  tone: index % 4,
+}));
+
+function AuthLeaves() {
+  return (
+    <div className="as-leaves" aria-hidden="true">
+      {AUTH_LEAVES.map((leaf, index) => (
+        <svg
+          key={index}
+          className={`as-leaf as-leaf-${leaf.tone}`}
+          viewBox="0 0 24 28"
+          style={{
+            left: `${leaf.left}%`,
+            width: leaf.size,
+            height: leaf.size * 1.15,
+            animationDuration: `${leaf.duration}s, ${leaf.duration / 2.4}s`,
+            animationDelay: `${leaf.delay}s, ${leaf.delay}s`,
+            "--sway": `${leaf.sway}px`,
+          }}
+        >
+          <path d="M12 1C20 6 22 17 12 27 2 17 4 6 12 1Z" />
+          <path d="M12 6V25" className="as-leaf-vein" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
+// An original owl mascot. It blinks, breathes, waves, follows the pointer with
+// its eyes, covers its eyes while you type a password, and reacts to errors.
+function AuthMascot({ mood, bubble, typed }) {
+  const stageRef = useRef(null);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return undefined;
+
+    let frame = 0;
+    const clamp = (value) => Math.max(-1, Math.min(1, value));
+
+    function onMove(event) {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const box = stage.getBoundingClientRect();
+        const centerX = box.left + box.width / 2;
+        const centerY = box.top + box.height * 0.4;
+        stage.style.setProperty(
+          "--lx",
+          clamp((event.clientX - centerX) / (window.innerWidth / 2)).toFixed(3)
+        );
+        stage.style.setProperty(
+          "--ly",
+          clamp((event.clientY - centerY) / (window.innerHeight / 2)).toFixed(3)
+        );
+      });
+    }
+
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("pointermove", onMove);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={stageRef}
+      className={`as-stage is-${mood}`}
+      style={{ "--tx": typed }}
+    >
+      <div className="as-halo" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+
+      <div className="as-bubble" key={bubble} role="status">
+        {bubble}
+      </div>
+
+      <span className="as-chip as-chip-a" aria-hidden="true">
+        <Flame size={16} /> 5-day streak
+      </span>
+      <span className="as-chip as-chip-b" aria-hidden="true">
+        <Check size={16} /> Task done
+      </span>
+      <span className="as-chip as-chip-c" aria-hidden="true">
+        <BookOpen size={16} /> Notes ready
+      </span>
+
+      <svg
+        className="as-owl-svg"
+        viewBox="0 0 320 340"
+        role="img"
+        aria-label="StudyOS owl mascot"
+      >
+        <defs>
+          <linearGradient id="asBody" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ffa56a" />
+            <stop offset="100%" stopColor="#f0663a" />
+          </linearGradient>
+          <linearGradient id="asWing" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f47c4a" />
+            <stop offset="100%" stopColor="#d9532c" />
+          </linearGradient>
+          <radialGradient id="asBelly" cx="50%" cy="35%" r="70%">
+            <stop offset="0%" stopColor="#fff3e4" />
+            <stop offset="100%" stopColor="#ffd9b8" />
+          </radialGradient>
+        </defs>
+
+        <ellipse className="as-shadow" cx="160" cy="320" rx="86" ry="11" />
+
+        <g className="as-owl">
+          {/* feet */}
+          <g className="as-feet">
+            <g fill="#f7a62e">
+              <ellipse cx="122" cy="306" rx="27" ry="11" />
+              <ellipse cx="198" cy="306" rx="27" ry="11" />
+            </g>
+            <g stroke="#d98417" strokeWidth="3" strokeLinecap="round">
+              <path d="M110 306V312M122 306V314M134 306V312" />
+              <path d="M186 306V312M198 306V314M210 306V312" />
+            </g>
+          </g>
+
+          {/* body */}
+          <g className="as-body">
+            <ellipse cx="160" cy="218" rx="98" ry="94" fill="url(#asBody)" />
+            <ellipse cx="160" cy="244" rx="62" ry="64" fill="url(#asBelly)" />
+            <g
+              fill="none"
+              stroke="#f0bf98"
+              strokeWidth="3"
+              strokeLinecap="round"
+            >
+              <path d="M130 214q10 11 20 0" />
+              <path d="M170 214q10 11 20 0" />
+              <path d="M112 244q10 11 20 0" />
+              <path d="M150 246q10 11 20 0" />
+              <path d="M188 244q10 11 20 0" />
+              <path d="M130 276q10 11 20 0" />
+              <path d="M170 276q10 11 20 0" />
+            </g>
+          </g>
+
+          {/* head */}
+          <g className="as-head">
+            <path d="M80 92L66 40L122 68Z" fill="#f0663a" />
+            <path d="M240 92L254 40L198 68Z" fill="#f0663a" />
+            <ellipse cx="160" cy="128" rx="98" ry="84" fill="url(#asBody)" />
+            <ellipse cx="160" cy="138" rx="82" ry="62" fill="url(#asBelly)" />
+
+            {/* cheeks */}
+            <circle className="as-cheek" cx="92" cy="166" r="12" />
+            <circle className="as-cheek" cx="228" cy="166" r="12" />
+
+            {/* eyes */}
+            {[122, 198].map((x) => (
+              <g key={x} transform={`translate(${x} 130)`}>
+                <circle r="32" fill="#fff" stroke="#f0b48b" strokeWidth="3" />
+                <g className="as-eye-track">
+                  <g className="as-eye-idle">
+                    <circle r="16" fill="#2a1f2d" />
+                    <circle cx="-5" cy="-6" r="5.5" fill="#fff" />
+                    <circle cx="6" cy="6" r="2.6" fill="#fff" opacity=".85" />
+                  </g>
+                </g>
+                <ellipse className="as-lid" rx="33" ry="33" fill="#f4ac78" />
+              </g>
+            ))}
+
+            {/* beak */}
+            <path
+              d="M160 142L146 162Q160 176 174 162Z"
+              fill="#ffb02e"
+              stroke="#e0901a"
+              strokeWidth="2"
+              strokeLinejoin="round"
+            />
+
+            {/* graduation cap */}
+            <g className="as-cap">
+              <path d="M112 66V94Q160 114 208 94V66L160 84Z" fill="#241c2c" />
+              <path d="M160 14L256 50L160 86L64 50Z" fill="#2f2638" />
+              <path d="M160 14L256 50L160 58L64 50Z" fill="#43364f" />
+              <circle cx="160" cy="52" r="5.5" fill="#f7a62e" />
+              <path
+                d="M160 52L240 58V70"
+                fill="none"
+                stroke="#f7a62e"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              <g className="as-tassel">
+                <rect x="235" y="68" width="10" height="26" rx="5" fill="#f7a62e" />
+                <path d="M237 90v10M243 90v10" stroke="#f7a62e" strokeWidth="3" strokeLinecap="round" />
+              </g>
+            </g>
+          </g>
+
+          {/* wings (drawn after the head so they can cover the eyes) */}
+          <g className="as-wing as-wing-l">
+            <ellipse
+              cx="68"
+              cy="225"
+              rx="24"
+              ry="62"
+              fill="url(#asWing)"
+              transform="rotate(12 68 225)"
+            />
+            <path
+              d="M58 262q8 9 16 0M54 244q8 9 16 0"
+              fill="none"
+              stroke="#c4471f"
+              strokeWidth="3"
+              strokeLinecap="round"
+              opacity=".5"
+            />
+          </g>
+          <g className="as-wing as-wing-r">
+            <ellipse
+              cx="252"
+              cy="225"
+              rx="24"
+              ry="62"
+              fill="url(#asWing)"
+              transform="rotate(-12 252 225)"
+            />
+            <path
+              d="M246 262q8 9 16 0M250 244q8 9 16 0"
+              fill="none"
+              stroke="#c4471f"
+              strokeWidth="3"
+              strokeLinecap="round"
+              opacity=".5"
+            />
+          </g>
+
+        </g>
+
+        {/* sparkles */}
+        <g className="as-sparkles" fill="#fff">
+          <path className="as-spark as-spark-a" d="M40 90l4 10 10 4-10 4-4 10-4-10-10-4 10-4z" />
+          <path className="as-spark as-spark-b" d="M286 120l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" />
+          <path className="as-spark as-spark-c" d="M268 250l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" />
+        </g>
+      </svg>
+    </div>
+  );
+}
 
 export default function App() {
   // ---------- Authentication ----------
@@ -798,6 +1067,7 @@ export default function App() {
   const [authToken, setAuthToken] = useState("");
   const [authChecking, setAuthChecking] = useState(true);
   const [showAuthScreen, setShowAuthScreen] = useState(false);
+  const [authFocus, setAuthFocus] = useState("");
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 const [authMode, setAuthMode] = useState("login");
@@ -2711,187 +2981,250 @@ async function undoDeleteTask() {
   }
 
   if (!student && showAuthScreen) {
-    return (
-      <main className="auth-screen">
-        <section className="auth-card">
-          <button
-            type="button"
-            className="auth-back-home"
-            onClick={() => {
-              setShowAuthScreen(false);
-              setAuthError("");
-            }}
-          >
-            <ChevronRight size={15} className="auth-back-icon" />
-            Back to home
-          </button>
+    const isRegister = authMode === "register";
 
-<div className="auth-brand">
-  <img
-    className="studyos-auth-logo"
-    src={STUDYOS_LOGO_SRC}
-    alt="StudyOS logo"
-  />
-
-  <span className="auth-brand-name">
-    Study<span className="brand-accent">OS</span>
-  </span>
-</div>
-
-
-          <p className="auth-subtitle">
-            Your personal space to plan, focus, and learn.
-          </p>
-
-          <div className="auth-mode-switch" role="tablist" aria-label="Authentication options">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={authMode === "login"}
-              className={authMode === "login" ? "auth-mode-active" : ""}
-              onClick={() => {
-                setAuthMode("login");
-                setAuthError("");
-              }}
-              disabled={authLoading}
-            >
-              Sign in
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={authMode === "register"}
-              className={authMode === "register" ? "auth-mode-active" : ""}
-              onClick={() => {
-                setAuthMode("register");
-                setAuthError("");
-              }}
-              disabled={authLoading}
-            >
-              Create account
-            </button>
-          </div>
-
-          <form className="email-auth-form" onSubmit={handleEmailAuth}>
-            {authMode === "register" && (
-              <label>
-                Full name
-                <input
-                  type="text"
-                  name="name"
-                  autoComplete="name"
-                  value={authName}
-                  onChange={(event) => setAuthName(event.target.value)}
-                  minLength={2}
-                  maxLength={100}
-                  required
-                  disabled={authLoading}
-                  placeholder="Enter your name"
-                />
-              </label>
-            )}
-            <label>
-              Email address
-              <input
-                type="email"
-                name="email"
-                autoComplete="email"
-                value={authEmail}
-                onChange={(event) => setAuthEmail(event.target.value)}
-                maxLength={254}
-                required
-                disabled={authLoading}
-                placeholder="you@example.com"
-              />
-            </label>
-            
-<label className="auth-password-label">
-  Password
-
-  <div className="auth-password-wrapper">
-    <input
-      type={showAuthPassword ? "text" : "password"}
-      autoComplete={
-        authMode === "register"
-          ? "new-password"
-          : "current-password"
-      }
-      value={authPassword}
-      onChange={(event) => setAuthPassword(event.target.value)}
-      placeholder="Enter your password"
-      minLength={8}
-      required
-    />
-
-    
-
-
-<button
-  type="button"
-  className="password-toggle-button"
-  onClick={() => setShowAuthPassword((previous) => !previous)}
-  aria-label={showAuthPassword ? "Hide password" : "Show password"}
-  aria-pressed={showAuthPassword}
->
-  <img
-    src={
-      showAuthPassword
-        ? "https://img.icons8.com/material-outlined/24/hide.png"
-        : "https://img.icons8.com/material-outlined/24/visible--v1.png"
+    // What the owl is doing right now.
+    let authMood = "idle";
+    if (authLoading) authMood = "loading";
+    else if (authError) authMood = "error";
+    else if (authFocus === "password") {
+      authMood = showAuthPassword ? "peek" : "cover";
+    } else if (authFocus === "email" || authFocus === "name") {
+      authMood = "email";
     }
-    alt={showAuthPassword ? "Hide password" : "Show password"}
-    width="24"
-    height="24"
-    style={{
-      display: "block",
-      width: "24px",
-      height: "24px",
-      objectFit: "contain",
-    }}
-  />
-</button>
 
+    const authBubbles = {
+      idle: isRegister ? "Let's get you started!" : "Welcome back! Ready to study?",
+      email: "Nice to meet you!",
+      cover: "I won't peek, promise!",
+      peek: "Okay... just a tiny peek",
+      loading: "Hold on a moment...",
+      error: "Oops! Let's try again",
+    };
 
-  </div>
-</label>
+    const typedProgress = Math.min(authEmail.length, 28) / 28;
 
-            <button className="email-auth-submit" type="submit" disabled={authLoading}>
-              {authLoading
-                ? "Please wait..."
-                : authMode === "register"
-                  ? "Create account"
-                  : "Sign in with email"}
-            </button>
-          </form>
+    return (
+      <main className="as-page" data-as-theme={settingsTheme}>
+        <AuthLeaves />
+        <span className="as-orb as-orb-a" aria-hidden="true" />
+        <span className="as-orb as-orb-b" aria-hidden="true" />
 
-          <div className="auth-divider"><span>or continue with</span></div>
-
-          <div className="google-button-container">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => {
-                setAuthError("Google sign-in failed. Please try again.");
+        <section className="as-shell">
+          <div className="as-panel">
+            <button
+              type="button"
+              className="as-back"
+              onClick={() => {
+                setShowAuthScreen(false);
+                setAuthError("");
+                setAuthFocus("");
               }}
-              text="continue_with"
-              theme="outline"
-              size="large"
-              shape="pill"
-            />
+            >
+              <ChevronLeft size={16} className="as-back-icon" aria-hidden="true" />
+              Back to home
+            </button>
+
+            <div className="as-brand">
+              <img className="as-brand-logo" src={STUDYOS_LOGO_SRC} alt="" />
+              <span>
+                Study<span className="as-brand-accent">OS</span>
+              </span>
+            </div>
+
+            <h1 className="as-title" key={authMode}>
+              {isRegister ? "Create your account" : "Welcome back"}
+            </h1>
+            <p className="as-sub">
+              {isRegister
+                ? "Join StudyOS and plan, focus and learn in one place."
+                : "Sign in to pick up right where you left off."}
+            </p>
+
+            <div
+              className="as-tabs"
+              role="tablist"
+              aria-label="Authentication options"
+              data-mode={authMode}
+            >
+              <span className="as-tab-pill" aria-hidden="true" />
+              <button
+                type="button"
+                role="tab"
+                aria-selected={!isRegister}
+                className={!isRegister ? "is-active" : ""}
+                onClick={() => {
+                  setAuthMode("login");
+                  setAuthError("");
+                }}
+                disabled={authLoading}
+              >
+                Sign in
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={isRegister}
+                className={isRegister ? "is-active" : ""}
+                onClick={() => {
+                  setAuthMode("register");
+                  setAuthError("");
+                }}
+                disabled={authLoading}
+              >
+                Create account
+              </button>
+            </div>
+
+            <form className="as-form" key={authMode} onSubmit={handleEmailAuth}>
+              {isRegister && (
+                <label className="as-field">
+                  <span className="as-label">Full name</span>
+                  <span className="as-input-wrap">
+                    <User size={18} className="as-input-icon" aria-hidden="true" />
+                    <input
+                      type="text"
+                      name="name"
+                      autoComplete="name"
+                      value={authName}
+                      onChange={(event) => setAuthName(event.target.value)}
+                      onFocus={() => setAuthFocus("name")}
+                      onBlur={() => setAuthFocus("")}
+                      minLength={2}
+                      maxLength={100}
+                      required
+                      disabled={authLoading}
+                      placeholder="Enter your name"
+                    />
+                  </span>
+                </label>
+              )}
+
+              <label className="as-field">
+                <span className="as-label">Email address</span>
+                <span className="as-input-wrap">
+                  <Mail size={18} className="as-input-icon" aria-hidden="true" />
+                  <input
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    value={authEmail}
+                    onChange={(event) => {
+                      setAuthEmail(event.target.value);
+                      if (authError) setAuthError("");
+                    }}
+                    onFocus={() => setAuthFocus("email")}
+                    onBlur={() => setAuthFocus("")}
+                    maxLength={254}
+                    required
+                    disabled={authLoading}
+                    placeholder="you@example.com"
+                  />
+                </span>
+              </label>
+
+              <label className="as-field">
+                <span className="as-label">Password</span>
+                <span className="as-input-wrap">
+                  <Lock size={18} className="as-input-icon" aria-hidden="true" />
+                  <input
+                    type={showAuthPassword ? "text" : "password"}
+                    autoComplete={isRegister ? "new-password" : "current-password"}
+                    value={authPassword}
+                    onChange={(event) => {
+                      setAuthPassword(event.target.value);
+                      if (authError) setAuthError("");
+                    }}
+                    onFocus={() => setAuthFocus("password")}
+                    onBlur={() => setAuthFocus("")}
+                    placeholder="Enter your password"
+                    minLength={8}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="as-eye"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => setShowAuthPassword((previous) => !previous)}
+                    aria-label={showAuthPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showAuthPassword}
+                  >
+                    {showAuthPassword ? (
+                      <EyeOff size={19} aria-hidden="true" />
+                    ) : (
+                      <Eye size={19} aria-hidden="true" />
+                    )}
+                  </button>
+                </span>
+              </label>
+
+              <button className="as-submit" type="submit" disabled={authLoading}>
+                <span className="as-submit-text">
+                  {authLoading
+                    ? "Please wait..."
+                    : isRegister
+                      ? "Create account"
+                      : "Sign in"}
+                </span>
+                {authLoading ? (
+                  <span className="as-spinner" aria-hidden="true" />
+                ) : (
+                  <ArrowRight size={18} className="as-submit-arrow" aria-hidden="true" />
+                )}
+              </button>
+            </form>
+
+            <div className="as-divider">
+              <span>or continue with</span>
+            </div>
+
+            <div className="as-google">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => {
+                  setAuthError("Google sign-in failed. Please try again.");
+                }}
+                text="continue_with"
+                theme={settingsTheme === "dark" ? "filled_black" : "outline"}
+                size="large"
+                shape="pill"
+              />
+            </div>
+
+            {authLoading && (
+              <p className="as-status" role="status">
+                Authenticating securely...
+              </p>
+            )}
+
+            {authError && (
+              <p className="as-error" role="alert">
+                {authError}
+              </p>
+            )}
+
+            <p className="as-switch">
+              {isRegister ? "Already have an account? " : "New to StudyOS? "}
+              <button
+                type="button"
+                disabled={authLoading}
+                onClick={() => {
+                  setAuthMode(isRegister ? "login" : "register");
+                  setAuthError("");
+                }}
+              >
+                {isRegister ? "Sign in" : "Register for free"}
+              </button>
+            </p>
           </div>
 
-          {authLoading && <p role="status">Authenticating securely...</p>}
-
-          {authError && (
-            <p className="auth-error" role="alert">
-              {authError}
-            </p>
-          )}
-
-          <p className="auth-footer">
-            {authMode === "register"
-              ? "Create an account with email and password, or use Google."
-              : "Sign in with your email and password, or use Google."}
-          </p>
+          <aside className="as-stage-wrap" aria-label="StudyOS mascot">
+            <AuthMascot
+              mood={authMood}
+              bubble={authBubbles[authMood]}
+              typed={typedProgress}
+            />
+          </aside>
         </section>
       </main>
     );
