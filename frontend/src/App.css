@@ -6764,11 +6764,11 @@ body,
 }
 
 .study-app .theme-preview-dark {
-  background: linear-gradient(135deg, #101614 50%, #55b99b 50%);
+  background: linear-gradient(135deg, #101614 50%, #4f1b1b 50%);
 }
 
 .study-app .theme-preview-light {
-  background: linear-gradient(135deg, #fbfcf8 50%, #276b57 50%);
+  background: linear-gradient(135deg, #fbfcf8 50%, #d98282 50%);
 }
 
 .study-app .settings-switch {
