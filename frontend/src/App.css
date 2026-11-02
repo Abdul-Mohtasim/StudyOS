@@ -14450,11 +14450,11 @@ html[data-theme="light"] .study-app .main-content>.mobile-top-nav {
   }
 
   .pl-nav-actions .pl-btn-sm {
-    padding: 0 14px;
+    padding: 0 7px;
   }
 
   .pl-brand span {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .pl-float {
@@ -14469,6 +14469,12 @@ html[data-theme="light"] .study-app .main-content>.mobile-top-nav {
     gap: 12px;
     padding: 12px;
   }
+}
+
+@media (max-width: 360px) {
+  .pl-brand span {
+      font-size: 0.96rem;
+    }
 }
 
 /* =========================================================
@@ -14776,9 +14782,17 @@ html.pl-vt::view-transition-new(root) {
 
 @media (max-width: 400px) {
   .pl-theme {
-    width: 58px;
-    height: 32px;
+    width: 57px;
+    height: 30px;
   }
+
+    .pl-cta-btn {
+      width: 100%;
+      max-width: 200px;
+      justify-content: center;
+    }
+
+  
 
   .pl-theme-thumb {
     top: 3px;
@@ -18488,7 +18502,7 @@ html.sm-js-reveal .study-app .stat-card.sm-in {
   }
 
   .study-app .wc-lines {
-    inset: 38px 2px 28px;
+    inset: 38px 2px 38px;
   }
 
   .study-app .wc-val {
@@ -20809,15 +20823,15 @@ html[data-theme="light"] .study-app .note-card::after {
   align-items: center;
   gap: 10px;
   margin-top: 14px;
-  min-height: 52px;
-  padding: 0 30px;
+  min-height: 45px;
+  padding: 0 20px;
   border: 0;
   border-radius: 999px;
   background: #fff;
   color: #0a0a0a;
   font: inherit;
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   cursor: pointer;
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
 }
@@ -20893,7 +20907,8 @@ html[data-theme="light"] .study-app .note-card::after {
 
   .pl-cta-btn {
     width: 100%;
-    max-width: 340px;
+    max-width: 244px;
+    font-size: 0.9rem;
     justify-content: center;
   }
 }
@@ -20913,3 +20928,4 @@ html[data-theme="light"] .study-app .note-card::after {
   border: 0 !important;
   outline: none !important;
 }
+
