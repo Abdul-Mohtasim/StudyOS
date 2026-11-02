@@ -297,6 +297,65 @@ const PUBLIC_MARQUEE = [
 
 const RING_CIRCUMFERENCE = 2 * Math.PI * 34;
 
+const CONTACT_EMAIL = "abdulmohtasim034@gmail.com";
+
+function ContactFooter({ onLogin }) {
+  const [copied, setCopied] = useState(false);
+
+  async function copyEmail() {
+    try {
+      await navigator.clipboard.writeText(CONTACT_EMAIL);
+    } catch {
+      const input = document.createElement("textarea");
+      input.value = CONTACT_EMAIL;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <footer className="pl-footer pl-cta-footer">
+      <div className="pl-cta-inner">
+        <h2>Let's work together.</h2>
+        <p>
+          Whether you're looking to collaborate, share feedback, or brainstorm
+          around a meaningful project, I'd love to hear from you.
+        </p>
+
+        <button type="button" className="pl-cta-btn" onClick={copyEmail}>
+          {copied ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="8" y="8" width="13" height="13" rx="2" />
+              <path d="M4 16V5a1 1 0 0 1 1-1h11" />
+            </svg>
+          )}
+          <span aria-live="polite">{copied ? "Email copied!" : "Copy my email address"}</span>
+        </button>
+      </div>
+
+      <div className="pl-cta-bar">
+        <span className="pl-cta-brand">
+          Study<span>OS</span>
+        </span>
+        {/* <nav aria-label="Footer">
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <button type="button" onClick={onLogin}>Log in</button>
+        </nav> */}
+        <span className="pl-cta-copy">© 2026 Abdul Mohtasim. All rights reserved.</span>
+      </div>
+    </footer>
+  );
+}
+
 function PublicLanding({ onLogin, onRegister, theme, onThemeChange }) {
   const [scrolled, setScrolled] = useState(false);
   const [demoTasks, setDemoTasks] = useState([
@@ -775,7 +834,7 @@ function PublicLanding({ onLogin, onRegister, theme, onThemeChange }) {
         </div>
       </section>
 
-      <footer className="pl-footer">
+      {/* <footer className="pl-footer">
         <div className="pl-container pl-footer-inner">
           <a className="pl-brand pl-brand-small" href="#home" aria-label="StudyOS home">
             <img src={STUDYOS_LOGO_SRC} alt="" className="pl-brand-logo" />
@@ -783,14 +842,11 @@ function PublicLanding({ onLogin, onRegister, theme, onThemeChange }) {
               Study<span className="pl-brand-accent">OS</span>
             </span>
           </a>
-          <nav className="pl-footer-links" aria-label="Footer">
-            <a href="#features">Features</a>
-            <a href="#how">How it works</a>
-            <button type="button" onClick={onLogin}>Log in</button>
-          </nav>
-          <span className="pl-copy">© 2026 StudyOS</span>
+          <span className="pl-copy">© 2026 Abdul Mohtasim. All rights reserved.</span>
+          
         </div>
-      </footer>
+      </footer> */}
+      <ContactFooter onLogin={onLogin} />
     </main>
   );
 }
@@ -6192,7 +6248,7 @@ async function undoDeleteTask() {
           </span>
 
           <span>
-            -Abdul Mohtasim-
+            © 2026 Abdul Mohtasim. All rights reserved.
             <Sparkles size={13} />
           </span>
         </footer>

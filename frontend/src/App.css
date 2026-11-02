@@ -4199,7 +4199,8 @@ button:disabled {
   gap: 7px;
   min-height: 38px;
   margin-top: auto;
-  padding: 9px 0 0;
+  border-radius: 10px;
+  padding: 9px 8px 10px;
   color: var(--purple, #a0ffdd);
   font-size: 12px;
   font-weight: 700;
@@ -6103,7 +6104,7 @@ textarea {
 }
 
 .theme-preview-light {
-  background: linear-gradient(135deg, #ffffff 50%, #b34d4d 50%);
+  background: linear-gradient(135deg, #ffffff 50%, #b5fde3 50%);
 }
 
 .settings-toggle-row {
@@ -6763,11 +6764,11 @@ body,
 }
 
 .study-app .theme-preview-dark {
-  background: linear-gradient(135deg, #101614 50%, #630e0e 50%);
+  background: linear-gradient(135deg, #101614 50%, #55b99b 50%);
 }
 
 .study-app .theme-preview-light {
-  background: linear-gradient(135deg, #fbfcf8 50%, #b34d4d 50%);
+  background: linear-gradient(135deg, #fbfcf8 50%, #276b57 50%);
 }
 
 .study-app .settings-switch {
@@ -8000,7 +8001,7 @@ body,
   max-width: 100%;
   font-size: 13.5px;
   line-height: 1.4;
-  padding: 9px 6px;
+  padding: 9px 11px;
   border-radius: 9px;
 }
 
@@ -10395,7 +10396,6 @@ html[data-theme="light"] .study-app select {
   .study-app .topbar {
     gap: 7px 6px;
     margin-bottom: 15px;
-    
   }
 
   .study-app .mobile-top-nav {
@@ -13903,7 +13903,7 @@ html[data-theme="light"] .study-app .main-content>.mobile-top-nav {
   overflow: hidden;
   padding: clamp(40px, 7vw, 76px) clamp(22px, 5vw, 60px);
   border-radius: 28px;
-  background: radial-gradient(circle at 15% 0%, #3a2f46, transparent 55%), var(--pl-cta-bg);
+  background: radial-gradient(circle at 15% 0%, #000000, transparent 55%), var(--pl-cta-bg);
   text-align: center;
 }
 
@@ -14450,11 +14450,11 @@ html[data-theme="light"] .study-app .main-content>.mobile-top-nav {
   }
 
   .pl-nav-actions .pl-btn-sm {
-    padding: 0 7px;
+    padding: 0 14px;
   }
 
   .pl-brand span {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
 
   .pl-float {
@@ -14776,8 +14776,8 @@ html.pl-vt::view-transition-new(root) {
 
 @media (max-width: 400px) {
   .pl-theme {
-    width: 57px;
-    height: 30px;
+    width: 58px;
+    height: 32px;
   }
 
   .pl-theme-thumb {
@@ -14809,14 +14809,6 @@ html.pl-vt::view-transition-new(root) {
   .pl-underline path {
     stroke-dashoffset: 0;
   }
-}
-
-@media (max-width: 348px) {
-  .pl-brand span {
-    font-size: 0.97rem;
-  }
-
-  
 }
 
 
@@ -16593,7 +16585,7 @@ html.sm-js-reveal .study-app .stat-card.sm-in {
 /* ---------- Welcome banner ---------- */
 .study-app .welcome-banner {
   background-size: 160% 160%;
-  animation: sm-rise 0.75s var(--sm-ease) 0.05s backwards, sm-banner-pan 12s ease-in-out 1s infinite;
+  animation: sm-rise 0.75s var(--sm-ease) 0.05s backwards, sm-banner-pan 10s ease-in-out 1s infinite;
 }
 
 @keyframes sm-banner-pan {
@@ -16618,7 +16610,7 @@ html.sm-js-reveal .study-app .stat-card.sm-in {
       transparent 0 62%,
       rgba(255, 255, 255, 0.14) 74%,
       transparent 86%);
-  animation: sm-spin 16s linear infinite;
+  animation: sm-spin 13s linear infinite;
 }
 
 @keyframes sm-spin {
@@ -16633,7 +16625,7 @@ html.sm-js-reveal .study-app .stat-card.sm-in {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: sm-text-shine 6s ease-in-out infinite;
+  animation: sm-text-shine 3s ease-in-out infinite;
 }
 
 @keyframes sm-text-shine {
@@ -17880,7 +17872,7 @@ html.sm-js-reveal .study-app .stat-card.sm-in {
   }
 
   .study-app .welcome-banner h2 {
-    animation-duration: 8s;
+    animation-duration: 5s;
   }
 }
 
@@ -19679,9 +19671,13 @@ html[data-theme="light"] .study-app .note-card::after {
   flex-wrap: wrap;
 }
 
-.study-app .panel-heading>div {
-  flex: 1 1 200px;
-  min-width: 0;
+/* Desktop/tablet only: on phones the heading can stack vertically, and a
+   flex-basis there turns into a fixed HEIGHT (the big empty gap bug). */
+@media (min-width: 641px) {
+  .study-app .panel-heading>div {
+    flex: 1 1 200px;
+    min-width: 0;
+  }
 }
 
 /* ---------- Focus Room: keep rings inside their own box ---------- */
@@ -19817,7 +19813,7 @@ html[data-theme="light"] .study-app .note-card::after {
   align-items: center;
   gap: clamp(12px, 3vw, 36px);
   min-height: clamp(330px, 34vw, 410px);
-  padding: clamp(24px, 3.4vw, 44px);
+  padding: clamp(24px, 3.4vw, 35px);
   border-radius: 26px;
   isolation: isolate;
   overflow: hidden;
@@ -20480,4 +20476,440 @@ html[data-theme="light"] .study-app .note-card::after {
   .wb-slot i:not(:first-child) {
     display: none;
   }
+}
+
+
+/* =====================================================================
+   MOBILE FIXES — Focus Session History, Weekly Planner, Study Analytics
+   (phones / small devices only; desktop is untouched)
+   ===================================================================== */
+@media (max-width: 640px) {
+
+  /* --- remove the empty space under every panel heading --- */
+  .study-app .panel-heading>div {
+    flex: 0 0 auto;
+    min-height: 0;
+    height: auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .study-app :is(.planner-heading, .analytics-heading) {
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .study-app :is(.planner-heading, .analytics-heading) .analytics-period {
+    align-self: flex-start;
+    margin: 0;
+  }
+
+  /* --- Focus Session History: icon | details, status row underneath --- */
+  .study-app .session-history-row {
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: start;
+    column-gap: 12px;
+    row-gap: 10px;
+    padding: 12px;
+  }
+
+  .study-app .session-history-row:hover {
+    transform: none;
+  }
+
+  .study-app .session-history-icon {
+    grid-row: 1 / span 2;
+    align-self: start;
+    width: 36px;
+    height: 36px;
+    flex: none;
+  }
+
+  .study-app .session-history-details {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  .study-app .fh-side {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    justify-items: initial;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .study-app .fh-day {
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+
+  .study-app .session-history-status {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 5px 11px;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  /* --- Weekly Study Planner --- */
+  .study-app .planner-day-tabs {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 5px;
+    width: 100%;
+    margin: 12px 0 14px;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .study-app .planner-day-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 0;
+    min-height: 0;
+    padding: 9px 2px;
+    border-radius: 12px;
+    font-size: 11.5px;
+  }
+
+  .study-app .planner-day-tab small {
+    min-width: 18px;
+    padding: 1px 5px;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .study-app .planner-add-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 12px;
+    margin: 0 0 14px;
+  }
+
+  .study-app .planner-add-form .planner-field,
+  .study-app .planner-add-form input,
+  .study-app .planner-add-form select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .study-app .planner-add-form .planner-field {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .study-app .planner-add-form .planner-submit {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .study-app .planner-task-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 8px 12px;
+    padding: 12px;
+  }
+
+  .study-app .planner-task-row .planner-task-main {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .study-app .planner-task-row .planner-deadline {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  /* --- Study Analytics --- */
+  .study-app .analytics-panel .analytics-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    margin: 12px 0;
+  }
+
+  .study-app .analytics-panel .analytics-metric {
+    min-width: 0;
+    padding: 10px 12px;
+    gap: 12px;
+  }
+
+  .study-app .analytics-panel .analytics-metric>div {
+    min-width: 0;
+  }
+
+  .study-app .analytics-panel .analytics-metric span:not(.analytics-metric-icon) {
+    overflow-wrap: anywhere;
+  }
+
+  .study-app .analytics-panel .wc-chart {
+    margin: 12px 0;
+    padding: 12px 8px 10px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .study-app .analytics-panel .wc-cols {
+    gap: 4px;
+  }
+
+  .study-app .analytics-panel .wc-col {
+    min-width: 0;
+  }
+
+  .study-app .analytics-panel .wc-label {
+    font-size: 10px;
+  }
+
+  .study-app .analytics-panel .wc-val {
+    font-size: 9.5px;
+  }
+}
+
+@media (max-width: 360px) {
+  .study-app .planner-day-tabs {
+    gap: 3px;
+  }
+
+  .study-app .planner-day-tab {
+    font-size: 10.5px;
+    padding: 8px 1px;
+  }
+
+  .study-app .fh-side {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+}
+
+/* ---- mobile polish: planner tabs, form spacing, due-date row ---- */
+@media (max-width: 640px) {
+
+  .study-app .planner-day-tab,
+  .study-app .planner-day-tab span {
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .study-app .planner-day-tab {
+    font-size: 11px;
+    padding: 9px 0;
+  }
+
+  .study-app .planner-add-form {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .study-app .planner-add-form .planner-field {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .study-app .planner-add-form .planner-field>span {
+    padding: 0;
+  }
+
+  .study-app .planner-task-row .planner-deadline {
+    justify-content: space-between;
+    text-align: left;
+  }
+
+  .study-app .planner-task-row .planner-due-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+  }
+
+  .study-app .planner-task-row .planner-deadline> :is(span, button) {
+    margin: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .study-app .planner-day-tab {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .study-app .planner-task-row .planner-deadline {
+    margin: 0 !important;
+    padding: 0;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+
+/* ---------- Public page: contact footer ---------- */
+.pl-page .pl-cta-footer {
+  background: #0a0a0a;
+  border-top: 0;
+  color: #fff;
+}
+
+.pl-cta-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: clamp(64px, 9vw, 112px) 20px clamp(56px, 7vw, 88px);
+  text-align: center;
+}
+
+.pl-cta-inner h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2rem, 5.2vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.pl-cta-inner p {
+  max-width: 640px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+  line-height: 1.6;
+}
+
+.pl-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  min-height: 52px;
+  padding: 0 30px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #0a0a0a;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+}
+
+.pl-cta-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 14px 30px -12px rgba(255, 255, 255, 0.45);
+}
+
+.pl-cta-btn:active {
+  transform: scale(0.98);
+}
+
+.pl-cta-btn:focus-visible {
+  outline: 3px solid #7aaee0;
+  outline-offset: 3px;
+}
+
+.pl-cta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.9rem;
+}
+
+.pl-cta-brand {
+  color: #fff;
+  font-weight: 800;
+}
+
+.pl-cta-brand span {
+  color: #ff8a8f;
+}
+
+.pl-cta-bar nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+}
+
+.pl-cta-bar nav a,
+.pl-cta-bar nav button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: rgba(255, 255, 255, 0.7);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.pl-cta-bar nav a:hover,
+.pl-cta-bar nav button:hover {
+  color: #fff;
+}
+
+.pl-cta-copy {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+@media (max-width: 600px) {
+  .pl-cta-bar {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .pl-cta-btn {
+    width: 100%;
+    max-width: 340px;
+    justify-content: center;
+  }
+}
+
+
+
+/* One colour for every search box: the wrapper colour only, input is transparent */
+.study-app :is(.search-box, .notes-search) input,
+.study-app :is(.search-box, .notes-search) input[type="search"],
+.study-app :is(.search-box, .notes-search) input:hover,
+.study-app :is(.search-box, .notes-search) input:focus,
+.study-app :is(.search-box, .notes-search) input:-webkit-autofill {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  border: 0 !important;
+  outline: none !important;
 }
