@@ -14450,7 +14450,7 @@ html[data-theme="light"] .study-app .main-content>.mobile-top-nav {
   }
 
   .pl-nav-actions .pl-btn-sm {
-    padding: 0 14px;
+    padding: 0 7px;
   }
 
   .pl-brand span {
@@ -14776,8 +14776,8 @@ html.pl-vt::view-transition-new(root) {
 
 @media (max-width: 400px) {
   .pl-theme {
-    width: 58px;
-    height: 32px;
+    width: 57px;
+    height: 30px;
   }
 
   .pl-theme-thumb {
@@ -14809,6 +14809,14 @@ html.pl-vt::view-transition-new(root) {
   .pl-underline path {
     stroke-dashoffset: 0;
   }
+}
+
+@media (max-width: 348px) {
+  .pl-brand span {
+    font-size: 0.97rem;
+  }
+
+  
 }
 
 
