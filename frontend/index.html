@@ -5,6 +5,11 @@
     <link rel="icon" type="image/svg+xml"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-8 -8 144 144'%3E%3Crect x='-8' y='-8' width='144' height='144' rx='32' fill='%23fff3ec'/%3E%3Cg fill='%23E4585F' transform='translate(0 -5)'%3E%3Cpath d='M64 24L124 54L64 84L4 54Z'/%3E%3Cpath d='M28 74L64 92L100 74V96C100 106 84 114 64 114C44 114 28 106 28 96Z'/%3E%3Cpath d='M112 60V97' stroke='%23E4585F' stroke-width='4' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='112' cy='101' r='5'/%3E%3C/g%3E%3C/svg%3E" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#6d5dfc" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <title>Study OS</title>
 
     
@@ -18,7 +23,14 @@
 
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main style="font-family:system-ui,sans-serif;max-width:640px;margin:48px auto;padding:0 16px">
+        <h1>StudyOS</h1>
+        <p>StudyOS is a study planner with tasks, notes, a planner and a focus timer.</p>
+        <p><a href="/privacy.html">Privacy Policy</a></p>
+      </main>
+    </div>
+    <noscript><p><a href="/privacy.html">Privacy Policy</a></p></noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

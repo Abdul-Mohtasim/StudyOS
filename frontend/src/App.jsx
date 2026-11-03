@@ -350,6 +350,13 @@ function ContactFooter({ onLogin }) {
           <a href="#how">How it works</a>
           <button type="button" onClick={onLogin}>Log in</button>
         </nav> */}
+        <a
+          href="/privacy.html"
+          className="pl-cta-copy"
+          style={{ textDecoration: "underline" }}
+        >
+          Privacy Policy
+        </a>
         <span className="pl-cta-copy">© 2026 Abdul Mohtasim. All rights reserved.</span>
       </div>
     </footer>
@@ -6245,6 +6252,12 @@ async function undoDeleteTask() {
           <span>
             <GraduationCap size={16} />
             StudyOS
+          </span>
+
+          <span>
+            <a href="/privacy.html" target="_blank" rel="noreferrer" style={{ color: "inherit", textDecoration: "underline" }}>
+              Privacy Policy
+            </a>
           </span>
 
           <span>
