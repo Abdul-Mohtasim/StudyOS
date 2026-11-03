@@ -1160,8 +1160,8 @@ function CountUp({ value, decimals = 0, duration = 1000 }) {
   return <>{shown.toFixed(decimals)}</>;
 }
 
-// A subject icon that is generated from the subject's own name, so nothing is
-// hard-coded: every subject gets its own colours, pattern and monogram.
+// Subject icons: clean line icons on a soft tinted tile (the "Minimal & Premium"
+// style). Maths -> calculator, Physics -> atom, English / unknown -> open book.
 function hashString(text) {
   let hash = 2166136261;
   for (let index = 0; index < text.length; index += 1) {
@@ -1171,100 +1171,61 @@ function hashString(text) {
   return hash >>> 0;
 }
 
-// Same hue the subject badge uses, so notes can share their subject's colour.
+// Hue is still used by notes to tint their cards.
 function getSubjectHue(name) {
   const clean = String(name || "?").trim() || "?";
   return hashString(clean.toLowerCase()) % 360;
 }
 
-// Picks an icon that matches the subject's meaning (Mathematics -> calculator,
-// Chemistry -> flask, Biology -> DNA ...). Unknown subjects get an open book.
+// [pattern, icon, tone, motion]. Only three calm tones are used (purple, blue,
+// amber) so the icons never look colourful.
 const SUBJECT_ICON_RULES = [
-  [/math|algebra|calcul|geometry|trigon|arithmetic/, Calculator],
-  [/physic|mechanic|quantum/, Atom],
-  [/chem/, FlaskConical],
-  [/bio|botany|zoology|genetic/, Dna],
-  [/comput|program|coding|software|informatic|\bit\b|\bics\b|web|cyber/, Laptop],
-  [/islam|quran|qur'an|deeniyat|religio|theolog|hadith|fiqh|seerah/, Moon],
-  [/urdu|poetry|poem/, Feather],
-  [/english|arabic|french|german|spanish|hindi|persian|punjabi|sindhi|language|literature|grammar|linguist/, Languages],
-  [/histor/, Hourglass],
-  [/geograph|geo\b|earth|environment/, Globe],
-  [/pakistan|civic|social|politic|govern|constitution|sociolog|study of/, Landmark],
-  [/econom|business|account|financ|commerce|banking/, Banknote],
-  [/statist|data|probabil/, ChartNoAxesCombined],
-  [/\bart\b|arts\b|drawing|design|paint|sketch/, Palette],
-  [/music|singing|piano|guitar/, Music],
-  [/sport|physical|\bpe\b|fitness|gym|health|exercise/, Dumbbell],
-  [/psycholog|mind|philosoph|logic/, Brain],
-  [/\blaw\b|legal|justice/, Scale],
-  [/science|lab|medic|anatom/, Microscope],
-  [/personal|self|general|life|routine/, User],
+  [/math|algebra|calcul|geometry|trigon|arithmetic/, Calculator, "purple", "tilt"],
+  [/physic|mechanic|quantum/, Atom, "blue", "spin"],
+  [/english|literature|grammar|linguist/, BookOpen, "amber", "lift"],
+  [/chem/, FlaskConical, "blue", "tilt"],
+  [/bio|botany|zoology|genetic/, Dna, "purple", "spin"],
+  [/comput|program|coding|software|informatic|\bit\b|\bics\b|web|cyber/, Laptop, "blue", "lift"],
+  [/islam|quran|qur'an|deeniyat|religio|theolog|hadith|fiqh|seerah/, Moon, "amber", "tilt"],
+  [/urdu|poetry|poem/, Feather, "amber", "tilt"],
+  [/arabic|french|german|spanish|hindi|persian|punjabi|sindhi|language/, Languages, "amber", "lift"],
+  [/histor/, Hourglass, "amber", "tilt"],
+  [/geograph|geo\b|earth|environment/, Globe, "blue", "spin"],
+  [/pakistan|civic|social|politic|govern|constitution|sociolog|study of/, Landmark, "purple", "lift"],
+  [/econom|business|account|financ|commerce|banking/, Banknote, "amber", "lift"],
+  [/statist|data|probabil/, ChartNoAxesCombined, "purple", "lift"],
+  [/\bart\b|arts\b|drawing|design|paint|sketch/, Palette, "amber", "tilt"],
+  [/music|singing|piano|guitar/, Music, "purple", "tilt"],
+  [/sport|physical|\bpe\b|fitness|gym|health|exercise/, Dumbbell, "blue", "tilt"],
+  [/psycholog|mind|philosoph|logic/, Brain, "purple", "lift"],
+  [/\blaw\b|legal|justice/, Scale, "blue", "tilt"],
+  [/science|lab|medic|anatom/, Microscope, "blue", "lift"],
+  [/personal|self|general|life|routine/, User, "purple", "lift"],
 ];
 
-function getSubjectIcon(name) {
+const SUBJECT_TONES = ["purple", "blue", "amber"];
+
+function getSubjectIconStyle(name) {
   const text = String(name || "").toLowerCase();
   const match = SUBJECT_ICON_RULES.find(([pattern]) => pattern.test(text));
-  return match ? match[1] : BookOpen;
+  if (match) return { Icon: match[1], tone: match[2], motion: match[3] };
+  return {
+    Icon: BookOpen,
+    tone: SUBJECT_TONES[hashString(text) % SUBJECT_TONES.length],
+    motion: "lift",
+  };
 }
 
 function SubjectBadge({ name, mini = false }) {
   const clean = String(name || "?").trim() || "?";
-  const hash = hashString(clean.toLowerCase());
-  const hue = hash % 360;
-  const hueTwo = (hue + 32 + ((hash >>> 9) % 44)) % 360;
-  const pattern = (hash >>> 5) % 4;
-  const spin = 7 + ((hash >>> 12) % 7);
-  const SubjectIcon = getSubjectIcon(clean);
+  const { Icon, tone, motion } = getSubjectIconStyle(clean);
 
   return (
     <span
-      className={`subject-icon sb-badge${mini ? " sb-mini" : ""}`}
+      className={`subject-icon sb-badge sb-${tone} sb-motion-${motion}${mini ? " sb-mini" : ""}`}
       aria-hidden="true"
-      style={{
-        background: `linear-gradient(135deg, hsl(${hue} 78% 58%), hsl(${hueTwo} 80% 44%))`,
-        "--sb-spin": `${spin}s`,
-        "--sb-delay": `${-(hash % 5000) / 1000}s`,
-        border: 0,
-        color: "#fff",
-      }}
     >
-      <svg className="sb-art" viewBox="0 0 40 40" focusable="false">
-        {pattern === 0 && (
-          <g fill="none" stroke="#fff" strokeOpacity=".28" strokeWidth="2">
-            <circle cx="30" cy="10" r="9" />
-            <circle cx="30" cy="10" r="16" />
-            <circle cx="30" cy="10" r="23" />
-          </g>
-        )}
-        {pattern === 1 && (
-          <g stroke="#fff" strokeOpacity=".24" strokeWidth="3" strokeLinecap="round">
-            <path d="M-2 22L22 -2M-2 34L34 -2M4 42L42 4M18 44L44 18" />
-          </g>
-        )}
-        {pattern === 2 && (
-          <g fill="#fff" fillOpacity=".3">
-            {[8, 18, 28, 38].flatMap((x) =>
-              [8, 18, 28, 38].map((y) => (
-                <circle key={`${x}-${y}`} cx={x} cy={y} r="1.8" />
-              ))
-            )}
-          </g>
-        )}
-        {pattern === 3 && (
-          <g fill="none" stroke="#fff" strokeOpacity=".3" strokeWidth="2.4" strokeLinecap="round">
-            <path d="M-2 14q7-8 14 0t14 0t14 0" />
-            <path d="M-2 26q7-8 14 0t14 0t14 0" />
-            <path d="M-2 38q7-8 14 0t14 0t14 0" />
-          </g>
-        )}
-        <g className="sb-orbit">
-          <circle cx="34" cy="6" r="2.2" fill="#fff" fillOpacity=".95" />
-        </g>
-      </svg>
-      <span className="sb-letters">
-        <SubjectIcon size={mini ? 10 : 21} strokeWidth={2.2} aria-hidden="true" />
-      </span>
+      <Icon className="sb-glyph" size={mini ? 11 : 21} strokeWidth={mini ? 2.2 : 1.8} aria-hidden="true" />
     </span>
   );
 }

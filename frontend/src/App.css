@@ -17246,111 +17246,6 @@ html.sm-js-reveal .study-app .stat-card.sm-in {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- Subjects: generated icon badges ---------- */
-.study-app .subject-icon.sb-badge {
-  position: relative;
-  overflow: hidden;
-  border: 0;
-  color: #fff;
-  box-shadow: 0 10px 18px -10px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  animation: sb-float 4.6s ease-in-out var(--sb-delay, 0s) infinite;
-  transition: transform 0.4s var(--sm-spring), box-shadow 0.3s;
-}
-
-.study-app .subject-icon.sb-badge .sb-art {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.study-app .subject-icon.sb-badge .sb-letters {
-  position: relative;
-  z-index: 1;
-  font-family: "Manrope", "DM Sans", system-ui, sans-serif;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  transition: transform 0.4s var(--sm-spring);
-}
-
-.study-app .subject-icon.sb-badge::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -80%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-  transform: skewX(-20deg);
-  animation: sb-shine 5.5s ease-in-out var(--sb-delay, 0s) infinite;
-}
-
-.study-app .sb-orbit {
-  transform-origin: 20px 20px;
-  animation: sm-spin var(--sb-spin, 9s) linear infinite;
-}
-
-.study-app .subject-row:hover .sb-badge,
-.study-app .subject-history-row:hover .sb-badge {
-  transform: rotate(-8deg) scale(1.12);
-  box-shadow: 0 16px 24px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-}
-
-.study-app .subject-row:hover .sb-letters,
-.study-app .subject-history-row:hover .sb-letters {
-  transform: scale(1.18);
-}
-
-@keyframes sb-float {
-
-  0%,
-  100% {
-    translate: 0 0;
-  }
-
-  50% {
-    translate: 0 -3px;
-  }
-}
-
-@keyframes sb-shine {
-
-  0%,
-  60% {
-    left: -80%;
-  }
-
-  85%,
-  100% {
-    left: 140%;
-  }
-}
-
-/* tiny version used inside task rows */
-.study-app .subject-icon.sb-badge.sb-mini {
-  display: inline-grid;
-  flex: 0 0 auto;
-  width: 17px;
-  height: 17px;
-  margin-right: 2px;
-  border-radius: 5px;
-  vertical-align: -4px;
-  box-shadow: none;
-  animation: none;
-}
-
-.study-app .subject-icon.sb-badge.sb-mini .sb-letters {
-  font-size: 8px;
-  letter-spacing: 0;
-  text-shadow: none;
-}
-
-.study-app .subject-icon.sb-badge.sb-mini::after,
-.study-app .subject-icon.sb-badge.sb-mini .sb-orbit {
-  display: none;
-}
 
 .study-app .subject-row {
   transition: transform 0.35s var(--sm-ease), box-shadow 0.3s, background-color 0.3s;
@@ -18540,37 +18435,6 @@ html.sm-js-reveal .study-app .stat-card.sm-in {
   }
 }
 
-/* ---------- Subject badges: meaningful icons instead of letters ---------- */
-.study-app .subject-icon.sb-badge .sb-letters {
-  display: grid;
-  place-items: center;
-  line-height: 0;
-}
-
-.study-app .subject-icon.sb-badge .sb-letters svg {
-  display: block;
-  width: 21px;
-  height: 21px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.32));
-}
-
-.study-app .subject-icon.sb-badge.sb-mini .sb-letters svg {
-  width: 10px;
-  height: 10px;
-  filter: none;
-}
-
-.study-app .subject-row:hover .sb-letters svg,
-.study-app .subject-history-row:hover .sb-letters svg {
-  animation: sm-wiggle 0.7s ease;
-}
-
-@media (max-width: 560px) {
-  .study-app .subject-icon.sb-badge .sb-letters svg {
-    width: 19px;
-    height: 19px;
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
 
@@ -20929,3 +20793,173 @@ html[data-theme="light"] .study-app .note-card::after {
   outline: none !important;
 }
 
+
+/* =====================================================================
+   Minimal & Premium subject icons + calm Notebook motion
+   Line icons on a soft tinted tile. Three tones only: purple, blue, amber.
+   ===================================================================== */
+.study-app .subject-icon.sb-badge {
+  --sb-ink: #7c4dcc;
+  --sb-tile: #efe9ff;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  color: var(--sb-ink);
+  background: var(--sb-tile);
+  box-shadow: none;
+  animation: sb-in 0.45s var(--sm-ease, ease-out) backwards;
+  transition: transform 0.3s var(--sm-ease, ease-out), background-color 0.3s;
+}
+
+.study-app .subject-icon.sb-badge.sb-purple { --sb-ink: #7c4dcc; --sb-tile: #efe9ff; }
+.study-app .subject-icon.sb-badge.sb-blue   { --sb-ink: #2f73c9; --sb-tile: #e6f0ff; }
+.study-app .subject-icon.sb-badge.sb-amber  { --sb-ink: #c9822f; --sb-tile: #fff0e4; }
+
+/* dark theme: translucent tile, brighter ink */
+html:not([data-theme="light"]) .study-app .subject-icon.sb-badge.sb-purple { --sb-ink: #b9a0ff; --sb-tile: rgba(160, 130, 255, 0.14); }
+html:not([data-theme="light"]) .study-app .subject-icon.sb-badge.sb-blue   { --sb-ink: #7db4ff; --sb-tile: rgba(90, 160, 255, 0.14); }
+html:not([data-theme="light"]) .study-app .subject-icon.sb-badge.sb-amber  { --sb-ink: #f0b36b; --sb-tile: rgba(240, 170, 90, 0.14); }
+
+.study-app .subject-icon.sb-badge .sb-glyph {
+  display: block;
+  transform-origin: center;
+  transition: transform 0.5s var(--sm-ease, ease-out);
+}
+
+/* tiny version used inside task rows and note tags */
+.study-app .subject-icon.sb-badge.sb-mini {
+  width: 19px;
+  height: 19px;
+  margin-right: 3px;
+  border-radius: 6px;
+  vertical-align: -5px;
+  animation: none;
+}
+
+/* hover motion: one small, single movement per icon (no loops) */
+.study-app .subject-row:hover .sb-badge,
+.study-app .subject-history-row:hover .sb-badge,
+.study-app .task-row:hover .sb-badge,
+.study-app .note-card:hover .sb-badge {
+  transform: translateY(-1px);
+}
+
+.study-app .subject-row:hover .sb-motion-tilt .sb-glyph,
+.study-app .subject-history-row:hover .sb-motion-tilt .sb-glyph,
+.study-app .task-row:hover .sb-motion-tilt .sb-glyph,
+.study-app .note-card:hover .sb-motion-tilt .sb-glyph {
+  transform: rotate(-8deg) scale(1.08);
+}
+
+.study-app .subject-row:hover .sb-motion-spin .sb-glyph,
+.study-app .subject-history-row:hover .sb-motion-spin .sb-glyph,
+.study-app .task-row:hover .sb-motion-spin .sb-glyph,
+.study-app .note-card:hover .sb-motion-spin .sb-glyph {
+  transform: rotate(90deg);
+}
+
+.study-app .subject-row:hover .sb-motion-lift .sb-glyph,
+.study-app .subject-history-row:hover .sb-motion-lift .sb-glyph,
+.study-app .task-row:hover .sb-motion-lift .sb-glyph,
+.study-app .note-card:hover .sb-motion-lift .sb-glyph {
+  transform: translateY(-1px) scale(1.1);
+}
+
+@keyframes sb-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ---------- Notebook: quiet, clean motion ---------- */
+.study-app .note-card {
+  border-radius: 14px;
+  padding-top: 17px;
+  animation: nb-fade 0.45s var(--sm-ease, ease-out) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+  transition: transform 0.25s var(--sm-ease, ease-out), box-shadow 0.25s, border-color 0.25s;
+}
+
+/* static accent line instead of the moving shimmer */
+.study-app .note-card::before {
+  height: 3px;
+  background: var(--nc);
+  opacity: 0.7;
+  animation: none;
+}
+
+/* no folded corner, no tilt */
+.study-app .note-card::after {
+  display: none;
+}
+
+.study-app .note-card:hover,
+.study-app .note-card:nth-child(even):hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 28px -20px var(--nc);
+}
+
+/* subject chip on a note: neutral, matches the icon tile */
+.study-app .note-subject-tag {
+  gap: 4px;
+  padding: 3px 10px 3px 4px;
+  font-weight: 700;
+  color: var(--text, inherit);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border: 1px solid var(--border);
+}
+
+.study-app .notes-search:focus-within>svg {
+  transform: scale(1.1);
+}
+
+.study-app .note-action-button svg {
+  transition: transform 0.25s var(--sm-ease, ease-out);
+}
+
+.study-app .note-action-button:hover svg {
+  transform: scale(1.12);
+}
+
+.study-app .notes-form-icon svg,
+.study-app .notes-empty-icon svg {
+  transition: transform 0.4s var(--sm-ease, ease-out);
+}
+
+.study-app .notes-form-heading:hover .notes-form-icon svg {
+  transform: rotate(90deg);
+}
+
+.study-app .notes-empty {
+  animation: nb-fade 0.5s var(--sm-ease, ease-out) both;
+}
+
+.study-app .notes-empty:hover .notes-empty-icon svg {
+  transform: translateY(-2px);
+}
+
+@keyframes nb-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 560px) {
+  .study-app .subject-icon.sb-badge:not(.sb-mini) {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .study-app .subject-icon.sb-badge,
+  .study-app .subject-icon.sb-badge .sb-glyph,
+  .study-app .note-card,
+  .study-app .notes-empty {
+    animation: none !important;
+    transition: none !important;
+  }
+}
