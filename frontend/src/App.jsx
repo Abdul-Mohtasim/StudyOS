@@ -435,7 +435,11 @@ function PublicLanding({ onLogin, onRegister, theme, onThemeChange }) {
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
-    if (reduceMotion || typeof document.startViewTransition !== "function") {
+    if (
+      reduceMotion ||
+      document.documentElement.classList.contains("perf-lite") ||
+      typeof document.startViewTransition !== "function"
+    ) {
       onThemeChange(next);
       return;
     }
@@ -1449,14 +1453,18 @@ function BannerScene({ done, total, streak, minutes, goalPercent }) {
 
     function resize() {
       const box = host.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const lite = document.documentElement.classList.contains("perf-lite");
+      const dpr = lite ? 1 : Math.min(window.devicePixelRatio || 1, 2);
       width = Math.max(1, box.width);
       height = Math.max(1, box.height);
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      const count = Math.max(16, Math.min(56, Math.round((width * height) / 8500)));
+      const count = Math.max(
+        lite ? 10 : 16,
+        Math.min(lite ? 24 : 56, Math.round((width * height) / (lite ? 16000 : 8500)))
+      );
       particles = Array.from({ length: count }, () => ({
         x: Math.random() * width,
         y: Math.random() * height,
@@ -1530,11 +1538,18 @@ function BannerScene({ done, total, streak, minutes, goalPercent }) {
       }
     }
 
+    let lastDraw = 0;
     function loop(time) {
       if (!visible || document.hidden) {
         raf = 0;
         return;
       }
+      // phones: cap the particle canvas at ~30fps so scrolling stays smooth
+      if (document.documentElement.classList.contains("perf-lite") && time - lastDraw < 32) {
+        raf = requestAnimationFrame(loop);
+        return;
+      }
+      lastDraw = time;
       draw(time);
       raf = requestAnimationFrame(loop);
     }
@@ -2432,6 +2447,7 @@ useEffect(() => {
       localStorage.setItem("studyos_auth_token", data.token);
       setStudent(data.student);
       setAuthToken(data.token);
+      haptic.welcome();
       setAuthPassword("");
       setAuthError("");
     } catch (error) {
@@ -2523,6 +2539,7 @@ useEffect(() => {
 
       setStudent(data.student);
       setAuthToken(data.token);
+      haptic.welcome();
       setAuthError("");
     } catch (error) {
       console.error("StudyOS Google sign-in error:", error);
@@ -3070,7 +3087,7 @@ const visibleTasks = tasks.filter((task) => {
 
       setNewTask("");
       setNewTaskDuration("25");
-      haptic.success();
+      haptic.add();
       setNotice("Your new task has been saved!");
     } catch (error) {
       console.error("Adding StudyOS task:", error);
@@ -3186,6 +3203,7 @@ async function undoDeleteTask() {
       current.filter((task) => task.id !== taskToRestore.id)
     );
 
+    haptic.undo();
     setNotice("Task restored successfully.");
   } catch (error) {
     console.error("Restoring StudyOS task:", error);
@@ -3312,6 +3330,7 @@ async function undoDeleteTask() {
 
       setPlannerTitle("");
       setPlannerDeadline("");
+      haptic.add();
       setNotice("Study task saved to your StudyOS account!");
     } catch (error) {
       console.error("Adding StudyOS planner task:", error);
@@ -3397,6 +3416,7 @@ async function undoDeleteTask() {
 
       setWeeklyPlan((current) => current.filter((task) => task.id !== id));
 
+      haptic.warning();
       setNotice("Planner task deleted.");
     } catch (error) {
       console.error("Deleting StudyOS planner task:", error);
@@ -3458,9 +3478,11 @@ async function undoDeleteTask() {
         setSubjectNotes((current) =>
           current.map((note) => (note.id === editingNoteId ? savedNote : note))
         );
+        haptic.note();
         setNotice("Note updated successfully!");
       } else {
         setSubjectNotes((current) => [savedNote, ...current]);
+        haptic.note();
         setNotice("Note saved successfully!");
       }
       setNotesError("");
@@ -3523,6 +3545,7 @@ async function undoDeleteTask() {
         cancelNoteEdit();
       }
 
+      haptic.warning();
       setNotice("Note deleted.");
     } catch (error) {
       console.error("Deleting StudyOS note:", error);
@@ -3599,6 +3622,7 @@ async function undoDeleteTask() {
 
       localStorage.setItem("studyos-daily-goal-minutes", String(savedMinutes));
 
+      haptic.confirm();
       setNotice("Daily study goal saved to your StudyOS account!");
     } catch (error) {
       console.error("Saving daily study goal:", error);
@@ -3656,6 +3680,7 @@ async function undoDeleteTask() {
         currentStudent ? { ...currentStudent, ...data.student } : data.student
       );
       setDisplayNameDraft(data.student.displayName || trimmedName);
+      haptic.confirm();
       setNotice("Your StudyOS display name has been updated!");
     } catch (error) {
       console.error("Saving StudyOS display name:", error);
@@ -3735,6 +3760,7 @@ async function undoDeleteTask() {
       }
 
       setSettingsError("");
+      haptic.confirm();
       setNotice("Settings saved successfully!");
     } catch (error) {
       console.error("Saving StudyOS settings:", error);

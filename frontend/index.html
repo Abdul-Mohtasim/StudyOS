@@ -5,11 +5,35 @@
     <link rel="icon" type="image/svg+xml"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-8 -8 144 144'%3E%3Crect x='-8' y='-8' width='144' height='144' rx='32' fill='%23fff3ec'/%3E%3Cg fill='%23E4585F' transform='translate(0 -5)'%3E%3Cpath d='M64 24L124 54L64 84L4 54Z'/%3E%3Cpath d='M28 74L64 92L100 74V96C100 106 84 114 64 114C44 114 28 106 28 96Z'/%3E%3Cpath d='M112 60V97' stroke='%23E4585F' stroke-width='4' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='112' cy='101' r='5'/%3E%3C/g%3E%3C/svg%3E" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#6d5dfc" />
+    <meta name="theme-color" content="#ffdcc4" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <script>
+      // Mark the Android app early so the launch splash shows before anything else.
+      try {
+        if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+          document.documentElement.classList.add("native-app");
+        }
+      } catch (e) {}
+    </script>
+    <style>
+      #boot-splash { display: none; }
+      html.native-app #boot-splash {
+        display: flex; position: fixed; inset: 0; z-index: 2147483000;
+        align-items: center; justify-content: center;
+        background: linear-gradient(135deg, #ffdcc4 0%, #ffc19d 50%, #ffdcc4 100%);
+        transition: opacity .5s ease;
+      }
+      #boot-splash svg { width: 150px; height: auto; transform: translateZ(0);
+        animation: boot-in .6s cubic-bezier(.2,.8,.2,1) both; }
+      #boot-splash.hide { opacity: 0; pointer-events: none; }
+      @keyframes boot-in { from { opacity: 0; transform: scale(.9) translateZ(0); } to { opacity: 1; transform: scale(1) translateZ(0); } }
+      @media (prefers-color-scheme: dark) {
+        html.native-app #boot-splash { background: linear-gradient(135deg, #19131f 0%, #2d1c30 50%, #19131f 100%); }
+      }
+    </style>
     <title>Study OS</title>
 
     
@@ -31,6 +55,9 @@
       </main>
     </div>
     <noscript><p><a href="/privacy.html">Privacy Policy</a></p></noscript>
+    <div id="boot-splash" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="4 19 120 90"><g fill="#E4585F" transform="translate(0 -5)"><path d="M64 24L124 54L64 84L4 54Z"/><path d="M28 74L64 92L100 74V96C100 106 84 114 64 114C44 114 28 106 28 96Z"/><path d="M112 60V97" stroke="#E4585F" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="112" cy="101" r="5"/></g></svg>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

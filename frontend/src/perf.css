@@ -1,0 +1,71 @@
+/* StudyOS phone performance pass.
+   Applied only when <html> has .perf-lite (Android app or any touch phone). */
+
+/* No blur-behind (the most expensive effect on phone GPUs). */
+html.perf-lite *,
+html.perf-lite *::before,
+html.perf-lite *::after {
+  backdrop-filter: none !important;
+}
+
+/* (separate rule so the CSS minifier keeps both the prefixed and plain property) */
+html.perf-lite :is(*) {
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Entrance animations still play once; endless decorative loops stop. */
+html.perf-lite *,
+html.perf-lite *::before,
+html.perf-lite *::after {
+  animation-iteration-count: 1 !important;
+}
+
+/* Real loading spinners keep spinning. */
+html.perf-lite .as-spinner {
+  animation-iteration-count: infinite !important;
+}
+
+/* Make the header bars solid instead of see-through. */
+html.perf-lite .pl-nav {
+  background: var(--pl-bg) !important;
+}
+
+/* Snappier, steadier touch behavior. */
+html.perf-lite,
+html.perf-lite * {
+  -webkit-tap-highlight-color: transparent;
+}
+html.perf-lite a,
+html.perf-lite button,
+html.perf-lite [role="button"],
+html.perf-lite [role="tab"],
+html.perf-lite input,
+html.perf-lite select,
+html.perf-lite summary {
+  touch-action: manipulation;
+}
+html.perf-lite body {
+  overscroll-behavior-y: none;
+}
+
+/* Keep animations on the GPU layer only (transform/opacity), no layout work. */
+html.perf-lite .pl-blob,
+html.perf-lite .as-orb,
+html.perf-lite .wb-aurora {
+  will-change: auto;
+}
+
+/* Shorter, lighter transitions everywhere on phones. */
+html.perf-lite .study-app *,
+html.perf-lite .pl-page * {
+  transition-duration: 0.18s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.perf-lite *,
+  html.perf-lite *::before,
+  html.perf-lite *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
