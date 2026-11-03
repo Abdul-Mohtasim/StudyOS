@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
+import { haptic, isHapticsEnabled, setHapticsEnabled } from "./haptics";
 import React, { useEffect, useRef, useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { flushSync } from "react-dom";
@@ -1710,6 +1711,7 @@ const [authEmail, setAuthEmail] = useState("");
 const [authPassword, setAuthPassword] = useState("");
 const [showAuthPassword, setShowAuthPassword] = useState(false);
 const [googleSignInReady, setGoogleSignInReady] = useState(false);
+const [hapticsOn, setHapticsOn] = useState(() => isHapticsEnabled());
 
 const [deletedTasks, setDeletedTasks] = useState([]);
 const [undoLoading, setUndoLoading] = useState(false);
@@ -2303,6 +2305,7 @@ useEffect(() => {
       // Ensure this timer completion is processed only once.
       if (completionRecordedRef.current) return;
       completionRecordedRef.current = true;
+      haptic.celebrate();
 
       const completedAt = new Date().toISOString();
 
@@ -2669,6 +2672,7 @@ useEffect(() => {
 
     setEndTime(Date.now() + remaining * 1000);
     setIsRunning(true);
+    haptic.timerStart();
   }
 
   function pauseTimer() {
@@ -2681,6 +2685,7 @@ useEffect(() => {
   }
 
   function resetTimer() {
+    haptic.warning();
     setIsRunning(false);
     setEndTime(null);
     setSecondsLeft(durationMinutes * 60);
@@ -3065,6 +3070,7 @@ const visibleTasks = tasks.filter((task) => {
 
       setNewTask("");
       setNewTaskDuration("25");
+      haptic.success();
       setNotice("Your new task has been saved!");
     } catch (error) {
       console.error("Adding StudyOS task:", error);
@@ -3100,6 +3106,7 @@ const visibleTasks = tasks.filter((task) => {
         current.map((item) => (item.id === id ? normalizeTask(data.task) : item))
       );
 
+      if (!task.completed) haptic.success();
       setNotice("");
     } catch (error) {
       console.error("Updating StudyOS task:", error);
@@ -3136,6 +3143,7 @@ async function deleteTask(id) {
       { ...task, deletedAt: Date.now() },
       ...current,
     ]);
+    haptic.warning();
     setNotice("Task deleted. You can undo this action.");
   } catch (error) {
     console.error("Deleting StudyOS task:", error);
@@ -3354,6 +3362,7 @@ async function undoDeleteTask() {
         current.map((item) => (item.id === id ? updatedTask : item))
       );
 
+      if (!task.completed) haptic.success();
       setNotice("");
     } catch (error) {
       console.error("Updating StudyOS planner task:", error);
@@ -6083,6 +6092,50 @@ async function undoDeleteTask() {
                     <span className="theme-preview theme-preview-light" aria-hidden="true" />
                     <span>Light</span>
                     {settingsTheme === "light" && <Check size={16} />}
+                  </button>
+                </div>
+              </article>
+
+              <article className="settings-card">
+                <div className="settings-card-heading">
+                  <span className="settings-card-icon">
+                    <Sparkles size={19} />
+                  </span>
+                  <div>
+                    <h3>Haptic feedback</h3>
+                    <p>Strong vibrations on taps, completed tasks and finished focus sessions.</p>
+                  </div>
+                </div>
+
+                <div
+                  className="settings-theme-options"
+                  role="group"
+                  aria-label="Haptic feedback"
+                >
+                  <button
+                    type="button"
+                    className={`settings-theme-option ${hapticsOn ? "selected" : ""}`}
+                    aria-pressed={hapticsOn}
+                    onClick={() => {
+                      setHapticsEnabled(true);
+                      setHapticsOn(true);
+                    }}
+                  >
+                    <span>On</span>
+                    {hapticsOn && <Check size={16} />}
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`settings-theme-option ${!hapticsOn ? "selected" : ""}`}
+                    aria-pressed={!hapticsOn}
+                    onClick={() => {
+                      setHapticsEnabled(false);
+                      setHapticsOn(false);
+                    }}
+                  >
+                    <span>Off</span>
+                    {!hapticsOn && <Check size={16} />}
                   </button>
                 </div>
               </article>
