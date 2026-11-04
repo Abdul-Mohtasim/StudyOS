@@ -12,6 +12,7 @@ const noteRoutes = require("./routes/notes");
 const focusSessionsRouter = require("./routes/focusSessions");
 const plannerRoutes = require("./routes/planner");
 const settingsRoutes = require("./routes/settings");
+const examRoutes = require("./routes/exams");
 const {
   connectDatabase,
   isDatabaseConnected,
@@ -83,6 +84,7 @@ app.use("/api/notes", noteRoutes);
 app.use("/api/focus-sessions", focusSessionsRouter);
 app.use("/api/planner", plannerRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/exams", examRoutes);
 
 app.get("/", (req, res) => {
   res.json({

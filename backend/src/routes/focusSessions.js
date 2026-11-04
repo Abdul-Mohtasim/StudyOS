@@ -3,6 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const FocusSession = require("../models/FocusSession");
 const requireAuth = require("../middleware/auth");
+const { parseOptionalSubject } = require("../utils/studyFields");
 
 const router = express.Router();
 const FOCUS_SESSION_PAGE_SIZE = 500;
@@ -91,7 +92,7 @@ router.get("/", async (req, res) => {
 // Save a naturally completed focus session.
 router.post("/", async (req, res) => {
   try {
-    const { durationMinutes, completedAt } = req.body;
+    const { durationMinutes, completedAt, subject } = req.body;
 
     if (
       !Number.isInteger(durationMinutes) ||
@@ -114,6 +115,12 @@ router.post("/", async (req, res) => {
       });
     }
 
+    const parsedSubject = parseOptionalSubject(subject);
+
+    if (!parsedSubject.ok) {
+      return res.status(400).json({ message: parsedSubject.message });
+    }
+
     const completedDate = new Date(completedAt);
     const now = Date.now();
     const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
@@ -132,6 +139,7 @@ router.post("/", async (req, res) => {
       student: req.student._id,
       durationMinutes,
       completedAt: completedDate,
+      subject: parsedSubject.value,
     });
 
     return res.status(201).json({ session });

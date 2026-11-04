@@ -1,0 +1,982 @@
+/* =====================================================================
+   StudyOS planning features
+   Task priority + due dates, exam countdown, Pomodoro cycles, richer notes
+   and the weekly summary. Uses the theme tokens from App.css so it follows
+   light / dark mode, and stays quiet on motion.
+   ===================================================================== */
+
+.study-app .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Priority + due date: add form ---------- */
+.study-app .task-add-extra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0 0 12px;
+}
+
+.study-app .prio-picker {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.study-app .prio-pill,
+.study-app .prio-chip {
+  --prio: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: auto;
+  min-height: 0;
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.study-app .prio-low { --prio: var(--success); }
+.study-app .prio-medium { --prio: var(--warning); }
+.study-app .prio-high { --prio: var(--danger); }
+
+.study-app .prio-pill:hover,
+.study-app .prio-chip:hover {
+  border-color: color-mix(in srgb, var(--prio) 55%, var(--border));
+  color: var(--prio);
+}
+
+.study-app .prio-pill.is-active {
+  color: var(--prio);
+  border-color: color-mix(in srgb, var(--prio) 60%, var(--border));
+  background: color-mix(in srgb, var(--prio) 14%, transparent);
+}
+
+.study-app .prio-chip {
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--prio);
+  border-color: color-mix(in srgb, var(--prio) 35%, var(--border));
+  background: color-mix(in srgb, var(--prio) 9%, transparent);
+}
+
+.study-app .task-due-field,
+.study-app .subject-exam-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.study-app .task-due-field input,
+.study-app .subject-exam-field input,
+.study-app .exam-form input[type="date"] {
+  width: auto;
+  height: 30px;
+  min-height: 0;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  color-scheme: dark;
+}
+
+html[data-theme="light"] .study-app .task-due-field input,
+html[data-theme="light"] .study-app .subject-exam-field input,
+html[data-theme="light"] .study-app .exam-form input[type="date"] {
+  color-scheme: light;
+}
+
+/* ---------- Task list: sort bar, chips, overdue ---------- */
+.study-app .task-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+
+.study-app .task-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.study-app .task-sort select {
+  width: auto;
+  height: 30px;
+  min-height: 0;
+  padding: 0 28px 0 10px;
+  border-radius: 9px;
+  font-size: 12.5px;
+}
+
+.study-app .task-overdue-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.study-app .task-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.study-app .due-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.study-app .due-chip.due-overdue {
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+  color: var(--danger);
+}
+
+.study-app .due-chip.due-today {
+  background: color-mix(in srgb, var(--warning) 18%, transparent);
+  color: var(--warning);
+}
+
+.study-app .due-chip.due-soon {
+  background: color-mix(in srgb, var(--primary) 13%, transparent);
+  color: var(--primary);
+}
+
+.study-app .due-chip.due-done {
+  opacity: 0.7;
+}
+
+.study-app .due-edit {
+  display: inline-flex;
+  align-items: center;
+}
+
+.study-app .task-tags .due-edit input {
+  width: 118px;
+  height: 22px;
+  min-height: 0;
+  padding: 0 4px;
+  border: 1px dashed var(--border);
+  border-radius: 7px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 11px;
+  color-scheme: dark;
+  opacity: 0.75;
+  transition: opacity 0.2s, border-color 0.2s;
+}
+
+html[data-theme="light"] .study-app .task-tags .due-edit input {
+  color-scheme: light;
+}
+
+.study-app .task-tags .due-edit input:hover,
+.study-app .task-tags .due-edit input:focus {
+  opacity: 1;
+  border-color: var(--primary);
+}
+
+.study-app .task-row.task-overdue {
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+/* ---------- Exam countdown + weekly summary cards ---------- */
+.study-app .insights-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 18px;
+  margin: 0 0 24px;
+  align-items: stretch;
+}
+
+.study-app .insights-grid > .panel {
+  min-width: 0;
+}
+
+.study-app .exam-list {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+}
+
+.study-app .exam-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+  animation: feat-fade 0.4s ease both;
+}
+
+.study-app .exam-info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.study-app .exam-info strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.study-app .exam-info span {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.study-app .exam-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.study-app .exam-chip.exam-urgent {
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+  color: var(--danger);
+}
+
+.study-app .exam-chip.exam-soon {
+  background: color-mix(in srgb, var(--warning) 17%, transparent);
+  color: var(--warning);
+}
+
+.study-app .exam-chip.exam-passed {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.study-app .exam-remove {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.study-app .exam-remove:hover {
+  background: var(--primary-soft);
+  opacity: 1;
+}
+
+.study-app .exam-empty {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin: 0 0 14px;
+  padding: 22px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.study-app .exam-empty strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.study-app .exam-empty p {
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.study-app .exam-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.study-app .exam-form input[type="text"],
+.study-app .exam-form input:not([type]),
+.study-app .exam-form input[list] {
+  min-width: 0;
+}
+
+.study-app .exam-form input[type="date"] {
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  height: 40px;
+}
+
+.study-app .summary-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.study-app .summary-tile {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+
+.study-app .summary-label {
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.study-app .summary-tile strong {
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.study-app .summary-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.study-app .summary-delta.delta-up { color: var(--success); }
+.study-app .summary-delta.delta-down { color: var(--danger); }
+
+.study-app .summary-compare {
+  display: grid;
+  gap: 9px;
+  margin-bottom: 16px;
+}
+
+.study-app .summary-bar-row {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.study-app .summary-bar-row b {
+  min-width: 52px;
+  color: var(--text);
+  font-size: 12.5px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.study-app .summary-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.study-app .summary-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transform-origin: left center;
+  transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: feat-grow 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.study-app .summary-bar i.is-current { background: var(--primary); }
+
+.study-app .summary-bar i.is-previous {
+  background: color-mix(in srgb, var(--text-muted) 55%, transparent);
+}
+
+.study-app .summary-best {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.study-app .summary-best p {
+  margin: 0;
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ---------- Subject cards: exam date ---------- */
+.study-app .subject-exam {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ---------- Focus Room: Pomodoro ---------- */
+.study-app .pomo-bar {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.study-app .pomo-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+}
+
+.study-app .pomo-tab {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.25s, color 0.25s;
+}
+
+.study-app .pomo-tab small {
+  opacity: 0.7;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.study-app .pomo-tab:hover:not(:disabled):not(.is-active) {
+  color: var(--text);
+}
+
+.study-app .pomo-tab.is-active {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.study-app .pomo-tab:disabled:not(.is-active) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.study-app .pomo-cycle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.study-app .pomo-cycle span {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  transition: background-color 0.35s, border-color 0.35s, transform 0.35s;
+}
+
+.study-app .pomo-cycle span.is-done {
+  border-color: var(--primary);
+  background: var(--primary);
+  transform: scale(1.1);
+}
+
+.study-app .pomo-cycle em {
+  margin-left: 4px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-style: normal;
+}
+
+.study-app .pomo-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.study-app .pomo-subject {
+  display: flex;
+  flex: 1 1 200px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.study-app .pomo-subject input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  min-height: 0;
+  font-size: 13px;
+}
+
+.study-app .pomo-auto {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.study-app .pomo-auto input {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.study-app .fh-subject {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+/* ---------- Notebook: format bar, tags, pins, markdown ---------- */
+.study-app .notes-format-bar {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.study-app .notes-format-bar button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+}
+
+.study-app .notes-format-bar button:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.study-app .notes-format-bar span {
+  margin-left: 6px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+
+.study-app .note-tags,
+.study-app .note-tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.study-app .note-tags {
+  margin: -4px 0 10px;
+}
+
+.study-app .note-tag-filter {
+  margin: 0 0 14px;
+}
+
+.study-app .note-tag-filter > span {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.study-app .note-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: auto;
+  min-height: 0;
+  padding: 2px 9px 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.study-app .note-tag:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.study-app .note-tag.is-active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.study-app .note-card.is-pinned {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+}
+
+.study-app .note-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.study-app .note-title-row h3 {
+  flex: 1;
+  min-width: 0;
+}
+
+.study-app .note-pin-button {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  min-height: 0;
+  margin: -3px -4px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: color 0.2s, background-color 0.2s, opacity 0.2s, transform 0.25s;
+}
+
+.study-app .note-pin-button:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+  opacity: 1;
+}
+
+.study-app .note-pin-button.is-on {
+  color: var(--primary);
+  opacity: 1;
+}
+
+.study-app .note-pin-button.is-on svg {
+  transform: rotate(-20deg);
+}
+
+.study-app .note-card .note-card-footer {
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+
+.study-app .note-card .note-words,
+.study-app .note-card .note-check-progress,
+.study-app .note-card .note-card-footer > span {
+  white-space: nowrap;
+}
+
+.study-app .note-check-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Note text is rendered as real blocks now, so stop pre-wrap spacing. */
+.study-app .note-card .note-card-content {
+  white-space: normal;
+}
+
+.study-app .note-md {
+  display: grid;
+  gap: 6px;
+}
+
+.study-app .note-md p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.study-app .note-md .md-heading {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.study-app .note-md .md-h1 { font-size: 1.15em; }
+.study-app .note-md .md-h2 { font-size: 1.05em; }
+
+.study-app .note-md strong { color: var(--text); }
+
+.study-app .note-md code {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+.study-app .note-md .md-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.study-app .note-md .md-checklist {
+  padding-left: 0;
+  list-style: none;
+}
+
+.study-app .note-md .md-checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.study-app .note-md .md-checklist li.is-checked > span {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.study-app .note-md .md-check {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  min-height: 0;
+  margin-top: 4px;
+  padding: 0;
+  border: 1.5px solid var(--border);
+  border-radius: 5px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.study-app .note-md .md-check:hover:not(:disabled) {
+  border-color: var(--primary);
+}
+
+.study-app .note-md li.is-checked .md-check {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+/* ---------- Small motion + mobile ---------- */
+@keyframes feat-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes feat-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (max-width: 900px) {
+  .study-app .insights-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .study-app .exam-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .study-app .exam-row .exam-remove {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .study-app .exam-row .exam-chip {
+    grid-column: 2 / 4;
+    grid-row: 2;
+    justify-self: start;
+  }
+
+  .study-app .exam-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .study-app .summary-tiles {
+    gap: 8px;
+  }
+
+  .study-app .summary-tile {
+    padding: 10px 9px;
+  }
+
+  .study-app .summary-tile strong {
+    font-size: 19px;
+  }
+
+  .study-app .pomo-tab {
+    flex-direction: column;
+    gap: 1px;
+    font-size: 12px;
+  }
+
+  .study-app .task-toolbar {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .study-app .exam-row,
+  .study-app .summary-bar i,
+  .study-app .pomo-cycle span,
+  .study-app .pomo-tab {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Polish: stronger selectors so the app-wide input styles don't win ---------- */
+.study-app .task-add-extra .task-due-field input[type="date"],
+.study-app .subject-exam .subject-exam-field input[type="date"],
+.study-app .exam-form input[type="date"] {
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: normal;
+}
+
+.study-app .task-toolbar .task-sort select {
+  height: 34px;
+  padding: 0 30px 0 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* A task with no due date shows just a small calendar button. */
+.study-app .task-tags .due-edit.is-empty input {
+  width: 28px;
+  padding: 0;
+  border-style: solid;
+  opacity: 0.55;
+}
+
+.study-app .task-tags .due-edit.is-empty input::-webkit-datetime-edit {
+  display: none;
+}
+
+.study-app .task-tags .due-edit.is-empty input::-webkit-calendar-picker-indicator {
+  margin: 0 auto;
+  cursor: pointer;
+}
+
+.study-app .task-tags .due-edit.is-empty:hover input,
+.study-app .task-tags .due-edit.is-empty:focus-within input {
+  opacity: 1;
+}
+
+.study-app .note-card .note-updated {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

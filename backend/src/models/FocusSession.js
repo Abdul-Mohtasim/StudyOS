@@ -21,6 +21,14 @@ const focusSessionSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+
+    // The subject the student was studying (optional).
+    subject: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+      default: "",
+    },
   },
   {
     timestamps: true,

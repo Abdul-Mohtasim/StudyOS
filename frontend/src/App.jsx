@@ -68,9 +68,59 @@ import {
   Brain,
   Scale,
   Microscope,
+  Pin,
+  Bold,
+  Italic,
+  List,
+  Flag,
+  CalendarClock,
+  Hash,
+  Coffee,
+  Trophy,
+  TrendingDown,
+  Minus,
+  TriangleAlert,
 } from "lucide-react";
 
 import "./App.css";
+import "./features.css";
+import MarkdownView from "./MarkdownView";
+import {
+  PRIORITIES,
+  PRIORITY_LABEL,
+  nextPriority,
+  describeDue,
+  isTaskOverdue,
+  describeExamCountdown,
+  localDateKey,
+  sortTasks,
+  parseTagInput,
+  applyMarkdownFormat,
+  toggleChecklistLine,
+  checklistProgress,
+  buildWeeklySummary,
+  compareToLast,
+  formatHours,
+} from "./studyHelpers";
+
+// Pomodoro: a long break after every fourth focus session.
+const SHORT_BREAK_MINUTES = 5;
+
+// "Mon, Dec 15, 2026" for a YYYY-MM-DD exam date.
+function dateKeyLabel(key) {
+  const [year, month, day] = String(key).split("-").map(Number);
+  const date = new Date(year, (month || 1) - 1, day || 1);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleDateString([], {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+}
+const LONG_BREAK_MINUTES = 15;
+const POMODORO_CYCLE = 4;
 
 const API_BASE_URL = import.meta.env.DEV
   ? ""
@@ -137,6 +187,19 @@ function normalizeTask(task) {
     subject: task.subject || "Personal",
     time: `${task.duration ?? 25} min`,
     completed: Boolean(task.completed),
+    priority: PRIORITIES.includes(task.priority) ? task.priority : "medium",
+    dueDate: typeof task.dueDate === "string" ? task.dueDate : "",
+    // Tasks finished before completion times were stored fall back to updatedAt.
+    completedAt:
+      task.completedAt || (task.completed ? task.updatedAt : "") || "",
+  };
+}
+
+function normalizeExam(exam) {
+  return {
+    id: exam._id || exam.id,
+    subject: exam.subject,
+    date: exam.date,
   };
 }
 
@@ -146,6 +209,8 @@ function normalizeNote(note) {
     title: note.title,
     subject: note.subject || "Personal",
     content: note.content,
+    pinned: Boolean(note.pinned),
+    tags: Array.isArray(note.tags) ? note.tags : [],
     createdAt: note.createdAt,
     updatedAt: note.updatedAt,
   };
@@ -156,6 +221,7 @@ function normalizeFocusSession(session) {
     id: session._id || session.id,
     durationMinutes: Number(session.durationMinutes),
     completedAt: session.completedAt,
+    subject: typeof session.subject === "string" ? session.subject : "",
   };
 }
 
@@ -1719,6 +1785,15 @@ useEffect(() => {
   const [newTask, setNewTask] = useState("");
   const [newSubject, setNewSubject] = useState("Personal");
   const [newTaskDuration, setNewTaskDuration] = useState("25");
+  const [newTaskPriority, setNewTaskPriority] = useState("medium");
+  const [newTaskDue, setNewTaskDue] = useState("");
+  const [taskSort, setTaskSort] = useState("newest");
+
+  // ---------- Exam countdowns ----------
+  const [exams, setExams] = useState([]);
+  const [examSubjectDraft, setExamSubjectDraft] = useState("");
+  const [examDateDraft, setExamDateDraft] = useState("");
+  const [examSaving, setExamSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [globalSearch, setGlobalSearch] = useState("");
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
@@ -1770,6 +1845,9 @@ useEffect(() => {
   const [noteSearch, setNoteSearch] = useState("");
   const [noteFilter, setNoteFilter] = useState("All Subjects");
   const [editingNoteId, setEditingNoteId] = useState(null);
+  const [noteTags, setNoteTags] = useState("");
+  const [noteTagFilter, setNoteTagFilter] = useState("");
+  const noteTextareaRef = useRef(null);
 
   // ---------- Pomodoro timer ----------
   const [durationMinutes, setDurationMinutes] = useState(25);
@@ -1785,6 +1863,24 @@ useEffect(() => {
   const [totalFocusMinutes, setTotalFocusMinutes] = useState(0);
   const [totalFocusSessionCount, setTotalFocusSessionCount] = useState(0);
   const completionRecordedRef = useRef(false);
+
+  // Pomodoro cycle: focus -> short break (x3) -> focus ... -> long break.
+  const [pomodoroMode, setPomodoroMode] = useState("focus");
+  const [cycleCount, setCycleCount] = useState(0);
+  const [focusSubject, setFocusSubject] = useState("");
+  const [pomodoroAutoStart, setPomodoroAutoStart] = useState(() => {
+    try {
+      return localStorage.getItem("studyos-pomodoro-autostart") !== "off";
+    } catch {
+      return true;
+    }
+  });
+  const phaseMinutes =
+    pomodoroMode === "short"
+      ? SHORT_BREAK_MINUTES
+      : pomodoroMode === "long"
+        ? LONG_BREAK_MINUTES
+        : durationMinutes;
 
   // ---------- Weekly planner and daily goal ----------
   const [weeklyPlan, setWeeklyPlan] = useState([]);
@@ -1978,6 +2074,43 @@ useEffect(() => {
     }
 
     fetchNotes();
+
+    return () => controller.abort();
+  }, [authToken, reloadVersion]);
+
+  // Load exam dates.
+  useEffect(() => {
+    if (!authToken) {
+      setExams([]);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function fetchExams() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/exams`, {
+          headers: { Authorization: `Bearer ${authToken}` },
+          signal: controller.signal,
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data.message || "Could not load your exam dates.");
+        }
+
+        setExams(
+          Array.isArray(data.exams) ? data.exams.map(normalizeExam) : []
+        );
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Loading StudyOS exams:", error);
+        }
+      }
+    }
+
+    fetchExams();
 
     return () => controller.abort();
   }, [authToken, reloadVersion]);
@@ -2276,14 +2409,54 @@ useEffect(() => {
 
       setIsRunning(false);
       setEndTime(null);
-      setSessionCompleted(true);
 
       // Ensure this timer completion is processed only once.
       if (completionRecordedRef.current) return;
       completionRecordedRef.current = true;
       haptic.celebrate();
 
+      const finishedMode = pomodoroMode;
       const completedAt = new Date().toISOString();
+
+      // Pick the next phase: focus -> break (a long one after every fourth
+      // focus session), break -> focus.
+      let nextMode = "focus";
+      let nextCycle = finishedMode === "long" ? 0 : cycleCount;
+
+      if (finishedMode === "focus") {
+        nextCycle = cycleCount + 1;
+        nextMode = nextCycle >= POMODORO_CYCLE ? "long" : "short";
+      }
+
+      const nextMinutes =
+        nextMode === "short"
+          ? SHORT_BREAK_MINUTES
+          : nextMode === "long"
+            ? LONG_BREAK_MINUTES
+            : durationMinutes;
+
+      setPomodoroMode(nextMode);
+      setCycleCount(nextCycle);
+      setSecondsLeft(nextMinutes * 60);
+
+      if (pomodoroAutoStart) {
+        completionRecordedRef.current = false;
+        setSessionCompleted(false);
+        setEndTime(Date.now() + nextMinutes * 60 * 1000);
+        setIsRunning(true);
+        setNotice(
+          finishedMode === "focus"
+            ? nextMode === "long"
+              ? "Great set! Take a long break."
+              : "Focus session done. Break time!"
+            : "Break over. Time to focus!"
+        );
+      } else {
+        setSessionCompleted(true);
+      }
+
+      // Breaks are not study time, so only focus sessions are saved.
+      if (finishedMode !== "focus") return;
 
       async function saveCompletedSession() {
         if (!authToken) {
@@ -2298,7 +2471,11 @@ useEffect(() => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${authToken}`,
             },
-            body: JSON.stringify({ durationMinutes, completedAt }),
+            body: JSON.stringify({
+              durationMinutes,
+              completedAt,
+              ...(focusSubject.trim() ? { subject: focusSubject.trim() } : {}),
+            }),
           });
 
           const data = await response.json().catch(() => ({}));
@@ -2352,7 +2529,16 @@ useEffect(() => {
     const interval = setInterval(updateTimer, 250);
 
     return () => clearInterval(interval);
-  }, [isRunning, endTime, durationMinutes, authToken]);
+  }, [
+    isRunning,
+    endTime,
+    durationMinutes,
+    authToken,
+    pomodoroMode,
+    cycleCount,
+    pomodoroAutoStart,
+    focusSubject,
+  ]);
 
   // ---------- Auth handlers ----------
   async function handleEmailAuth(event) {
@@ -2521,6 +2707,8 @@ useEffect(() => {
     // Stop and reset the timer.
     setIsRunning(false);
     setEndTime(null);
+    setPomodoroMode("focus");
+    setCycleCount(0);
     setSecondsLeft(durationMinutes * 60);
     setSessionCompleted(false);
     completionRecordedRef.current = false;
@@ -2612,7 +2800,7 @@ useEffect(() => {
     const minutes = Math.min(180, Math.max(1, Math.floor(value)));
 
     setDurationMinutes(minutes);
-    setSecondsLeft(minutes * 60);
+    if (pomodoroMode === "focus") setSecondsLeft(minutes * 60);
     setSessionCompleted(false);
     setEndTime(null);
   }
@@ -2620,18 +2808,48 @@ useEffect(() => {
   function applyPreset(minutes) {
     if (isRunning) return;
     setDurationMinutes(minutes);
-    setSecondsLeft(minutes * 60);
+    if (pomodoroMode === "focus") setSecondsLeft(minutes * 60);
     setSessionCompleted(false);
     setEndTime(null);
   }
 
+  // Jump between Focus / Short break / Long break (not while the clock runs).
+  function switchPhase(mode) {
+    if (isRunning || mode === pomodoroMode) return;
+
+    const minutes =
+      mode === "short"
+        ? SHORT_BREAK_MINUTES
+        : mode === "long"
+          ? LONG_BREAK_MINUTES
+          : durationMinutes;
+
+    setPomodoroMode(mode);
+    setSecondsLeft(minutes * 60);
+    setSessionCompleted(false);
+    setEndTime(null);
+    completionRecordedRef.current = false;
+  }
+
+  function changePomodoroAutoStart(event) {
+    const enabled = event.target.checked;
+    setPomodoroAutoStart(enabled);
+    try {
+      localStorage.setItem("studyos-pomodoro-autostart", enabled ? "on" : "off");
+    } catch {
+      // The preference simply won't be remembered.
+    }
+  }
+
   function startTimer() {
-    if (focusSessionsLoading) {
+    const isBreak = pomodoroMode !== "focus";
+
+    if (!isBreak && focusSessionsLoading) {
       setNotice("Loading your focus history. Please wait a moment.");
       return;
     }
 
-    if (!authToken) {
+    if (!isBreak && !authToken) {
       setNotice("Please sign in to start a focus session.");
       return;
     }
@@ -2641,7 +2859,7 @@ useEffect(() => {
     // After a finished session the clock sits at 0; start a fresh one.
     let remaining = secondsLeft;
     if (remaining <= 0) {
-      remaining = durationMinutes * 60;
+      remaining = phaseMinutes * 60;
       setSecondsLeft(remaining);
     }
 
@@ -2666,7 +2884,7 @@ useEffect(() => {
     haptic.warning();
     setIsRunning(false);
     setEndTime(null);
-    setSecondsLeft(durationMinutes * 60);
+    setSecondsLeft(phaseMinutes * 60);
     setSessionCompleted(false);
   }
 
@@ -2676,7 +2894,7 @@ useEffect(() => {
   }
 
   // ---------- Derived values ----------
-  const totalSeconds = durationMinutes * 60;
+  const totalSeconds = phaseMinutes * 60;
   const timerMinutes = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const timerSeconds = String(secondsLeft % 60).padStart(2, "0");
   const timerProgress = Math.min(
@@ -2835,19 +3053,57 @@ useEffect(() => {
 
   const searchQuery = search.trim().toLowerCase();
 
-const visibleTasks = tasks.filter((task) => {
-  const searchableText = [
-    task.title,
-    task.subject,
-    task.time,
-    task.completed ? "completed done" : "pending todo incomplete",
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+const visibleTasks = sortTasks(
+  tasks.filter((task) => {
+    const searchableText = [
+      task.title,
+      task.subject,
+      task.time,
+      `${task.priority} priority`,
+      isTaskOverdue(task) ? "overdue late" : "",
+      task.completed ? "completed done" : "pending todo incomplete",
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
 
-  return searchableText.includes(searchQuery);
-});
+    return searchableText.includes(searchQuery);
+  }),
+  taskSort
+);
+
+  const overdueCount = tasks.filter((task) => isTaskOverdue(task)).length;
+
+  // ---------- Exam countdowns (derived) ----------
+  const examBySubject = new Map(
+    exams.map((exam) => [exam.subject.trim().toLowerCase(), exam])
+  );
+
+  const upcomingExams = exams
+    .map((exam) => ({ ...exam, countdown: describeExamCountdown(exam.date) }))
+    .filter((exam) => exam.countdown && exam.countdown.days >= 0)
+    .sort((a, b) => a.countdown.days - b.countdown.days)
+    .slice(0, 5);
+
+  // ---------- Weekly summary (derived) ----------
+  const weeklySummary = buildWeeklySummary({ tasks, sessions: focusSessions });
+  const summaryMinutesChange = compareToLast(
+    weeklySummary.current.minutes,
+    weeklySummary.previous.minutes
+  );
+  const summaryTasksChange = compareToLast(
+    weeklySummary.current.tasks,
+    weeklySummary.previous.tasks
+  );
+  const summarySessionsChange = compareToLast(
+    weeklySummary.current.sessions,
+    weeklySummary.previous.sessions
+  );
+  const summaryMaxMinutes = Math.max(
+    1,
+    weeklySummary.current.minutes,
+    weeklySummary.previous.minutes
+  );
 
   // My Subjects is based ONLY on subjects used by tasks.
   // Planner entries and notes never create a subject card on their own.
@@ -3034,7 +3290,13 @@ const visibleTasks = tasks.filter((task) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ title, subject: newSubject, duration }),
+        body: JSON.stringify({
+          title,
+          subject: newSubject,
+          duration,
+          priority: newTaskPriority,
+          ...(newTaskDue ? { dueDate: newTaskDue } : {}),
+        }),
       });
 
       const data = await response.json().catch(() => ({}));
@@ -3048,12 +3310,155 @@ const visibleTasks = tasks.filter((task) => {
 
       setNewTask("");
       setNewTaskDuration("25");
+      setNewTaskPriority("medium");
+      setNewTaskDue("");
       haptic.add();
       setNotice("Your new task has been saved!");
     } catch (error) {
       console.error("Adding StudyOS task:", error);
       setNotice(error.message || "Could not save the task.");
     }
+  }
+
+  // Change a task's priority or due date (dueDate: null clears it).
+  async function patchTask(id, fields) {
+    if (!authToken) return;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/tasks/${encodeURIComponent(id)}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify(fields),
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.message || "Could not update the task.");
+      }
+
+      setTasks((current) =>
+        current.map((item) => (item.id === id ? normalizeTask(data.task) : item))
+      );
+      setNotice("");
+    } catch (error) {
+      console.error("Updating StudyOS task:", error);
+      setNotice(error.message || "Could not update the task.");
+    }
+  }
+
+  // ---------- Exam handlers ----------
+  async function saveExam(subject, date) {
+    if (!authToken) {
+      setNotice("Please sign in before saving exam dates.");
+      return false;
+    }
+
+    setExamSaving(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/exams`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ subject, date }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data.exam) {
+        throw new Error(data.message || "Could not save the exam date.");
+      }
+
+      const saved = normalizeExam(data.exam);
+
+      setExams((current) =>
+        [
+          ...current.filter(
+            (exam) =>
+              exam.subject.trim().toLowerCase() !==
+              saved.subject.trim().toLowerCase()
+          ),
+          saved,
+        ].sort((a, b) => a.date.localeCompare(b.date))
+      );
+      setNotice("");
+      return true;
+    } catch (error) {
+      console.error("Saving StudyOS exam:", error);
+      setNotice(error.message || "Could not save the exam date.");
+      return false;
+    } finally {
+      setExamSaving(false);
+    }
+  }
+
+  async function removeExam(exam) {
+    if (!authToken || !exam) return;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/exams/${encodeURIComponent(exam.id)}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${authToken}` },
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data.message || "Could not remove the exam date.");
+      }
+
+      setExams((current) => current.filter((item) => item.id !== exam.id));
+    } catch (error) {
+      console.error("Removing StudyOS exam:", error);
+      setNotice(error.message || "Could not remove the exam date.");
+    }
+  }
+
+  async function submitExamForm(event) {
+    event.preventDefault();
+
+    const subject = examSubjectDraft.trim();
+
+    if (!subject) {
+      setNotice("Choose a subject for your exam.");
+      return;
+    }
+
+    if (!examDateDraft) {
+      setNotice("Pick the exam date.");
+      return;
+    }
+
+    const saved = await saveExam(subject, examDateDraft);
+
+    if (saved) {
+      setExamSubjectDraft("");
+      setExamDateDraft("");
+    }
+  }
+
+  // Used by the date field on each subject card.
+  function setSubjectExamDate(subjectName, date) {
+    const existing = examBySubject.get(subjectName.trim().toLowerCase());
+
+    if (!date) {
+      removeExam(existing);
+      return;
+    }
+
+    saveExam(subjectName, date);
   }
 
   async function toggleTask(id) {
@@ -3420,7 +3825,12 @@ async function undoDeleteTask() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ title, subject: noteSubject, content }),
+        body: JSON.stringify({
+          title,
+          subject: noteSubject,
+          content,
+          tags: parseTagInput(noteTags),
+        }),
       });
 
       const data = await response.json().catch(() => ({}));
@@ -3450,6 +3860,7 @@ async function undoDeleteTask() {
 
       setNoteTitle("");
       setNoteContent("");
+      setNoteTags("");
       setNoteSubject("Mathematics");
       setEditingNoteId(null);
     } catch (error) {
@@ -3465,6 +3876,7 @@ async function undoDeleteTask() {
     setNoteTitle(note.title);
     setNoteSubject(note.subject);
     setNoteContent(note.content);
+    setNoteTags((note.tags || []).join(", "));
 
     document.getElementById("subject-note-editor")?.scrollIntoView({
       behavior: "smooth",
@@ -3476,7 +3888,105 @@ async function undoDeleteTask() {
     setEditingNoteId(null);
     setNoteTitle("");
     setNoteContent("");
+    setNoteTags("");
     setNoteSubject("Mathematics");
+  }
+
+  // Bold / italic / bullets / checklist / heading buttons above the editor.
+  function formatNote(type) {
+    const field = noteTextareaRef.current;
+    if (!field) return;
+
+    const result = applyMarkdownFormat(
+      noteContent,
+      field.selectionStart ?? noteContent.length,
+      field.selectionEnd ?? noteContent.length,
+      type
+    );
+
+    setNoteContent(result.value.slice(0, 20000));
+
+    requestAnimationFrame(() => {
+      field.focus();
+      field.setSelectionRange(result.start, result.end);
+    });
+  }
+
+  // Replace one note in state with the server's copy.
+  function applySavedNote(savedNote) {
+    setSubjectNotes((current) =>
+      current.map((note) => (note.id === savedNote.id ? savedNote : note))
+    );
+  }
+
+  async function patchNote(id, fields, failMessage) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/notes/${encodeURIComponent(id)}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(fields),
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data.note) {
+      throw new Error(data.message || failMessage);
+    }
+
+    return normalizeNote(data.note);
+  }
+
+  async function toggleNotePin(note) {
+    if (!authToken) {
+      setNotice("Please sign in before pinning notes.");
+      return;
+    }
+
+    try {
+      applySavedNote(
+        await patchNote(
+          note.id,
+          { pinned: !note.pinned },
+          "Could not update the note."
+        )
+      );
+      haptic.note();
+    } catch (error) {
+      console.error("Pinning StudyOS note:", error);
+      setNotice(error.message || "Could not update the note.");
+    }
+  }
+
+  // Tick a checklist item inside a note without opening the editor.
+  async function toggleNoteChecklist(note, lineIndex) {
+    if (!authToken) return;
+
+    const content = toggleChecklistLine(note.content, lineIndex);
+    if (content === note.content) return;
+
+    // Show the change straight away, then confirm with the server.
+    setSubjectNotes((current) =>
+      current.map((item) => (item.id === note.id ? { ...item, content } : item))
+    );
+
+    try {
+      applySavedNote(
+        await patchNote(note.id, { content }, "Could not update the checklist.")
+      );
+    } catch (error) {
+      console.error("Updating StudyOS checklist:", error);
+      setSubjectNotes((current) =>
+        current.map((item) =>
+          item.id === note.id ? { ...item, content: note.content } : item
+        )
+      );
+      setNotice(error.message || "Could not update the checklist.");
+    }
   }
 
   async function deleteSubjectNote(id) {
@@ -3514,18 +4024,43 @@ async function undoDeleteTask() {
     }
   }
 
-  const visibleNotes = subjectNotes.filter((note) => {
-    const matchesSearch =
-      note.title.toLowerCase().includes(noteSearch.toLowerCase()) ||
-      note.content.toLowerCase().includes(noteSearch.toLowerCase());
+  const visibleNotes = subjectNotes
+    .filter((note) => {
+      const query = noteSearch.trim().toLowerCase().replace(/^#/, "");
 
-    const matchesSubject =
-      noteFilter === "All Subjects" ||
-      (note.subject || "Personal").trim().toLowerCase() ===
-      noteFilter.trim().toLowerCase();
+      const matchesSearch =
+        note.title.toLowerCase().includes(noteSearch.toLowerCase()) ||
+        note.content.toLowerCase().includes(noteSearch.toLowerCase()) ||
+        (query !== "" && note.tags.some((tag) => tag.includes(query)));
 
-    return matchesSearch && matchesSubject;
-  });
+      const matchesSubject =
+        noteFilter === "All Subjects" ||
+        (note.subject || "Personal").trim().toLowerCase() ===
+        noteFilter.trim().toLowerCase();
+
+      const matchesTag = !noteTagFilter || note.tags.includes(noteTagFilter);
+
+      return matchesSearch && matchesSubject && matchesTag;
+    })
+    // Pinned notes first; otherwise keep the server's newest-first order.
+    .map((note, index) => ({ note, index }))
+    .sort(
+      (a, b) =>
+        Number(b.note.pinned) - Number(a.note.pinned) || a.index - b.index
+    )
+    .map((entry) => entry.note);
+
+  // Most-used tags, shown as quick filters above the list.
+  const noteTagCounts = new Map();
+  subjectNotes.forEach((note) =>
+    note.tags.forEach((tag) =>
+      noteTagCounts.set(tag, (noteTagCounts.get(tag) || 0) + 1)
+    )
+  );
+  const popularNoteTags = [...noteTagCounts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 10)
+    .map(([tag]) => tag);
 
   // ---------- Settings handlers ----------
   async function saveDailyGoal(event) {
@@ -4708,6 +5243,147 @@ async function undoDeleteTask() {
         </section>
 
         <section
+          className="insights-grid"
+          id="exam-countdown"
+          aria-label="Exam countdown and weekly summary"
+        >
+          <article className="panel exam-panel">
+            <div className="panel-heading">
+              <div>
+                <h2>Exam Countdown</h2>
+                <p>Know exactly how long you have left.</p>
+              </div>
+              <span className="pill-count">
+                {upcomingExams.length} upcoming
+              </span>
+            </div>
+
+            {upcomingExams.length === 0 ? (
+              <div className="exam-empty">
+                <CalendarClock size={22} aria-hidden="true" />
+                <strong>No exams coming up</strong>
+                <p>Add an exam date below and it will count down here.</p>
+              </div>
+            ) : (
+              <ul className="exam-list">
+                {upcomingExams.map((exam) => (
+                  <li className="exam-row" key={exam.id}>
+                    <SubjectBadge name={exam.subject} />
+
+                    <div className="exam-info">
+                      <strong>{exam.subject}</strong>
+                      <span>
+                        {dateKeyLabel(exam.date)}
+                      </span>
+                    </div>
+
+                    <span className={`exam-chip exam-${exam.countdown.tone}`}>
+                      {exam.countdown.label}
+                    </span>
+
+                    <button
+                      type="button"
+                      className="exam-remove"
+                      onClick={() => removeExam(exam)}
+                      aria-label={`Remove ${exam.subject} exam date`}
+                      title="Remove exam date"
+                    >
+                      <X size={14} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <form className="exam-form" onSubmit={submitExamForm}>
+              <input
+                list="studyos-subject-suggestions"
+                value={examSubjectDraft}
+                onChange={(event) => setExamSubjectDraft(event.target.value)}
+                placeholder="Subject"
+                aria-label="Exam subject"
+                maxLength={60}
+              />
+              <input
+                type="date"
+                value={examDateDraft}
+                min={localDateKey(new Date())}
+                onChange={(event) => setExamDateDraft(event.target.value)}
+                aria-label="Exam date"
+              />
+              <button type="submit" className="add-task-button" disabled={examSaving}>
+                <Plus size={16} />
+                <span>{examSaving ? "Saving..." : "Add exam"}</span>
+              </button>
+            </form>
+          </article>
+
+          <article className="panel summary-panel">
+            <div className="panel-heading">
+              <div>
+                <h2>Weekly Summary</h2>
+                <p>The last 7 days compared with the 7 before.</p>
+              </div>
+            </div>
+
+            <div className="summary-tiles">
+              {[
+                ["Hours studied", formatHours(weeklySummary.current.minutes), summaryMinutesChange],
+                ["Tasks done", String(weeklySummary.current.tasks), summaryTasksChange],
+                ["Sessions", String(weeklySummary.current.sessions), summarySessionsChange],
+              ].map(([label, value, change]) => (
+                <div className="summary-tile" key={label}>
+                  <span className="summary-label">{label}</span>
+                  <strong>{value}</strong>
+                  <span className={`summary-delta delta-${change.direction}`}>
+                    {change.direction === "up" ? (
+                      <TrendingUp size={12} aria-hidden="true" />
+                    ) : change.direction === "down" ? (
+                      <TrendingDown size={12} aria-hidden="true" />
+                    ) : (
+                      <Minus size={12} aria-hidden="true" />
+                    )}
+                    {change.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="summary-compare" aria-label="Study time this week versus last week">
+              {[
+                ["This week", weeklySummary.current.minutes, "is-current"],
+                ["Last week", weeklySummary.previous.minutes, "is-previous"],
+              ].map(([label, minutes, tone]) => (
+                <div className="summary-bar-row" key={label}>
+                  <span>{label}</span>
+                  <div className="summary-bar" aria-hidden="true">
+                    <i
+                      className={tone}
+                      style={{ width: `${Math.max(minutes > 0 ? 4 : 0, Math.round((minutes / summaryMaxMinutes) * 100))}%` }}
+                    />
+                  </div>
+                  <b>{formatHours(minutes)}</b>
+                </div>
+              ))}
+            </div>
+
+            <div className="summary-best">
+              <Trophy size={16} aria-hidden="true" />
+              {weeklySummary.best ? (
+                <p>
+                  Best subject: <strong>{weeklySummary.best.name}</strong>
+                  {weeklySummary.best.basis === "focus"
+                    ? ` · ${formatHours(weeklySummary.best.minutes)} focused`
+                    : ` · ${weeklySummary.best.tasks} ${weeklySummary.best.tasks === 1 ? "task" : "tasks"} done`}
+                </p>
+              ) : (
+                <p>Pick a subject in the Focus Room to find your best subject.</p>
+              )}
+            </div>
+          </article>
+        </section>
+
+        <section
           className="panel weekly-planner-panel"
           id="weekly-planner"
           aria-label="Weekly study planner"
@@ -5103,6 +5779,57 @@ async function undoDeleteTask() {
               </button>
             </form>
 
+            <div className="task-add-extra">
+              <div className="prio-picker" role="radiogroup" aria-label="Task priority">
+                {PRIORITIES.map((level) => (
+                  <button
+                    type="button"
+                    key={level}
+                    role="radio"
+                    aria-checked={newTaskPriority === level}
+                    className={`prio-pill prio-${level}${newTaskPriority === level ? " is-active" : ""}`}
+                    onClick={() => setNewTaskPriority(level)}
+                  >
+                    <Flag size={12} aria-hidden="true" />
+                    {PRIORITY_LABEL[level]}
+                  </button>
+                ))}
+              </div>
+
+              <label className="task-due-field">
+                <CalendarClock size={14} aria-hidden="true" />
+                <span>Due</span>
+                <input
+                  type="date"
+                  value={newTaskDue}
+                  onChange={(event) => setNewTaskDue(event.target.value)}
+                  aria-label="Task due date (optional)"
+                />
+              </label>
+            </div>
+
+            <div className="task-toolbar">
+              <label className="task-sort">
+                <span>Sort by</span>
+                <select
+                  value={taskSort}
+                  onChange={(event) => setTaskSort(event.target.value)}
+                  aria-label="Sort tasks"
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="due">Due date</option>
+                  <option value="priority">Priority</option>
+                </select>
+              </label>
+
+              {overdueCount > 0 && (
+                <span className="task-overdue-flag" role="status">
+                  <TriangleAlert size={13} aria-hidden="true" />
+                  {overdueCount} overdue
+                </span>
+              )}
+            </div>
+
             {notice && (
               <p className="task-notice" role="status">
                 {notice}
@@ -5153,9 +5880,14 @@ async function undoDeleteTask() {
                   </p>
                 </div>
               ) : (
-                visibleTasks.map((task) => (
+                visibleTasks.map((task) => {
+                  const due = task.dueDate
+                    ? describeDue(task.dueDate, task.completed)
+                    : null;
+
+                  return (
                   <article
-                    className={`task-row ${task.completed ? "task-completed" : ""}`}
+                    className={`task-row ${task.completed ? "task-completed" : ""}${due?.tone === "overdue" ? " task-overdue" : ""}`}
                     key={task.id}
                   >
                     <button
@@ -5180,6 +5912,43 @@ async function undoDeleteTask() {
                         <span className="meta-dot">·</span>
                         <Clock3 size={12} /> {task.time || "Anytime"}
                       </span>
+
+                      <span className="task-tags">
+                        <button
+                          type="button"
+                          className={`prio-chip prio-${task.priority}`}
+                          onClick={() =>
+                            patchTask(task.id, { priority: nextPriority(task.priority) })
+                          }
+                          title="Change priority"
+                          aria-label={`Priority ${PRIORITY_LABEL[task.priority]}. Click to change.`}
+                        >
+                          <Flag size={11} aria-hidden="true" />
+                          {PRIORITY_LABEL[task.priority]}
+                        </button>
+
+                        {due && (
+                          <span className={`due-chip due-${due.tone}`}>
+                            {due.tone === "overdue" ? (
+                              <TriangleAlert size={11} aria-hidden="true" />
+                            ) : (
+                              <CalendarClock size={11} aria-hidden="true" />
+                            )}
+                            {due.label}
+                          </span>
+                        )}
+
+                        <label className={`due-edit${task.dueDate ? "" : " is-empty"}`} title={task.dueDate ? "Change due date" : "Add a due date"}>
+                          <input
+                            type="date"
+                            value={task.dueDate}
+                            onChange={(event) =>
+                              patchTask(task.id, { dueDate: event.target.value || null })
+                            }
+                            aria-label={`Due date for ${task.title}`}
+                          />
+                        </label>
+                      </span>
                     </div>
 
                     <span
@@ -5198,7 +5967,8 @@ async function undoDeleteTask() {
                       <Trash2 size={16} />
                     </button>
                   </article>
-                ))
+                  );
+                })
               )}
             </div>
 
@@ -5224,10 +5994,74 @@ async function undoDeleteTask() {
 
               <span className={`focus-live ${isRunning ? "focus-active" : ""}`}>
                 <span />
-                {isRunning ? "FOCUSING" : sessionCompleted ? "COMPLETED" : "READY"}
+                {isRunning
+                  ? pomodoroMode === "focus"
+                    ? "FOCUSING"
+                    : "ON BREAK"
+                  : sessionCompleted
+                    ? "COMPLETED"
+                    : "READY"}
               </span>
             </div>
 
+            <div className="pomo-bar">
+              <div className="pomo-tabs" role="tablist" aria-label="Timer phase">
+                {[
+                  ["focus", "Focus", durationMinutes],
+                  ["short", "Short break", SHORT_BREAK_MINUTES],
+                  ["long", "Long break", LONG_BREAK_MINUTES],
+                ].map(([mode, label, minutes]) => (
+                  <button
+                    type="button"
+                    key={mode}
+                    role="tab"
+                    aria-selected={pomodoroMode === mode}
+                    className={`pomo-tab${pomodoroMode === mode ? " is-active" : ""}`}
+                    onClick={() => switchPhase(mode)}
+                    disabled={isRunning}
+                  >
+                    {mode !== "focus" && <Coffee size={13} aria-hidden="true" />}
+                    {label}
+                    <small>{minutes}m</small>
+                  </button>
+                ))}
+              </div>
+
+              <div className="pomo-cycle" aria-label={`${cycleCount} of ${POMODORO_CYCLE} focus sessions done in this set`}>
+                {Array.from({ length: POMODORO_CYCLE }, (_, index) => (
+                  <span key={index} className={index < cycleCount ? "is-done" : ""} />
+                ))}
+                <em>
+                  {cycleCount}/{POMODORO_CYCLE} · long break after {POMODORO_CYCLE}
+                </em>
+              </div>
+
+              <div className="pomo-options">
+                <label className="pomo-subject">
+                  <span>Studying</span>
+                  <input
+                    list="studyos-subject-suggestions"
+                    value={focusSubject}
+                    onChange={(event) => setFocusSubject(event.target.value)}
+                    placeholder="Pick a subject (optional)"
+                    maxLength={60}
+                    disabled={isRunning}
+                    aria-label="Subject for this focus session"
+                  />
+                </label>
+
+                <label className="pomo-auto">
+                  <input
+                    type="checkbox"
+                    checked={pomodoroAutoStart}
+                    onChange={changePomodoroAutoStart}
+                  />
+                  <span>Auto-start next</span>
+                </label>
+              </div>
+            </div>
+
+            {pomodoroMode === "focus" && (
             <div className="timer-duration-setting">
               <label htmlFor="focusDuration">Session length</label>
 
@@ -5249,7 +6083,9 @@ async function undoDeleteTask() {
 
               <p>Choose between 1 and 180 minutes.</p>
             </div>
+            )}
 
+            {pomodoroMode === "focus" && (
             <div className="fr-presets" role="group" aria-label="Quick session lengths">
               {[5, 15, 25, 45, 60, 90].map((minutes) => (
                 <button
@@ -5263,6 +6099,7 @@ async function undoDeleteTask() {
                 </button>
               ))}
             </div>
+            )}
 
             <div
               className={`focus-visual fr-stage${isRunning ? " is-running" : ""}${
@@ -5304,16 +6141,26 @@ async function undoDeleteTask() {
                     {timerMinutes}<i className="fr-colon">:</i>{timerSeconds}
                   </strong>
 
-                  <span>{sessionCompleted ? "COMPLETE" : "TIME LEFT"}</span>
+                  <span>
+                    {sessionCompleted
+                      ? "COMPLETE"
+                      : pomodoroMode === "focus"
+                        ? "TIME LEFT"
+                        : "BREAK"}
+                  </span>
                 </div>
               </div>
             </div>
 
             <p className="focus-caption" aria-live="polite">
               {sessionCompleted
-                ? "Amazing work! Your focus session is complete."
+                ? pomodoroMode === "focus"
+                  ? "Break finished. Ready for the next focus session?"
+                  : "Amazing work! Your focus session is complete. Take a break."
                 : isRunning
-                  ? "Stay focused. You're doing great!"
+                  ? pomodoroMode !== "focus"
+                    ? "Stretch, drink some water and rest your eyes."
+                    : "Stay focused. You're doing great!"
                   : secondsLeft < totalSeconds
                     ? "Resume whenever you're ready."
                     : "One thing at a time. You've got this."}
@@ -5336,10 +6183,14 @@ async function undoDeleteTask() {
                 >
                   <Play size={16} fill="currentColor" />
                   {sessionCompleted
-                    ? "Start another session"
+                    ? pomodoroMode === "focus"
+                      ? "Start focus session"
+                      : "Start break"
                     : secondsLeft < totalSeconds
                       ? "Resume session"
-                      : "Start focus session"}
+                      : pomodoroMode === "focus"
+                        ? "Start focus session"
+                        : "Start break"}
                 </button>
               )}
 
@@ -5355,7 +6206,11 @@ async function undoDeleteTask() {
 
             <div className="focus-duration">
               <Clock3 size={14} />
-              <span>Custom Timer session · {durationMinutes} minutes</span>
+              <span>
+                {pomodoroMode === "focus"
+                  ? `Focus session · ${durationMinutes} minutes`
+                  : `${pomodoroMode === "long" ? "Long" : "Short"} break · ${phaseMinutes} minutes`}
+              </span>
             </div>
           </section>
 
@@ -5429,6 +6284,9 @@ async function undoDeleteTask() {
                       <div className="session-history-details">
                         <strong>
                           {session.durationMinutes} minute focus session
+                          {session.subject && (
+                            <span className="fh-subject">{session.subject}</span>
+                          )}
                         </strong>
 
                         <span>
@@ -5529,6 +6387,29 @@ async function undoDeleteTask() {
                 </select>
               </div>
 
+              {(popularNoteTags.length > 0 || noteTagFilter) && (
+                <div className="note-tag-filter" role="group" aria-label="Filter notes by tag">
+                  <span>Tags</span>
+                  {popularNoteTags.map((tag) => (
+                    <button
+                      type="button"
+                      key={tag}
+                      className={`note-tag${noteTagFilter === tag ? " is-active" : ""}`}
+                      onClick={() => setNoteTagFilter((current) => (current === tag ? "" : tag))}
+                      aria-pressed={noteTagFilter === tag}
+                    >
+                      <Hash size={10} aria-hidden="true" />
+                      {tag}
+                    </button>
+                  ))}
+                  {noteTagFilter && (
+                    <button type="button" className="text-button" onClick={() => setNoteTagFilter("")}>
+                      Clear
+                    </button>
+                  )}
+                </div>
+              )}
+
               {notesLoading ? (
                 <div className="notes-empty" role="status">
                   <span className="notes-empty-icon">
@@ -5570,7 +6451,7 @@ async function undoDeleteTask() {
                 <div className="notes-list">
                   {visibleNotes.map((note, noteIndex) => (
                     <article
-                      className="note-card"
+                      className={`note-card${note.pinned ? " is-pinned" : ""}`}
                       key={note.id}
                       style={{
                         "--nh": getSubjectHue(note.subject),
@@ -5613,24 +6494,70 @@ async function undoDeleteTask() {
                         </div>
                       </div>
 
-                      <h3>{note.title}</h3>
+                      <div className="note-title-row">
+                        <h3>{note.title}</h3>
 
-                      <p className="note-card-content">{note.content}</p>
+                        <button
+                          type="button"
+                          className={`note-pin-button${note.pinned ? " is-on" : ""}`}
+                          onClick={() => toggleNotePin(note)}
+                          aria-label={note.pinned ? `Unpin ${note.title}` : `Pin ${note.title}`}
+                          aria-pressed={note.pinned}
+                          title={note.pinned ? "Unpin note" : "Pin note to the top"}
+                        >
+                          <Pin size={15} fill={note.pinned ? "currentColor" : "none"} />
+                        </button>
+                      </div>
+
+                      {note.tags.length > 0 && (
+                        <div className="note-tags">
+                          {note.tags.map((tag) => (
+                            <button
+                              type="button"
+                              key={tag}
+                              className={`note-tag${noteTagFilter === tag ? " is-active" : ""}`}
+                              onClick={() => setNoteTagFilter((current) => (current === tag ? "" : tag))}
+                              title={`Show notes tagged ${tag}`}
+                            >
+                              <Hash size={10} aria-hidden="true" />
+                              {tag}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="note-card-content">
+                        <MarkdownView
+                          content={note.content}
+                          onToggleCheck={(lineIndex) => toggleNoteChecklist(note, lineIndex)}
+                        />
+                      </div>
 
                       <div className="note-card-footer">
                         <span className="note-words">
                           {note.content.trim().split(/\s+/).filter(Boolean).length} words
                         </span>
-                        <Clock3 size={13} />
-                        <span>
-                          Updated{" "}
-                          {new Date(
-                            note.updatedAt || note.createdAt || Date.now()
-                          ).toLocaleDateString([], {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
+                        {(() => {
+                          const progress = checklistProgress(note.content);
+                          return progress.total > 0 ? (
+                            <span className="note-check-progress">
+                              <ListChecks size={12} aria-hidden="true" />
+                              {progress.done}/{progress.total}
+                            </span>
+                          ) : null;
+                        })()}
+                        <span className="note-updated">
+                          <Clock3 size={13} />
+                          <span>
+                            Updated{" "}
+                            {new Date(
+                              note.updatedAt || note.createdAt || Date.now()
+                            ).toLocaleDateString([], {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
                         </span>
                       </div>
                     </article>
@@ -5712,6 +6639,11 @@ async function undoDeleteTask() {
                             ? "progress-25"
                             : "progress-low";
 
+                  const subjectExam = examBySubject.get(subject.name.trim().toLowerCase());
+                  const subjectExamCountdown = subjectExam
+                    ? describeExamCountdown(subjectExam.date)
+                    : null;
+
                   return (
                     <article className={`subject-row${selectedSubjectsForRemoval.includes(subject.name) ? " is-selected" : ""}`} key={subject.name}>
                       <label className="subject-select-control">
@@ -5750,6 +6682,28 @@ async function undoDeleteTask() {
                           <span>
                             {subjectNotesCount} {subjectNotesCount === 1 ? "note" : "notes"}
                           </span>
+                        </div>
+
+                        <div className="subject-exam">
+                          <label className="subject-exam-field">
+                            <CalendarClock size={13} aria-hidden="true" />
+                            <span>Exam date</span>
+                            <input
+                              type="date"
+                              value={subjectExam?.date || ""}
+                              disabled={examSaving}
+                              onChange={(event) =>
+                                setSubjectExamDate(subject.name, event.target.value)
+                              }
+                              aria-label={`Exam date for ${subject.name}`}
+                            />
+                          </label>
+
+                          {subjectExamCountdown && (
+                            <span className={`exam-chip exam-${subjectExamCountdown.tone}`}>
+                              {subjectExamCountdown.label}
+                            </span>
+                          )}
                         </div>
 
                         {totalSubjectTasks === 0 && (
@@ -5862,15 +6816,47 @@ async function undoDeleteTask() {
                 />
               </label>
 
+              <div className="notes-format-bar" role="toolbar" aria-label="Format your note">
+                {[
+                  ["bold", Bold, "Bold"],
+                  ["italic", Italic, "Italic"],
+                  ["bullet", List, "Bullet list"],
+                  ["checklist", ListChecks, "Checklist"],
+                ].map(([type, Icon, label]) => (
+                  <button
+                    type="button"
+                    key={type}
+                    onClick={() => formatNote(type)}
+                    title={label}
+                    aria-label={label}
+                  >
+                    <Icon size={15} aria-hidden="true" />
+                  </button>
+                ))}
+                <span>Use **bold**, *italic*, - bullets and - [ ] checklists</span>
+              </div>
+
               <label className="notes-field">
                 <span>Note content</span>
                 <textarea
+                  ref={noteTextareaRef}
                   value={noteContent}
                   onChange={(event) => setNoteContent(event.target.value)}
                   placeholder="Write your explanation, definitions, formulas, or revision notes..."
                   rows={6}
                   maxLength={20000}
                   required
+                />
+              </label>
+
+              <label className="notes-field">
+                <span>Tags</span>
+                <input
+                  type="text"
+                  value={noteTags}
+                  onChange={(event) => setNoteTags(event.target.value)}
+                  placeholder="e.g. formulas, exam, chapter-3 (up to 8)"
+                  maxLength={160}
                 />
               </label>
 

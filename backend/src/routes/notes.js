@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const Note = require("../models/Note");
 const requireAuth = require("../middleware/auth");
+const { parseTags } = require("../utils/studyFields");
 
 const router = express.Router();
 
@@ -24,7 +25,7 @@ router.get("/", async (req, res, next) => {
 // POST /api/notes — create a note for the authenticated student.
 router.post("/", async (req, res, next) => {
   try {
-    const { title, subject, content } = req.body;
+    const { title, subject, content, tags, pinned } = req.body;
 
     if (typeof title !== "string" || !title.trim() || title.trim().length > 120) {
       return res.status(400).json({
@@ -51,11 +52,31 @@ router.post("/", async (req, res, next) => {
       });
     }
 
+    let cleanTags = [];
+
+    if (tags !== undefined) {
+      const parsedTags = parseTags(tags);
+
+      if (!parsedTags.ok) {
+        return res.status(400).json({ message: parsedTags.message });
+      }
+
+      cleanTags = parsedTags.value;
+    }
+
+    if (pinned !== undefined && typeof pinned !== "boolean") {
+      return res.status(400).json({
+        message: "Pinned must be true or false.",
+      });
+    }
+
     const note = await Note.create({
       student: req.student._id,
       title: title.trim(),
       subject: subject === undefined ? "Personal" : subject.trim() || "Personal",
       content: content.trim(),
+      tags: cleanTags,
+      pinned: pinned === true,
     });
 
     return res.status(201).json({
@@ -78,7 +99,7 @@ router.patch("/:id", async (req, res, next) => {
       });
     }
 
-    const allowedFields = ["title", "subject", "content"];
+    const allowedFields = ["title", "subject", "content", "tags", "pinned"];
     const suppliedFields = Object.keys(req.body);
     const updates = {};
 
@@ -128,6 +149,26 @@ router.patch("/:id", async (req, res, next) => {
         }
         updates.content = value.trim();
       }
+
+      if (field === "tags") {
+        const parsedTags = parseTags(value);
+
+        if (!parsedTags.ok) {
+          return res.status(400).json({ message: parsedTags.message });
+        }
+
+        updates.tags = parsedTags.value;
+      }
+
+      if (field === "pinned") {
+        if (typeof value !== "boolean") {
+          return res.status(400).json({
+            message: "Pinned must be true or false.",
+          });
+        }
+
+        updates.pinned = value;
+      }
     }
 
     const note = await Note.findOneAndUpdate(
@@ -139,6 +180,8 @@ router.patch("/:id", async (req, res, next) => {
       {
         new: true,
         runValidators: true,
+        // Pinning or unpinning is not an edit, so "Updated" keeps its date.
+        timestamps: !(suppliedFields.length === 1 && suppliedFields[0] === "pinned"),
       }
     );
 

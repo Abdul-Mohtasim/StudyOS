@@ -30,6 +30,22 @@ const noteSchema = new mongoose.Schema(
       trim: true,
       maxlength: [20000, "Note content cannot exceed 20000 characters."],
     },
+
+    // Short lower-case labels such as "formulas" or "revision".
+    tags: {
+      type: [String],
+      default: [],
+      validate: {
+        validator: (value) => value.length <= 8,
+        message: "A note can have up to 8 tags.",
+      },
+    },
+
+    // Pinned notes are shown first.
+    pinned: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

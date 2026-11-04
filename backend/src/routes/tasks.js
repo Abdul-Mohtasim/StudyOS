@@ -3,6 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const Task = require("../models/Task");
 const requireAuth = require("../middleware/auth");
+const { parsePriority, parseOptionalDate } = require("../utils/studyFields");
 
 const router = express.Router();
 
@@ -26,7 +27,7 @@ router.get("/", async (req, res, next) => {
 // POST /api/tasks — create a task.
 router.post("/", async (req, res, next) => {
   try {
-    const { title, subject, duration } = req.body;
+    const { title, subject, duration, priority, dueDate } = req.body;
 
     if (typeof title !== "string" || !title.trim()) {
       return res.status(400).json({
@@ -67,12 +68,38 @@ router.post("/", async (req, res, next) => {
       }
     }
 
+    let cleanPriority = "medium";
+
+    if (priority !== undefined) {
+      const parsedPriority = parsePriority(priority);
+
+      if (!parsedPriority.ok) {
+        return res.status(400).json({ message: parsedPriority.message });
+      }
+
+      cleanPriority = parsedPriority.value;
+    }
+
+    let cleanDueDate = null;
+
+    if (dueDate !== undefined) {
+      const parsedDate = parseOptionalDate(dueDate, "Due date");
+
+      if (!parsedDate.ok) {
+        return res.status(400).json({ message: parsedDate.message });
+      }
+
+      cleanDueDate = parsedDate.value;
+    }
+
     const task = await Task.create({
       student: req.student._id,
       title: cleanTitle,
       subject:
         subject === undefined ? "Personal" : subject.trim() || "Personal",
       duration: cleanDuration,
+      priority: cleanPriority,
+      dueDate: cleanDueDate,
     });
 
     return res.status(201).json({
@@ -95,7 +122,14 @@ router.patch("/:id", async (req, res, next) => {
       });
     }
 
-    const allowedFields = ["title", "subject", "duration", "completed"];
+    const allowedFields = [
+      "title",
+      "subject",
+      "duration",
+      "completed",
+      "priority",
+      "dueDate",
+    ];
     const updates = {};
     const suppliedFields = Object.keys(req.body);
 
@@ -157,6 +191,29 @@ router.patch("/:id", async (req, res, next) => {
         }
 
         updates.completed = value;
+        // Remember when the task was finished (used by the weekly summary).
+        updates.completedAt = value ? new Date() : null;
+      }
+
+      if (field === "priority") {
+        const parsedPriority = parsePriority(value);
+
+        if (!parsedPriority.ok) {
+          return res.status(400).json({ message: parsedPriority.message });
+        }
+
+        updates.priority = parsedPriority.value;
+      }
+
+      if (field === "dueDate") {
+        // null or "" removes the due date.
+        const parsedDate = parseOptionalDate(value, "Due date");
+
+        if (!parsedDate.ok) {
+          return res.status(400).json({ message: parsedDate.message });
+        }
+
+        updates.dueDate = parsedDate.value;
       }
     }
 

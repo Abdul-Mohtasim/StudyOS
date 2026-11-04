@@ -36,6 +36,28 @@ const taskSchema = new mongoose.Schema(
       default: false,
     },
 
+    // When the task was ticked off (null while it is still to do).
+    completedAt: {
+      type: Date,
+      default: null,
+    },
+
+    priority: {
+      type: String,
+      enum: {
+        values: ["low", "medium", "high"],
+        message: "Priority must be low, medium or high.",
+      },
+      default: "medium",
+    },
+
+    // "YYYY-MM-DD" (kept as text so the day never shifts with time zones).
+    dueDate: {
+      type: String,
+      default: null,
+      match: [/^\d{4}-\d{2}-\d{2}$/, "Due date must be YYYY-MM-DD."],
+    },
+
     // Supports temporarily deleting and restoring tasks.
     deletedAt: {
       type: Date,
