@@ -6,7 +6,7 @@
     "LocalNotifications": {
       "smallIcon": "ic_stat_studyos",
       "iconColor": "#E5484D",
-      "sound": "studyos-notify.wav"
+      "sound": "studyos_notify.wav"
     }
   }
 }

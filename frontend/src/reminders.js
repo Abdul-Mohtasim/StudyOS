@@ -15,7 +15,8 @@ const DAYS_AHEAD = 14;
 
 // Android 8+ takes the sound from the notification *channel*, and a channel can't be edited after
 // it has been created, so the id carries a version. Bump it if the sound ever changes.
-const CHANNEL_ID = "studyos-reminders-v2";
+const CHANNEL_ID = "studyos-reminders-v3";
+const OLD_CHANNELS = ["studyos-reminders-v2"];
 const NATIVE_SOUND = "studyos_notify.wav"; // android/app/src/main/res/raw/studyos_notify.wav
 const WEB_SOUND = "/sounds/studyos-notify.wav"; // public/sounds/studyos-notify.wav
 const SMALL_ICON = "ic_stat_studyos";
@@ -40,11 +41,6 @@ export function saveReminderPrefs(prefs) {
 
 const isNative = () => Capacitor.isNativePlatform();
 
-// Tiny native helper (android/.../StudyNotifyPlugin.java). Only registered inside the Android app.
-const StudyNotify = Capacitor.isNativePlatform() ? registerPlugin("StudyNotify") : null;
-
-export const remindersAreNative = () => isNative();
-
 async function plugin() {
   const mod = await import("@capacitor/local-notifications");
   return mod.LocalNotifications;
@@ -55,38 +51,63 @@ export function notificationsSupported() {
 }
 
 // ---------------------------------------------------------------- permissions
-// Ask the system for permission. Resolves to "granted" | "denied" | "default".
-// On Android the system dialog only appears while the permission is still undecided; once it has
-// been denied the request returns "denied" straight away (see openNotificationSettings below).
+// Small native helper (android/.../StudyNotifyPlugin.java): real notification state + settings shortcuts.
+const StudyNotify = isNative() ? registerPlugin("StudyNotify") : null;
+
+export async function openNotificationSettings() {
+  try {
+    await StudyNotify.openNotificationSettings();
+  } catch {
+    /* helper missing: rebuild the Android app */
+  }
+}
+export async function openChannelSettings() {
+  try {
+    await StudyNotify.openChannelSettings({ channelId: CHANNEL_ID });
+  } catch {
+    /* helper missing: rebuild the Android app */
+  }
+}
+// { enabled, channelExists, importance, hasSound } or null when unavailable.
+export async function getNotifyStatus() {
+  try {
+    return await StudyNotify.getStatus({ channelId: CHANNEL_ID });
+  } catch {
+    return null;
+  }
+}
+
+// Ask the system for permission.
+// Resolves to { state: "granted" | "denied" | "blocked" | "error", message? }
+//   blocked = Android will not show the Allow/Deny pop-up any more (it was refused before),
+//             so the person has to switch notifications on in the phone's settings.
 export async function requestReminderPermission() {
   try {
     if (isNative()) {
       const LN = await plugin();
-      const current = await LN.checkPermissions();
-      if (current.display === "granted") return "granted";
-      const res = await LN.requestPermissions();
-      if (res.display === "granted") return "granted";
-      // Notifications can also be switched off for the whole app in system settings.
-      return "denied";
-    }
-    if (typeof Notification === "undefined") return "denied";
-    if (Notification.permission === "granted") return "granted";
-    return await Notification.requestPermission();
-  } catch (err) {
-    console.warn("Notification permission request failed:", err && err.message);
-    return "denied";
-  }
-}
+      const before = await LN.checkPermissions();
+      if (before.display === "granted") return { state: "granted" };
 
-// Android: opens StudyOS's notification settings so the user can switch notifications on.
-// Returns false in a browser or if the screen could not be opened.
-export async function openNotificationSettings() {
-  if (!isNative()) return false;
-  try {
-    await StudyNotify.openSettings();
-    return true;
-  } catch {
-    return false;
+      // "denied" (not "prompt") means Android has stopped showing the pop-up for this app.
+      if (before.display === "denied") {
+        const status = await getNotifyStatus();
+        if (status && status.enabled) return { state: "granted" };
+        return { state: "blocked", message: "Notifications are turned off for StudyOS in your phone settings." };
+      }
+
+      const res = await LN.requestPermissions(); // shows the system Allow / Don't allow pop-up
+      if (res.display === "granted") return { state: "granted" };
+      return { state: "denied", message: "Notifications were not allowed." };
+    }
+    if (typeof Notification === "undefined") return { state: "error", message: "This browser does not support notifications." };
+    if (Notification.permission === "granted") return { state: "granted" };
+    const result = await Notification.requestPermission();
+    return result === "granted" ? { state: "granted" } : { state: "denied", message: "Notifications are blocked in your browser." };
+  } catch (err) {
+    return {
+      state: "error",
+      message: `Could not ask for notification permission (${(err && err.message) || "unknown error"}). Reinstall the latest app build.`,
+    };
   }
 }
 
@@ -197,6 +218,9 @@ export function playReminderSound() {
 let channelReady = false;
 async function ensureChannel(LN) {
   if (channelReady) return;
+  for (const id of OLD_CHANNELS) {
+    try { await LN.deleteChannel({ id }); } catch { /* not there */ }
+  }
   try {
     await LN.createChannel({
       id: CHANNEL_ID,
@@ -360,27 +384,91 @@ function syncWeb(prefs, { streak, studiedToday }) {
 
 // ---------------------------------------------------------------- test button
 // Shows a reminder right now (with sound) so you can check permission, sound and timing.
+// Resolves to { ok, message?, soundIssue? }
 export async function sendTestReminder() {
   if (isNative()) {
     try {
       const LN = await plugin();
-      if ((await LN.checkPermissions()).display !== "granted") return false;
+      if ((await LN.checkPermissions()).display !== "granted") {
+        const status = await getNotifyStatus();
+        if (!(status && status.enabled)) return { ok: false, message: "Allow notifications first, then try again." };
+      }
       await ensureChannel(LN);
       await LN.schedule({
         notifications: [{
           id: TEST_ID,
           title: "StudyOS reminders are on ✅",
           body: "This is how your study reminders will look and sound.",
-          schedule: { at: new Date(Date.now() + 1000), allowWhileIdle: true },
+          // no "schedule": the notification is shown immediately
           ...nativeBase(false),
         }],
       });
-      return true;
-    } catch {
-      return false;
+      const status = await getNotifyStatus();
+      const soundIssue = Boolean(status && status.channelExists && (!status.hasSound || status.importance < 3));
+      return { ok: true, soundIssue };
+    } catch (err) {
+      return { ok: false, message: `Could not show the notification (${(err && err.message) || "unknown error"}).` };
     }
   }
-  if (typeof Notification === "undefined" || Notification.permission !== "granted") return false;
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") {
+    return { ok: false, message: "Allow notifications first, then try again." };
+  }
   showWeb("StudyOS reminders are on ✅", "This is how your study reminders will look and sound.", "studyos-test");
-  return true;
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------- diagnostics
+// A plain-language checklist of everything that has to be true for reminders to work.
+export async function getDiagnostics() {
+  const lines = [];
+  const add = (ok, label, detail = "") => lines.push({ ok, label, detail });
+
+  if (!isNative()) {
+    add(typeof Notification !== "undefined", "Browser notifications supported");
+    if (typeof Notification !== "undefined") add(Notification.permission === "granted", `Browser permission: ${Notification.permission}`);
+    return lines;
+  }
+
+  add(true, "Running inside the Android app");
+  let LN = null;
+  try {
+    LN = await plugin();
+    await LN.checkPermissions();
+    add(true, "Notification plugin is installed in this build");
+  } catch (err) {
+    add(false, "Notification plugin is NOT installed in this build", "Run: npm install, npm run build, npx cap sync android, then reinstall the app.");
+    return lines;
+  }
+
+  const st = await getNotifyStatus();
+  if (!st) {
+    add(false, "Native helper missing: this is an old app build", "Rebuild and reinstall. Android > App info should say Version 1.1.");
+  } else {
+    add(true, `App version ${st.versionName || "?"}, Android API ${st.sdk}`);
+    if (st.sdk >= 33) {
+      add(Boolean(st.declaresPostNotifications), "App asks Android for notification permission (POST_NOTIFICATIONS)",
+        st.declaresPostNotifications ? "" : "Missing from this build's manifest: rebuild and reinstall.");
+    } else {
+      add(true, "Android 12 or older: no permission pop-up exists, notifications are allowed by default");
+    }
+    add(Boolean(st.enabled), "Notifications are switched on for StudyOS in Android settings");
+    if (st.channelExists) {
+      add(st.importance >= 3, `Reminder channel importance: ${st.importance} (needs 3+ to make a sound)`);
+      add(Boolean(st.hasSound), "Reminder channel has a sound");
+    }
+  }
+
+  try {
+    const p = await LN.checkPermissions();
+    add(p.display === "granted", `Permission state: ${p.display}`);
+  } catch { /* ignore */ }
+  try {
+    const e = await LN.checkExactNotificationSetting();
+    add(e.exact_alarm === "granted", `Exact alarms ("Alarms & reminders"): ${e.exact_alarm}`);
+  } catch { /* older Android */ }
+  try {
+    const pending = await LN.getPending();
+    add(true, `Reminders currently scheduled: ${pending.notifications.length}`);
+  } catch { /* ignore */ }
+  return lines;
 }

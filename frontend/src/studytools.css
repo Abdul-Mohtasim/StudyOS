@@ -128,13 +128,6 @@
 .study-app .st-rem-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 14px; border-top: 1px solid var(--border); }
 .study-app .st-link { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--primary); text-decoration: underline; cursor: pointer; }
 
-/* notifications blocked alert */
-.study-app .st-rem-alert { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 4px 0 14px; padding: 14px 16px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--danger, #f08080) 55%, var(--border)); background: color-mix(in srgb, var(--danger, #f08080) 10%, var(--surface, #2c191d)); animation: st-alert-in 0.28s ease-out; }
-.study-app .st-rem-alert strong { font-size: 0.95rem; }
-.study-app .st-rem-alert p { margin: 0 0 6px; font-size: 0.86rem; line-height: 1.45; color: var(--text-muted); }
-@keyframes st-alert-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .study-app .st-rem-alert { animation: none; } }
-
 /* offline banner */
 .st-offline { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 9999; display: flex; align-items: center; gap: 9px; max-width: min(92vw, 520px); padding: 10px 16px; border-radius: 999px; background: #3b2024; color: #fff4f2; font: 600 0.84rem/1.35 system-ui, sans-serif; box-shadow: 0 8px 26px rgba(0,0,0,0.3); }
 .st-offline.syncing { background: #1f5f46; }
@@ -152,3 +145,10 @@
   .study-app .st-bars li { grid-template-columns: 1fr auto; }
   .study-app .st-bars .st-bar { grid-column: 1 / -1; order: 3; }
 }
+
+.study-app .st-diag { margin-top: 14px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg); }
+.study-app .st-diag ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; font-size: 0.84rem; }
+.study-app .st-diag li { display: flex; gap: 8px; align-items: flex-start; }
+.study-app .st-diag li.ok > span:first-child { color: var(--success); font-weight: 700; }
+.study-app .st-diag li.bad > span:first-child { color: var(--danger); font-weight: 700; }
+.study-app .st-diag small { display: block; color: var(--text-muted); }

@@ -25,13 +25,6 @@ html.perf-lite .as-spinner {
   animation-iteration-count: infinite !important;
 }
 
-/* The skeleton loading screen keeps shimmering until the app is ready. */
-html.perf-lite .sk-screen .sk-block::after,
-html.perf-lite .sk-screen .sk-progress span,
-html.perf-lite .sk-screen .sk-cap {
-  animation-iteration-count: infinite !important;
-}
-
 /* Make the header bars solid instead of see-through. */
 html.perf-lite .pl-nav {
   background: var(--pl-bg) !important;

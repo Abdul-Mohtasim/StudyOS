@@ -1,6 +1,6 @@
 // Flashcards (spaced repetition), grade tracker, per-subject study time,
 // reminder settings and the offline banner.
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Trash2,
@@ -15,16 +15,17 @@ import {
   Check,
 } from "lucide-react";
 import { GRADES, describeNext, generateCardsFromNote, isDue, nextSchedule, normalizeCard } from "./srs";
+import { Capacitor } from "@capacitor/core";
 import { useOfflineStatus } from "./offline";
 import {
   notificationsSupported,
   requestReminderPermission,
-  reminderPermission,
-  openNotificationSettings,
-  remindersAreNative,
   requestExactAlarms,
   exactAlarmsGranted,
   sendTestReminder,
+  openNotificationSettings,
+  openChannelSettings,
+  getDiagnostics,
 } from "./reminders";
 
 async function call(base, token, method, path, body) {
@@ -856,18 +857,13 @@ function ReminderRow({ title, hint, on, onToggle, time, fallback, onTime, timeLa
 }
 
 export function ReminderSettings({ prefs, onChange }) {
-  const [perm, setPerm] = useState("");
+  const [perm, setPerm] = useState(null); // { state, message }
   const [exactOk, setExactOk] = useState(true);
   const [testMsg, setTestMsg] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [soundIssue, setSoundIssue] = useState(false);
+  const [diag, setDiag] = useState(null);
   const supported = notificationsSupported();
-  const native = remindersAreNative();
-
-  // Keep the latest values for the resume listener below.
-  const latest = useRef({ prefs, onChange });
-  latest.current = { prefs, onChange };
-  // The reminder the user tried to turn on while notifications were blocked.
-  const pendingKey = useRef(null);
+  const native = Capacitor.isNativePlatform();
 
   useEffect(() => {
     let alive = true;
@@ -875,74 +871,40 @@ export function ReminderSettings({ prefs, onChange }) {
     return () => { alive = false; };
   }, [prefs.daily, prefs.streak]);
 
-  // Coming back from the system settings screen: if notifications are now allowed,
-  // clear the warning and switch on the reminder the user asked for.
-  useEffect(() => {
-    if (!supported) return undefined;
-    let alive = true;
-    const recheck = async () => {
-      const p = await reminderPermission();
-      if (!alive) return;
-      if (p === "granted") {
-        setPerm((cur) => (cur === "denied" ? "" : cur));
-        const key = pendingKey.current;
-        if (key) {
-          pendingKey.current = null;
-          const { prefs: cur, onChange: set } = latest.current;
-          if (!cur[key]) set({ ...cur, [key]: true });
-          setExactOk(await requestExactAlarms());
-        }
-      }
-    };
-    const onVisible = () => { if (document.visibilityState === "visible") recheck(); };
-    document.addEventListener("visibilitychange", onVisible);
-    document.addEventListener("resume", recheck);
-    window.addEventListener("focus", recheck);
-    return () => {
-      alive = false;
-      document.removeEventListener("visibilitychange", onVisible);
-      document.removeEventListener("resume", recheck);
-      window.removeEventListener("focus", recheck);
-    };
-  }, [supported]);
+  const runDiag = useCallback(async () => setDiag(await getDiagnostics()), []);
+  useEffect(() => { if (native) runDiag(); }, [native, runDiag]);
 
   const toggle = async (key) => {
-    if (busy) return;
-    const turningOn = !prefs[key];
-    if (!turningOn) {
-      pendingKey.current = null;
+    if (prefs[key]) {
       onChange({ ...prefs, [key]: false });
       return;
     }
-    if (supported) {
-      setBusy(true);
-      try {
-        const p = await requestReminderPermission();
-        setPerm(p);
-        if (p !== "granted") {
-          pendingKey.current = key;
-          onChange({ ...prefs, [key]: false });
-          return;
-        }
-        pendingKey.current = null;
-        // Android: allow "Alarms & reminders" so the notification fires on the exact minute.
-        setExactOk(await requestExactAlarms());
-      } finally {
-        setBusy(false);
-      }
+    if (!supported) return;
+    const res = await requestReminderPermission(); // shows the Allow / Don't allow pop-up
+    setPerm(res);
+    runDiag();
+    if (res.state !== "granted") {
+      onChange({ ...prefs, [key]: false });
+      return;
     }
     onChange({ ...prefs, [key]: true });
+    // Android: also ask for "Alarms & reminders" so it fires on the exact minute (does not block the toggle).
+    requestExactAlarms().then(setExactOk).catch(() => {});
   };
 
   const test = async () => {
-    let p = perm;
-    if (supported) {
-      p = await requestReminderPermission();
-      setPerm(p);
+    setSoundIssue(false);
+    const res = await requestReminderPermission();
+    setPerm(res);
+    if (res.state !== "granted") {
+      setTestMsg(res.message || "Allow notifications first, then try again.");
+      return;
     }
-    const ok = p === "granted" && (await sendTestReminder());
-    setTestMsg(ok ? "Test reminder sent." : "Allow notifications first, then try again.");
-    setTimeout(() => setTestMsg(""), 4000);
+    const out = await sendTestReminder();
+    runDiag();
+    setSoundIssue(Boolean(out.soundIssue));
+    setTestMsg(out.ok ? "Test reminder sent. Check your notification bar." : out.message);
+    setTimeout(() => setTestMsg(""), 8000);
   };
 
   return (
@@ -956,22 +918,6 @@ export function ReminderSettings({ prefs, onChange }) {
       </div>
 
       {!supported && <p className="st-muted">This browser does not support notifications.</p>}
-
-      {perm === "denied" && (
-        <div className="st-rem-alert" role="alert">
-          <strong>Notifications are turned off for StudyOS</strong>
-          <p>
-            {native
-              ? "Android is not showing the permission prompt, so turn notifications on in the app's settings. The reminder switches on by itself when you come back."
-              : "Your browser is blocking notifications for this site. Allow them in the site settings (the lock icon next to the address), then try again."}
-          </p>
-          {native && (
-            <button type="button" className="settings-save-button" onClick={() => openNotificationSettings()}>
-              <Bell size={15} /> Open notification settings
-            </button>
-          )}
-        </div>
-      )}
 
       <ReminderRow
         title="Daily “time to study” reminder"
@@ -995,6 +941,14 @@ export function ReminderSettings({ prefs, onChange }) {
         timeLabel="Warn me at"
       />
 
+      {perm && perm.state !== "granted" && (
+        <p className="st-error" role="alert">
+          {perm.message || "Notifications are blocked. Allow them in your device or browser settings, then try again."}{" "}
+          {native && perm.state === "blocked" && (
+            <button type="button" className="st-link" onClick={openNotificationSettings}>Open notification settings</button>
+          )}
+        </p>
+      )}
       <div className="st-rem-actions">
         <button type="button" className="settings-save-button" onClick={test}>
           <Bell size={15} /> Send test reminder
@@ -1002,11 +956,37 @@ export function ReminderSettings({ prefs, onChange }) {
         {testMsg && <span className="st-muted" role="status">{testMsg}</span>}
       </div>
 
+      {soundIssue && (
+        <p className="st-error" role="alert">
+          Sound is switched off for StudyOS reminders on this phone.{" "}
+          <button type="button" className="st-link" onClick={openChannelSettings}>Open sound settings</button>
+        </p>
+      )}
+      {native && testMsg.startsWith("Test reminder sent") && !soundIssue && (
+        <p className="st-muted st-hint">No sound? Check the phone is not on silent or Do Not Disturb and the notification volume is up.</p>
+      )}
       {!exactOk && (
         <p className="st-error">
           Android may delay reminders until you allow “Alarms &amp; reminders” for StudyOS.{" "}
           <button type="button" className="st-link" onClick={async () => setExactOk(await requestExactAlarms())}>Allow now</button>
         </p>
+      )}
+      {native && (
+        <div className="st-diag">
+          <div className="st-row">
+            <strong>Notification check</strong>
+            <button type="button" className="st-link" onClick={runDiag}>Refresh</button>
+          </div>
+          <ul>
+            {(diag || []).map((d, i) => (
+              <li key={i} className={d.ok ? "ok" : "bad"}>
+                <span aria-hidden="true">{d.ok ? "✓" : "✗"}</span>
+                <span>{d.label}{d.detail ? <small> {d.detail}</small> : null}</span>
+              </li>
+            ))}
+            {!diag && <li className="st-muted">Checking...</li>}
+          </ul>
+        </div>
       )}
       <p className="st-muted st-hint">In the Android app reminders arrive on time even when StudyOS is closed. In a browser they only appear while StudyOS is open.</p>
     </article>
