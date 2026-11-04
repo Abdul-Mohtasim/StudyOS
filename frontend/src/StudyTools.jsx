@@ -1,6 +1,6 @@
 // Flashcards (spaced repetition), grade tracker, per-subject study time,
 // reminder settings and the offline banner.
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Plus,
   Trash2,
@@ -19,6 +19,9 @@ import { useOfflineStatus } from "./offline";
 import {
   notificationsSupported,
   requestReminderPermission,
+  reminderPermission,
+  openNotificationSettings,
+  remindersAreNative,
   requestExactAlarms,
   exactAlarmsGranted,
   sendTestReminder,
@@ -856,7 +859,15 @@ export function ReminderSettings({ prefs, onChange }) {
   const [perm, setPerm] = useState("");
   const [exactOk, setExactOk] = useState(true);
   const [testMsg, setTestMsg] = useState("");
+  const [busy, setBusy] = useState(false);
   const supported = notificationsSupported();
+  const native = remindersAreNative();
+
+  // Keep the latest values for the resume listener below.
+  const latest = useRef({ prefs, onChange });
+  latest.current = { prefs, onChange };
+  // The reminder the user tried to turn on while notifications were blocked.
+  const pendingKey = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -864,21 +875,61 @@ export function ReminderSettings({ prefs, onChange }) {
     return () => { alive = false; };
   }, [prefs.daily, prefs.streak]);
 
+  // Coming back from the system settings screen: if notifications are now allowed,
+  // clear the warning and switch on the reminder the user asked for.
+  useEffect(() => {
+    if (!supported) return undefined;
+    let alive = true;
+    const recheck = async () => {
+      const p = await reminderPermission();
+      if (!alive) return;
+      if (p === "granted") {
+        setPerm((cur) => (cur === "denied" ? "" : cur));
+        const key = pendingKey.current;
+        if (key) {
+          pendingKey.current = null;
+          const { prefs: cur, onChange: set } = latest.current;
+          if (!cur[key]) set({ ...cur, [key]: true });
+          setExactOk(await requestExactAlarms());
+        }
+      }
+    };
+    const onVisible = () => { if (document.visibilityState === "visible") recheck(); };
+    document.addEventListener("visibilitychange", onVisible);
+    document.addEventListener("resume", recheck);
+    window.addEventListener("focus", recheck);
+    return () => {
+      alive = false;
+      document.removeEventListener("visibilitychange", onVisible);
+      document.removeEventListener("resume", recheck);
+      window.removeEventListener("focus", recheck);
+    };
+  }, [supported]);
+
   const toggle = async (key) => {
+    if (busy) return;
     const turningOn = !prefs[key];
     if (!turningOn) {
+      pendingKey.current = null;
       onChange({ ...prefs, [key]: false });
       return;
     }
     if (supported) {
-      const p = await requestReminderPermission();
-      setPerm(p);
-      if (p !== "granted") {
-        onChange({ ...prefs, [key]: false });
-        return;
+      setBusy(true);
+      try {
+        const p = await requestReminderPermission();
+        setPerm(p);
+        if (p !== "granted") {
+          pendingKey.current = key;
+          onChange({ ...prefs, [key]: false });
+          return;
+        }
+        pendingKey.current = null;
+        // Android: allow "Alarms & reminders" so the notification fires on the exact minute.
+        setExactOk(await requestExactAlarms());
+      } finally {
+        setBusy(false);
       }
-      // Android: allow "Alarms & reminders" so the notification fires on the exact minute.
-      setExactOk(await requestExactAlarms());
     }
     onChange({ ...prefs, [key]: true });
   };
@@ -905,6 +956,22 @@ export function ReminderSettings({ prefs, onChange }) {
       </div>
 
       {!supported && <p className="st-muted">This browser does not support notifications.</p>}
+
+      {perm === "denied" && (
+        <div className="st-rem-alert" role="alert">
+          <strong>Notifications are turned off for StudyOS</strong>
+          <p>
+            {native
+              ? "Android is not showing the permission prompt, so turn notifications on in the app's settings. The reminder switches on by itself when you come back."
+              : "Your browser is blocking notifications for this site. Allow them in the site settings (the lock icon next to the address), then try again."}
+          </p>
+          {native && (
+            <button type="button" className="settings-save-button" onClick={() => openNotificationSettings()}>
+              <Bell size={15} /> Open notification settings
+            </button>
+          )}
+        </div>
+      )}
 
       <ReminderRow
         title="Daily “time to study” reminder"
@@ -935,7 +1002,6 @@ export function ReminderSettings({ prefs, onChange }) {
         {testMsg && <span className="st-muted" role="status">{testMsg}</span>}
       </div>
 
-      {perm === "denied" && <p className="st-error">Notifications are blocked. Allow them in your device or browser settings, then try again.</p>}
       {!exactOk && (
         <p className="st-error">
           Android may delay reminders until you allow “Alarms &amp; reminders” for StudyOS.{" "}

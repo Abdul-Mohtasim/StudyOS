@@ -97,6 +97,7 @@ import {
 } from "./StudyTools";
 import { clearOfflineCache } from "./offline";
 import { loadReminderPrefs, saveReminderPrefs, syncReminders } from "./reminders";
+import LoadingSkeleton from "./LoadingSkeleton";
 import {
   PRIORITIES,
   PRIORITY_LABEL,
@@ -4321,13 +4322,7 @@ async function undoDeleteTask() {
 
   // ---------- Auth screens ----------
   if (authChecking) {
-    return (
-      <main className="auth-screen">
-        <section className="auth-card">
-          <p>Restoring your StudyOS...</p>
-        </section>
-      </main>
-    );
+    return <LoadingSkeleton />;
   }
 
   if (!student && showAuthScreen) {

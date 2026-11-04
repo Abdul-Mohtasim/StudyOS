@@ -4,7 +4,7 @@
 //    StudyOS chime.
 //  * Browser: Notification API while the app/tab is open (a browser cannot wake itself up).
 //    A 1-second clock checks the real time, so background-tab timer throttling cannot delay it.
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 
 const KEY = "studyos-reminders";
 const FIRED_KEY = "studyos-reminders-fired";
@@ -40,6 +40,11 @@ export function saveReminderPrefs(prefs) {
 
 const isNative = () => Capacitor.isNativePlatform();
 
+// Tiny native helper (android/.../StudyNotifyPlugin.java). Only registered inside the Android app.
+const StudyNotify = Capacitor.isNativePlatform() ? registerPlugin("StudyNotify") : null;
+
+export const remindersAreNative = () => isNative();
+
 async function plugin() {
   const mod = await import("@capacitor/local-notifications");
   return mod.LocalNotifications;
@@ -51,18 +56,37 @@ export function notificationsSupported() {
 
 // ---------------------------------------------------------------- permissions
 // Ask the system for permission. Resolves to "granted" | "denied" | "default".
+// On Android the system dialog only appears while the permission is still undecided; once it has
+// been denied the request returns "denied" straight away (see openNotificationSettings below).
 export async function requestReminderPermission() {
   try {
     if (isNative()) {
       const LN = await plugin();
+      const current = await LN.checkPermissions();
+      if (current.display === "granted") return "granted";
       const res = await LN.requestPermissions();
-      return res.display === "granted" ? "granted" : "denied";
+      if (res.display === "granted") return "granted";
+      // Notifications can also be switched off for the whole app in system settings.
+      return "denied";
     }
     if (typeof Notification === "undefined") return "denied";
     if (Notification.permission === "granted") return "granted";
     return await Notification.requestPermission();
-  } catch {
+  } catch (err) {
+    console.warn("Notification permission request failed:", err && err.message);
     return "denied";
+  }
+}
+
+// Android: opens StudyOS's notification settings so the user can switch notifications on.
+// Returns false in a browser or if the screen could not be opened.
+export async function openNotificationSettings() {
+  if (!isNative()) return false;
+  try {
+    await StudyNotify.openSettings();
+    return true;
+  } catch {
+    return false;
   }
 }
 
