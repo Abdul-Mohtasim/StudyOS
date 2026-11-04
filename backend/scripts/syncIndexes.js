@@ -14,12 +14,19 @@ require("dotenv").config();
 
 const { connectDatabase, closeDatabase } = require("../src/config/database");
 const Exam = require("../src/models/Exam");
+const Flashcard = require("../src/models/Flashcard");
+const Grade = require("../src/models/Grade");
 
 async function main() {
   await connectDatabase();
   await Exam.createCollection().catch(() => {});
   await Exam.createIndexes();
   console.log("Exam indexes are ready.");
+  await Flashcard.createCollection().catch(() => {});
+  await Flashcard.createIndexes();
+  await Grade.createCollection().catch(() => {});
+  await Grade.createIndexes();
+  console.log("Flashcard and grade indexes are ready.");
 }
 
 main()

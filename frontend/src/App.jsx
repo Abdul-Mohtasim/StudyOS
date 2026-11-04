@@ -84,7 +84,19 @@ import {
 
 import "./App.css";
 import "./features.css";
+import "./studytools.css";
 import MarkdownView from "./MarkdownView";
+import {
+  FlashcardsPage,
+  GradesPage,
+  StudyTimeCard,
+  ReminderSettings,
+  OfflineBanner,
+  useFlashcards,
+  useGrades,
+} from "./StudyTools";
+import { clearOfflineCache } from "./offline";
+import { loadReminderPrefs, saveReminderPrefs, syncReminders } from "./reminders";
 import {
   PRIORITIES,
   PRIORITY_LABEL,
@@ -1867,7 +1879,20 @@ useEffect(() => {
   // Pomodoro cycle: focus -> short break (x3) -> focus ... -> long break.
   const [pomodoroMode, setPomodoroMode] = useState("focus");
   const [cycleCount, setCycleCount] = useState(0);
-  const [focusSubject, setFocusSubject] = useState("");
+  const [focusSubject, setFocusSubject] = useState(() => {
+    try {
+      return localStorage.getItem("studyos-focus-subject") || "";
+    } catch {
+      return "";
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("studyos-focus-subject", focusSubject);
+    } catch {
+      /* storage unavailable */
+    }
+  }, [focusSubject]);
   const [pomodoroAutoStart, setPomodoroAutoStart] = useState(() => {
     try {
       return localStorage.getItem("studyos-pomodoro-autostart") !== "off";
@@ -1899,6 +1924,19 @@ useEffect(() => {
   const [reminderIndex, setReminderIndex] = useState(0);
   const [showStudyTip, setShowStudyTip] = useState(false);
   const [reloadVersion, setReloadVersion] = useState(0);
+
+  // ---------- Flashcards, grades, reminders, offline sync ----------
+  const flashcards = useFlashcards(authToken, API_BASE_URL);
+  const gradeTracker = useGrades(authToken, API_BASE_URL);
+  const [flashcardNoteId, setFlashcardNoteId] = useState("");
+  const [reminderPrefs, setReminderPrefs] = useState(loadReminderPrefs);
+
+  // Offline changes finished syncing: reload everything from the server.
+  useEffect(() => {
+    const onSynced = () => setReloadVersion((version) => version + 1);
+    window.addEventListener("studyos:synced", onSynced);
+    return () => window.removeEventListener("studyos:synced", onSynced);
+  }, []);
 
   // ---------- Streak calendar popup ----------
   const [streakCalendarOpen, setStreakCalendarOpen] = useState(false);
@@ -2713,8 +2751,9 @@ useEffect(() => {
     setSessionCompleted(false);
     completionRecordedRef.current = false;
 
-    // Clear the saved login session.
+    // Clear the saved login session and the offline copy of this account.
     localStorage.removeItem("studyos_auth_token");
+    clearOfflineCache();
 
     // Clear authenticated student state.
     setStudent(null);
@@ -2949,6 +2988,14 @@ useEffect(() => {
     studyStreak += 1;
     streakDate.setDate(streakDate.getDate() - 1);
   }
+
+  // Keep study reminders in step with the streak and today's progress.
+  const studiedToday = sessionDateKeys.has(todayKey);
+  useEffect(() => {
+    if (!authToken) return;
+    saveReminderPrefs(reminderPrefs);
+    syncReminders(reminderPrefs, { streak: studyStreak, studiedToday });
+  }, [authToken, reminderPrefs, studyStreak, studiedToday]);
 
   // Activity for the last seven calendar days.
   const weeklyActivity = Array.from({ length: 7 }, (_, index) => {
@@ -4651,6 +4698,33 @@ async function undoDeleteTask() {
             <Target size={18} />
             <span>Focus Room</span>
           </a>
+
+          <a
+            className={`nav-link ${activeSection === "flashcards" ? "active" : ""}`}
+            href="#flashcards"
+            onClick={() => {
+              setActiveSection("flashcards");
+              setMenuOpen(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            <Brain size={18} />
+            <span>Flashcards</span>
+            {flashcards.dueCount > 0 && <span className="nav-count">{flashcards.dueCount}</span>}
+          </a>
+
+          <a
+            className={`nav-link ${activeSection === "grades" ? "active" : ""}`}
+            href="#grades"
+            onClick={() => {
+              setActiveSection("grades");
+              setMenuOpen(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            <ChartNoAxesCombined size={18} />
+            <span>Grades</span>
+          </a>
         </nav>
 
         <div className="sidebar-bottom">
@@ -4715,7 +4789,7 @@ async function undoDeleteTask() {
         </div>
       </aside>
 
-      <main className={`main-content${activeSection === "settings" ? " settings-page" : ""}`} id="dashboard">
+      <main className={`main-content${activeSection === "settings" || activeSection === "flashcards" || activeSection === "grades" ? " settings-page" : ""}`} id="dashboard">
           <nav className={`mobile-top-nav${menuOpen ? " menu-open" : ""}`} aria-label="Main navigation">
             <a className="mobile-navbar-brand" href="#dashboard" aria-label="StudyOS home">
               <img src={STUDYOS_LOGO_SRC} alt="" />
@@ -4726,6 +4800,8 @@ async function undoDeleteTask() {
             <a className={`nav-link ${activeSection === "tasks" ? "active" : ""}`} href="#tasks" onClick={() => setActiveSection("tasks")}><CalendarDays size={17} /><span>My Tasks</span><span className="nav-count">{remainingCount}</span></a>
             <a className={`nav-link ${activeSection === "subjects" ? "active" : ""}`} href="#subjects" onClick={() => setActiveSection("subjects")}><BookOpen size={17} /><span>Subjects</span></a>
             <a className={`nav-link ${activeSection === "focus" ? "active" : ""}`} href="#focus" onClick={() => setActiveSection("focus")} aria-label="Focus Room" title="Focus Room"><Target size={17} /><span>Focus Room</span></a>
+            <a className={`nav-link ${activeSection === "flashcards" ? "active" : ""}`} href="#flashcards" onClick={() => setActiveSection("flashcards")} aria-label="Flashcards" title="Flashcards"><Brain size={17} /><span>Flashcards</span>{flashcards.dueCount > 0 && <span className="nav-count">{flashcards.dueCount}</span>}</a>
+            <a className={`nav-link ${activeSection === "grades" ? "active" : ""}`} href="#grades" onClick={() => setActiveSection("grades")} aria-label="Grades" title="Grades"><ChartNoAxesCombined size={17} /><span>Grades</span></a>
             </div>
           <div className="topbar-actions">
             <div className={`global-search-wrapper${mobileSearchOpen ? " mobile-search-open" : ""}`} style={{ position: "relative" }}>
@@ -4958,25 +5034,26 @@ async function undoDeleteTask() {
 
             <div>
               <div className="breadcrumb">
-                Workspace <ChevronRight size={13} /> {activeSection === "settings" ? "Settings" : "Dashboard"}
+                Workspace <ChevronRight size={13} /> {{ settings: "Settings", flashcards: "Flashcards", grades: "Grades" }[activeSection] || "Dashboard"}
               </div>
 
               <h1>
-                {activeSection === "settings"
-                  ? "Settings"
-                  : <>Good day, {getGreetingName(student)}</>}
+                {{ settings: "Settings", flashcards: "Flashcards", grades: "Grade tracker" }[activeSection] ||
+                  <>Good day, {getGreetingName(student)}</>}
               </h1>
 
               <p className="subtitle">
-                {activeSection === "settings"
-                  ? "Personalize your StudyOS experience."
-                  : "A little progress every day adds up."}
+                {{
+                  settings: "Personalize your StudyOS experience.",
+                  flashcards: "Spaced repetition: cards come back just before you forget them.",
+                  grades: "Log your marks and watch the trend.",
+                }[activeSection] || "A little progress every day adds up."}
               </p>
             </div>
           </div>
         </header>
 
-        <div className="dashboard-page-content" hidden={activeSection === "settings"}>
+        <div className="dashboard-page-content" hidden={activeSection === "settings" || activeSection === "flashcards" || activeSection === "grades"}>
         <section className="welcome-banner">
           <span className="wb-grid" aria-hidden="true" />
           <span className="wb-aurora wb-aurora-a" aria-hidden="true" />
@@ -5381,6 +5458,10 @@ async function undoDeleteTask() {
               )}
             </div>
           </article>
+        </section>
+
+        <section className="study-time-section" aria-label="Study time by subject">
+          <StudyTimeCard authToken={authToken} base={API_BASE_URL} refreshKey={totalFocusSessionCount} />
         </section>
 
         <section
@@ -6499,6 +6580,20 @@ async function undoDeleteTask() {
 
                         <button
                           type="button"
+                          className="note-pin-button"
+                          onClick={() => {
+                            setFlashcardNoteId(note.id);
+                            setActiveSection("flashcards");
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          aria-label={`Make flashcards from ${note.title}`}
+                          title="Make flashcards from this note"
+                        >
+                          <Brain size={15} />
+                        </button>
+
+                        <button
+                          type="button"
                           className={`note-pin-button${note.pinned ? " is-on" : ""}`}
                           onClick={() => toggleNotePin(note)}
                           aria-label={note.pinned ? `Unpin ${note.title}` : `Pin ${note.title}`}
@@ -6900,6 +6995,20 @@ async function undoDeleteTask() {
 
         {/* The dashboard quote reminder has been removed. Settings reminder preferences remain unchanged. */}
 
+        {activeSection === "flashcards" && (
+          <FlashcardsPage
+            fc={flashcards}
+            notes={subjectNotes}
+            subjectNames={subjects.map((subject) => subject.name)}
+            initialNoteId={flashcardNoteId}
+            onInitialNoteUsed={() => setFlashcardNoteId("")}
+          />
+        )}
+
+        {activeSection === "grades" && (
+          <GradesPage gr={gradeTracker} subjectNames={subjects.map((subject) => subject.name)} />
+        )}
+
         {activeSection === "settings" && (
           <section
             className="settings-section"
@@ -7176,6 +7285,8 @@ async function undoDeleteTask() {
               </article>
             </div>
 
+            <ReminderSettings prefs={reminderPrefs} onChange={setReminderPrefs} />
+
             <p className="settings-footnote">
               <Save size={14} />
               Your preferences are saved to your StudyOS account.
@@ -7292,6 +7403,7 @@ async function undoDeleteTask() {
           </span>
         </footer>
       </main>
+      <OfflineBanner />
     </div>
   );
 }

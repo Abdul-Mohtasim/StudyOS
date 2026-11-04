@@ -1,6 +1,6 @@
 // StudyOS service worker: caches the app shell so the app opens instantly/offline.
 // API calls (/api/* and other origins) are never cached.
-const CACHE = "studyos-shell-v1";
+const CACHE = "studyos-shell-v2";
 const SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -22,7 +22,15 @@ self.addEventListener("fetch", (e) => {
 
   // Pages: network first, fall back to cached shell when offline.
   if (req.mode === "navigate") {
-    e.respondWith(fetch(req).catch(() => caches.match("/")));
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          // Keep the newest app shell so it opens offline with the latest build.
+          if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put("/", copy)); }
+          return res;
+        })
+        .catch(() => caches.match("/"))
+    );
     return;
   }
   // Static assets (hashed by Vite): cache first, then network.
@@ -31,5 +39,16 @@ self.addEventListener("fetch", (e) => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
       return res;
     }))
+  );
+});
+
+// Tapping a reminder opens (or focuses) StudyOS.
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      const open = list.find((c) => "focus" in c);
+      return open ? open.focus() : self.clients.openWindow("/");
+    })
   );
 });

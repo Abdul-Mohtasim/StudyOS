@@ -1,5 +1,12 @@
 {
   "appId": "com.studyos.app",
   "appName": "StudyOS",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_studyos",
+      "iconColor": "#E5484D",
+      "sound": "studyos_notify.wav"
+    }
+  }
 }

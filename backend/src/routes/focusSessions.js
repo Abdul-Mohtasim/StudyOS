@@ -88,6 +88,43 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET /api/focus-sessions/by-subject?days=30
+// Minutes studied per subject. days=0 (or omitted) means all time.
+router.get("/by-subject", async (req, res) => {
+  try {
+    const days = Math.min(3650, Math.max(0, Math.floor(Number(req.query.days) || 0)));
+    const match = { student: req.student._id };
+
+    if (days > 0) {
+      match.completedAt = { $gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) };
+    }
+
+    const rows = await FocusSession.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: { $ifNull: ["$subject", ""] },
+          minutes: { $sum: "$durationMinutes" },
+          sessions: { $sum: 1 },
+        },
+      },
+      { $sort: { minutes: -1 } },
+    ]);
+
+    return res.status(200).json({
+      days,
+      subjects: rows.map((row) => ({
+        subject: row._id,
+        minutes: row.minutes,
+        sessions: row.sessions,
+      })),
+    });
+  } catch (error) {
+    console.error("Could not total focus time by subject:", error);
+    return res.status(500).json({ message: "Could not total your study time." });
+  }
+});
+
 // POST /api/focus-sessions
 // Save a naturally completed focus session.
 router.post("/", async (req, res) => {

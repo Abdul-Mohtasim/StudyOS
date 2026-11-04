@@ -13,6 +13,8 @@ const focusSessionsRouter = require("./routes/focusSessions");
 const plannerRoutes = require("./routes/planner");
 const settingsRoutes = require("./routes/settings");
 const examRoutes = require("./routes/exams");
+const flashcardRoutes = require("./routes/flashcards");
+const gradeRoutes = require("./routes/grades");
 const {
   connectDatabase,
   isDatabaseConnected,
@@ -34,7 +36,7 @@ app.use(
 app.options(/.*/, cors(corsOptions));
 app.use(cors(corsOptions));
 
-app.use(express.json({ limit: "20kb" }));
+app.use(express.json({ limit: "100kb" }));
 
 app.use(
   pinoHttp({
@@ -49,7 +51,7 @@ app.use(
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 100,
+  limit: 400,
   standardHeaders: "draft-8",
   legacyHeaders: false,
   message: {
@@ -85,6 +87,8 @@ app.use("/api/focus-sessions", focusSessionsRouter);
 app.use("/api/planner", plannerRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/exams", examRoutes);
+app.use("/api/flashcards", flashcardRoutes);
+app.use("/api/grades", gradeRoutes);
 
 app.get("/", (req, res) => {
   res.json({

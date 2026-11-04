@@ -5,6 +5,10 @@ import { Capacitor } from "@capacitor/core";
 import App from "./App.jsx";
 import { installGlobalHaptics } from "./haptics";
 import "./perf.css";
+import { installOfflineLayer } from "./offline";
+
+// Offline mode: cache API reads and queue edits made without a connection.
+installOfflineLayer(import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL || "").replace(/\/+$/, ""));
 
 // Phones and the Android app get the lighter, smoother animation mode.
 const root = document.documentElement;
