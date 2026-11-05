@@ -9,6 +9,10 @@ const Student = require("../models/Student");
 const router = express.Router();
 const googleClient = new OAuth2Client();
 
+// Download Google's signing keys now (they are cached afterwards), so the first
+// Google sign-in does not have to wait for that request.
+googleClient.getFederatedSignonCertsAsync().catch(() => {});
+
 function createSessionToken(student, jwtSecret) {
   return jwt.sign(
     { sub: student._id.toString() },

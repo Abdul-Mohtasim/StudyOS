@@ -19,6 +19,24 @@ if (isNative || isTouchPhone) root.classList.add("perf-lite");
 
 installGlobalHaptics();
 
+// Wake the API up (cold start + database) and open its connection while the app paints,
+// so sign-in and the first data load do not wait for it.
+(() => {
+  const api = import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+  try {
+    if (api) {
+      const link = document.createElement("link");
+      link.rel = "preconnect";
+      link.href = api;
+      link.crossOrigin = "anonymous";
+      document.head.appendChild(link);
+    }
+    fetch(`${api}/api/health`, { cache: "no-store" }).catch(() => {});
+  } catch {
+    /* warm-up only */
+  }
+})();
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <GoogleOAuthProvider

@@ -1,32 +1,39 @@
 // Study reminders: a daily "time to study" nudge and a "streak about to break" warning.
-//  * Android app: scheduled with @capacitor/local-notifications as EXACT alarms, so they fire
-//    on the minute you pick (even when the app is closed or the phone is idle) with the
-//    StudyOS chime.
+//  * Android app: scheduled natively with AlarmManager (android/.../StudyNotifyPlugin.java), so they fire
+//    on the minute you pick, even when the app is closed, with the StudyOS chime.
 //  * Browser: Notification API while the app/tab is open (a browser cannot wake itself up).
 //    A 1-second clock checks the real time, so background-tab timer throttling cannot delay it.
 import { Capacitor, registerPlugin } from "@capacitor/core";
+import {
+  makePicker, DAILY_POOL, STREAK_POOL, NAG_TIERS, NAG_STREAK_POOL, NAG_FINAL_POOL,
+  NAG_FINAL_NO_STREAK_POOL, TEST_POOL, customBody,
+} from "./reminderMessages";
 
 const KEY = "studyos-reminders";
 const FIRED_KEY = "studyos-reminders-fired";
-const DAILY_ID = 1001; // 1001..1030 (one per upcoming day)
+const DAILY_ID = 1001; // 1001..1014 (one per upcoming day)
 const STREAK_ID = 2001;
-const TEST_ID = 2900;
+const CUSTOM_ID = 3000; // 3000 + slot * 20 + day
+const NAG_ID = 4000; // 4000 + day * 20 + slot
+const NAG_DAYS = 3;
 const DAYS_AHEAD = 14;
 
-// Android 8+ takes the sound from the notification *channel*, and a channel can't be edited after
-// it has been created, so the id carries a version. Bump it if the sound ever changes.
-const CHANNEL_ID = "studyos-reminders-v3";
-const OLD_CHANNELS = ["studyos-reminders-v2"];
-const NATIVE_SOUND = "studyos_notify.wav"; // android/app/src/main/res/raw/studyos_notify.wav
-const WEB_SOUND = "/sounds/studyos-notify.wav"; // public/sounds/studyos-notify.wav
-const SMALL_ICON = "ic_stat_studyos";
-const ICON_COLOR = "#E5484D";
+const WEB_SOUND = "/sounds/studyos-notify.mp3"; // public/sounds/studyos-notify.mp3
 
-export const DEFAULT_REMINDERS = { daily: false, time: "18:00", streak: false, streakTime: "20:00" };
+export const MAX_CUSTOM = 8;
+export const DEFAULT_REMINDERS = {
+  daily: false, time: "18:00", streak: false, streakTime: "20:00",
+  // "Nag mode": playful, escalating nudges through the day until you study (Duolingo style).
+  nag: false, nagStart: "15:00", nagEnd: "21:00", nagEvery: 2,
+  // Your own reminders: [{ id, time: "07:30", text: "Revise chemistry", on: true }]
+  custom: [],
+};
 
 export function loadReminderPrefs() {
   try {
-    return { ...DEFAULT_REMINDERS, ...JSON.parse(localStorage.getItem(KEY) || "{}") };
+    const saved = { ...DEFAULT_REMINDERS, ...JSON.parse(localStorage.getItem(KEY) || "{}") };
+    if (!Array.isArray(saved.custom)) saved.custom = [];
+    return saved;
   } catch {
     return { ...DEFAULT_REMINDERS };
   }
@@ -41,62 +48,51 @@ export function saveReminderPrefs(prefs) {
 
 const isNative = () => Capacitor.isNativePlatform();
 
-async function plugin() {
-  const mod = await import("@capacitor/local-notifications");
-  return mod.LocalNotifications;
-}
-
 export function notificationsSupported() {
   return isNative() || typeof Notification !== "undefined";
 }
 
-// ---------------------------------------------------------------- permissions
-// Small native helper (android/.../StudyNotifyPlugin.java): real notification state + settings shortcuts.
+// ---------------------------------------------------------------- native bridge
 const StudyNotify = isNative() ? registerPlugin("StudyNotify") : null;
 
+// Never wait forever on the native side.
+function native(call, ms = 10000) {
+  return Promise.race([
+    call,
+    new Promise((_, reject) => setTimeout(() => reject(new Error("The phone did not answer in time.")), ms)),
+  ]);
+}
+
 export async function openNotificationSettings() {
-  try {
-    await StudyNotify.openNotificationSettings();
-  } catch {
-    /* helper missing: rebuild the Android app */
-  }
+  try { await native(StudyNotify.openNotificationSettings()); } catch { /* rebuild the app */ }
 }
 export async function openChannelSettings() {
-  try {
-    await StudyNotify.openChannelSettings({ channelId: CHANNEL_ID });
-  } catch {
-    /* helper missing: rebuild the Android app */
-  }
+  try { await native(StudyNotify.openChannelSettings()); } catch { /* rebuild the app */ }
 }
-// { enabled, channelExists, importance, hasSound } or null when unavailable.
+// { enabled, sdk, canExact, scheduled, channelExists, importance, hasSound, versionName, ... } or null.
 export async function getNotifyStatus() {
+  if (!StudyNotify) return null;
   try {
-    return await StudyNotify.getStatus({ channelId: CHANNEL_ID });
+    return await native(StudyNotify.getStatus());
   } catch {
     return null;
   }
 }
 
-// Ask the system for permission.
+// ---------------------------------------------------------------- permissions
 // Resolves to { state: "granted" | "denied" | "blocked" | "error", message? }
-//   blocked = Android will not show the Allow/Deny pop-up any more (it was refused before),
+//   blocked = Android will not show the Allow/Deny pop-up (refused before, or turned off in settings),
 //             so the person has to switch notifications on in the phone's settings.
 export async function requestReminderPermission() {
   try {
     if (isNative()) {
-      const LN = await plugin();
-      const before = await LN.checkPermissions();
-      if (before.display === "granted") return { state: "granted" };
-
-      // "denied" (not "prompt") means Android has stopped showing the pop-up for this app.
-      if (before.display === "denied") {
-        const status = await getNotifyStatus();
-        if (status && status.enabled) return { state: "granted" };
+      const started = Date.now();
+      // Waits for the person to answer the system pop-up (Android 13+); older Android answers at once.
+      const res = await native(StudyNotify.requestPermission(), 120000);
+      if (res.granted) return { state: "granted" };
+      if (Date.now() - started < 600) {
         return { state: "blocked", message: "Notifications are turned off for StudyOS in your phone settings." };
       }
-
-      const res = await LN.requestPermissions(); // shows the system Allow / Don't allow pop-up
-      if (res.display === "granted") return { state: "granted" };
       return { state: "denied", message: "Notifications were not allowed." };
     }
     if (typeof Notification === "undefined") return { state: "error", message: "This browser does not support notifications." };
@@ -106,55 +102,36 @@ export async function requestReminderPermission() {
   } catch (err) {
     return {
       state: "error",
-      message: `Could not ask for notification permission (${(err && err.message) || "unknown error"}). Reinstall the latest app build.`,
+      message: `Could not ask for notification permission (${(err && err.message) || "unknown error"}). Uninstall the app, rebuild and reinstall it.`,
     };
   }
 }
 
 export async function reminderPermission() {
-  try {
-    if (isNative()) {
-      const LN = await plugin();
-      const res = await LN.checkPermissions();
-      return res.display === "granted" ? "granted" : "default";
-    }
-    return typeof Notification === "undefined" ? "denied" : Notification.permission;
-  } catch {
-    return "default";
+  if (isNative()) {
+    const st = await getNotifyStatus();
+    return st && st.enabled ? "granted" : "default";
   }
+  return typeof Notification === "undefined" ? "denied" : Notification.permission;
 }
 
-// Android 12+ only fires a notification at the exact minute when "Alarms & reminders" is allowed
-// for the app. Without it Android batches the alarm and it can arrive many minutes late.
-// Returns true when exact timing is available.
-async function exactAllowed(LN) {
-  try {
-    const res = await LN.checkExactNotificationSetting();
-    return res.exact_alarm === "granted";
-  } catch {
-    return true; // older plugin/Android: exact alarms are not gated
-  }
+// Android 12+ only fires a notification on the exact minute when "Alarms & reminders" is allowed
+// for the app. Without it Android may batch the alarm and it can arrive a few minutes late.
+export async function exactAlarmsGranted() {
+  if (!isNative()) return true;
+  const st = await getNotifyStatus();
+  return st ? st.canExact !== false : true;
 }
 
 export async function requestExactAlarms() {
   if (!isNative()) return true;
   try {
-    const LN = await plugin();
-    if (await exactAllowed(LN)) return true;
-    const res = await LN.changeExactNotificationSetting(); // opens the system "Alarms & reminders" screen
-    return res.exact_alarm === "granted";
+    if (await exactAlarmsGranted()) return true;
+    await native(StudyNotify.openExactAlarmSettings()); // opens the system "Alarms & reminders" screen
   } catch {
-    return false;
+    /* ignore */
   }
-}
-
-export async function exactAlarmsGranted() {
-  if (!isNative()) return true;
-  try {
-    return await exactAllowed(await plugin());
-  } catch {
-    return true;
-  }
+  return exactAlarmsGranted();
 }
 
 // ---------------------------------------------------------------- helpers
@@ -170,12 +147,6 @@ function atTime(dayOffset, { hour, minute }) {
   d.setHours(hour, minute, 0, 0);
   return d;
 }
-
-const DAILY_TITLE = "Time to study 📚";
-const DAILY_BODY = "A short focus session keeps your momentum going.";
-const streakTitle = (n) => `Your ${n}-day streak is about to break 🔥`;
-const streakBody = (studiedToday) =>
-  studiedToday ? "Study a little tomorrow to keep it alive." : "One short session today keeps it alive.";
 
 // ---------------------------------------------------------------- sound (browser + in-app)
 let audio = null;
@@ -214,39 +185,85 @@ export function playReminderSound() {
   }
 }
 
-// ---------------------------------------------------------------- Android
-let channelReady = false;
-async function ensureChannel(LN) {
-  if (channelReady) return;
-  for (const id of OLD_CHANNELS) {
-    try { await LN.deleteChannel({ id }); } catch { /* not there */ }
+// ---------------------------------------------------------------- plan
+// Nudges start friendly and get cheekier as the day runs out. Every notification gets its own message
+// (see reminderMessages.js); nothing repeats within the plan.
+function nagMessage(index, count, streak, pick, seed) {
+  if (index === count - 1 && count > 1) {
+    return streak > 0 ? pick(NAG_FINAL_POOL, seed, { n: streak }) : pick(NAG_FINAL_NO_STREAK_POOL, seed);
   }
-  try {
-    await LN.createChannel({
-      id: CHANNEL_ID,
-      name: "Study reminders",
-      description: "Daily study reminders and streak warnings",
-      importance: 5, // max: heads-up banner + sound
-      visibility: 1,
-      sound: NATIVE_SOUND,
-      vibration: true,
-      lights: true,
-      lightColor: ICON_COLOR,
-    });
-    channelReady = true;
-  } catch {
-    /* channels only exist on Android 8+ */
-  }
+  if (streak > 0 && index === Math.max(1, count - 2)) return pick(NAG_STREAK_POOL, seed, { n: streak });
+  const tier = Math.min(NAG_TIERS.length - 1, Math.floor((index / Math.max(1, count - 1)) * (NAG_TIERS.length - 1)));
+  return pick(NAG_TIERS[tier], seed);
 }
 
-const nativeBase = (exact) => ({
-  channelId: CHANNEL_ID,
-  sound: NATIVE_SOUND,
-  smallIcon: SMALL_ICON,
-  iconColor: ICON_COLOR,
-  isExactNotification: exact,
-});
+function nagTimes(prefs) {
+  const start = parseTime(prefs.nagStart, [15, 0]);
+  const end = parseTime(prefs.nagEnd, [21, 0]);
+  const every = Math.max(1, Math.min(6, Number(prefs.nagEvery) || 2));
+  const from = start.hour * 60 + start.minute;
+  const to = end.hour * 60 + end.minute;
+  const out = [];
+  for (let m = from; m <= to && out.length < 12; m += every * 60) out.push({ hour: Math.floor(m / 60), minute: m % 60 });
+  return out;
+}
 
+// Every reminder that should exist from now on: [{ id, at: Date, title, body }]
+function buildPlan(prefs, { streak, studiedToday }) {
+  const now = Date.now();
+  const items = [];
+  const push = (id, at, title, body) => { if (at.getTime() > now) items.push({ id, at, title, body, tag: `studyos-${id}` }); };
+  const pick = makePicker();
+  const dayKey = (at) => `${at.getFullYear()}-${at.getMonth()}-${at.getDate()}`;
+
+  if (prefs.daily) {
+    const t = parseTime(prefs.time, [18, 0]);
+    for (let i = 0; i < DAYS_AHEAD; i += 1) {
+      if (i === 0 && studiedToday) continue;
+      const at = atTime(i, t);
+      const [title, body] = pick(DAILY_POOL, `daily|${dayKey(at)}`);
+      push(DAILY_ID + i, at, title, body);
+    }
+  }
+
+  if (prefs.streak && streak > 0) {
+    // The streak is at risk today if you haven't studied yet, otherwise tomorrow.
+    const at = atTime(studiedToday ? 1 : 0, parseTime(prefs.streakTime, [20, 0]));
+    const [title, body] = pick(STREAK_POOL, `streak|${dayKey(at)}`, { n: streak });
+    push(STREAK_ID, at, title, body);
+  }
+
+  (prefs.custom || []).slice(0, MAX_CUSTOM).forEach((c, slot) => {
+    if (!c || c.on === false) return;
+    const t = parseTime(c.time, [8, 0]);
+    const text = (c.text || "").trim();
+    for (let i = 0; i < DAYS_AHEAD; i += 1) {
+      const at = atTime(i, t);
+      if (text) {
+        // your own words stay as the title; the line under it is different every day
+        push(CUSTOM_ID + slot * 20 + i, at, text, customBody(slot * 14 + i));
+      } else {
+        const [title, body] = pick(DAILY_POOL, `custom|${slot}|${dayKey(at)}`);
+        push(CUSTOM_ID + slot * 20 + i, at, title, body);
+      }
+    }
+  });
+
+  if (prefs.nag) {
+    const times = nagTimes(prefs);
+    for (let i = 0; i < NAG_DAYS; i += 1) {
+      if (i === 0 && studiedToday) continue; // already studied: no nagging today
+      times.forEach((t, j) => {
+        const at = atTime(i, t);
+        const [title, body] = nagMessage(j, times.length, streak, pick, `nag|${dayKey(at)}|${j}`);
+        push(NAG_ID + i * 20 + j, at, title, body);
+      });
+    }
+  }
+  return items;
+}
+
+// ---------------------------------------------------------------- Android
 // Re-plan every reminder from the current state. Call whenever prefs, the streak
 // or "studied today" change. Safe to call often.
 //   state = { streak: number, studiedToday: boolean }
@@ -255,55 +272,13 @@ export async function syncReminders(prefs, state) {
   syncWeb(prefs, state);
 }
 
-async function syncNative(prefs, { streak, studiedToday }) {
+async function syncNative(prefs, state) {
   try {
-    const LN = await plugin();
-    const pending = await LN.getPending();
-    const ours = pending.notifications.filter((n) => n.id >= 1000 && n.id < 3000 && n.id !== TEST_ID);
-    if (ours.length) await LN.cancel({ notifications: ours.map((n) => ({ id: n.id })) });
-    if ((await LN.checkPermissions()).display !== "granted") return;
-    await ensureChannel(LN);
-
-    // Exact when the user has allowed "Alarms & reminders". When they haven't, schedule inexact
-    // so a background sync never throws the settings screen at them; the toggle flow asks for it.
-    const exact = await exactAllowed(LN);
-    const base = nativeBase(exact);
-
-    const notifications = [];
-    const now = Date.now();
-
-    if (prefs.daily) {
-      const t = parseTime(prefs.time, [18, 0]);
-      // One per day for the next two weeks, skipping today when you already studied.
-      for (let i = 0; i < DAYS_AHEAD; i += 1) {
-        const at = atTime(i, t);
-        if (at.getTime() <= now || (i === 0 && studiedToday)) continue;
-        notifications.push({
-          id: DAILY_ID + i,
-          title: DAILY_TITLE,
-          body: DAILY_BODY,
-          schedule: { at, allowWhileIdle: true },
-          ...base,
-        });
-      }
-    }
-
-    if (prefs.streak && streak > 0) {
-      const t = parseTime(prefs.streakTime, [20, 0]);
-      // The streak is at risk today if you haven't studied yet, otherwise tomorrow.
-      const at = atTime(studiedToday ? 1 : 0, t);
-      if (at.getTime() > now) {
-        notifications.push({
-          id: STREAK_ID,
-          title: streakTitle(streak),
-          body: streakBody(studiedToday),
-          schedule: { at, allowWhileIdle: true },
-          ...base,
-        });
-      }
-    }
-
-    if (notifications.length) await LN.schedule({ notifications });
+    const status = await getNotifyStatus();
+    if (!status || !status.enabled) return; // not allowed (yet): nothing to schedule
+    const items = buildPlan(prefs, state).map((p) => ({ id: p.id, at: p.at.getTime(), title: p.title, body: p.body }));
+    // Always replace the whole list (an empty list cancels everything).
+    await native(StudyNotify.scheduleReminders({ items }));
   } catch (err) {
     console.warn("Could not schedule reminders:", err && err.message);
   }
@@ -359,15 +334,11 @@ function checkWebPlan() {
   }
 }
 
-function syncWeb(prefs, { streak, studiedToday }) {
+function syncWeb(prefs, state) {
   webPlan = [];
   if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-    if (prefs.daily && !studiedToday) {
-      webPlan.push({ at: atTime(0, parseTime(prefs.time, [18, 0])), title: DAILY_TITLE, body: DAILY_BODY, tag: "studyos-daily" });
-    }
-    if (prefs.streak && streak > 0 && !studiedToday) {
-      webPlan.push({ at: atTime(0, parseTime(prefs.streakTime, [20, 0])), title: streakTitle(streak), body: streakBody(false), tag: "studyos-streak" });
-    }
+    const today = new Date().toDateString();
+    webPlan = buildPlan(prefs, state).filter((p) => p.at.toDateString() === today); // a browser only knows about today
   }
   if (webPlan.length && !webTicker && typeof window !== "undefined") {
     webTicker = setInterval(checkWebPlan, 1000);
@@ -388,21 +359,10 @@ function syncWeb(prefs, { streak, studiedToday }) {
 export async function sendTestReminder() {
   if (isNative()) {
     try {
-      const LN = await plugin();
-      if ((await LN.checkPermissions()).display !== "granted") {
-        const status = await getNotifyStatus();
-        if (!(status && status.enabled)) return { ok: false, message: "Allow notifications first, then try again." };
-      }
-      await ensureChannel(LN);
-      await LN.schedule({
-        notifications: [{
-          id: TEST_ID,
-          title: "StudyOS reminders are on ✅",
-          body: "This is how your study reminders will look and sound.",
-          // no "schedule": the notification is shown immediately
-          ...nativeBase(false),
-        }],
-      });
+      const before = await getNotifyStatus();
+      if (!before || !before.enabled) return { ok: false, message: "Allow notifications first, then try again." };
+      const [title, body] = makePicker()(TEST_POOL, Date.now());
+      await native(StudyNotify.showNow({ title, body }));
       const status = await getNotifyStatus();
       const soundIssue = Boolean(status && status.channelExists && (!status.hasSound || status.importance < 3));
       return { ok: true, soundIssue };
@@ -413,7 +373,8 @@ export async function sendTestReminder() {
   if (typeof Notification === "undefined" || Notification.permission !== "granted") {
     return { ok: false, message: "Allow notifications first, then try again." };
   }
-  showWeb("StudyOS reminders are on ✅", "This is how your study reminders will look and sound.", "studyos-test");
+  const [title, body] = makePicker()(TEST_POOL, Date.now());
+  showWeb(title, body, "studyos-test");
   return { ok: true };
 }
 
@@ -430,45 +391,24 @@ export async function getDiagnostics() {
   }
 
   add(true, "Running inside the Android app");
-  let LN = null;
-  try {
-    LN = await plugin();
-    await LN.checkPermissions();
-    add(true, "Notification plugin is installed in this build");
-  } catch (err) {
-    add(false, "Notification plugin is NOT installed in this build", "Run: npm install, npm run build, npx cap sync android, then reinstall the app.");
-    return lines;
-  }
-
   const st = await getNotifyStatus();
   if (!st) {
-    add(false, "Native helper missing: this is an old app build", "Rebuild and reinstall. Android > App info should say Version 1.1.");
-  } else {
-    add(true, `App version ${st.versionName || "?"}, Android API ${st.sdk}`);
-    if (st.sdk >= 33) {
-      add(Boolean(st.declaresPostNotifications), "App asks Android for notification permission (POST_NOTIFICATIONS)",
-        st.declaresPostNotifications ? "" : "Missing from this build's manifest: rebuild and reinstall.");
-    } else {
-      add(true, "Android 12 or older: no permission pop-up exists, notifications are allowed by default");
-    }
-    add(Boolean(st.enabled), "Notifications are switched on for StudyOS in Android settings");
-    if (st.channelExists) {
-      add(st.importance >= 3, `Reminder channel importance: ${st.importance} (needs 3+ to make a sound)`);
-      add(Boolean(st.hasSound), "Reminder channel has a sound");
-    }
+    add(false, "Reminder helper missing: this is an old app build", "Uninstall the app, then rebuild and reinstall it. Android > App info should say Version 1.3.");
+    return lines;
   }
-
-  try {
-    const p = await LN.checkPermissions();
-    add(p.display === "granted", `Permission state: ${p.display}`);
-  } catch { /* ignore */ }
-  try {
-    const e = await LN.checkExactNotificationSetting();
-    add(e.exact_alarm === "granted", `Exact alarms ("Alarms & reminders"): ${e.exact_alarm}`);
-  } catch { /* older Android */ }
-  try {
-    const pending = await LN.getPending();
-    add(true, `Reminders currently scheduled: ${pending.notifications.length}`);
-  } catch { /* ignore */ }
+  add(true, `App version ${st.versionName || "?"}, Android API ${st.sdk}`);
+  if (st.sdk >= 33) {
+    add(Boolean(st.declaresPostNotifications), "App asks Android for notification permission",
+      st.declaresPostNotifications ? "" : "Missing from this build: rebuild and reinstall.");
+  } else {
+    add(true, "Android 12 or older: no permission pop-up exists, notifications are allowed by default");
+  }
+  add(Boolean(st.enabled), "Notifications are switched on for StudyOS in Android settings");
+  if (st.channelExists) {
+    add(st.importance >= 3, `Reminder channel importance: ${st.importance} (needs 3+ to make a sound)`);
+    add(Boolean(st.hasSound), "Reminder channel has a sound");
+  }
+  add(st.canExact !== false, `Exact timing ("Alarms & reminders"): ${st.canExact === false ? "not allowed, reminders may be a few minutes late" : "allowed"}`);
+  add(true, `Reminders currently scheduled: ${st.scheduled ?? 0}`);
   return lines;
 }

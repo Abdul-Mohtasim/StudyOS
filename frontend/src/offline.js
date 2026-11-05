@@ -126,6 +126,14 @@ function cacheKeysFor(uid, pathPrefix) {
   }
 }
 
+// The signed-in student from the last successful /api/auth/me, if this device has it.
+export function readCachedMe(token) {
+  const uid = uidFromToken(token || "");
+  if (!uid) return null;
+  const data = readCache(uid, "/api/auth/me");
+  return data && data.student ? data : null;
+}
+
 // Remove cached account data (called when the student signs out).
 export function clearOfflineCache() {
   try {

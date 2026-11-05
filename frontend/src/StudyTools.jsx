@@ -21,11 +21,13 @@ import {
   notificationsSupported,
   requestReminderPermission,
   requestExactAlarms,
+  MAX_CUSTOM,
   exactAlarmsGranted,
   sendTestReminder,
   openNotificationSettings,
   openChannelSettings,
   getDiagnostics,
+  getNotifyStatus,
 } from "./reminders";
 
 async function call(base, token, method, path, body) {
@@ -829,7 +831,7 @@ function TimeSelect({ value, fallback, onChange, label, disabled }) {
   );
 }
 
-function ReminderRow({ title, hint, on, onToggle, time, fallback, onTime, timeLabel }) {
+function ReminderRow({ title, hint, on, onToggle, time, fallback, onTime, timeLabel, children }) {
   return (
     <div className="st-rem-row">
       <div className="st-rem-main">
@@ -852,6 +854,7 @@ function ReminderRow({ title, hint, on, onToggle, time, fallback, onTime, timeLa
         <span className="st-rem-timelabel">{timeLabel}</span>
         <TimeSelect value={time} fallback={fallback} onChange={onTime} label={timeLabel} disabled={!on} />
       </div>
+      {children}
     </div>
   );
 }
@@ -862,6 +865,8 @@ export function ReminderSettings({ prefs, onChange }) {
   const [testMsg, setTestMsg] = useState("");
   const [soundIssue, setSoundIssue] = useState(false);
   const [diag, setDiag] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [nstat, setNstat] = useState(null);
   const supported = notificationsSupported();
   const native = Capacitor.isNativePlatform();
 
@@ -872,24 +877,49 @@ export function ReminderSettings({ prefs, onChange }) {
   }, [prefs.daily, prefs.streak]);
 
   const runDiag = useCallback(async () => setDiag(await getDiagnostics()), []);
-  useEffect(() => { if (native) runDiag(); }, [native, runDiag]);
+  useEffect(() => { if (native) { runDiag(); getNotifyStatus().then(setNstat); } }, [native, runDiag]);
 
   const toggle = async (key) => {
     if (prefs[key]) {
-      onChange({ ...prefs, [key]: false });
+      onChange((cur) => ({ ...cur, [key]: false }));
       return;
     }
+    // Switch on straight away so the tap always responds; flip back if Android says no.
+    onChange((cur) => ({ ...cur, [key]: true }));
     if (!supported) return;
-    const res = await requestReminderPermission(); // shows the Allow / Don't allow pop-up
+    setBusy(true);
+    setPerm(null);
+    const res = await requestReminderPermission(); // shows the Allow / Don't allow pop-up (has its own time limit)
+    setBusy(false);
     setPerm(res);
     runDiag();
     if (res.state !== "granted") {
-      onChange({ ...prefs, [key]: false });
+      onChange((cur) => ({ ...cur, [key]: false }));
       return;
     }
-    onChange({ ...prefs, [key]: true });
     // Android: also ask for "Alarms & reminders" so it fires on the exact minute (does not block the toggle).
     requestExactAlarms().then(setExactOk).catch(() => {});
+  };
+
+  const custom = Array.isArray(prefs.custom) ? prefs.custom : [];
+  const updateCustom = (id, patch) =>
+    onChange((cur) => ({ ...cur, custom: (cur.custom || []).map((c) => (c.id === id ? { ...c, ...patch } : c)) }));
+  const removeCustom = (id) =>
+    onChange((cur) => ({ ...cur, custom: (cur.custom || []).filter((c) => c.id !== id) }));
+  const addCustom = async () => {
+    if (custom.length >= MAX_CUSTOM) return;
+    if (supported) {
+      setBusy(true);
+      const res = await requestReminderPermission();
+      setBusy(false);
+      setPerm(res);
+      runDiag();
+      if (res.state !== "granted") return;
+    }
+    onChange((cur) => ({
+      ...cur,
+      custom: [...(cur.custom || []), { id: Date.now(), time: "08:00", text: "", on: true }].slice(0, MAX_CUSTOM),
+    }));
   };
 
   const test = async () => {
@@ -919,6 +949,16 @@ export function ReminderSettings({ prefs, onChange }) {
 
       {!supported && <p className="st-muted">This browser does not support notifications.</p>}
 
+      {native && nstat && nstat.sdk < 33 && (
+        <p className="st-info">
+          Your phone runs Android 12 or older (API {nstat.sdk}). These versions never show an “Allow” pop-up, because notifications are
+          allowed automatically. Just turn a toggle on and tap “Send test reminder”.
+        </p>
+      )}
+      {native && nstat && nstat.sdk >= 33 && nstat.declaresPostNotifications === false && (
+        <p className="st-error">This app build does not ask Android for notification permission. Uninstall it, rebuild and reinstall.</p>
+      )}
+
       <ReminderRow
         title="Daily “time to study” reminder"
         hint="A friendly nudge every day at your chosen time."
@@ -941,6 +981,71 @@ export function ReminderSettings({ prefs, onChange }) {
         timeLabel="Warn me at"
       />
 
+      <ReminderRow
+        title="Nag mode (like Duolingo) 🦉"
+        hint="Playful nudges through the day that get cheekier until you study. They stop as soon as you finish a session."
+        on={prefs.nag}
+        onToggle={() => toggle("nag")}
+        time={prefs.nagStart}
+        fallback="15:00"
+        onTime={(nagStart) => onChange({ ...prefs, nagStart })}
+        timeLabel="Start nudging at"
+      >
+        <div className="st-rem-timeline">
+          <span className="st-rem-timelabel">Last nudge at</span>
+          <TimeSelect value={prefs.nagEnd} fallback="21:00" onChange={(nagEnd) => onChange({ ...prefs, nagEnd })} label="Last nudge at" disabled={!prefs.nag} />
+        </div>
+        <div className="st-rem-timeline">
+          <span className="st-rem-timelabel">Nudge me every</span>
+          <select
+            className="st-every"
+            aria-label="Hours between nudges"
+            value={prefs.nagEvery}
+            disabled={!prefs.nag}
+            onChange={(e) => onChange({ ...prefs, nagEvery: Number(e.target.value) })}
+          >
+            {[1, 2, 3, 4].map((h) => <option key={h} value={h}>{h} hour{h > 1 ? "s" : ""}</option>)}
+          </select>
+        </div>
+      </ReminderRow>
+
+      <div className="st-rem-row">
+        <div className="st-rem-text">
+          <strong>My own reminders</strong>
+          <p>Add as many as {MAX_CUSTOM} reminders at any time, with your own message (for example “Revise chemistry”).</p>
+        </div>
+        {custom.map((c) => (
+          <div className="st-custom" key={c.id}>
+            <div className="st-custom-top">
+              <TimeSelect value={c.time} fallback="08:00" onChange={(time) => updateCustom(c.id, { time })} label="Custom reminder time" disabled={c.on === false} />
+              <button
+                type="button"
+                className={`settings-switch ${c.on !== false ? "is-on" : ""}`}
+                role="switch"
+                aria-checked={c.on !== false}
+                aria-label="Turn this reminder on or off"
+                onClick={() => updateCustom(c.id, { on: c.on === false })}
+              >
+                <span />
+              </button>
+              <button type="button" className="st-link" onClick={() => removeCustom(c.id)} aria-label="Delete this reminder">Delete</button>
+            </div>
+            <input
+              className="st-custom-text"
+              type="text"
+              maxLength={80}
+              placeholder="Message, e.g. Revise chemistry"
+              value={c.text}
+              onChange={(e) => updateCustom(c.id, { text: e.target.value })}
+            />
+          </div>
+        ))}
+        <button type="button" className="settings-save-button" onClick={addCustom} disabled={custom.length >= MAX_CUSTOM}>
+          + Add a reminder
+        </button>
+      </div>
+
+      {busy && <p className="st-muted" role="status"><RefreshCw size={14} /> Waiting for Android...</p>}
       {perm && perm.state !== "granted" && (
         <p className="st-error" role="alert">
           {perm.message || "Notifications are blocked. Allow them in your device or browser settings, then try again."}{" "}

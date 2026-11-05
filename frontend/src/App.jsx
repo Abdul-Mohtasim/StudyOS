@@ -95,7 +95,9 @@ import {
   useFlashcards,
   useGrades,
 } from "./StudyTools";
-import { clearOfflineCache } from "./offline";
+import { clearOfflineCache, readCachedMe } from "./offline";
+import AppSkeleton from "./Skeleton";
+import "./skeleton.css";
 import { loadReminderPrefs, saveReminderPrefs, syncReminders } from "./reminders";
 import {
   PRIORITIES,
@@ -1982,10 +1984,24 @@ useEffect(() => {
         return;
       }
 
+      // Fast path: this device already knows who you are, so open the app at once
+      // and confirm the session with the server in the background.
+      const cachedMe = readCachedMe(savedToken);
+      if (cachedMe && !cancelled) {
+        setStudent(cachedMe.student);
+        setAuthToken(savedToken);
+        setAuthChecking(false);
+      }
+
       try {
         const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           headers: { Authorization: `Bearer ${savedToken}` },
         });
+
+        // Already showing the app from the saved copy: only an explicit "not signed in" logs out.
+        if (cachedMe && !response.ok && ![401, 403, 404].includes(response.status)) {
+          return;
+        }
 
         if (!response.ok) {
           throw new Error("Session expired or invalid.");
@@ -4321,13 +4337,7 @@ async function undoDeleteTask() {
 
   // ---------- Auth screens ----------
   if (authChecking) {
-    return (
-      <main className="auth-screen">
-        <section className="auth-card">
-          <p>Restoring your StudyOS...</p>
-        </section>
-      </main>
-    );
+    return <AppSkeleton />;
   }
 
   if (!student && showAuthScreen) {
