@@ -1,0 +1,135 @@
+/* Email features (forgot password, email links, settings card, buttons). */
+
+.as-forgot {
+  justify-self: end;
+  margin: -4px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--as-brand, #e4585f);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.as-forgot:hover { text-decoration: underline; }
+
+.em-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(15, 15, 20, 0.55);
+}
+
+.em-dialog,
+.em-card {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 26px 24px;
+  border-radius: 18px;
+  background: #ffffff;
+  color: #1f2430;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.em-dialog h2,
+.em-card h1 { margin: 0 0 12px; font-size: 1.3rem; display: flex; align-items: center; gap: 8px; }
+.em-brand { color: #e4585f; font-weight: 800; font-size: 1.2rem; margin-bottom: 14px; }
+.em-text { margin: 0 0 14px; line-height: 1.55; font-size: 0.95rem; }
+.em-ok { color: #1f9d6b; }
+
+.em-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid #d9d2cc;
+  border-radius: 12px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+.em-input:focus { outline: 2px solid #e4585f; outline-offset: 1px; }
+
+.em-button {
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: #e4585f;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.em-button:disabled { opacity: 0.6; cursor: default; }
+
+.em-error {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(228, 72, 79, 0.4);
+  border-radius: 10px;
+  background: rgba(228, 72, 79, 0.1);
+  color: #c7343b;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.em-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.em-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: linear-gradient(135deg, #ffdcc4 0%, #ffc19d 50%, #ffdcc4 100%);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.em-spin { animation: em-spin 0.9s linear infinite; vertical-align: -3px; }
+@keyframes em-spin { to { transform: rotate(360deg); } }
+
+html[data-theme="dark"] .em-dialog,
+html[data-theme="dark"] .em-card { background: #231a2b; color: #f3eaf5; }
+html[data-theme="dark"] .em-input { background: #19131f; border-color: #3b2d45; }
+html[data-theme="dark"] .em-page { background: linear-gradient(135deg, #19131f 0%, #2d1c30 50%, #19131f 100%); }
+
+.em-verify { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.em-test { margin-top: 12px; display: inline-flex; align-items: center; gap: 6px; }
+.em-settings .st-info,
+.em-settings .st-error,
+.em-settings .st-muted { margin-top: 10px; }
+
+.em-flash-send {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.em-flash-send select {
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(128, 128, 128, 0.35);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.em-flash-send .settings-save-button { display: inline-flex; align-items: center; gap: 6px; }

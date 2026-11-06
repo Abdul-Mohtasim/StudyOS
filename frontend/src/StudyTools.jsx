@@ -152,7 +152,7 @@ function dueLabel(card) {
 }
 
 // =============================================================== flashcards page
-export function FlashcardsPage({ fc, notes, subjectNames, initialNoteId, onInitialNoteUsed }) {
+export function FlashcardsPage({ fc, notes, subjectNames, initialNoteId, onInitialNoteUsed, extraActions }) {
   const [tab, setTab] = useState(initialNoteId ? "notes" : "review");
   useEffect(() => {
     if (initialNoteId) setTab("notes");
@@ -175,6 +175,8 @@ export function FlashcardsPage({ fc, notes, subjectNames, initialNoteId, onIniti
           </button>
         ))}
       </div>
+
+      {extraActions}
 
       {fc.error && <p className="st-error" role="alert">{fc.error}</p>}
       {fc.loading && fc.cards.length === 0 && <p className="st-muted"><RefreshCw size={14} /> Loading your cards...</p>}

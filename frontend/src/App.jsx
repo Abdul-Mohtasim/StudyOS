@@ -98,6 +98,7 @@ import {
 import { clearOfflineCache, readCachedMe } from "./offline";
 import AppSkeleton from "./Skeleton";
 import "./skeleton.css";
+import { ForgotPasswordModal, EmailSettingsCard, EmailNoteButton, EmailFlashcardsButton } from "./EmailFeatures";
 import { loadReminderPrefs, saveReminderPrefs, syncReminders } from "./reminders";
 import {
   PRIORITIES,
@@ -1762,6 +1763,7 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
 const [authMode, setAuthMode] = useState("login");
+const [forgotOpen, setForgotOpen] = useState(false);
 const [authName, setAuthName] = useState("");
 const [authEmail, setAuthEmail] = useState("");
 const [authPassword, setAuthPassword] = useState("");
@@ -4518,6 +4520,12 @@ async function undoDeleteTask() {
                 </span>
               </label>
 
+              {!isRegister && (
+                <button type="button" className="as-forgot" onClick={() => setForgotOpen(true)} disabled={authLoading}>
+                  Forgot password?
+                </button>
+              )}
+
               <button className="as-submit" type="submit" disabled={authLoading}>
                 <span className="as-submit-text">
                   {authLoading
@@ -4603,6 +4611,9 @@ async function undoDeleteTask() {
             />
           </aside>
         </section>
+        {forgotOpen && (
+          <ForgotPasswordModal initialEmail={authEmail} onClose={() => setForgotOpen(false)} />
+        )}
       </main>
     );
   }
@@ -6555,6 +6566,8 @@ async function undoDeleteTask() {
                         </span>
 
                         <div className="note-card-actions">
+                          <EmailNoteButton note={note} authToken={authToken} onNotice={setNotice} />
+
                           <button
                             type="button"
                             className="note-action-button"
@@ -7012,6 +7025,13 @@ async function undoDeleteTask() {
             subjectNames={subjects.map((subject) => subject.name)}
             initialNoteId={flashcardNoteId}
             onInitialNoteUsed={() => setFlashcardNoteId("")}
+            extraActions={
+              <EmailFlashcardsButton
+                authToken={authToken}
+                subjectNames={subjects.map((subject) => subject.name)}
+                onNotice={setNotice}
+              />
+            }
           />
         )}
 
@@ -7296,6 +7316,8 @@ async function undoDeleteTask() {
             </div>
 
             <ReminderSettings prefs={reminderPrefs} onChange={setReminderPrefs} />
+
+            <EmailSettingsCard authToken={authToken} student={student} />
 
             <p className="settings-footnote">
               <Save size={14} />

@@ -5,6 +5,7 @@ const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const Student = require("../models/Student");
+const { afterSignIn, isEmailVerified } = require("../services/accountEmails");
 
 const router = express.Router();
 const googleClient = new OAuth2Client();
@@ -32,6 +33,7 @@ function publicStudent(student) {
     displayName: student.displayName || student.name,
     email: student.email,
     picture: student.picture || "",
+    emailVerified: isEmailVerified(student),
   };
 }
 
@@ -105,6 +107,9 @@ router.post("/register", async (req, res) => {
       picture: "",
     });
 
+    // Welcome + confirmation email (never blocks sign-up if email fails).
+    await afterSignIn(student, req);
+
     const token = createSessionToken(student, jwtSecret);
 
     return res.status(201).json({
@@ -172,6 +177,9 @@ router.post("/login", async (req, res) => {
         error: "Invalid email or password.",
       });
     }
+
+    // New-device security alert (never blocks sign-in if email fails).
+    await afterSignIn(student, req);
 
     const token = createSessionToken(student, jwtSecret);
 
@@ -297,6 +305,9 @@ router.post("/google", async (req, res) => {
     if (!student) {
       throw new Error("Student record could not be retrieved.");
     }
+
+    // Welcome email for new accounts and new-device security alert.
+    await afterSignIn(student, req);
 
     const token = createSessionToken(student, jwtSecret);
 

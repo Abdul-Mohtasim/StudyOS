@@ -37,6 +37,16 @@ const studentSchema = new mongoose.Schema(
       default: "",
       maxlength: 2048,
     },
+
+    // Email addresses from Google sign-in count as verified (see services/accountEmails.js).
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerifiedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

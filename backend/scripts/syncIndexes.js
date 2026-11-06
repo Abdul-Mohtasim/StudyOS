@@ -16,6 +16,10 @@ const { connectDatabase, closeDatabase } = require("../src/config/database");
 const Exam = require("../src/models/Exam");
 const Flashcard = require("../src/models/Flashcard");
 const Grade = require("../src/models/Grade");
+const EmailToken = require("../src/models/EmailToken");
+const EmailLog = require("../src/models/EmailLog");
+const LoginDevice = require("../src/models/LoginDevice");
+const EmailPreferences = require("../src/models/EmailPreferences");
 
 async function main() {
   await connectDatabase();
@@ -27,6 +31,15 @@ async function main() {
   await Grade.createCollection().catch(() => {});
   await Grade.createIndexes();
   console.log("Flashcard and grade indexes are ready.");
+  await EmailToken.createCollection().catch(() => {});
+  await EmailToken.createIndexes();
+  await EmailLog.createCollection().catch(() => {});
+  await EmailLog.createIndexes();
+  await LoginDevice.createCollection().catch(() => {});
+  await LoginDevice.createIndexes();
+  await EmailPreferences.createCollection().catch(() => {});
+  await EmailPreferences.createIndexes();
+  console.log("Email indexes are ready.");
 }
 
 main()

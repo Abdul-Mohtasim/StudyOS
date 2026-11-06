@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { Capacitor } from "@capacitor/core";
 import App from "./App.jsx";
+import { EmailLinkScreen } from "./EmailFeatures";
 import { installGlobalHaptics } from "./haptics";
 import "./perf.css";
 import { installOfflineLayer } from "./offline";
@@ -37,13 +38,26 @@ installGlobalHaptics();
   }
 })();
 
+// Links from emails open this page as /?reset=TOKEN or /?verify=TOKEN.
+const linkParams = new URLSearchParams(window.location.search);
+const emailLinkKind = linkParams.get("reset") ? "reset" : linkParams.get("verify") ? "verify" : "";
+const emailLinkToken = emailLinkKind ? linkParams.get(emailLinkKind) : "";
+if (emailLinkKind) {
+  // Keep the one-time token out of the address bar and browser history.
+  window.history.replaceState(null, "", window.location.pathname);
+}
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <GoogleOAuthProvider
-      clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
-    >
-      <App />
-    </GoogleOAuthProvider>
+    {emailLinkKind ? (
+      <EmailLinkScreen kind={emailLinkKind} token={emailLinkToken} />
+    ) : (
+      <GoogleOAuthProvider
+        clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
+      >
+        <App />
+      </GoogleOAuthProvider>
+    )}
   </StrictMode>
 );
 

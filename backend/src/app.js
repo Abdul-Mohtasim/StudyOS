@@ -15,6 +15,9 @@ const settingsRoutes = require("./routes/settings");
 const examRoutes = require("./routes/exams");
 const flashcardRoutes = require("./routes/flashcards");
 const gradeRoutes = require("./routes/grades");
+const accountEmailRoutes = require("./routes/accountEmail");
+const emailRoutes = require("./routes/email");
+const cronRoutes = require("./routes/cron");
 const {
   connectDatabase,
   isDatabaseConnected,
@@ -81,6 +84,7 @@ app.use("/api", async (req, res, next) => {
 
 // Register API routes once.
 app.use("/api/auth", authRoutes);
+app.use("/api/auth", accountEmailRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/focus-sessions", focusSessionsRouter);
@@ -89,6 +93,8 @@ app.use("/api/settings", settingsRoutes);
 app.use("/api/exams", examRoutes);
 app.use("/api/flashcards", flashcardRoutes);
 app.use("/api/grades", gradeRoutes);
+app.use("/api/email", emailRoutes);
+app.use("/api/cron", cronRoutes);
 
 app.get("/", (req, res) => {
   res.json({
