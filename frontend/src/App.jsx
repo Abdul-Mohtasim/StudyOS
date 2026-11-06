@@ -402,10 +402,10 @@ function ContactFooter({ onLogin }) {
   return (
     <footer className="pl-footer pl-cta-footer">
       <div className="pl-cta-inner">
-        <h2>Let's work together.</h2>
+        <h2>Let's Learn together.</h2>
         <p>
           Whether you're looking to collaborate, share feedback, or brainstorm
-          around a meaningful project, I'd love to hear from you.
+          around a meaningful IdeaS, I'd love to hear from you.
         </p>
 
         <button type="button" className="pl-cta-btn" onClick={copyEmail}>

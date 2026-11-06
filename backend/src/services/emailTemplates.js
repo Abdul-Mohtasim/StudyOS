@@ -12,6 +12,12 @@ function appUrl(path = "") {
   return `${base}${path}`;
 }
 
+// Logo shown at the top of every email. Email apps block inline SVG, so it is a PNG
+// served from the web app (frontend/public/icons/email-logo.png). Override with EMAIL_LOGO_URL.
+function logoUrl() {
+  return process.env.EMAIL_LOGO_URL || appUrl("/icons/email-logo.png");
+}
+
 function esc(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -39,7 +45,10 @@ function layout({ preheader, title, body, manage = true }) {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fff3ec;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;padding:28px 26px">
 <tr><td>
-<div style="font-size:20px;font-weight:800;color:${BRAND};margin-bottom:18px">StudyOS</div>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:18px"><tr>
+<td style="padding-right:10px;vertical-align:middle"><img src="${esc(logoUrl())}" width="36" height="36" alt="StudyOS" style="display:block;border:0;outline:none;width:36px;height:36px"></td>
+<td style="vertical-align:middle;font-size:20px;font-weight:800;color:${BRAND}">StudyOS</td>
+</tr></table>
 <h1 style="font-size:22px;line-height:1.3;margin:0 0 14px">${esc(title)}</h1>
 ${body}
 </td></tr></table>
