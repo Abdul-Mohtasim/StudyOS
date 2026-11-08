@@ -1,0 +1,209 @@
+/* Collapsible settings cards: header row + details that slide down. */
+.study-app .settings-card.cc-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.study-app .cc-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 16px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.study-app .cc-head:focus-visible {
+  outline: 2px solid #ff8e86;
+  outline-offset: -3px;
+  border-radius: 16px;
+}
+
+.study-app .cc-titles {
+  display: grid;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.study-app .cc-title {
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.study-app .cc-summary {
+  font-size: 0.82rem;
+  line-height: 1.3;
+  opacity: 0.72;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.study-app .cc-chevron {
+  flex: 0 0 auto;
+  transition: transform 0.32s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.study-app .cc-card.is-open .cc-chevron {
+  transform: rotate(180deg);
+}
+
+/* The slide: the row grows from 0 to its natural height. */
+.study-app .cc-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 0.34s cubic-bezier(0.3, 0.8, 0.3, 1),
+    opacity 0.26s ease,
+    visibility 0s linear 0.34s;
+}
+
+.study-app .cc-card.is-open .cc-body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    grid-template-rows 0.34s cubic-bezier(0.3, 0.8, 0.3, 1),
+    opacity 0.3s ease 0.05s,
+    visibility 0s;
+}
+
+.study-app .cc-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.study-app .cc-content {
+  display: grid;
+  gap: 12px;
+  padding: 2px 16px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  padding-top: 14px;
+}
+
+html[data-theme="light"] .study-app .cc-content {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .study-app .cc-body,
+  .study-app .cc-card.is-open .cc-body,
+  .study-app .cc-chevron {
+    transition: none;
+  }
+}
+
+/* Compact rows inside the collapsed cards */
+.study-app .cc-content .st-rem-row,
+.study-app .cc-content .settings-toggle-row {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  margin: 0;
+}
+.study-app .cc-content .st-rem-text p,
+.study-app .cc-content .settings-toggle-row p {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  opacity: 0.7;
+}
+.study-app .st-diag-details summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 4px 0;
+}
+
+/* ---------- Appearance + Haptic: icon + one toggle each ---------- */
+.study-app .settings-prefs-card {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 4px;
+  padding: 6px 16px;
+}
+.study-app .settings-pref-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 68px;
+  padding: 10px 0;
+}
+.study-app .settings-pref-row + .settings-pref-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+html[data-theme="light"] .study-app .settings-pref-row + .settings-pref-row {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+.study-app .settings-pref-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, #6b5bd6, #3f3a8f);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  transition: background 0.3s ease, transform 0.3s ease;
+}
+.study-app .settings-pref-icon svg {
+  animation: pref-pop 0.4s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+.study-app .settings-pref-icon.pref-appearance.is-light {
+  background: linear-gradient(135deg, #ffb347, #ff7e4a);
+}
+.study-app .settings-pref-icon.pref-haptic {
+  background: linear-gradient(135deg, #6f7d8c, #4b5663);
+}
+.study-app .settings-pref-icon.pref-haptic.is-on {
+  background: linear-gradient(135deg, #f0555f, #f58a4b);
+}
+.study-app .settings-pref-icon.pref-haptic.is-on svg {
+  animation: pref-buzz 0.5s ease both;
+}
+.study-app .settings-pref-text {
+  display: grid;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.study-app .settings-pref-text strong {
+  font-size: 1rem;
+  font-weight: 800;
+}
+.study-app .settings-pref-text span {
+  font-size: 0.82rem;
+  opacity: 0.72;
+}
+@keyframes pref-pop {
+  from { transform: scale(0.4) rotate(-60deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0); opacity: 1; }
+}
+@keyframes pref-buzz {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px) rotate(-6deg); }
+  40% { transform: translateX(3px) rotate(6deg); }
+  60% { transform: translateX(-2px) rotate(-4deg); }
+  80% { transform: translateX(2px) rotate(4deg); }
+}
+@media (min-width: 760px) {
+  .study-app .settings-prefs-card {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 28px;
+  }
+  .study-app .settings-pref-row + .settings-pref-row {
+    border-top: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .study-app .settings-pref-icon svg { animation: none; }
+}

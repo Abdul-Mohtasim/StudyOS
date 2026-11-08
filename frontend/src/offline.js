@@ -32,10 +32,85 @@ let queue = loadQueue();
 let status = { online: typeof navigator === "undefined" ? true : navigator.onLine !== false, pending: queue.length, syncing: false };
 const listeners = new Set();
 let flushPromise = null;
+let wasDown = !status.online; // true from the moment the app noticed it was offline until it recovers
 
 function setStatus(patch) {
+  const wasOnline = status.online;
   status = { ...status, ...patch };
   listeners.forEach((fn) => fn());
+  // While offline, keep checking in the background; stop as soon as the connection is back.
+  if (!status.online) {
+    wasDown = true;
+    startProbe();
+  } else {
+    stopProbe();
+    // Offline -> online, however it was noticed: send saved changes and refresh the whole app.
+    if (!wasOnline && wasDown) {
+      wasDown = false;
+      recovered();
+    }
+  }
+}
+
+// ---------- background reconnect probe ----------
+// While the app is offline it asks the server "are you there?" every 2 seconds. The moment
+// an answer arrives: the offline message disappears, saved changes are sent, and the whole
+// app reloads its data. No tap, no manual refresh.
+const PROBE_EVERY_MS = 2000;
+const PROBE_TIMEOUT_MS = 4000;
+let probeTimer = null;
+let probing = false;
+
+function startProbe() {
+  if (probeTimer || !realFetch || typeof window === "undefined") return;
+  probeTimer = setInterval(probeNow, PROBE_EVERY_MS);
+  probeNow();
+}
+function stopProbe() {
+  if (probeTimer) clearInterval(probeTimer);
+  probeTimer = null;
+}
+
+async function probeNow() {
+  if (probing || !realFetch) return;
+  probing = true;
+  const controller = typeof AbortController === "undefined" ? null : new AbortController();
+  const timer = controller ? setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS) : null;
+  try {
+    const res = await realFetch(`${apiBase}/api/ping?t=${Date.now()}`, {
+      cache: "no-store",
+      ...(controller ? { signal: controller.signal } : {}),
+    });
+    if (res.ok) markReconnected();
+  } catch {
+    /* still offline: the next tick tries again */
+  } finally {
+    if (timer) clearTimeout(timer);
+    probing = false;
+  }
+}
+
+function markReconnected() {
+  if (!status.online) setStatus({ online: true });
+}
+
+// Internet is back: the offline message is already gone (status.online is true). Send queued
+// changes, tell every screen to reload its data, and refresh the app shell in the background.
+async function recovered() {
+  let changed = false;
+  try {
+    changed = await flushOfflineQueue();
+  } catch {
+    /* the 60 second timer will try again */
+  }
+  // flushOfflineQueue already announces "studyos:synced" when it sent something.
+  if (!changed) window.dispatchEvent(new CustomEvent("studyos:synced"));
+  window.dispatchEvent(new CustomEvent("studyos:reconnected"));
+  try {
+    navigator.serviceWorker?.getRegistration?.().then((reg) => reg && reg.update()).catch(() => {});
+  } catch {
+    /* not available */
+  }
 }
 
 export function subscribeOffline(fn) {
@@ -236,6 +311,29 @@ async function fetchRead(input, init) {
   throw lastError || new TypeError("Network request failed.");
 }
 
+// Sign-in / sign-up calls: if the server answers "busy" (502/503/504) or the connection
+// hiccups, try again by itself a few times before showing an error to the student.
+// (Sign-in requests are safe to repeat.)
+const AUTH_RETRY_DELAYS_MS = [700, 1500, 2500, 4000];
+export async function fetchAuth(url, init) {
+  const doFetch = realFetch || window.fetch.bind(window);
+  let lastError = null;
+  for (let attempt = 0; attempt <= AUTH_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      const res = await doFetch(url, init);
+      if (!RETRY_STATUSES.includes(res.status) || attempt === AUTH_RETRY_DELAYS_MS.length) return res;
+      const retryAfter = Number(res.headers.get("retry-after"));
+      await wait(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1000, 4000) : AUTH_RETRY_DELAYS_MS[attempt]);
+    } catch (err) {
+      if (!isNetworkError(err)) throw err;
+      lastError = err;
+      if (navigator.onLine === false || attempt === AUTH_RETRY_DELAYS_MS.length) throw err;
+      await wait(AUTH_RETRY_DELAYS_MS[attempt]);
+    }
+  }
+  throw lastError || new TypeError("Network request failed.");
+}
+
 // ---------- applying changes to cached lists ----------
 function updateLists(uid, collection, fn) {
   const [listKey] = COLLECTIONS[collection];
@@ -429,7 +527,7 @@ const mapIds = (text) => {
 export function flushOfflineQueue() {
   if (flushPromise) return flushPromise;
   const uid = currentUid();
-  if (!uid || !queue.some((q) => q.uid === uid) || navigator.onLine === false) return Promise.resolve(false);
+  if (!uid || !queue.some((q) => q.uid === uid) || (navigator.onLine === false && !status.online)) return Promise.resolve(false);
 
   flushPromise = (async () => {
     setStatus({ syncing: true });
@@ -505,7 +603,7 @@ export function installOfflineLayer(base = "") {
 
     // ----- reads -----
     if (method === "GET") {
-      const offlineNow = navigator.onLine === false;
+      const offlineNow = navigator.onLine === false && !status.online;
       if (!offlineNow && queue.length && parsed.segs[0] !== "auth") {
         await Promise.race([flushOfflineQueue(), new Promise((r) => setTimeout(r, 4000))]);
       }
@@ -538,7 +636,7 @@ export function installOfflineLayer(base = "") {
       return realFetch(input, init);
     }
 
-    if (navigator.onLine !== false) {
+    if (navigator.onLine !== false || status.online) {
       try {
         const res = await realFetch(input, init);
         if (!status.online) setStatus({ online: true });
@@ -565,13 +663,18 @@ export function installOfflineLayer(base = "") {
   };
 
   window.addEventListener("online", () => {
-    setStatus({ online: true });
-    flushOfflineQueue();
+    // The phone says it has a network again: confirm with the server, then refresh everything.
+    if (wasDown) probeNow();
+    else flushOfflineQueue();
   });
   window.addEventListener("offline", () => setStatus({ online: false }));
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") flushOfflineQueue();
+    if (document.visibilityState !== "visible") return;
+    if (!status.online) probeNow();
+    else flushOfflineQueue();
   });
+  // Started the app with no connection: begin checking straight away.
+  if (!status.online) startProbe();
   setInterval(() => {
     if (queue.length) flushOfflineQueue();
   }, 60000);

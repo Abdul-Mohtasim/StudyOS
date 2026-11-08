@@ -44,6 +44,7 @@ import {
   TrendingUp,
   Smartphone,
   Moon,
+  Sun,
   Zap,
   Mail,
   Lock,
@@ -95,7 +96,15 @@ import {
   useFlashcards,
   useGrades,
 } from "./StudyTools";
-import { clearOfflineCache, readCachedMe } from "./offline";
+import { fetchAuth, flushOfflineQueue, readCachedMe, useOfflineStatus } from "./offline";
+import {
+  forgetOfflineAccounts,
+  offlineAccounts,
+  offlineGoogleSignIn,
+  offlineSignIn,
+  rememberAccount,
+  tokenExpired,
+} from "./offlineAuth";
 import AppSkeleton from "./Skeleton";
 import "./skeleton.css";
 import { ForgotPasswordModal, EmailSettingsCard, EmailNoteButton, EmailFlashcardsButton } from "./EmailFeatures";
@@ -1771,6 +1780,9 @@ export default function App() {
   const [showAuthScreen, setShowAuthScreen] = useState(false);
   const [authFocus, setAuthFocus] = useState("");
   const [authError, setAuthError] = useState("");
+  const { online: netOnline } = useOfflineStatus();
+  const wasOfflineRef = useRef(false);
+  const [, setOfflineTick] = useState(0); // re-draws the saved-account list after "Forget"
   const [authLoading, setAuthLoading] = useState(false);
 const [authMode, setAuthMode] = useState("login");
 const [forgotOpen, setForgotOpen] = useState(false);
@@ -2237,9 +2249,6 @@ useEffect(() => {
           setStudyRemindersEnabled(saved.studyRemindersEnabled);
         }
 
-        if (typeof saved.taskNotificationsEnabled === "boolean") {
-          setTaskNotificationsEnabled(saved.taskNotificationsEnabled);
-        }
       } catch (error) {
         if (error.name !== "AbortError") {
           console.error("Loading StudyOS settings:", error);
@@ -2606,6 +2615,68 @@ useEffect(() => {
     focusSubject,
   ]);
 
+  // ---------- Offline sign-in ----------
+  // Opens the account saved on this device (no server needed) and shows its saved data.
+  function openOfflineSession(account) {
+    localStorage.setItem("studyos_auth_token", account.token);
+    const saved = readCachedMe(account.token);
+    setStudent((saved && saved.student) || account.student);
+    setAuthToken(account.token);
+    window.dispatchEvent(new Event("offline"));
+    wasOfflineRef.current = true;
+    haptic.welcome();
+    setAuthPassword("");
+    setAuthError("");
+  }
+
+  async function signInOffline(email, password) {
+    const result = await offlineSignIn(email, password);
+    if (result.status === "ok") {
+      openOfflineSession(result.account);
+      return true;
+    }
+    setAuthError(result.message);
+    return false;
+  }
+
+  function continueOffline(email) {
+    const account = offlineGoogleSignIn(email);
+    if (!account) {
+      setAuthError("This account can not be opened offline. Please sign in with internet once.");
+      return;
+    }
+    openOfflineSession(account);
+  }
+
+  // Back online after an offline session whose login has expired: sign in again so changes can sync.
+  useEffect(() => {
+    if (!authToken) return;
+    if (!netOnline) {
+      wasOfflineRef.current = true;
+      return;
+    }
+    if (wasOfflineRef.current && tokenExpired(authToken)) {
+      wasOfflineRef.current = false;
+      localStorage.removeItem("studyos_auth_token");
+      setStudent(null);
+      setAuthToken("");
+      setAuthMode("login");
+      setShowAuthScreen(true);
+      setAuthError("You are back online. Please sign in again to sync your changes.");
+    }
+  }, [netOnline, authToken]);
+
+  // Internet came back by itself: remove the old "No internet" sign-in message and refresh all data.
+  useEffect(() => {
+    const onReconnected = () => {
+      setAuthError((current) => (/internet|offline|back online/i.test(current || "") ? "" : current));
+      setReloadVersion((version) => version + 1);
+      setOfflineTick((tick) => tick + 1);
+    };
+    window.addEventListener("studyos:reconnected", onReconnected);
+    return () => window.removeEventListener("studyos:reconnected", onReconnected);
+  }, []);
+
   // ---------- Auth handlers ----------
   async function handleEmailAuth(event) {
     event.preventDefault();
@@ -2627,6 +2698,18 @@ useEffect(() => {
       return;
     }
 
+    // No internet: check the email + password saved on this device instead.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      if (authMode === "register") {
+        setAuthError("You are offline. Creating a new account needs internet access.");
+      } else {
+        setAuthLoading(true);
+        await signInOffline(email, password);
+        setAuthLoading(false);
+      }
+      return;
+    }
+
     setAuthLoading(true);
     try {
       const endpoint = authMode === "register" ? "register" : "login";
@@ -2634,7 +2717,7 @@ useEffect(() => {
         ? { name: authName.trim(), email, password }
         : { email, password };
 
-      const response = await fetch(`${API_BASE_URL}/api/auth/${endpoint}`, {
+      const response = await fetchAuth(`${API_BASE_URL}/api/auth/${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -2658,15 +2741,23 @@ useEffect(() => {
       }
 
       localStorage.setItem("studyos_auth_token", data.token);
+      rememberAccount({ email, password, student: data.student, token: data.token });
       setStudent(data.student);
       setAuthToken(data.token);
+      flushOfflineQueue();
       haptic.welcome();
       setAuthPassword("");
       setAuthError("");
     } catch (error) {
       console.error("StudyOS email authentication error:", error);
-      if (error instanceof TypeError && /fetch/i.test(error.message)) {
-        setAuthError("Cannot reach the login API. Check the API URL, backend availability, and CORS settings.");
+      if (error instanceof TypeError) {
+        // The internet is probably down even though the phone says it is connected.
+        window.dispatchEvent(new Event("offline"));
+        if (authMode === "login") {
+          await signInOffline(email, password);
+        } else {
+          setAuthError("You are offline. Creating a new account needs internet access.");
+        }
       } else {
         setAuthError(error.message || "Unable to authenticate. Please try again.");
       }
@@ -2678,6 +2769,10 @@ useEffect(() => {
   // Native (Capacitor / Android) Google sign-in. This lives OUTSIDE
   // handleGoogleSuccess so it can actually be called from the button.
   async function handleNativeGoogleSignIn() {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setAuthError("No internet connection. Google sign-in needs internet. If you signed in before, tap \"Continue offline\" below.");
+      return;
+    }
     setAuthError("");
 
     try {
@@ -2717,7 +2812,7 @@ useEffect(() => {
     setAuthError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
+      const response = await fetchAuth(`${API_BASE_URL}/api/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ credential }),
@@ -2749,17 +2844,20 @@ useEffect(() => {
       }
 
       localStorage.setItem("studyos_auth_token", data.token);
+      rememberAccount({ email: data.student.email, student: data.student, token: data.token, viaGoogle: true });
 
       setStudent(data.student);
       setAuthToken(data.token);
+      flushOfflineQueue();
       haptic.welcome();
       setAuthError("");
     } catch (error) {
       console.error("StudyOS Google sign-in error:", error);
 
-      if (error instanceof TypeError && /fetch/i.test(error.message)) {
+      if (error instanceof TypeError) {
+        window.dispatchEvent(new Event("offline"));
         setAuthError(
-          "Cannot reach the login API. Check the API URL, backend CORS settings, and backend availability."
+          "No internet connection. Google sign-in needs internet. If you signed in before, tap \"Continue offline\" below."
         );
       } else {
         setAuthError(error.message || "Unable to sign in. Please try again.");
@@ -2779,9 +2877,9 @@ useEffect(() => {
     setSessionCompleted(false);
     completionRecordedRef.current = false;
 
-    // Clear the saved login session and the offline copy of this account.
+    // Clear the saved login session. The saved copy of the data stays on this device so the
+    // account can still be opened offline (it is removed with "Forget saved account" on the sign-in screen).
     localStorage.removeItem("studyos_auth_token");
-    clearOfflineCache();
 
     // Clear authenticated student state.
     setStudent(null);
@@ -4313,9 +4411,6 @@ async function undoDeleteTask() {
         setStudyRemindersEnabled(saved.studyRemindersEnabled);
       }
 
-      if (typeof saved.taskNotificationsEnabled === "boolean") {
-        setTaskNotificationsEnabled(saved.taskNotificationsEnabled);
-      }
 
       if (
         Number.isInteger(saved.dailyGoalMinutes) &&
@@ -4552,6 +4647,43 @@ async function undoDeleteTask() {
               </button>
             </form>
 
+            {!netOnline && (() => {
+              const saved = offlineAccounts();
+              const googleSaved = saved.filter((account) => account.viaGoogle);
+              return (
+                <div className="as-offline-box" role="status">
+                  <p>
+                    {saved.length
+                      ? "No internet. Sign in with your saved email and password to see your data."
+                      : "No internet. Offline sign-in works after you have signed in once on this device."}
+                  </p>
+                  {googleSaved.map((account) => (
+                    <button
+                      type="button"
+                      key={account.email}
+                      className="as-offline-continue"
+                      onClick={() => continueOffline(account.email)}
+                    >
+                      Continue offline as {account.name}
+                    </button>
+                  ))}
+                  {saved.length > 0 && (
+                    <button
+                      type="button"
+                      className="as-offline-forget"
+                      onClick={() => {
+                        forgetOfflineAccounts();
+                        setOfflineTick((tick) => tick + 1);
+                        setAuthError("");
+                      }}
+                    >
+                      Forget saved accounts on this device
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
+
             <div className="as-divider">
               <span>or continue with</span>
             </div>
@@ -4613,17 +4745,20 @@ async function undoDeleteTask() {
             </p>
           </div>
 
-          <aside className="as-stage-wrap" aria-label="StudyOS mascot">
-            <AuthMascot
-              mood={authMood}
-              bubble={authBubbles[authMood]}
-              typed={typedProgress}
-            />
-          </aside>
+          {!Capacitor.isNativePlatform() && (
+            <aside className="as-stage-wrap" aria-label="StudyOS mascot">
+              <AuthMascot
+                mood={authMood}
+                bubble={authBubbles[authMood]}
+                typed={typedProgress}
+              />
+            </aside>
+          )}
         </section>
         {forgotOpen && (
           <ForgotPasswordModal initialEmail={authEmail} onClose={() => setForgotOpen(false)} />
         )}
+        <OfflineBanner />
       </main>
     );
   }
@@ -4631,6 +4766,8 @@ async function undoDeleteTask() {
   // ---------- Public landing page for visitors ----------
   if (!student) {
     return (
+      <>
+      <OfflineBanner />
       <PublicLanding
         theme={settingsTheme}
         onThemeChange={setSettingsTheme}
@@ -4643,6 +4780,7 @@ async function undoDeleteTask() {
           setShowAuthScreen(true);
         }}
       />
+      </>
     );
   }
 
@@ -7057,17 +7195,6 @@ async function undoDeleteTask() {
             id="settings"
             aria-labelledby="settings-title"
           >
-            <div className="section-heading settings-heading">
-              <div>
-                <span className="section-kicker">PERSONALIZE STUDYOS</span>
-                <h2 id="settings-title">Settings</h2>
-                <p>Adjust your study goal, appearance, and notifications.</p>
-              </div>
-              <span className="settings-heading-icon" aria-hidden="true">
-                <Settings size={23} />
-              </span>
-            </div>
-
             {settingsLoading && (
               <p className="settings-status" role="status">
                 <RefreshCw size={15} /> Loading your saved settings...
@@ -7176,150 +7303,46 @@ async function undoDeleteTask() {
                 </form>
               </article>
 
-              <article className="settings-card">
-                <div className="settings-card-heading">
-                  <span className="settings-card-icon">
-                    <Sparkles size={19} />
+              <article className="settings-card settings-prefs-card">
+                <div className="settings-pref-row">
+                  <span className={`settings-pref-icon pref-appearance ${settingsTheme === "dark" ? "is-dark" : "is-light"}`} aria-hidden="true">
+                    {settingsTheme === "dark" ? <Moon size={20} key="moon" /> : <Sun size={20} key="sun" />}
                   </span>
-                  <div>
-                    <h3>Appearance</h3>
-                    <p>Choose the look that feels comfortable for studying.</p>
-                  </div>
-                </div>
-
-                <div
-                  className="settings-theme-options"
-                  role="group"
-                  aria-label="Choose appearance"
-                >
-                  <button
-                    type="button"
-                    className={`settings-theme-option ${settingsTheme === "dark" ? "selected" : ""
-                      }`}
-                    aria-pressed={settingsTheme === "dark"}
-                    disabled={settingsLoading || settingsSaving}
-                    onClick={() => saveSettings({ theme: "dark" })}
-                  >
-                    <span className="theme-preview theme-preview-dark" aria-hidden="true" />
-                    <span>Dark</span>
-                    {settingsTheme === "dark" && <Check size={16} />}
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`settings-theme-option ${settingsTheme === "light" ? "selected" : ""
-                      }`}
-                    aria-pressed={settingsTheme === "light"}
-                    disabled={settingsLoading || settingsSaving}
-                    onClick={() => saveSettings({ theme: "light" })}
-                  >
-                    <span className="theme-preview theme-preview-light" aria-hidden="true" />
-                    <span>Light</span>
-                    {settingsTheme === "light" && <Check size={16} />}
-                  </button>
-                </div>
-              </article>
-
-              <article className="settings-card">
-                <div className="settings-card-heading">
-                  <span className="settings-card-icon">
-                    <Sparkles size={19} />
-                  </span>
-                  <div>
-                    <h3>Haptic feedback</h3>
-                    <p>Strong vibrations on taps, completed tasks and finished focus sessions.</p>
-                  </div>
-                </div>
-
-                <div
-                  className="settings-theme-options"
-                  role="group"
-                  aria-label="Haptic feedback"
-                >
-                  <button
-                    type="button"
-                    className={`settings-theme-option ${hapticsOn ? "selected" : ""}`}
-                    aria-pressed={hapticsOn}
-                    onClick={() => {
-                      setHapticsEnabled(true);
-                      setHapticsOn(true);
-                    }}
-                  >
-                    <span>On</span>
-                    {hapticsOn && <Check size={16} />}
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`settings-theme-option ${!hapticsOn ? "selected" : ""}`}
-                    aria-pressed={!hapticsOn}
-                    onClick={() => {
-                      setHapticsEnabled(false);
-                      setHapticsOn(false);
-                    }}
-                  >
-                    <span>Off</span>
-                    {!hapticsOn && <Check size={16} />}
-                  </button>
-                </div>
-              </article>
-
-              <article className="settings-card settings-reminder-card">
-                <div className="settings-card-heading">
-                  <span className="settings-card-icon">
-                    <Sparkles size={19} />
-                  </span>
-                  <div>
-                    <h3>A Little Reminder</h3>
-                    <p>A little encouragement for your next study session.</p>
-                  </div>
-                </div>
-
-                <blockquote key={`q-${reminderIndex}`} className="settings-reminder-quote">
-                  “{currentReminder.text}”
-                </blockquote>
-                <p key={`a-${reminderIndex}`} className="settings-reminder-author">{currentReminder.author}</p>
-                <div key={`t-${reminderIndex}`} className="settings-reminder-tip">
-                  <strong>Study tip</strong>
-                  <p>{currentReminder.tip}</p>
-                </div>
-                <button
-                  type="button"
-                  className="settings-save-button settings-reminder-next"
-                  onClick={nextReminder}
-                >
-                  <RefreshCw size={15} /> New reminder
-                </button>
-              </article>
-
-              <article className="settings-card settings-notifications-card">
-                <div className="settings-card-heading">
-                  <span className="settings-card-icon">
-                    <Bell size={19} />
-                  </span>
-                  <div>
-                    <h3>Notifications</h3>
-                    <p>Choose whether you want notifications about unfinished tasks.</p>
-                  </div>
-                </div>
-
-                <div className="settings-toggle-row">
-                  <div>
-                    <strong>Task notifications</strong>
-                    <p>Show notifications about unfinished tasks.</p>
+                  <div className="settings-pref-text">
+                    <strong>Appearance</strong>
+                    <span>{settingsTheme === "dark" ? "Dark mode" : "Light mode"}</span>
                   </div>
                   <button
                     type="button"
-                    className={`settings-switch ${taskNotificationsEnabled ? "is-on" : ""}`}
+                    className={`settings-switch ${settingsTheme === "dark" ? "is-on" : ""}`}
                     role="switch"
-                    aria-checked={taskNotificationsEnabled}
-                    aria-label="Task notifications"
+                    aria-checked={settingsTheme === "dark"}
+                    aria-label="Dark mode"
                     disabled={settingsLoading || settingsSaving}
-                    onClick={() =>
-                      saveSettings({
-                        taskNotificationsEnabled: !taskNotificationsEnabled,
-                      })
-                    }
+                    onClick={() => saveSettings({ theme: settingsTheme === "dark" ? "light" : "dark" })}
+                  >
+                    <span />
+                  </button>
+                </div>
+
+                <div className="settings-pref-row">
+                  <span className={`settings-pref-icon pref-haptic ${hapticsOn ? "is-on" : ""}`} aria-hidden="true">
+                    <Smartphone size={20} />
+                  </span>
+                  <div className="settings-pref-text">
+                    <strong>Haptic feedback</strong>
+                    <span>{hapticsOn ? "Vibration on" : "Vibration off"}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className={`settings-switch ${hapticsOn ? "is-on" : ""}`}
+                    role="switch"
+                    aria-checked={hapticsOn}
+                    aria-label="Haptic feedback"
+                    onClick={() => {
+                      setHapticsEnabled(!hapticsOn);
+                      setHapticsOn(!hapticsOn);
+                    }}
                   >
                     <span />
                   </button>

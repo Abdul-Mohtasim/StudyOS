@@ -20984,3 +20984,53 @@ html:not([data-theme="light"]) .study-app .subject-icon.sb-badge.sb-amber  { --s
     transform: none;
   }
 }
+
+/* ---------- Sign-in screen: offline help + no owl in the mobile app ---------- */
+.as-shell:not(:has(.as-stage-wrap)) {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  width: min(480px, 100%);
+}
+.as-shell:not(:has(.as-stage-wrap)) > * {
+  width: 100%;
+  max-width: 440px;
+}
+
+.as-offline-box {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px dashed rgba(255, 160, 150, 0.5);
+  border-radius: 14px;
+  background: rgba(255, 140, 130, 0.08);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+.as-offline-box p {
+  margin: 0;
+}
+.as-offline-continue {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0555f, #f58a4b);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.as-offline-forget {
+  justify-self: start;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  opacity: 0.75;
+  cursor: pointer;
+}

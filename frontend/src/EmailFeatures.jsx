@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Mail, Send, Check, X, Loader2 } from "lucide-react";
 import "./emailFeatures.css";
+import CollapsibleCard from "./CollapsibleCard";
 
 const API_BASE = import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
@@ -209,12 +210,12 @@ export function EmailLinkScreen({ kind, token }) {
 // ---------- Settings: email notifications ----------
 
 const EMAIL_OPTIONS = [
-  ["weeklyReport", "Weekly progress report", "Hours studied, tasks done and your best subject, compared with last week (Sunday evening)."],
-  ["examCountdown", "Exam countdown", "An email 7 days before and the day before each exam."],
-  ["dailyDigest", "Morning task email", "Overdue tasks and tasks due today, every morning."],
-  ["streakWarning", "Streak warning", "In the evening, only if your streak is about to break."],
-  ["flashcardsDue", "Flashcards due", "A morning email when cards are ready to review."],
-  ["securityAlerts", "Security alerts", "An email when your account is used on a new device."],
+  ["weeklyReport", "Weekly report", "Your progress, every Sunday."],
+  ["examCountdown", "Exam countdown", "7 days and 1 day before an exam."],
+  ["dailyDigest", "Morning tasks", "Overdue and due-today tasks."],
+  ["streakWarning", "Streak warning", "Only if your streak is at risk."],
+  ["flashcardsDue", "Flashcards due", "When cards are ready to review."],
+  ["securityAlerts", "Security alerts", "When a new device signs in."],
 ];
 
 export function EmailSettingsCard({ authToken, student }) {
@@ -272,15 +273,16 @@ export function EmailSettingsCard({ authToken, student }) {
 
   const email = data?.email || student?.email || "";
 
+  const onCount = data ? EMAIL_OPTIONS.filter(([key]) => data.prefs[key]).length : 0;
+
   return (
-    <article className="settings-card em-settings">
-      <div className="settings-card-heading">
-        <span className="settings-card-icon"><Mail size={19} /></span>
-        <div>
-          <h3>Email notifications</h3>
-          <p>{email ? `Sent to ${email}.` : "Get reminders and reports in your inbox, even when the app is closed."}</p>
-        </div>
-      </div>
+    <CollapsibleCard
+      className="em-settings"
+      icon={<Mail size={19} />}
+      title="Email notifications"
+      summary={data ? (onCount ? `${onCount} of ${EMAIL_OPTIONS.length} on` : "All off") : email || "Reports and reminders by email"}
+    >
+      {email && <p className="st-muted">Sent to {email}</p>}
 
       {data && data.mailConfigured === false && (
         <p className="st-info">Email sending is not set up on this server yet, so nothing can be sent. See UPDATE_GUIDE_4_EMAILS.md.</p>
@@ -315,12 +317,6 @@ export function EmailSettingsCard({ authToken, student }) {
       ))}
 
       {!data && !error && <p className="st-muted">Loading...</p>}
-      {data && (
-        <p className="st-muted">
-          Times follow this device's time zone{data.prefs.timeZone ? ` (${data.prefs.timeZone})` : ""}.
-        </p>
-      )}
-
       {data && data.emailVerified && (
         <button type="button" className="settings-save-button em-test" disabled={busy === "test"} onClick={() => action("test", "/api/email/test")}>
           <Send size={14} /> {busy === "test" ? "Sending..." : "Send me a test email"}
@@ -329,7 +325,7 @@ export function EmailSettingsCard({ authToken, student }) {
 
       {note && <p className="st-info" role="status">{note}</p>}
       {error && <p className="st-error" role="alert">{error}</p>}
-    </article>
+    </CollapsibleCard>
   );
 }
 

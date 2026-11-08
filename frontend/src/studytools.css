@@ -129,11 +129,7 @@
 .study-app .st-link { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--primary); text-decoration: underline; cursor: pointer; }
 
 /* offline banner */
-.st-offline { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 9999; display: flex; align-items: center; gap: 9px; max-width: min(92vw, 520px); padding: 10px 16px; border-radius: 999px; background: #3b2024; color: #fff4f2; font: 600 0.84rem/1.35 system-ui, sans-serif; box-shadow: 0 8px 26px rgba(0,0,0,0.3); }
-.st-offline.syncing { background: #1f5f46; }
-.st-offline .spin { animation: st-spin 1s linear infinite; }
 @keyframes st-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .st-offline .spin { animation: none; } }
 
 @media (max-width: 560px) {
   .study-app .st-stats { gap: 8px; }
@@ -164,3 +160,123 @@
 }
 .study-app .st-every { width: auto; }
 .study-app .st-rem-row > .settings-save-button { margin-top: 10px; }
+
+/* ---------- Offline message: floats in the air at the bottom of the screen ---------- */
+.st-offline-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 max(12px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left));
+  pointer-events: none; /* never blocks a tap on the screen below */
+}
+
+.st-offline {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(100%, 440px);
+  padding: 11px clamp(14px, 4vw, 20px) 11px 12px;
+  border: 1px solid rgba(255, 150, 140, 0.38);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(58, 24, 30, 0.96), rgba(92, 34, 44, 0.96));
+  color: #fff4f2;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  animation:
+    st-offline-in 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) both,
+    st-offline-float 3.8s ease-in-out 0.55s infinite;
+  will-change: transform;
+}
+
+.st-offline.syncing {
+  border-color: rgba(120, 220, 170, 0.4);
+  background: linear-gradient(135deg, rgba(20, 70, 52, 0.96), rgba(31, 95, 70, 0.96));
+}
+
+.st-offline-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.st-offline-icon::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 190, 180, 0.5);
+  animation: st-offline-pulse 2.6s ease-out infinite;
+}
+
+.st-offline.syncing .st-offline-icon::after {
+  display: none;
+}
+
+.st-offline-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.3;
+}
+
+.st-offline-text strong {
+  font-size: clamp(0.7rem, 3vw, 0.82rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
+}
+
+.st-offline-text small {
+  font-size: clamp(0.66rem, 2.7vw, 0.74rem);
+  font-weight: 500;
+  opacity: 0.82;
+  overflow-wrap: anywhere;
+}
+
+.st-offline .spin {
+  animation: st-spin 1s linear infinite;
+}
+
+@keyframes st-offline-in {
+  from { opacity: 0; transform: translateY(26px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Rises and sinks gently; the shadow grows softer as it rises, like it is hovering. */
+@keyframes st-offline-float {
+  0%, 100% { transform: translateY(0);    box-shadow: 0 14px 26px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(255, 255, 255, 0.04) inset; }
+  50%      { transform: translateY(-10px); box-shadow: 0 26px 34px rgba(0, 0, 0, 0.24), 0 0 0 1px rgba(255, 255, 255, 0.04) inset; }
+}
+
+@keyframes st-offline-pulse {
+  0%   { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+@media (max-width: 360px) {
+  .st-offline { gap: 9px; padding: 10px 12px 10px 10px; border-radius: 18px; }
+  .st-offline-icon { width: 30px; height: 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-offline,
+  .st-offline-icon::after,
+  .st-offline .spin {
+    animation: none;
+  }
+}

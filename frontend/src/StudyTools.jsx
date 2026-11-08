@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { GRADES, describeNext, generateCardsFromNote, isDue, nextSchedule, normalizeCard } from "./srs";
 import { Capacitor } from "@capacitor/core";
+import CollapsibleCard from "./CollapsibleCard";
 import { useOfflineStatus } from "./offline";
 import {
   notificationsSupported,
@@ -839,7 +840,7 @@ function ReminderRow({ title, hint, on, onToggle, time, fallback, onTime, timeLa
       <div className="st-rem-main">
         <div className="st-rem-text">
           <strong>{title}</strong>
-          <p>{hint}</p>
+          {hint ? <p>{hint}</p> : null}
         </div>
         <button
           type="button"
@@ -852,11 +853,15 @@ function ReminderRow({ title, hint, on, onToggle, time, fallback, onTime, timeLa
           <span />
         </button>
       </div>
-      <div className="st-rem-timeline">
-        <span className="st-rem-timelabel">{timeLabel}</span>
-        <TimeSelect value={time} fallback={fallback} onChange={onTime} label={timeLabel} disabled={!on} />
-      </div>
-      {children}
+      {on && (
+        <>
+          <div className="st-rem-timeline">
+            <span className="st-rem-timelabel">{timeLabel}</span>
+            <TimeSelect value={time} fallback={fallback} onChange={onTime} label={timeLabel} />
+          </div>
+          {children}
+        </>
+      )}
     </div>
   );
 }
@@ -939,31 +944,24 @@ export function ReminderSettings({ prefs, onChange }) {
     setTimeout(() => setTestMsg(""), 8000);
   };
 
-  return (
-    <article className="settings-card st-reminders">
-      <div className="settings-card-heading">
-        <span className="settings-card-icon"><Bell size={19} /></span>
-        <div>
-          <h3>Study reminders</h3>
-          <p>Pick when StudyOS should nudge you. Reminders play the StudyOS chime.</p>
-        </div>
-      </div>
+  const activeCount =
+    [prefs.daily, prefs.streak, prefs.nag].filter(Boolean).length + custom.filter((c) => c.on !== false).length;
 
+  return (
+    <CollapsibleCard
+      className="st-reminders"
+      icon={<Bell size={19} />}
+      title="Study reminders"
+      summary={activeCount ? `${activeCount} reminder${activeCount === 1 ? "" : "s"} on` : "All reminders off"}
+    >
       {!supported && <p className="st-muted">This browser does not support notifications.</p>}
 
-      {native && nstat && nstat.sdk < 33 && (
-        <p className="st-info">
-          Your phone runs Android 12 or older (API {nstat.sdk}). These versions never show an “Allow” pop-up, because notifications are
-          allowed automatically. Just turn a toggle on and tap “Send test reminder”.
-        </p>
-      )}
       {native && nstat && nstat.sdk >= 33 && nstat.declaresPostNotifications === false && (
         <p className="st-error">This app build does not ask Android for notification permission. Uninstall it, rebuild and reinstall.</p>
       )}
 
       <ReminderRow
-        title="Daily “time to study” reminder"
-        hint="A friendly nudge every day at your chosen time."
+        title="Daily reminder"
         on={prefs.daily}
         onToggle={() => toggle("daily")}
         time={prefs.time}
@@ -973,8 +971,7 @@ export function ReminderSettings({ prefs, onChange }) {
       />
 
       <ReminderRow
-        title="Warn me when my streak is about to break"
-        hint="Only sent on days you have not studied yet."
+        title="Streak warning"
         on={prefs.streak}
         onToggle={() => toggle("streak")}
         time={prefs.streakTime}
@@ -984,8 +981,7 @@ export function ReminderSettings({ prefs, onChange }) {
       />
 
       <ReminderRow
-        title="Nag mode (like Duolingo) 🦉"
-        hint="Playful nudges through the day that get cheekier until you study. They stop as soon as you finish a session."
+        title="Nag mode 🦉"
         on={prefs.nag}
         onToggle={() => toggle("nag")}
         time={prefs.nagStart}
@@ -1013,8 +1009,7 @@ export function ReminderSettings({ prefs, onChange }) {
 
       <div className="st-rem-row">
         <div className="st-rem-text">
-          <strong>My own reminders</strong>
-          <p>Add as many as {MAX_CUSTOM} reminders at any time, with your own message (for example “Revise chemistry”).</p>
+          <strong>My reminders</strong>
         </div>
         {custom.map((c) => (
           <div className="st-custom" key={c.id}>
@@ -1043,7 +1038,7 @@ export function ReminderSettings({ prefs, onChange }) {
           </div>
         ))}
         <button type="button" className="settings-save-button" onClick={addCustom} disabled={custom.length >= MAX_CUSTOM}>
-          + Add a reminder
+          + Add reminder
         </button>
       </div>
 
@@ -1069,9 +1064,6 @@ export function ReminderSettings({ prefs, onChange }) {
           <button type="button" className="st-link" onClick={openChannelSettings}>Open sound settings</button>
         </p>
       )}
-      {native && testMsg.startsWith("Test reminder sent") && !soundIssue && (
-        <p className="st-muted st-hint">No sound? Check the phone is not on silent or Do Not Disturb and the notification volume is up.</p>
-      )}
       {!exactOk && (
         <p className="st-error">
           Android may delay reminders until you allow “Alarms &amp; reminders” for StudyOS.{" "}
@@ -1079,11 +1071,14 @@ export function ReminderSettings({ prefs, onChange }) {
         </p>
       )}
       {native && (
-        <div className="st-diag">
+        <details className="st-diag st-diag-details">
+          <summary>Notification check</summary>
           <div className="st-row">
-            <strong>Notification check</strong>
             <button type="button" className="st-link" onClick={runDiag}>Refresh</button>
           </div>
+          {nstat && nstat.sdk < 33 && (
+            <p className="st-muted">Android {nstat.sdk < 31 ? "11 or older" : "12 or older"}: notifications are allowed by default.</p>
+          )}
           <ul>
             {(diag || []).map((d, i) => (
               <li key={i} className={d.ok ? "ok" : "bad"}>
@@ -1093,10 +1088,9 @@ export function ReminderSettings({ prefs, onChange }) {
             ))}
             {!diag && <li className="st-muted">Checking...</li>}
           </ul>
-        </div>
+        </details>
       )}
-      <p className="st-muted st-hint">In the Android app reminders arrive on time even when StudyOS is closed. In a browser they only appear while StudyOS is open.</p>
-    </article>
+    </CollapsibleCard>
   );
 }
 
@@ -1105,13 +1099,27 @@ export function OfflineBanner() {
   const { online, pending, syncing } = useOfflineStatus();
   if (online && !pending && !syncing) return null;
   return (
-    <div className={`st-offline${online ? " syncing" : ""}`} role="status" aria-live="polite">
-      {online ? <RefreshCw size={15} className="spin" /> : <WifiOff size={15} />}
-      <span>
-        {online
-          ? `Syncing ${pending} change${pending === 1 ? "" : "s"}...`
-          : `You're offline. Your work is saved on this device${pending ? ` (${pending} change${pending === 1 ? "" : "s"} waiting)` : ""} and will sync automatically.`}
-      </span>
+    <div className="st-offline-wrap" role="status" aria-live="polite">
+      {online ? (
+        <div className="st-offline syncing">
+          <span className="st-offline-icon"><RefreshCw size={16} className="spin" /></span>
+          <span className="st-offline-text">
+            <strong>Syncing {pending} change{pending === 1 ? "" : "s"}...</strong>
+          </span>
+        </div>
+      ) : (
+        <div className="st-offline">
+          <span className="st-offline-icon"><WifiOff size={16} /></span>
+          <span className="st-offline-text">
+            <strong>OFFLINE OR NO INTERNET ACCESS</strong>
+            <small>
+              {pending
+                ? `${pending} change${pending === 1 ? "" : "s"} saved on this device. They sync when you are back online.`
+                : "Showing your saved data."}
+            </small>
+          </span>
+        </div>
+      )}
     </div>
   );
 }
