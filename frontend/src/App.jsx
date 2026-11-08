@@ -4425,10 +4425,7 @@ async function undoDeleteTask() {
     return (
       <>
       <OfflineBanner />
-      {Capacitor.isNativePlatform() ||
-      (typeof window !== "undefined" &&
-        window.matchMedia &&
-        window.matchMedia("(max-width: 820px)").matches) ? (
+      {Capacitor.isNativePlatform() ? (
         <Onboarding
           onLogin={() => {
             setAuthMode("login");
