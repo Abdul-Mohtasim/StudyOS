@@ -1,0 +1,360 @@
+/* =====================================================================
+   SIGN IN / CREATE ACCOUNT PAGE  (.au-*)
+   Simple and clean: flat colours only (no gradients, no shadows, no
+   decorative animation). Palette:
+     #191D23 primary   #57707A accent   #7B919C secondary
+     #989DAA surface   #C5BAC4 muted    #DEDCDC background
+   ===================================================================== */
+.au-page {
+  --au-bg: #dedcdc;
+  --au-card: #ebe9e9;
+  --au-field: #dedcdc;
+  --au-line: #c5bac4;
+  --au-ink: #191d23;
+  --au-muted: #57707a;
+  --au-accent: #57707a;
+  --au-btn: #191d23;
+  --au-btn-ink: #dedcdc;
+  --au-danger: #a8372f;
+  --au-danger-bg: #f1dcda;
+
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px 16px;
+  background: var(--au-bg);
+  color: var(--au-ink);
+  font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+.au-page[data-as-theme="dark"] {
+  --au-bg: #191d23;
+  --au-card: #20262d;
+  --au-field: #191d23;
+  --au-line: #3a454e;
+  --au-ink: #dedcdc;
+  --au-muted: #989daa;
+  --au-accent: #7b919c;
+  --au-btn: #dedcdc;
+  --au-btn-ink: #191d23;
+  --au-danger: #f0a39c;
+  --au-danger-bg: #3a2528;
+}
+
+html:has(.au-page[data-as-theme="light"]) { background: #dedcdc; }
+html:has(.au-page[data-as-theme="dark"]) { background: #191d23; }
+
+.au-page *,
+.au-page *::before,
+.au-page *::after { box-sizing: border-box; }
+
+/* Nothing on this page moves except the small loading spinner. */
+.au-page,
+.au-page * { animation: none; box-shadow: none; text-shadow: none; }
+.au-page .au-spinner { animation: au-spin 0.7s linear infinite !important; }
+@keyframes au-spin { to { transform: rotate(360deg); } }
+
+.au-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 28px 24px 22px;
+  border: 1px solid var(--au-line);
+  border-radius: 16px;
+  background: var(--au-card);
+}
+
+.au-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 20px -4px;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: var(--au-muted);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.au-back:hover { color: var(--au-ink); }
+
+.au-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.au-brand img { width: 32px; height: 32px; object-fit: contain; }
+.au-brand b { color: var(--au-accent); font-weight: 800; }
+
+.au-title {
+  margin: 0 0 4px;
+  font-size: clamp(1.45rem, 5vw, 1.8rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.au-sub {
+  margin: 0 0 20px;
+  color: var(--au-muted);
+  font-size: 0.92rem;
+}
+
+.au-form { display: grid; gap: 12px; }
+
+.au-field { display: grid; gap: 5px; }
+.au-label { font-size: 0.82rem; font-weight: 700; }
+
+.au-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.au-input > svg.au-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--au-muted);
+  pointer-events: none;
+}
+.au-input input {
+  width: 100%;
+  height: 42px;
+  padding: 0 40px 0 38px;
+  border: 1px solid var(--au-line);
+  border-radius: 10px;
+  background: var(--au-field);
+  color: var(--au-ink);
+  font: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.au-input input::placeholder { color: var(--au-muted); opacity: 0.8; }
+.au-input input:focus { border-color: var(--au-accent); outline: 2px solid var(--au-accent); outline-offset: -1px; }
+.au-input input:disabled { opacity: 0.6; }
+
+.au-eye {
+  position: absolute;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--au-muted);
+  cursor: pointer;
+}
+.au-eye:hover { color: var(--au-ink); }
+
+.au-forgot {
+  justify-self: end;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--au-accent);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.au-forgot:hover { text-decoration: underline; }
+
+.au-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  margin-top: 2px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--au-btn);
+  color: var(--au-btn-ink);
+  font: inherit;
+  font-size: 0.97rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.au-submit:hover:not(:disabled) { opacity: 0.88; }
+.au-submit:disabled { opacity: 0.6; cursor: wait; }
+
+.au-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+}
+
+.au-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 12px;
+  color: var(--au-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.au-divider::before,
+.au-divider::after { content: ""; flex: 1; height: 1px; background: var(--au-line); }
+
+.au-google { display: flex; justify-content: center; min-height: 42px; overflow: hidden; }
+.au-google > div { max-width: 100%; }
+.au-google-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 42px;
+  border: 1px solid var(--au-line);
+  border-radius: 10px;
+  background: var(--au-field);
+  color: var(--au-ink);
+  font: inherit;
+  font-size: 0.93rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.au-google-btn:hover:not(:disabled) { border-color: var(--au-accent); }
+.au-google-btn:disabled { opacity: 0.6; cursor: wait; }
+
+.au-status { margin: 12px 0 0; color: var(--au-muted); font-size: 0.86rem; text-align: center; }
+.au-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--au-danger);
+  border-radius: 10px;
+  background: var(--au-danger-bg);
+  color: var(--au-danger);
+  font-size: 0.86rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Switch between "Sign in" and "Create account" now lives below the form. */
+.au-switch {
+  margin: 18px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--au-line);
+  color: var(--au-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+.au-switch button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--au-ink);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.au-switch button:disabled { opacity: 0.6; }
+
+/* Offline sign-in box */
+.au-offline {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 12px;
+  border: 1px dashed var(--au-accent);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.au-offline p { margin: 0; }
+.au-offline-continue {
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--au-btn);
+  color: var(--au-btn-ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.au-offline-forget {
+  justify-self: start;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+/* The "forgot password" link reuses an older class; keep it matching this page. */
+.au-page .as-forgot { color: var(--au-accent); }
+
+/* ---------- Responsive ---------- */
+@media (min-width: 900px) {
+  .au-card { max-width: 440px; padding: 34px 32px 26px; }
+}
+@media (max-width: 380px) {
+  .au-page { padding: 12px 10px; }
+  .au-card { padding: 20px 16px 18px; border-radius: 14px; }
+}
+@media (max-height: 640px) {
+  .au-page { align-items: flex-start; }
+}
+
+/* ---------- Reset-password dialog: follows the sign-in theme ---------- */
+.au-page .em-overlay { background: rgba(25, 29, 35, 0.55); }
+.au-page[data-as-theme="dark"] .em-overlay { background: rgba(0, 0, 0, 0.62); }
+.au-page .em-dialog {
+  padding: 26px 22px 22px;
+  border: 1px solid var(--au-line);
+  border-radius: 16px;
+  background: var(--au-card);
+  color: var(--au-ink);
+  font-family: inherit;
+  box-shadow: none;
+}
+.au-page .em-dialog h2 { margin: 0 34px 10px 0; font-size: 1.25rem; color: var(--au-ink); }
+.au-page .em-text { color: var(--au-muted); }
+.au-page .em-text strong { color: var(--au-ink); }
+.au-page .em-input {
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--au-line);
+  border-radius: 10px;
+  background: var(--au-field);
+  color: var(--au-ink);
+  font-size: 0.95rem;
+}
+.au-page .em-input::placeholder { color: var(--au-muted); opacity: 0.8; }
+.au-page .em-input:focus { border-color: var(--au-accent); outline: 2px solid var(--au-accent); outline-offset: -1px; }
+.au-page .em-button {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: var(--au-btn);
+  color: var(--au-btn-ink);
+  font-weight: 700;
+}
+.au-page .em-error {
+  border-color: var(--au-danger);
+  background: var(--au-danger-bg);
+  color: var(--au-danger);
+}
+.au-page .em-close { color: var(--au-muted); }
+.au-page .em-close:hover { color: var(--au-ink); }

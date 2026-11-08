@@ -252,6 +252,16 @@
   animation: st-spin 1s linear infinite;
 }
 
+/* "Back online": pops in, stays about 2 seconds, no endless floating. */
+.st-offline.st-back-online {
+  animation: st-offline-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.st-offline.st-back-online .st-offline-icon::after {
+  display: block;
+  border-color: rgba(150, 240, 190, 0.6);
+  animation: st-offline-pulse 1.1s ease-out 2;
+}
+
 @keyframes st-offline-in {
   from { opacity: 0; transform: translateY(26px) scale(0.94); }
   to   { opacity: 1; transform: translateY(0) scale(1); }

@@ -11,6 +11,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
+  Wifi,
   WifiOff,
   Check,
 } from "lucide-react";
@@ -1097,17 +1098,28 @@ export function ReminderSettings({ prefs, onChange }) {
 // =============================================================== offline banner
 export function OfflineBanner() {
   const { online, pending, syncing } = useOfflineStatus();
-  if (online && !pending && !syncing) return null;
+  const [backOnline, setBackOnline] = useState(false);
+  const wasOnlineRef = React.useRef(online);
+
+  // Internet just came back: show a friendly "Back online" message for 2 seconds.
+  useEffect(() => {
+    if (online && !wasOnlineRef.current) {
+      wasOnlineRef.current = true;
+      setBackOnline(true);
+      const timer = setTimeout(() => setBackOnline(false), 2000);
+      return () => clearTimeout(timer);
+    }
+    if (!online) {
+      wasOnlineRef.current = false;
+      setBackOnline(false);
+    }
+    return undefined;
+  }, [online]);
+
+  if (online && !backOnline && !pending && !syncing) return null;
   return (
     <div className="st-offline-wrap" role="status" aria-live="polite">
-      {online ? (
-        <div className="st-offline syncing">
-          <span className="st-offline-icon"><RefreshCw size={16} className="spin" /></span>
-          <span className="st-offline-text">
-            <strong>Syncing {pending} change{pending === 1 ? "" : "s"}...</strong>
-          </span>
-        </div>
-      ) : (
+      {!online ? (
         <div className="st-offline">
           <span className="st-offline-icon"><WifiOff size={16} /></span>
           <span className="st-offline-text">
@@ -1117,6 +1129,21 @@ export function OfflineBanner() {
                 ? `${pending} change${pending === 1 ? "" : "s"} saved on this device. They sync when you are back online.`
                 : "Showing your saved data."}
             </small>
+          </span>
+        </div>
+      ) : backOnline ? (
+        <div className="st-offline syncing st-back-online">
+          <span className="st-offline-icon"><Wifi size={16} /></span>
+          <span className="st-offline-text">
+            <strong>BACK ONLINE</strong>
+            <small>{pending || syncing ? "Syncing your latest data..." : "Your data is up to date."}</small>
+          </span>
+        </div>
+      ) : (
+        <div className="st-offline syncing">
+          <span className="st-offline-icon"><RefreshCw size={16} className="spin" /></span>
+          <span className="st-offline-text">
+            <strong>Syncing {pending} change{pending === 1 ? "" : "s"}...</strong>
           </span>
         </div>
       )}
