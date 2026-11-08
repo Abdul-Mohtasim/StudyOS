@@ -16,9 +16,9 @@ const MAX_EXAMS_PER_STUDENT = 100;
 // GET /api/exams — the student's exam dates, soonest first.
 router.get("/", async (req, res, next) => {
   try {
-    const exams = await Exam.find({ student: req.student._id }).sort({
-      date: 1,
-    });
+    const exams = await Exam.find({ student: req.student._id })
+      .sort({ date: 1 })
+      .lean();
 
     return res.status(200).json({ exams });
   } catch (error) {

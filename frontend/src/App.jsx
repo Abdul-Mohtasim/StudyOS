@@ -122,6 +122,16 @@ import {
 const SHORT_BREAK_MINUTES = 5;
 
 // "Mon, Dec 15, 2026" for a YYYY-MM-DD exam date.
+// Tapping anywhere on a task card toggles it, except on its own buttons, inputs and links
+// (priority, due date, delete, ...) and while the user is selecting text.
+function toggleOnRowClick(event, toggle) {
+  if (event.defaultPrevented) return;
+  if (event.target.closest("button, a, input, select, textarea, label, [role='button']")) return;
+  const selection = window.getSelection && window.getSelection();
+  if (selection && !selection.isCollapsed && String(selection).trim()) return;
+  toggle();
+}
+
 function dateKeyLabel(key) {
   const [year, month, day] = String(key).split("-").map(Number);
   const date = new Date(year, (month || 1) - 1, day || 1);
@@ -402,10 +412,10 @@ function ContactFooter({ onLogin }) {
   return (
     <footer className="pl-footer pl-cta-footer">
       <div className="pl-cta-inner">
-        <h2>Let's Learn together.</h2>
+        <h2>Let's work together.</h2>
         <p>
           Whether you're looking to collaborate, share feedback, or brainstorm
-          around a meaningful IdeaS, I'd love to hear from you.
+          around a meaningful project, I'd love to hear from you.
         </p>
 
         <button type="button" className="pl-cta-btn" onClick={copyEmail}>
@@ -5607,6 +5617,7 @@ async function undoDeleteTask() {
                       task.completed ? "planner-task-completed" : ""
                     }`}
                     key={task.id}
+                    onClick={(event) => toggleOnRowClick(event, () => togglePlannerTask(task.id))}
                   >
                     <button
                       type="button"
@@ -5991,6 +6002,7 @@ async function undoDeleteTask() {
                   <article
                     className={`task-row ${task.completed ? "task-completed" : ""}${due?.tone === "overdue" ? " task-overdue" : ""}`}
                     key={task.id}
+                    onClick={(event) => toggleOnRowClick(event, () => toggleTask(task.id))}
                   >
                     <button
                       type="button"

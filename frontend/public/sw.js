@@ -1,6 +1,6 @@
 // StudyOS service worker: caches the app shell so the app opens instantly/offline.
 // API calls (/api/* and other origins) are never cached.
-const CACHE = "studyos-shell-v2";
+const CACHE = "studyos-shell-v3";
 const SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -20,16 +20,20 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
 
-  // Pages: network first, fall back to cached shell when offline.
+  // Pages: open the saved app shell at once (instant start), and fetch a fresh copy in the
+  // background for the next visit. First visit / nothing saved yet: use the network.
   if (req.mode === "navigate") {
     e.respondWith(
-      fetch(req)
-        .then((res) => {
-          // Keep the newest app shell so it opens offline with the latest build.
-          if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put("/", copy)); }
-          return res;
-        })
-        .catch(() => caches.match("/"))
+      caches.match("/").then((cached) => {
+        const refresh = fetch(req)
+          .then((res) => {
+            if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put("/", copy)); }
+            return res;
+          })
+          .catch(() => cached);
+        if (cached) { e.waitUntil(refresh); return cached; }
+        return refresh;
+      })
     );
     return;
   }

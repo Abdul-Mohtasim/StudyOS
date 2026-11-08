@@ -78,7 +78,7 @@ function hideBootSplash() {
 }
 requestAnimationFrame(() =>
   requestAnimationFrame(() => {
-    const wait = Math.max(0, 750 - performance.now());
+    const wait = Math.max(0, 300 - performance.now());
     setTimeout(hideBootSplash, wait);
   })
 );

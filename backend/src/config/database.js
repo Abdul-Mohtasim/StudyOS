@@ -22,8 +22,15 @@ async function connectDatabase() {
     .connect(process.env.MONGODB_URI, {
       serverSelectionTimeoutMS: 10000,
       connectTimeoutMS: 10000,
-      maxPoolSize: 10,
-      minPoolSize: 0,
+      // Each worker keeps its own pool. 2 workers x 20 = 40 connections (Atlas free tier allows 500).
+      maxPoolSize: Number(process.env.MONGO_POOL_SIZE) || 20,
+      minPoolSize: 2,
+      maxIdleTimeMS: 60000,
+      // Fail fast instead of hanging when a query or the pool is stuck.
+      socketTimeoutMS: 45000,
+      waitQueueTimeoutMS: 10000,
+      retryReads: true,
+      retryWrites: true,
       autoIndex: process.env.NODE_ENV !== "production",
     })
     .then(() => {

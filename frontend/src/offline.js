@@ -178,6 +178,64 @@ function isNetworkError(err) {
   return err instanceof TypeError || (err && err.name === "TypeError");
 }
 
+
+// ---------- resilient reads ----------
+// A server that is restarting, busy (503) or a phone on a weak signal should not leave a
+// screen spinning. Reads are tried again a couple of times, give up after a time limit,
+// and fall back to the copy saved on the device when the server still cannot answer.
+const READ_TIMEOUT_MS = 20000;
+const RETRY_STATUSES = [502, 503, 504];
+const RETRY_DELAYS_MS = [500, 1400];
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// One attempt with a time limit. A timeout is reported like a network failure (TypeError).
+async function fetchWithTimeout(input, init) {
+  const caller = init && init.signal;
+  if (typeof AbortController === "undefined") return realFetch(input, init);
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, READ_TIMEOUT_MS);
+  const onCallerAbort = () => controller.abort();
+  if (caller) {
+    if (caller.aborted) controller.abort();
+    else caller.addEventListener("abort", onCallerAbort, { once: true });
+  }
+  try {
+    return await realFetch(input, { ...init, signal: controller.signal });
+  } catch (err) {
+    if (timedOut && !(caller && caller.aborted)) throw new TypeError("The request took too long.");
+    throw err;
+  } finally {
+    clearTimeout(timer);
+    if (caller) caller.removeEventListener("abort", onCallerAbort);
+  }
+}
+
+async function fetchRead(input, init) {
+  let lastError = null;
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      const res = await fetchWithTimeout(input, init);
+      if (!RETRY_STATUSES.includes(res.status) || attempt === RETRY_DELAYS_MS.length) return res;
+      const retryAfter = Number(res.headers.get("retry-after"));
+      await wait(Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1000, 3000) : RETRY_DELAYS_MS[attempt]);
+    } catch (err) {
+      if (!isNetworkError(err) || (init && init.signal && init.signal.aborted)) throw err;
+      lastError = err;
+      if (attempt === RETRY_DELAYS_MS.length) throw err;
+      await wait(RETRY_DELAYS_MS[attempt]);
+    }
+    if (init && init.signal && init.signal.aborted) throw lastError || new DOMException("Aborted", "AbortError");
+  }
+  throw lastError || new TypeError("Network request failed.");
+}
+
 // ---------- applying changes to cached lists ----------
 function updateLists(uid, collection, fn) {
   const [listKey] = COLLECTIONS[collection];
@@ -453,9 +511,14 @@ export function installOfflineLayer(base = "") {
       }
       if (!offlineNow) {
         try {
-          const res = await realFetch(input, init);
+          const res = await fetchRead(input, init);
           if (res.ok && (res.headers.get("content-type") || "").includes("application/json")) {
             res.clone().json().then((data) => writeCache(uid, parsed.key, data)).catch(() => {});
+          }
+          if (RETRY_STATUSES.includes(res.status)) {
+            // Server still down/busy after retrying: show the saved copy if there is one.
+            const saved = readCache(uid, parsed.key);
+            if (saved) return jsonResponse(saved);
           }
           if (!status.online) setStatus({ online: true });
           return res;

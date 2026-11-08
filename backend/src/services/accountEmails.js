@@ -9,6 +9,7 @@ const EmailToken = require("../models/EmailToken");
 const EmailLog = require("../models/EmailLog");
 const LoginDevice = require("../models/LoginDevice");
 const EmailPreferences = require("../models/EmailPreferences");
+const { forgetStudent } = require("../middleware/auth");
 const { sendMail } = require("./mailer");
 const templates = require("./emailTemplates");
 const { createToken, hashToken } = require("../utils/emailTokens");
@@ -101,6 +102,7 @@ async function verifyEmailToken(token) {
     { returnDocument: "after" }
   );
   await EmailToken.deleteMany({ student: record.student, type: "verify" });
+  forgetStudent(record.student);
   return student;
 }
 
@@ -144,6 +146,7 @@ async function resetPasswordWithToken(token, newPassword, req) {
     { returnDocument: "after" }
   );
   await EmailToken.deleteMany({ student: record.student, type: "reset" });
+  forgetStudent(record.student);
   if (student) await deliver(req, student, templates.passwordChanged({ student }), "Password changed");
   return student;
 }

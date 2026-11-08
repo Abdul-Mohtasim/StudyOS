@@ -20963,3 +20963,24 @@ html:not([data-theme="light"]) .study-app .subject-icon.sb-badge.sb-amber  { --s
     transition: none !important;
   }
 }
+
+/* Whole task card is tappable (toggles done); its own buttons keep their own action. */
+.task-row,
+.planner-task-row {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.task-row :is(button, a, input, label),
+.planner-task-row :is(button, a, input, label) {
+  cursor: pointer;
+}
+.task-row:active,
+.planner-task-row:active {
+  transform: scale(0.992);
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-row:active,
+  .planner-task-row:active {
+    transform: none;
+  }
+}

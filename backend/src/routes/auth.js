@@ -7,6 +7,16 @@ const bcrypt = require("bcryptjs");
 const Student = require("../models/Student");
 const { afterSignIn, isEmailVerified } = require("../services/accountEmails");
 
+// Welcome / new-device emails must never make signing in slow: wait for them at most
+// a moment (they keep running in the background and never throw).
+const EMAIL_WAIT_MS = 700;
+function afterSignInQuick(student, req) {
+  return Promise.race([
+    afterSignIn(student, req),
+    new Promise((resolve) => setTimeout(resolve, EMAIL_WAIT_MS)),
+  ]);
+}
+
 const router = express.Router();
 const googleClient = new OAuth2Client();
 
@@ -108,7 +118,7 @@ router.post("/register", async (req, res) => {
     });
 
     // Welcome + confirmation email (never blocks sign-up if email fails).
-    await afterSignIn(student, req);
+    await afterSignInQuick(student, req);
 
     const token = createSessionToken(student, jwtSecret);
 
@@ -179,7 +189,7 @@ router.post("/login", async (req, res) => {
     }
 
     // New-device security alert (never blocks sign-in if email fails).
-    await afterSignIn(student, req);
+    await afterSignInQuick(student, req);
 
     const token = createSessionToken(student, jwtSecret);
 
@@ -306,8 +316,10 @@ router.post("/google", async (req, res) => {
       throw new Error("Student record could not be retrieved.");
     }
 
+    requireAuth.forgetStudent(student._id);
+
     // Welcome email for new accounts and new-device security alert.
-    await afterSignIn(student, req);
+    await afterSignInQuick(student, req);
 
     const token = createSessionToken(student, jwtSecret);
 
@@ -358,6 +370,7 @@ router.patch("/profile", requireAuth, async (req, res) => {
 
     req.student.displayName = trimmedName;
     await req.student.save();
+    requireAuth.forgetStudent(req.student._id);
 
     return res.status(200).json({
       message: "Display name updated successfully.",

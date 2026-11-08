@@ -69,4 +69,7 @@ const taskSchema = new mongoose.Schema(
   }
 );
 
+// The task list asks for: this student, not deleted, newest first.
+taskSchema.index({ student: 1, deletedAt: 1, createdAt: -1 });
+
 module.exports = mongoose.model("Task", taskSchema);

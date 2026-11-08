@@ -20,6 +20,11 @@ const EmailToken = require("../src/models/EmailToken");
 const EmailLog = require("../src/models/EmailLog");
 const LoginDevice = require("../src/models/LoginDevice");
 const EmailPreferences = require("../src/models/EmailPreferences");
+const Task = require("../src/models/Task");
+const Note = require("../src/models/Note");
+const PlannerTask = require("../src/models/PlannerTask");
+const FocusSession = require("../src/models/FocusSession");
+const Student = require("../src/models/Student");
 
 async function main() {
   await connectDatabase();
@@ -40,6 +45,12 @@ async function main() {
   await EmailPreferences.createCollection().catch(() => {});
   await EmailPreferences.createIndexes();
   console.log("Email indexes are ready.");
+  // Speed indexes for the main lists (tasks, notes, planner, focus history, sign-in).
+  for (const model of [Task, Note, PlannerTask, FocusSession, Student]) {
+    await model.createCollection().catch(() => {});
+    await model.createIndexes();
+  }
+  console.log("Speed indexes are ready.");
 }
 
 main()

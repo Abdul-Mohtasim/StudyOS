@@ -16,7 +16,10 @@ router.get("/", async (req, res, next) => {
     const tasks = await Task.find({
       student: req.student._id,
       deletedAt: null,
-    }).sort({ createdAt: -1 });
+    })
+      .sort({ createdAt: -1 })
+      .limit(2000)
+      .lean();
 
     return res.status(200).json({ tasks });
   } catch (error) {

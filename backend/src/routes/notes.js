@@ -14,7 +14,10 @@ router.get("/", async (req, res, next) => {
   try {
     const notes = await Note.find({
       student: req.student._id,
-    }).sort({ updatedAt: -1 });
+    })
+      .sort({ updatedAt: -1 })
+      .limit(2000)
+      .lean();
 
     return res.status(200).json({ notes });
   } catch (error) {
