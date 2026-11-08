@@ -56,10 +56,10 @@ function setStatus(patch) {
 // While the app is offline it asks the server "are you there?" every 2 seconds. The moment
 // an answer arrives: the offline message disappears, saved changes are sent, and the whole
 // app reloads its data. No tap, no manual refresh.
-const PROBE_EVERY_MS = 2000;
-const PROBE_TIMEOUT_MS = 4000;
+const PROBE_EVERY_MS = 600;
+const PROBE_TIMEOUT_MS = 2000;
 let probeTimer = null;
-let probing = false;
+let probing = 0;
 
 function startProbe() {
   if (probeTimer || !realFetch || typeof window === "undefined") return;
@@ -72,21 +72,24 @@ function stopProbe() {
 }
 
 async function probeNow() {
-  if (probing || !realFetch) return;
-  probing = true;
+  if (!realFetch || probing >= 3) return;
+  probing += 1;
   const controller = typeof AbortController === "undefined" ? null : new AbortController();
   const timer = controller ? setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS) : null;
   try {
+    // mode "no-cors": we only need to know the server answered, not read the answer. This
+    // works even if the server sends no CORS headers (the app's page origin differs from the API).
     const res = await realFetch(`${apiBase}/api/ping?t=${Date.now()}`, {
       cache: "no-store",
+      mode: "no-cors",
       ...(controller ? { signal: controller.signal } : {}),
     });
-    if (res.ok) markReconnected();
+    if (res.ok || res.type === "opaque") markReconnected();
   } catch {
     /* still offline: the next tick tries again */
   } finally {
     if (timer) clearTimeout(timer);
-    probing = false;
+    probing -= 1;
   }
 }
 
@@ -97,15 +100,16 @@ function markReconnected() {
 // Internet is back: the offline message is already gone (status.online is true). Send queued
 // changes, tell every screen to reload its data, and refresh the app shell in the background.
 async function recovered() {
-  let changed = false;
+  // Reload every screen right now; do not wait for the queue.
+  window.dispatchEvent(new CustomEvent("studyos:reconnected"));
+  window.dispatchEvent(new CustomEvent("studyos:synced"));
   try {
-    changed = await flushOfflineQueue();
+    const changed = await flushOfflineQueue();
+    // Queued changes were just sent: reload once more so screens show the final data.
+    if (changed) window.dispatchEvent(new CustomEvent("studyos:synced"));
   } catch {
     /* the 60 second timer will try again */
   }
-  // flushOfflineQueue already announces "studyos:synced" when it sent something.
-  if (!changed) window.dispatchEvent(new CustomEvent("studyos:synced"));
-  window.dispatchEvent(new CustomEvent("studyos:reconnected"));
   try {
     navigator.serviceWorker?.getRegistration?.().then((reg) => reg && reg.update()).catch(() => {});
   } catch {
@@ -668,6 +672,17 @@ export function installOfflineLayer(base = "") {
     else flushOfflineQueue();
   });
   window.addEventListener("offline", () => setStatus({ online: false }));
+  // The phone's network type changed (Wi-Fi/mobile data came up): check at once.
+  try {
+    navigator.connection?.addEventListener?.("change", () => {
+      if (!status.online) probeNow();
+    });
+  } catch {
+    /* not supported */
+  }
+  window.addEventListener("focus", () => {
+    if (!status.online) probeNow();
+  });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") return;
     if (!status.online) probeNow();

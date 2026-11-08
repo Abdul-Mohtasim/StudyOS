@@ -31,7 +31,7 @@ app.disable("x-powered-by");
 
 // Cheap "is the process alive" check for load balancers. It answers before anything
 // else runs (no database, no logging), so it stays fast even under heavy load.
-app.get(["/api/ping", "/api/health/live"], (req, res) => {
+app.get(["/api/ping", "/api/health/live"], cors(corsOptions), (req, res) => {
   res.status(200).json({ status: "ok", pid: process.pid });
 });
 
