@@ -19,6 +19,7 @@ const gradeRoutes = require("./routes/grades");
 const accountEmailRoutes = require("./routes/accountEmail");
 const emailRoutes = require("./routes/email");
 const cronRoutes = require("./routes/cron");
+const friendRoutes = require("./routes/friends");
 const {
   connectDatabase,
   isDatabaseConnected,
@@ -133,6 +134,7 @@ app.use("/api/flashcards", flashcardRoutes);
 app.use("/api/grades", gradeRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/cron", cronRoutes);
+app.use("/api/friends", friendRoutes);
 
 app.get("/", (req, res) => {
   res.json({
