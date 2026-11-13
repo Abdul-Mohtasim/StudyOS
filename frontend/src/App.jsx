@@ -108,6 +108,10 @@ import {
 } from "./offlineAuth";
 import AppSkeleton from "./Skeleton";
 import Onboarding from "./Onboarding";
+import NewUserFlow from "./newflow/NewUserFlow";
+import HomeScreen, { TabBar } from "./HomeScreen";
+import { Share } from "@capacitor/share";
+import { Contacts } from "@capacitor-community/contacts";
 import "./skeleton.css";
 import { ForgotPasswordModal, EmailSettingsCard, EmailNoteButton, EmailFlashcardsButton } from "./EmailFeatures";
 import { loadReminderPrefs, saveReminderPrefs, syncReminders } from "./reminders";
@@ -1513,6 +1517,9 @@ function BannerScene({ done, total, streak, minutes, goalPercent }) {
 }
 
 
+const IS_NATIVE = Capacitor.isNativePlatform();
+const GUEST_STUDENT = { id: "guest", guest: true, name: "Guest", displayName: "Guest", email: "" };
+
 export default function App() {
   // ---------- Authentication ----------
   const [student, setStudent] = useState(null);
@@ -1534,6 +1541,8 @@ const [authEmail, setAuthEmail] = useState("");
 const [authPassword, setAuthPassword] = useState("");
 const [showAuthPassword, setShowAuthPassword] = useState(false);
 const [googleSignInReady, setGoogleSignInReady] = useState(false);
+  const [newUserFlowOpen, setNewUserFlowOpen] = useState(false);
+  const [guestFlowOpen, setGuestFlowOpen] = useState(false);
 const [hapticsOn, setHapticsOn] = useState(() => isHapticsEnabled());
 
 const [deletedTasks, setDeletedTasks] = useState([]);
@@ -1747,7 +1756,12 @@ useEffect(() => {
       const savedToken = localStorage.getItem("studyos_auth_token");
 
       if (!savedToken) {
-        if (!cancelled) setAuthChecking(false);
+        if (!cancelled) {
+          if (Capacitor.isNativePlatform() && localStorage.getItem("studyos_guest") === "1") {
+            setStudent(GUEST_STUDENT);
+          }
+          setAuthChecking(false);
+        }
         return;
       }
 
@@ -2610,6 +2624,120 @@ useEffect(() => {
     }
   }
 
+
+  // ---------- New-user flow (app only): register without committing ----------
+  const pendingAuthRef = useRef(null);
+  async function flowPost(path, payload) {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      return { ok: false, error: "You are offline. Creating an account needs internet access." };
+    }
+    try {
+      const response = await fetchAuth(`${API_BASE_URL}/api/auth/${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const text = await response.text();
+      let data = {};
+      if (text.trim()) {
+        try { data = JSON.parse(text); } catch { return { ok: false, error: `Server returned an invalid response (HTTP ${response.status}).` }; }
+      }
+      if (!response.ok) return { ok: false, error: data.error || data.message || `Request failed (HTTP ${response.status}).` };
+      if (!data.student || !data.token) return { ok: false, error: "The server response is missing account data." };
+      return { ok: true, data };
+    } catch {
+      return { ok: false, error: "Network problem. Please check your connection." };
+    }
+  }
+  async function registerForFlow({ name, email, password, age }) {
+    const em = String(email || "").trim().toLowerCase();
+    if (name.length < 2) return { ok: false, error: "Please enter your name (at least 2 characters)." };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return { ok: false, error: "Please enter a valid email address." };
+    if (!password || password.length < 8 || password.length > 128) return { ok: false, error: "Your password must be between 8 and 128 characters." };
+    const r = await flowPost("register", { name, email: em, password });
+    if (!r.ok) return r;
+    pendingAuthRef.current = { ...r.data, email: em, password, age };
+    return { ok: true };
+  }
+  async function googleForFlow() {
+    try {
+      const result = await GoogleSignIn.signIn();
+      if (!result?.idToken) return { ok: false, error: "Google did not return an ID token. Please try again." };
+      const r = await flowPost("google", { credential: result.idToken });
+      if (!r.ok) return r;
+      pendingAuthRef.current = { ...r.data, email: r.data.student.email, viaGoogle: true };
+      return { ok: true, email: r.data.student.email, name: r.data.student.name };
+    } catch (error) {
+      if (error?.code === "SIGN_IN_CANCELED" || error?.message?.toLowerCase()?.includes("cancel")) return { ok: false };
+      return { ok: false, error: error?.message || "Google sign-in failed. Please try again." };
+    }
+  }
+  function startGuest(info) {
+    try {
+      localStorage.setItem("studyos_guest", "1");
+      localStorage.setItem("studyos_newuser_pending", JSON.stringify({ at: Date.now(), score: info?.score ?? null, gems: info?.gems ?? 0, goal: info?.x?.goal || 7, placement: info?.x?.res || {}, examDate: info?.intro?.examDate || "" }));
+    } catch { /* ignore */ }
+    setNewUserFlowOpen(false);
+    setStudent(GUEST_STUDENT);
+    setAuthToken("");
+    haptic.welcome();
+  }
+  async function inviteForFlow() {
+    const text = "Study with me on StudyOS! It keeps my streak going every day.";
+    try {
+      await Share.share({ title: "StudyOS", text, dialogTitle: "Invite friends" });
+      return { ok: true };
+    } catch (error) {
+      const msg = String(error?.message || "").toLowerCase();
+      if (msg.includes("cancel")) return { ok: false, cancelled: true };
+      try { await navigator.clipboard?.writeText(text); } catch { /* ignore */ }
+      return { ok: false, error: "Could not open sharing on this phone." };
+    }
+  }
+  // Find phone contacts (by email) who already use StudyOS.
+  async function findContactsForFlow() {
+    try {
+      let perm = await Contacts.checkPermissions();
+      if (perm.contacts !== "granted") perm = await Contacts.requestPermissions();
+      if (perm.contacts !== "granted") return { ok: false, denied: true };
+      const res = await Contacts.getContacts({ projection: { name: true, emails: true } });
+      const emails = [];
+      for (const c of res.contacts || []) for (const e of c.emails || []) if (e?.address) emails.push(e.address);
+      const token = pendingAuthRef.current?.token;
+      if (!token || !emails.length) return { ok: true, matches: [] };
+      const response = await fetchAuth(`${API_BASE_URL}/api/friends/match`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ emails: emails.slice(0, 500) }),
+      });
+      if (!response.ok) return { ok: true, matches: [] };
+      const data = await response.json();
+      return { ok: true, matches: data.matches || [] };
+    } catch (error) {
+      return { ok: false, error: "Could not read your contacts." };
+    }
+  }
+  function finishNewUserFlow(info) {
+    const d = pendingAuthRef.current;
+    if (!d) return;
+    try {
+      let pend = {};
+      try { pend = JSON.parse(localStorage.getItem("studyos_newuser_pending") || "{}"); localStorage.removeItem("studyos_newuser_pending"); } catch { /* ignore */ }
+      localStorage.setItem("studyos_newuser", JSON.stringify({ ...pend, at: Date.now(), age: d.age || "", goal: info?.x?.goal || pend.goal || 7, placement: info?.x?.res || pend.placement || {}, score: info?.score ?? pend.score ?? null, gems: info?.gems ?? pend.gems ?? 0, examDate: info?.intro?.examDate || pend.examDate || "", friends: info?.friends || [] }));
+    } catch { /* ignore */ }
+    localStorage.setItem("studyos_auth_token", d.token);
+    rememberAccount(d.viaGoogle
+      ? { email: d.email, student: d.student, token: d.token, viaGoogle: true }
+      : { email: d.email, password: d.password, student: d.student, token: d.token });
+    pendingAuthRef.current = null;
+    localStorage.removeItem("studyos_guest");
+    setGuestFlowOpen(false);
+    setStudent(d.student);
+    setAuthToken(d.token);
+    flushOfflineQueue();
+    haptic.welcome();
+  }
+
   const handleLogout = () => {
     // Stop and reset the timer.
     setIsRunning(false);
@@ -2623,6 +2751,7 @@ useEffect(() => {
     // Clear the saved login session. The saved copy of the data stays on this device so the
     // account can still be opened offline (it is removed with "Forget saved account" on the sign-in screen).
     localStorage.removeItem("studyos_auth_token");
+    localStorage.removeItem("studyos_guest");
 
     // Clear authenticated student state.
     setStudent(null);
@@ -2636,6 +2765,62 @@ useEffect(() => {
     setShowNotifications(false);
     setNotice("");
   };
+
+  const newUserInfo = React.useMemo(() => {
+    try { return JSON.parse(localStorage.getItem("studyos_newuser") || "null"); } catch { return null; }
+  }, [student?.id, student?.guest]);
+
+  function goTab(key) {
+    setActiveSection(key);
+    setMenuOpen(false);
+    const anchor = { dashboard: null, tasks: "tasks", focus: "focus", subjects: "subjects" }[key];
+    window.setTimeout(() => {
+      if (key === "dashboard" || key === "flashcards" || key === "settings") {
+        (document.querySelector(".main-content") || window).scrollTo?.({ top: 0, behavior: "smooth" });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (anchor) {
+        document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 60);
+  }
+
+  function homeQuick(kind) {
+    if (kind === "task") {
+      goTab("tasks");
+      window.setTimeout(() => document.querySelector(".task-add-form input")?.focus?.(), 450);
+    } else if (kind === "note") {
+      setActiveSection("dashboard");
+      window.setTimeout(() => document.getElementById("subject-notes")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    } else if (kind === "card") {
+      goTab("flashcards");
+    } else if (kind === "exam") {
+      setActiveSection("dashboard");
+      window.setTimeout(() => document.getElementById("exam-countdown")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    }
+  }
+
+  async function addStarterTask(title, subject) {
+    if (!authToken) return;
+    try {
+      const response = await fetchAuth(`${API_BASE_URL}/api/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ title, subject, duration: 25, priority: "medium" }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.task) throw new Error(data.message || "Could not add the task.");
+      setTasks((current) => [normalizeTask(data.task), ...current]);
+      haptic.add();
+    } catch (error) {
+      setNotice(error.message || "Could not add the task.");
+    }
+  }
+
+  useEffect(() => {
+    if (student?.guest && /sign in|log in/i.test(notice || "")) {
+      setNotice("Create your profile first to use this feature.");
+    }
+  }, [notice, student]);
 
   function retryDataLoads() {
     setReloadVersion((current) => current + 1);
@@ -3402,7 +3587,11 @@ const visibleTasks = sortTasks(
       }
 
       setTasks((current) =>
-        current.map((item) => (item.id === id ? normalizeTask(data.task) : item))
+        current.map((item) =>
+          item.id === id
+            ? data.task ? normalizeTask(data.task) : { ...item, completed: !task.completed }
+            : item
+        )
       );
 
       if (!task.completed) haptic.success();
@@ -4426,6 +4615,17 @@ async function undoDeleteTask() {
       <>
       <OfflineBanner />
       {Capacitor.isNativePlatform() ? (
+        newUserFlowOpen ? (
+          <NewUserFlow
+            onBack={() => setNewUserFlowOpen(false)}
+            register={registerForFlow}
+            google={googleForFlow}
+            invite={inviteForFlow}
+            contacts={findContactsForFlow}
+            onFinish={finishNewUserFlow}
+            guest={startGuest}
+          />
+        ) : (
         <Onboarding
           onLogin={() => {
             setAuthMode("login");
@@ -4435,7 +4635,9 @@ async function undoDeleteTask() {
             setAuthMode("register");
             setShowAuthScreen(true);
           }}
+          onGetStarted={() => setNewUserFlowOpen(true)}
         />
+        )
       ) : (
         <PublicLanding
           theme={settingsTheme}
@@ -4456,7 +4658,29 @@ async function undoDeleteTask() {
 
   // ---------- Main app ----------
   return (
-    <div className="study-app">
+    <div className={`study-app${student?.guest ? " guest-mode" : ""}${IS_NATIVE ? " native-tabs" : ""}`}>
+      {student?.guest && !guestFlowOpen && (
+        <div className="guest-banner" role="region" aria-label="Create your profile">
+          <div className="guest-banner-text">
+            <strong>Create your profile first</strong>
+            <span>Save your progress, tasks and streak.</span>
+          </div>
+          <button type="button" className="guest-banner-btn" onClick={() => { haptic.press?.(); setGuestFlowOpen(true); }}>
+            Create profile
+          </button>
+        </div>
+      )}
+      {guestFlowOpen && (
+        <NewUserFlow
+          startAt="Create profile"
+          onBack={() => setGuestFlowOpen(false)}
+          register={registerForFlow}
+          google={googleForFlow}
+          invite={inviteForFlow}
+          contacts={findContactsForFlow}
+          onFinish={finishNewUserFlow}
+        />
+      )}
       {menuOpen && (
         <button
           className="mobile-overlay"
@@ -4861,7 +5085,7 @@ async function undoDeleteTask() {
           
           </nav>
 
-        <header className="topbar">
+        <header className={`topbar${IS_NATIVE && activeSection === "dashboard" ? " topbar-home-hidden" : ""}`}>
           <div className="topbar-left">
             <button
               className="icon-button mobile-menu"
@@ -4893,6 +5117,26 @@ async function undoDeleteTask() {
         </header>
 
         <div className="dashboard-page-content" hidden={activeSection === "settings" || activeSection === "flashcards" || activeSection === "grades"}>
+        {IS_NATIVE && (
+          <HomeScreen
+            name={student?.displayName || student?.name}
+            guest={Boolean(student?.guest)}
+            online={netOnline}
+            tasks={tasks}
+            goalMinutes={dailyGoalMinutes}
+            todayMinutes={todayFocusMinutes}
+            streak={studyStreak}
+            exam={upcomingExams[0] || null}
+            newUser={newUserInfo}
+            onToggleTask={toggleTask}
+            onSeeAll={() => goTab("tasks")}
+            onQuick={homeQuick}
+            onCreateProfile={() => setGuestFlowOpen(true)}
+            active={activeSection === "dashboard"}
+            onAddStarter={addStarterTask}
+            onOpenGoal={() => goTab("focus")}
+          />
+        )}
         <section className="welcome-banner">
           <span className="wb-grid" aria-hidden="true" />
           <span className="wb-aurora wb-aurora-a" aria-hidden="true" />
@@ -7140,6 +7384,7 @@ async function undoDeleteTask() {
           </span>
         </footer>
       </main>
+      {IS_NATIVE && !guestFlowOpen && <TabBar active={activeSection} onSelect={goTab} />}
       <OfflineBanner />
     </div>
   );

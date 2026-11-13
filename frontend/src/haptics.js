@@ -264,6 +264,7 @@ export function installGlobalHaptics() {
     "pointerdown",
     (event) => {
       if (!enabled) return;
+      if (event.target.closest?.("[data-own-haptics]")) return;
       const el = event.target.closest?.(INTERACTIVE);
       if (!el || el.disabled || el.getAttribute("aria-disabled") === "true") return;
       const now = Date.now();

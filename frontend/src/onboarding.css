@@ -90,3 +90,9 @@
 .ob .ob-h1{letter-spacing:-.015em}.ob .ob-head h2{letter-spacing:-.01em}
 
 .ob .ob-signin{margin-top:4cqw}
+
+.ob-sit.ob-sm{--w:26cqw;left:3cqw}
+.ob .ob-newto{margin:0;text-align:center;font:600 3.9cqw var(--ob-body);color:var(--ob-slate)}
+
+.ob-compact .ob-card{padding:3.2cqw}
+.ob .ob-reserve.ob-r16{padding-top:16cqw}

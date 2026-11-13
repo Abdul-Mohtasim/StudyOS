@@ -185,16 +185,16 @@ const screens=[
   <div class="ob-bottom"><button type="button" class="ob-btn" data-act="next">Next</button></div>`},
  {html:`
   ${nav(5,false)}${head2('Study anywhere','StudyOS keeps working when your connection does not.').replace('class="ob-head"','class="ob-head" style="max-width:none"')}
-  <div class="ob-list" style="margin-top:4cqw">
+  <div class="ob-list ob-compact" style="margin-top:4cqw">
    ${card('offline','Works offline','Keep studying without internet. Your changes are saved on your phone.')}
    ${card('sync','Syncs automatically','When internet returns, everything updates by itself.')}
    ${card('bell','Study reminders','Gentle nudges at the times you choose.')}
    ${card('mail','Email updates','Optional reminders and summaries in your inbox.')}
   </div>
-  <div class="ob-bottom ob-reserve"><button type="button" class="ob-btn" data-act="register">Create my account${sit(P[6],{raise:'phone',noLegs:true,cls:'ob-sit ob-l'})}</button><button type="button" class="ob-btn ob-alt" data-act="login">I already have an account</button></div>`}
+  <div class="ob-bottom ob-reserve ob-r16"><p class="ob-newto">New to StudyOS?</p><button type="button" class="ob-btn" data-act="start">Get started${sit(P[6],{raise:'phone',noLegs:true,cls:'ob-sit ob-l ob-sm'})}</button><button type="button" class="ob-btn ob-alt" data-act="login">I already have an account</button></div>`}
 ];
 
-export default function Onboarding({ onLogin, onRegister }) {
+export default function Onboarding({ onLogin, onRegister, onGetStarted }) {
   const [step, setStep] = useState(0);
   const last = screens.length - 1;
 
@@ -216,6 +216,7 @@ export default function Onboarding({ onLogin, onRegister }) {
     else if (act === "back") setStep((s) => Math.max(0, s - 1));
     else if (act === "skip") setStep(last);
     else if (act === "login") onLogin && onLogin();
+    else if (act === "start") (onGetStarted || onRegister) && (onGetStarted || onRegister)();
     else if (act === "register") onRegister && onRegister();
     window.scrollTo(0, 0);
   }

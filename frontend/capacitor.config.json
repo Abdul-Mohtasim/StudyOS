@@ -5,7 +5,7 @@
   "plugins": {
     "LocalNotifications": {
       "smallIcon": "ic_stat_studyos",
-      "iconColor": "#E5484D",
+      "iconColor": "#57707A",
       "sound": "studyos_notify.mp3"
     }
   }

@@ -233,13 +233,15 @@ html:has(.au-page[data-as-theme="dark"]) { background: #191d23; }
 .au-status { margin: 12px 0 0; color: var(--au-muted); font-size: 0.86rem; text-align: center; }
 .au-error {
   margin: 12px 0 0;
-  padding: 10px 12px;
-  border: 1px solid var(--au-danger);
+  padding: 12px 14px;
+  border: 1px solid var(--au-accent);
   border-radius: 10px;
-  background: var(--au-danger-bg);
-  color: var(--au-danger);
+  background: var(--au-field);
+  color: var(--au-ink);
   font-size: 0.86rem;
   font-weight: 600;
+  line-height: 1.45;
+  text-align: center;
   overflow-wrap: anywhere;
 }
 
@@ -273,6 +275,8 @@ html:has(.au-page[data-as-theme="dark"]) { background: #191d23; }
   padding: 12px;
   border: 1px dashed var(--au-accent);
   border-radius: 10px;
+  background: var(--au-field);
+  color: var(--au-ink);
   font-size: 0.85rem;
   line-height: 1.4;
 }

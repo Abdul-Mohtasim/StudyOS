@@ -230,6 +230,7 @@ export function EmailSettingsCard({ authToken, student }) {
     request("GET", "/api/email/prefs", { token: authToken })
       .then((result) => {
         if (!alive) return;
+        if (!result || !result.prefs) throw new Error("Could not load email settings.");
         setData(result);
         // Keep emails on your local clock: remember this device's time zone.
         const zone = browserTimeZone();
