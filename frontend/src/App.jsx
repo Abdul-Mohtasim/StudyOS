@@ -109,7 +109,8 @@ import {
 import AppSkeleton from "./Skeleton";
 import Onboarding from "./Onboarding";
 import NewUserFlow from "./newflow/NewUserFlow";
-import HomeScreen, { TabBar } from "./HomeScreen";
+import DesignShell from "./design/DesignShell";
+import qrcode from "qrcode-generator";
 import { Share } from "@capacitor/share";
 import { Contacts } from "@capacitor-community/contacts";
 import "./skeleton.css";
@@ -122,6 +123,7 @@ import {
   describeDue,
   isTaskOverdue,
   describeExamCountdown,
+  daysUntil,
   localDateKey,
   sortTasks,
   parseTagInput,
@@ -2324,6 +2326,8 @@ useEffect(() => {
             );
           }
 
+          if (Number.isFinite(data.gems)) setGemsServer(data.gems);
+
           if (localStorage.getItem("studyos_auth_token") !== authToken) {
             return;
           }
@@ -2734,6 +2738,13 @@ useEffect(() => {
     setGuestFlowOpen(false);
     setStudent(d.student);
     setAuthToken(d.token);
+    // Friends picked in the lesson become real friend requests on the server.
+    const picked = Array.isArray(info?.friends) ? info.friends.filter((id) => typeof id === "string").slice(0, 50) : [];
+    if (picked.length) {
+      Promise.all(picked.map((id) => nativeApi("/api/friends/request", "POST", { userId: id }, d.token))).then(() => {
+        if (tokenIsCurrent(d.token)) loadSocial(d.token);
+      });
+    }
     flushOfflineQueue();
     haptic.welcome();
   }
@@ -2764,18 +2775,114 @@ useEffect(() => {
     setMenuOpen(false);
     setShowNotifications(false);
     setNotice("");
+    setGemsServer(null);
+    setSocial(null);
+    setActiveSection("dashboard");
   };
 
   const newUserInfo = React.useMemo(() => {
     try { return JSON.parse(localStorage.getItem("studyos_newuser") || "null"); } catch { return null; }
   }, [student?.id, student?.guest]);
 
+  // ---------- Native app: gems and friends (stored on the server) ----------
+  const [gemsServer, setGemsServer] = useState(null);
+  const [social, setSocial] = useState(null); // { following, followers, leaderboard }
+
+  async function nativeApi(path, method = "GET", body, token = authToken) {
+    if (!token) return { ok: false, data: {} };
+    try {
+      const response = await fetch(`${API_BASE_URL}${path}`, {
+        method,
+        headers: { Authorization: `Bearer ${token}`, ...(body ? { "Content-Type": "application/json" } : {}) },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+      });
+      const data = await response.json().catch(() => ({}));
+      return { ok: response.ok, data };
+    } catch {
+      return { ok: false, data: {} };
+    }
+  }
+
+  function tokenIsCurrent(token) {
+    return localStorage.getItem("studyos_auth_token") === token;
+  }
+
+  async function loadGems(token = authToken) {
+    const { ok, data } = await nativeApi("/api/gems", "GET", null, token);
+    if (ok && Number.isFinite(data.gems) && tokenIsCurrent(token)) setGemsServer(data.gems);
+  }
+
+  async function loadSocial(token = authToken) {
+    const { ok, data } = await nativeApi("/api/friends", "GET", null, token);
+    if (ok && (Array.isArray(data.friends) || Array.isArray(data.following)) && tokenIsCurrent(token)) {
+      setSocial({
+        friends: Array.isArray(data.friends) ? data.friends : data.following,
+        incoming: Array.isArray(data.incoming) ? data.incoming : [],
+        outgoing: Array.isArray(data.outgoing) ? data.outgoing : [],
+        leaderboard: Array.isArray(data.leaderboard) ? data.leaderboard : [],
+      });
+    }
+  }
+
+  // Phones that already earned gems before they were stored on the server hand them over once.
+  async function claimLocalGems(token) {
+    try {
+      if (localStorage.getItem("studyos_gems_claimed") === token.slice(-12)) return;
+      const local = JSON.parse(localStorage.getItem("studyos_newuser") || "null");
+      const amount = Math.floor(Number(local?.gems) || 0);
+      if (amount > 0) await nativeApi("/api/gems/onboarding", "POST", { amount }, token);
+      localStorage.setItem("studyos_gems_claimed", token.slice(-12));
+    } catch { /* ignore */ }
+  }
+
+  useEffect(() => {
+    if (!IS_NATIVE || !authToken || student?.guest) return undefined;
+    let alive = true;
+    (async () => {
+      await claimLocalGems(authToken);
+      if (!alive) return;
+      loadGems(authToken);
+      loadSocial(authToken);
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authToken, student?.guest]);
+
+  // Refresh when the person opens a screen that shows this data.
+  useEffect(() => {
+    if (!IS_NATIVE || !authToken || student?.guest) return;
+    if (activeSection === "profile") { loadSocial(); loadGems(); }
+    else if (activeSection === "dashboard") { loadGems(); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSection]);
+
+  async function addFriendByEmail(email) {
+    if (!authToken || student?.guest) return { ok: false, message: "Create your profile to add friends." };
+    const { ok, data } = await nativeApi("/api/friends/request", "POST", { email });
+    if (!ok) return { ok: false, message: data.message || data.error || "Could not add that friend." };
+    await loadSocial();
+    haptic.success();
+    return { ok: true, message: data.message || "Request sent." };
+  }
+
+  async function respondToFriend(userId, accept) {
+    if (!authToken) return;
+    const { ok, data } = await nativeApi("/api/friends/respond", "POST", { userId, accept: Boolean(accept) });
+    if (ok) {
+      if (accept) { haptic.success(); if (Number.isFinite(data.gems)) setGemsServer(data.gems); }
+      await loadSocial();
+    } else {
+      setNotice(data.message || "Could not answer that request.");
+      await loadSocial();
+    }
+  }
+
   function goTab(key) {
     setActiveSection(key);
     setMenuOpen(false);
     const anchor = { dashboard: null, tasks: "tasks", focus: "focus", subjects: "subjects" }[key];
     window.setTimeout(() => {
-      if (key === "dashboard" || key === "flashcards" || key === "settings") {
+      if (key === "dashboard" || key === "flashcards" || key === "settings" || key === "profile" || key === "notifications") {
         (document.querySelector(".main-content") || window).scrollTo?.({ top: 0, behavior: "smooth" });
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else if (anchor) {
@@ -4234,19 +4341,19 @@ async function undoDeleteTask() {
   }
 
   // Save the custom StudyOS display name without changing the Google name.
-  async function saveDisplayName(event) {
+  async function saveDisplayName(event, explicitName) {
     event.preventDefault();
 
-    const trimmedName = displayNameDraft.trim();
+    const trimmedName = (explicitName ?? displayNameDraft).trim();
 
     if (trimmedName.length < 2 || trimmedName.length > 40) {
       setNotice("Display name must be between 2 and 40 characters.");
-      return;
+      return false;
     }
 
     if (!authToken) {
       setNotice("Please sign in before updating your display name.");
-      return;
+      return false;
     }
 
     setProfileSaving(true);
@@ -4283,9 +4390,11 @@ async function undoDeleteTask() {
       setDisplayNameDraft(data.student.displayName || trimmedName);
       haptic.confirm();
       setNotice("Your StudyOS display name has been updated!");
+      return true;
     } catch (error) {
       console.error("Saving StudyOS display name:", error);
       setNotice(error.message || "Could not update your display name.");
+      return false;
     } finally {
       setProfileSaving(false);
     }
@@ -4656,9 +4765,214 @@ async function undoDeleteTask() {
     );
   }
 
+  // ---------- Native app: data + actions for the design screens ----------
+  const designName = (student?.displayName || student?.name || "").trim();
+  const designData = IS_NATIVE ? (() => {
+    const nameParts = designName.split(/\s+/).filter(Boolean);
+    const ex = upcomingExams[0] || null;
+    let ready = 0;
+    if (ex) {
+      const same = tasks.filter((t) => (t.subject || "").trim().toLowerCase() === ex.subject.trim().toLowerCase());
+      ready = same.length ? Math.round((same.filter((t) => t.completed).length / same.length) * 100) : 0;
+    }
+    const joined = student?.createdAt ? new Date(student.createdAt).getFullYear() : new Date().getFullYear();
+    return {
+      dark: settingsTheme === "dark",
+      online: netOnline,
+      guest: Boolean(student?.guest),
+      first: nameParts[0] || "",
+      last: nameParts.slice(1).join(" "),
+      fullName: designName,
+      email: student?.email || "",
+      username: student?.username || (student?.email ? student.email.split("@")[0] : ""),
+      joinedYear: Number.isFinite(joined) ? joined : new Date().getFullYear(),
+      score: Math.round(todayFocusMinutes),
+      streak: studyStreak,
+      gems: gemsServer ?? 0,
+      goalMin: dailyGoalMinutes,
+      todayMin: todayFocusMinutes,
+      exam: ex ? { subject: ex.subject, days: ex.countdown.days, ready, dateLabel: new Date(`${ex.date}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }) } : null,
+      subjects: subjects.map((x) => x.name),
+      subjectCount: subjects.length,
+      tasksDone: tasks.filter((t) => t.completed).length,
+      hours: Math.round(totalFocusMinutes / 60),
+      tasks: tasks.map((t) => {
+        const days = t.dueDate ? daysUntil(t.dueDate) : null;
+        let when = "today";
+        if (days !== null) when = days < 0 && !t.completed ? "overdue" : days <= 0 ? "today" : days <= 7 ? "week" : "later";
+        return {
+          id: t.id,
+          title: t.title,
+          subject: t.subject,
+          meta: `${t.time}${t.dueDate ? ` · ${describeDue(t.dueDate, t.completed)?.label || ""}` : ""}`,
+          done: t.completed,
+          when,
+        };
+      }),
+      friends: (social?.friends || []).map((u) => ({ id: u.id, name: u.name, gems: u.gems || 0 })),
+      incoming: (social?.incoming || []).map((u) => ({ id: u.id, name: u.name })),
+      notesCount: subjectNotes.length,
+      subjectProgress: subjects
+        .map((x) => {
+          const same = tasks.filter((t) => (t.subject || "").trim().toLowerCase() === x.name.trim().toLowerCase());
+          return { name: x.name, pct: same.length ? Math.round((same.filter((t) => t.completed).length / same.length) * 100) : 0 };
+        })
+        .sort((a, b) => b.pct - a.pct),
+      week: (() => {
+        const now = new Date();
+        const dayStart = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+        const today0 = dayStart(now);
+        const bars = [0, 0, 0, 0, 0, 0, 0];
+        const labels = [];
+        for (let i = 6; i >= 0; i -= 1) labels.push("SMTWTFS"[new Date(today0 - i * 864e5).getDay()]);
+        const bySubject = {};
+        let prev = 0;
+        let sessions = 0;
+        focusSessions.forEach((x) => {
+          const at = new Date(x.completedAt).getTime();
+          if (!Number.isFinite(at)) return;
+          const idx = 6 - Math.floor((today0 - dayStart(new Date(at))) / 864e5);
+          if (idx >= 0 && idx <= 6) {
+            bars[idx] += x.durationMinutes || 0;
+            sessions += 1;
+            if (x.subject) bySubject[x.subject] = (bySubject[x.subject] || 0) + (x.durationMinutes || 0);
+          } else if (idx >= -7 && idx < 0) prev += x.durationMinutes || 0;
+        });
+        const minutes = bars.reduce((n, m) => n + m, 0);
+        const best = Object.entries(bySubject).sort((a, b) => b[1] - a[1])[0];
+        const from = new Date(today0 - 6 * 864e5);
+        const fmt = (d) => d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        const tasksDone = tasks.filter((t) => t.completed && t.completedAt && new Date(t.completedAt).getTime() >= from.getTime()).length;
+        return {
+          range: `${fmt(from)} – ${fmt(now)}`,
+          minutes,
+          bars,
+          labels,
+          sessions,
+          best: best ? best[0] : "",
+          tasks: tasksDone,
+          change: prev > 0 ? Math.round(((minutes - prev) / prev) * 100) : null,
+        };
+      })(),
+    };
+  })() : null;
+
+  const designActions = IS_NATIVE ? {
+    toggleTask: (id, forceDone) => {
+      const t = tasks.find((x) => x.id === id);
+      if (forceDone && t?.completed) return;
+      toggleTask(id);
+    },
+    deleteTask: (id) => deleteTask(id),
+    undoDelete: async (task) => {
+      const old = deletedTasks.find((x) => x.id === task?.id) || tasks.find((x) => x.id === task?.id) || task;
+      if (!old || !authToken) return;
+      try {
+        const response = await fetchAuth(`${API_BASE_URL}/api/tasks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({
+            title: old.title,
+            subject: old.subject || "Personal",
+            duration: parseInt(old.time, 10) || 25,
+            priority: old.priority || "medium",
+            ...(old.dueDate ? { dueDate: old.dueDate } : {}),
+          }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.task) throw new Error(data.message || "Could not restore the task.");
+        setTasks((current) => [normalizeTask(data.task), ...current]);
+        setDeletedTasks((current) => current.filter((x) => x.id !== old.id));
+        setNotice("");
+      } catch (error) {
+        setNotice(error.message || "Could not restore the task.");
+      }
+    },
+    addTask: async ({ title, subject, priority, dueDate }) => {
+      if (!authToken) { setNotice("Create your profile first to save tasks."); return false; }
+      try {
+        const response = await fetchAuth(`${API_BASE_URL}/api/tasks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({
+            title: String(title || "").trim().slice(0, 120),
+            subject: subject || "Personal",
+            duration: 25,
+            priority: PRIORITIES.includes(priority) ? priority : "medium",
+            ...(dueDate ? { dueDate } : {}),
+          }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.task) throw new Error(data.message || "Could not add the task.");
+        setTasks((current) => [normalizeTask(data.task), ...current]);
+        haptic.add();
+        return true;
+      } catch (error) {
+        setNotice(error.message || "Could not add the task.");
+        return false;
+      }
+    },
+    addNote: async ({ title, subject, content }) => {
+      if (!authToken) { setNotice("Create your profile first to save notes."); return false; }
+      try {
+        const response = await fetchAuth(`${API_BASE_URL}/api/notes`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({ title: String(title || "").trim().slice(0, 120), subject: subject || "Personal", content: String(content || "").slice(0, 20000), tags: [] }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.note) throw new Error(data.message || "Could not save your note.");
+        setSubjectNotes((current) => [normalizeNote(data.note), ...current]);
+        haptic.note();
+        return true;
+      } catch (error) {
+        setNotice(error.message || "Could not save your note.");
+        return false;
+      }
+    },
+    saveProfile: (name) => {
+      setDisplayNameDraft(name);
+      return saveDisplayName({ preventDefault() {} }, name);
+    },
+    signOut: () => handleLogout(),
+    invite: () => inviteForFlow(),
+    addFriend: (email) => addFriendByEmail(email),
+    respond: (id, accept) => respondToFriend(id, accept),
+    open: (key) => goTab(key),
+    share: async (text) => {
+      try { await Share.share({ title: "StudyOS", text, dialogTitle: "Share" }); } catch { /* cancelled */ }
+    },
+    saveSession: async ({ minutes, subject }) => {
+      if (!authToken) { setNotice("Create your profile first to save sessions."); return; }
+      try {
+        const response = await fetchAuth(`${API_BASE_URL}/api/focus-sessions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({ durationMinutes: minutes, completedAt: new Date().toISOString(), ...(subject ? { subject } : {}) }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.session) throw new Error(data.message || "Could not save the session.");
+        if (Number.isFinite(data.gems)) setGemsServer(data.gems);
+        const saved = normalizeFocusSession(data.session);
+        setFocusSessions((current) => [saved, ...current.filter((x) => x.id !== saved.id)]);
+        setTotalFocusMinutes((current) => current + saved.durationMinutes);
+        setTotalFocusSessionCount((current) => current + 1);
+        haptic.success();
+      } catch (error) {
+        setNotice(error.message || "Could not save the session.");
+      }
+    },
+    help: () => setNotice("Need help? Email us from the StudyOS website."),
+    toggleTheme: () => saveSettings({ theme: settingsTheme === "dark" ? "light" : "dark" }),
+  } : null;
+
+  function designTab(key) {
+    goTab({ home: "dashboard", tasks: "tasks", focus: "focus", study: "study", profile: "profile" }[key] || "dashboard");
+  }
+
   // ---------- Main app ----------
   return (
-    <div className={`study-app${student?.guest ? " guest-mode" : ""}${IS_NATIVE ? " native-tabs" : ""}`}>
+    <div className={`study-app${student?.guest ? " guest-mode" : ""}${IS_NATIVE ? " native-tabs" : ""}${IS_NATIVE && ["dashboard", "tasks", "focus", "study", "profile", "settings"].includes(activeSection) ? " design-cover" : ""}`}>
       {student?.guest && !guestFlowOpen && (
         <div className="guest-banner" role="region" aria-label="Create your profile">
           <div className="guest-banner-text">
@@ -4852,7 +5166,7 @@ async function undoDeleteTask() {
         </div>
       </aside>
 
-      <main className={`main-content${activeSection === "settings" || activeSection === "flashcards" || activeSection === "grades" ? " settings-page" : ""}`} id="dashboard">
+      <main className={`main-content${activeSection === "settings" || activeSection === "flashcards" || activeSection === "grades" || activeSection === "profile" || activeSection === "notifications" ? " settings-page" : ""}`} id="dashboard">
           <nav className={`mobile-top-nav${menuOpen ? " menu-open" : ""}`} aria-label="Main navigation">
             <a className="mobile-navbar-brand" href="#dashboard" aria-label="StudyOS home">
               <img src={STUDYOS_LOGO_SRC} alt="" />
@@ -5085,7 +5399,7 @@ async function undoDeleteTask() {
           
           </nav>
 
-        <header className={`topbar${IS_NATIVE && activeSection === "dashboard" ? " topbar-home-hidden" : ""}`}>
+        <header className={`topbar${IS_NATIVE && (activeSection === "dashboard" || activeSection === "tasks" || activeSection === "profile" || activeSection === "settings") ? " topbar-home-hidden" : ""}`}>
           <div className="topbar-left">
             <button
               className="icon-button mobile-menu"
@@ -5116,27 +5430,7 @@ async function undoDeleteTask() {
           </div>
         </header>
 
-        <div className="dashboard-page-content" hidden={activeSection === "settings" || activeSection === "flashcards" || activeSection === "grades"}>
-        {IS_NATIVE && (
-          <HomeScreen
-            name={student?.displayName || student?.name}
-            guest={Boolean(student?.guest)}
-            online={netOnline}
-            tasks={tasks}
-            goalMinutes={dailyGoalMinutes}
-            todayMinutes={todayFocusMinutes}
-            streak={studyStreak}
-            exam={upcomingExams[0] || null}
-            newUser={newUserInfo}
-            onToggleTask={toggleTask}
-            onSeeAll={() => goTab("tasks")}
-            onQuick={homeQuick}
-            onCreateProfile={() => setGuestFlowOpen(true)}
-            active={activeSection === "dashboard"}
-            onAddStarter={addStarterTask}
-            onOpenGoal={() => goTab("focus")}
-          />
-        )}
+        <div className="dashboard-page-content" hidden={activeSection === "settings" || activeSection === "flashcards" || activeSection === "grades" || activeSection === "profile" || activeSection === "notifications"}>
         <section className="welcome-banner">
           <span className="wb-grid" aria-hidden="true" />
           <span className="wb-aurora wb-aurora-a" aria-hidden="true" />
@@ -7103,7 +7397,8 @@ async function undoDeleteTask() {
           <GradesPage gr={gradeTracker} subjectNames={subjects.map((subject) => subject.name)} />
         )}
 
-        {activeSection === "settings" && (
+
+        {!IS_NATIVE && activeSection === "settings" && (
           <section
             className="settings-section"
             id="settings"
@@ -7384,7 +7679,12 @@ async function undoDeleteTask() {
           </span>
         </footer>
       </main>
-      {IS_NATIVE && !guestFlowOpen && <TabBar active={activeSection} onSelect={goTab} />}
+      {IS_NATIVE && ["subjects", "flashcards", "grades"].includes(activeSection) && (
+        <button type="button" className="native-back-pill" onClick={() => { haptic.tap?.(); goTab("study"); }}>‹ Back</button>
+      )}
+      {IS_NATIVE && !guestFlowOpen && !newUserFlowOpen && (
+        <DesignShell data={designData} actions={designActions} onTab={designTab} section={activeSection} />
+      )}
       <OfflineBanner />
     </div>
   );

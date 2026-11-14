@@ -1,6 +1,7 @@
 
 const express = require("express");
 const mongoose = require("mongoose");
+const gemsService = require("../services/gems");
 const FocusSession = require("../models/FocusSession");
 const requireAuth = require("../middleware/auth");
 const { parseOptionalSubject } = require("../utils/studyFields");
@@ -179,7 +180,15 @@ router.post("/", async (req, res) => {
       subject: parsedSubject.value,
     });
 
-    return res.status(201).json({ session });
+    // 1 gem per 5 focused minutes (max 10 per session); the daily cap lives in the gems service.
+    let gems = null;
+    try {
+      gems = await gemsService.awardDaily(req.student._id, Math.min(10, Math.floor(durationMinutes / 5)));
+    } catch (gemError) {
+      console.error("Could not award gems:", gemError);
+    }
+
+    return res.status(201).json({ session, gems: gems ? gems.balance : null, gemsAdded: gems ? gems.added : 0 });
   } catch (error) {
     console.error("Could not save focus session:", error);
 

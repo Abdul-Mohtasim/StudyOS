@@ -1,0 +1,89 @@
+/* Native-app Profile + Notifications screens. Tokens come from .hm (home.css). */
+.pf { padding: 4px 2px 40px; }
+.pf-rise { animation: hm-rise .46s cubic-bezier(.2,.9,.3,1) both; animation-delay: calc(var(--i, 0) * 55ms); }
+.pf-hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 6px; }
+.pf-av { border-radius: 50%; object-fit: cover; flex: none; display: block; }
+.pf-av-l { display: grid; place-items: center; font-family: "Space Grotesk", sans-serif; font-weight: 700; color: #1b1e25; }
+.pf-hero .pf-av { animation: pf-pop .6s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes pf-pop { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+.pf-name { font: 700 26px/1.1 "Space Grotesk", "Inter", sans-serif; margin: 12px 0 0; }
+.pf-mail { font: 400 13.5px "Inter", sans-serif; color: var(--hm-mut); margin: 4px 0 0; word-break: break-all; }
+.pf-edit { margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: var(--hm-chip); color: var(--hm-ink); font: 600 13px "Inter", sans-serif; }
+.pf-name-form { width: 100%; margin-top: 12px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.pf-name-form input, .pf-add-row input { width: 100%; height: 46px; border-radius: 14px; border: 2px solid transparent; background: var(--hm-card); color: var(--hm-ink); font: 500 16px "Inter", sans-serif; padding: 0 14px; outline: none; transition: border-color .2s; }
+.pf-name-form input { text-align: center; }
+.pf-name-form input:focus, .pf-add-row input:focus { border-color: var(--hm-mauve); }
+.pf-name-form > div { display: flex; gap: 8px; }
+.pf-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 18px; border-radius: 999px; background: var(--hm-dark); color: #ebe8ea; font: 600 14px "Inter", sans-serif; transition: transform .15s, opacity .2s; }
+html[data-theme="dark"] .pf-btn { background: var(--hm-mauve); color: #1b1e25; }
+.pf-btn.ghost { background: var(--hm-chip); color: var(--hm-ink); }
+html[data-theme="dark"] .pf-btn.ghost { background: var(--hm-chip); color: var(--hm-ink); }
+.pf-btn:active, .pf-circle:active, .pf-menu button:active, .pf-edit:active { transform: scale(.95); }
+.pf-btn:disabled { opacity: .5; }
+.pf-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+.pf-stat { background: var(--hm-card); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; }
+.pf-stat svg { color: var(--hm-mut); margin-bottom: 4px; }
+.pf-stat b { font: 700 26px "Space Grotesk", sans-serif; }
+.pf-stat span { font: 500 12.5px "Inter", sans-serif; color: var(--hm-mut); }
+.pf-card { background: var(--hm-card); border-radius: 22px; padding: 14px 16px; margin-top: 12px; }
+.pf-score { display: flex; align-items: center; gap: 10px; font: 500 14px "Inter", sans-serif; }
+.pf-score b { margin-left: auto; font: 700 22px "Space Grotesk", sans-serif; }
+.pf-h { font: 700 19px "Space Grotesk", sans-serif; margin: 22px 0 0; }
+.pf-title { font: 700 28px "Space Grotesk", sans-serif; margin: 10px 0 4px; }
+.pf-sub { font: 600 12.5px "Inter", sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--hm-mut); margin: 0 0 8px; }
+.pf-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; animation: hm-rise .4s both; }
+.pf-row + .pf-row { border-top: 1px solid var(--hm-track); }
+.pf-grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pf-grow b { font: 600 15px "Inter", sans-serif; overflow-wrap: anywhere; }
+.pf-grow small { font: 400 12.5px "Inter", sans-serif; color: var(--hm-mut); display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.pf-circle { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--hm-chip); color: var(--hm-ink); transition: transform .15s; }
+.pf-circle.ok { background: #2f8f5b; color: #fff; }
+.pf-link { font: 600 13px "Inter", sans-serif; color: var(--hm-mut); padding: 6px 4px; }
+.pf-link.warn { color: #c0443c; }
+.pf-add-row { display: flex; gap: 8px; }
+.pf-add-row .pf-btn { flex: none; }
+.pf-msg { margin: 8px 2px 0; font: 500 13px "Inter", sans-serif; color: var(--hm-mut); }
+.pf-empty { margin: 4px 0; font: 400 14px/1.45 "Inter", sans-serif; color: var(--hm-mut); text-align: center; padding: 8px 0; }
+.pf-cta { display: flex; align-items: center; gap: 12px; }
+.pf-cta > div { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pf-cta b { font: 700 15px "Space Grotesk", sans-serif; }
+.pf-cta span { font: 400 13px "Inter", sans-serif; color: var(--hm-mut); }
+.pf-menu { padding: 6px 8px; }
+.pf-menu button { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 8px; border-radius: 14px; font: 600 15px "Inter", sans-serif; text-align: left; transition: transform .15s, background .2s; }
+.pf-menu button + button { border-top: 1px solid var(--hm-track); border-radius: 0 0 14px 14px; }
+.pf-menu button span { flex: 1; }
+.pf-menu button svg:last-child { color: var(--hm-mut); }
+.pf-menu .danger { color: #c0443c; }
+.pf-menu .danger svg { color: #c0443c !important; }
+.pf-badge { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: #c0443c; color: #fff; font: 700 12px/22px "Inter", sans-serif; font-style: normal; text-align: center; animation: pf-pop .5s cubic-bezier(.2,1.4,.4,1) both; }
+.pf-bar { display: flex; align-items: center; justify-content: space-between; }
+.pf-back { display: inline-flex; align-items: center; gap: 2px; height: 36px; padding: 0 14px 0 8px; border-radius: 999px; background: var(--hm-chip); color: var(--hm-ink); font: 600 14px "Inter", sans-serif; transition: transform .15s; }
+.pf-back:active { transform: scale(.95); }
+.pf-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.pf-note { position: relative; display: flex; gap: 12px; align-items: flex-start; background: var(--hm-card); border-radius: 20px; padding: 14px 14px; }
+.pf-note.unread::before { content: ""; position: absolute; top: 14px; right: 40px; width: 8px; height: 8px; border-radius: 50%; background: #c0443c; }
+.pf-note-ic { flex: none; width: 40px; height: 40px; border-radius: 14px; display: grid; place-items: center; background: var(--hm-chip); color: var(--hm-ink); }
+.pf-note-act { display: flex; gap: 8px; margin-top: 8px; }
+.pf-note-act .pf-btn { height: 34px; padding: 0 14px; font-size: 13px; }
+.pf-ok { color: #2f8f5b !important; font-weight: 600 !important; }
+.pf-time { font: 500 11.5px "Inter", sans-serif; color: var(--hm-mut); white-space: nowrap; padding-top: 2px; }
+.pf-x { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: var(--hm-mut); }
+.pf-note .pf-time { margin-right: 16px; }
+.pf-none { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 28px 18px; }
+.pf-none svg { color: var(--hm-mut); }
+.pf-none b { font: 700 17px "Space Grotesk", sans-serif; }
+.pf-none span { font: 400 13.5px/1.45 "Inter", sans-serif; color: var(--hm-mut); }
+.pf-settings-bar { padding: 4px 2px 8px; }
+.study-app.native-tabs .pf-settings-bar + .settings-section { padding-top: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .pf-rise, .pf-row, .pf-badge, .pf-hero .pf-av { animation: none !important; }
+}
+
+/* Settings page inside the app: same ink / mauve look as Home and Profile. */
+.study-app.native-tabs .settings-section .settings-card { border-radius: 22px; border: 0; box-shadow: none; background: #edebec; }
+html[data-theme="dark"] .study-app.native-tabs .settings-section .settings-card { background: #1f252d; }
+.study-app.native-tabs .settings-section .settings-card-icon { background: #c9b8c3; color: #1b1e25; box-shadow: none; }
+.study-app.native-tabs .settings-section .settings-save-button { background: #1b1e25; color: #ebe8ea; border-radius: 999px; box-shadow: none; }
+html[data-theme="dark"] .study-app.native-tabs .settings-section .settings-save-button { background: #c9b8c3; color: #1b1e25; }
+.study-app.native-tabs .settings-section .settings-switch.is-on { background: #5a707a; }
+.study-app.native-tabs .settings-section .settings-card::before { display: none; }

@@ -12,7 +12,7 @@ const SUBJECT_TIPS = {
   biology: "Draw and label one diagram from memory",
 };
 
-function useCountUp(target, ms = 900) {
+export function useCountUp(target, ms = 900) {
   const [v, setV] = useState(0);
   useEffect(() => {
     const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -92,15 +92,17 @@ export function TabBar({ active, onSelect }) {
     ["tasks", "Tasks", ListChecks],
     ["focus", "Focus", Timer],
     ["flashcards", "Study", Layers],
-    ["settings", "Profile", UserRound],
+    ["profile", "Profile", UserRound],
   ];
-  const idx = Math.max(0, tabs.findIndex(([k]) => k === active));
-  const known = tabs.some(([k]) => k === active);
+  // Settings and Notifications are opened from Profile, so the Profile tab stays lit for them.
+  const lit = active === "settings" || active === "notifications" ? "profile" : active;
+  const idx = Math.max(0, tabs.findIndex(([k]) => k === lit));
+  const known = tabs.some(([k]) => k === lit);
   return (
     <nav className="hm-tabbar" aria-label="Main tabs">
       <span className="hm-tabpill" style={{ transform: `translateX(${idx * 100}%)`, opacity: known ? 1 : 0 }} aria-hidden="true" />
       {tabs.map(([k, label, Icon]) => (
-        <button key={k} type="button" className={`hm-tab${k === active ? " on" : ""}`} onClick={() => onSelect(k)} aria-label={label} aria-current={k === active ? "page" : undefined}>
+        <button key={k} type="button" className={`hm-tab${k === lit ? " on" : ""}`} onClick={() => onSelect(k)} aria-label={label} aria-current={k === lit ? "page" : undefined}>
           <Icon size={21} />
           <span>{label}</span>
         </button>
@@ -110,7 +112,7 @@ export function TabBar({ active, onSelect }) {
 }
 
 export default function HomeScreen({
-  name, guest, online, tasks, goalMinutes, todayMinutes, streak, exam, newUser,
+  name, guest, online, tasks, goalMinutes, todayMinutes, streak, exam, newUser, gems: gemsProp,
   onToggleTask, onSeeAll, onQuick, onCreateProfile, active = true, onAddStarter, onOpenGoal,
 }) {
   const [sheet, setSheet] = useState(false);
@@ -139,7 +141,7 @@ export default function HomeScreen({
   }, [newUser]);
   const recentNew = newUser && Date.now() - (newUser.at || 0) < 3 * 86400000;
   const [starterAdded, setStarterAdded] = useState(() => new Set());
-  const gems = newUser?.gems || 0;
+  const gems = gemsProp ?? newUser?.gems ?? 0;
   const score = newUser?.score ?? null;
 
   useEffect(() => {

@@ -20,6 +20,8 @@ const accountEmailRoutes = require("./routes/accountEmail");
 const emailRoutes = require("./routes/email");
 const cronRoutes = require("./routes/cron");
 const friendRoutes = require("./routes/friends");
+const gemRoutes = require("./routes/gems");
+const notificationRoutes = require("./routes/notifications");
 const {
   connectDatabase,
   isDatabaseConnected,
@@ -135,6 +137,8 @@ app.use("/api/grades", gradeRoutes);
 app.use("/api/email", emailRoutes);
 app.use("/api/cron", cronRoutes);
 app.use("/api/friends", friendRoutes);
+app.use("/api/gems", gemRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.get("/", (req, res) => {
   res.json({

@@ -38,6 +38,16 @@ const studentSchema = new mongoose.Schema(
       maxlength: 2048,
     },
 
+    // Gems are only ever changed by the server (services/gems.js).
+    gems: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    gemsDay: { type: String, default: "" }, // YYYY-MM-DD of the daily counter below
+    gemsToday: { type: Number, default: 0 }, // gems earned from daily-capped sources today
+    onboardingGemsClaimed: { type: Boolean, default: false },
+
     // Email addresses from Google sign-in count as verified (see services/accountEmails.js).
     emailVerified: {
       type: Boolean,
