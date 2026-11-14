@@ -14,7 +14,36 @@ const DEFAULT_SETTINGS = {
   taskNotificationsEnabled: true,
 };
 
-const ALLOWED_FIELDS = Object.keys(DEFAULT_SETTINGS);
+const ALLOWED_FIELDS = [...Object.keys(DEFAULT_SETTINGS), "prefs"];
+const SELECT_FIELDS = "-_id dailyGoalMinutes theme studyRemindersEnabled taskNotificationsEnabled prefs";
+
+// Accepts a small, flat object of preferences. Returns { value } or { error }.
+function cleanPrefs(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return { error: "prefs must be an object." };
+  const keys = Object.keys(input);
+  if (keys.length === 0 || keys.length > 60) return { error: "Send between 1 and 60 preferences." };
+  const out = {};
+  for (const key of keys) {
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(key)) return { error: `Invalid preference name: ${key}.` };
+    const v = input[key];
+    if (key === "subjects") {
+      if (!Array.isArray(v) || v.length > 40) return { error: "subjects must be a list of up to 40." };
+      const list = [];
+      for (const item of v) {
+        const name = typeof item?.name === "string" ? item.name.trim() : "";
+        if (!name || name.length > 100) return { error: "Each subject needs a name of 1-100 characters." };
+        const color = typeof item?.color === "string" && /^#[0-9a-fA-F]{3,8}$/.test(item.color) ? item.color : "";
+        list.push({ name, color });
+      }
+      out.subjects = list;
+    } else if (typeof v === "boolean" || (typeof v === "number" && Number.isFinite(v)) || (typeof v === "string" && v.length <= 100)) {
+      out[key] = v;
+    } else {
+      return { error: `Invalid value for ${key}.` };
+    }
+  }
+  return { value: out };
+}
 
 // GET /api/settings
 // Load the authenticated student's settings.
@@ -23,7 +52,7 @@ router.get("/", async (req, res, next) => {
     const settings = await StudentSettings.findOne({
       student: req.student._id,
     })
-      .select("-_id dailyGoalMinutes theme studyRemindersEnabled taskNotificationsEnabled")
+      .select(SELECT_FIELDS)
       .lean();
 
     return res.status(200).json({
@@ -111,6 +140,12 @@ router.put("/", async (req, res, next) => {
       }
     }
 
+    if (Object.prototype.hasOwnProperty.call(body, "prefs")) {
+      const cleaned = cleanPrefs(body.prefs);
+      if (cleaned.error) return res.status(400).json({ message: cleaned.error });
+      for (const [k, v] of Object.entries(cleaned.value)) updates[`prefs.${k}`] = v;
+    }
+
     const settings = await StudentSettings.findOneAndUpdate(
       { student: req.student._id },
       {
@@ -124,7 +159,7 @@ router.put("/", async (req, res, next) => {
         setDefaultsOnInsert: true,
       }
     )
-      .select("-_id dailyGoalMinutes theme studyRemindersEnabled taskNotificationsEnabled")
+      .select(SELECT_FIELDS)
       .lean();
 
     return res.status(200).json({

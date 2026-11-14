@@ -526,7 +526,7 @@ function ffHtml(){return nx(`<div id="ffb" class="xhm"></div>`)}
 function ffRender(){
  const el=$('#ffb',R),F=X.ff;
  const bubble=t=>`<div class="xz" style="margin:70px 18px 0">${MZ()}<div class="xbub">${t}</div></div>`;
- const err=F.err?`<div class="xerr" style="bottom:170px">${esc(F.err)}</div>`:'';
+ const err=F.err?`<div class="xerr" style="bottom:250px;left:20px;right:20px;text-align:center">${esc(F.err)}</div>`:'';
  if(F.st==='home')el.innerHTML=bubble('Study is better with friends! See who you know is already here, or invite someone.')+err+`<div class="xbar"><button class="xbtn" type="button" data-a="contacts">Find friends from contacts</button><button class="xbtn sec" type="button" data-a="invite">Invite friends</button><button class="xbtn sec" type="button" data-a="later">${F.shared?'Continue':'Maybe later'}</button></div>`;
  else if(F.st==='load')el.innerHTML=bubble('Looking through your contacts...')+`<div style="position:absolute;left:0;right:0;top:300px;text-align:center">${dots}</div>`;
  else if(F.st==='none')el.innerHTML=bubble(F.denied?'Contacts access is off. You can turn it on in your phone settings, or invite friends with a link.':'None of your contacts are on StudyOS yet. Invite them and study together!')+err+`<div class="xbar"><button class="xbtn" type="button" data-a="invite">Invite friends</button><button class="xbtn sec" type="button" data-a="later">${F.shared?'Continue':'Maybe later'}</button></div>`;

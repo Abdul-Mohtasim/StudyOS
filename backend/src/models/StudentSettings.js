@@ -41,6 +41,12 @@ const studentSettingsSchema = new mongoose.Schema(
       default: true,
       required: true,
     },
+
+    // App preferences (toggles, custom subjects...) kept as simple key/value pairs.
+    prefs: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
   },
   {
     timestamps: true,

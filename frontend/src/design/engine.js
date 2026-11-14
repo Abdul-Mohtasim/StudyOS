@@ -841,6 +841,7 @@ const badgeList=()=>{
     ['100 day streak',s>=100,'#c0503e',STAR],['50 notes',n>=50,'#4060b8',()=>BOOK],['20 hours',h>=20,'#e8832a',()=>CLKH]
   ];
 };
+DZ.badgeList=badgeList;
 const badgesHtml=()=>{
   const xp=Math.round((D.hours||0)*60+(D.tasksDone||0)*10),lv=1+Math.floor(xp/1000),cur=xp%1000;
   const list=badgeList(),on=list.filter(b=>b[1]),off=list.filter(b=>!b[1]);
@@ -903,6 +904,134 @@ const wire=(name,html,extra)=>{const k=IDX(name);if(k>=0)SCREENS.splice(k,1);SCR
 wire('Weekly report',weekHtml);wire('Badges',badgesHtml);wire('Exam mode',examHtml);
 }
 
+/* ---- Real Search, Planner, Add subject, Quiz, Progress, Achievement, Reminder, Upload ---- */
+{
+const SUBJ2=()=>(D.subjects&&D.subjects.length?D.subjects:['Biology','Maths','Physics','Chemistry']);
+const pickOn=(sel)=>{const el=$(sel+' .on',R);return el?el.textContent.trim():''};
+const fld=(attr,ph,ml=120)=>`<input class="input dz-in" ${attr} maxlength="${ml}" placeholder="${ph}" style="width:100%;border:0;outline:0;color:#1b1e25;font-weight:500">`;
+const qhead=(icon,title,sub)=>`<div class="qh"><button class="qback" type="button" data-back aria-label="Back">${DZ.BACK}</button><div class="qhi">${DZ.QI[icon]}</div></div><div class="qpt">${title}</div><div class="qps">${sub}</div>`;
+const replace=(name,obj)=>{const k=IDX(name);if(k>=0)SCREENS.splice(k,1);SCREENS.push(Object.assign({t:name,d:name,g:'Quick add pages',spec:{m:'',h:'',s:NS}},obj))};
+const toQuick=()=>go('Quick add');
+const busy=async(btn,fn)=>{btn.disabled=true;hap('press');let ok=false;try{ok=await fn()}catch(_){}btn.disabled=false;return ok};
+
+/* Planner -> /api/planner */
+const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+replace('Planner',{
+  html:()=>{const today=(new Date().getDay()+6)%7;
+    return wrapD(`<div class="pg">${qhead('plan','Planner','Place a study block on your week.')}${DZ.lb('Day')}<div class="chips" data-day style="flex-wrap:wrap">${DAYS.map((d,i)=>`<span class="chip${i===today?' on':''}" data-chip>${d.slice(0,3)}</span>`).join('')}</div>${DZ.lb('What will you study?')}${fld('data-f="title"','e.g. Chapter 5 problem set')}${DZ.lb('Subject')}<div class="chips" data-subj>${DZ.ch(SUBJ2())}</div></div><button class="btn2 qcta" type="button" data-save="plan">Add to planner</button>`)},
+  play(){S.mute=false;enter();R.onclick=async e=>{
+    if(e.target.closest('[data-back]')){hap('light');toQuick();return}
+    const c=e.target.closest('[data-chip]');if(c){$$('[data-chip]',c.parentNode).forEach(x=>x.classList.remove('on'));c.classList.add('on');hap('light');return}
+    const s=e.target.closest('[data-save]');if(!s)return;
+    const title=$('[data-f=title]',R).value.trim();if(!title){toast('Write what you will study');return}
+    const dayShort=pickOn('[data-day]'),day=DAYS.find(d=>d.startsWith(dayShort))||'Monday';
+    const ok=await busy(s,()=>CB.addPlan?CB.addPlan({title,subject:pickOn('[data-subj]')||SUBJ2()[0],day}):false);
+    if(ok){hap('success');toast('Added to your planner');toQuick()}else toast('Could not save. Try again.')}}
+});
+
+/* Add subject -> account preferences */
+const SCOL=['#c7b9c4','#5a707a','#6a58d0','#3d9d5f','#f2a62c','#e0674f'];
+replace('Add subject',{
+  html:()=>wrapD(`<div class="pg">${qhead('subject','Add subject','Every subject gets its own colour.')}${DZ.lb('Name')}${fld('data-f="name"','e.g. Biology',60)}${DZ.lb('Colour')}<div class="qdots" data-col>${SCOL.map((c,i)=>`<i data-chip class="${i===2?'on':''}" data-c="${c}" style="background:${c}"></i>`).join('')}</div></div><button class="btn2 qcta" type="button" data-save="subject">Add subject</button>`),
+  play(){S.mute=false;enter();R.onclick=async e=>{
+    if(e.target.closest('[data-back]')){hap('light');toQuick();return}
+    const c=e.target.closest('[data-chip]');if(c){$$('[data-chip]',c.parentNode).forEach(x=>x.classList.remove('on'));c.classList.add('on');hap('light');return}
+    const s=e.target.closest('[data-save]');if(!s)return;
+    const name=$('[data-f=name]',R).value.trim();if(!name){toast('Give the subject a name');return}
+    if((D.subjects||[]).some(x=>x.toLowerCase()===name.toLowerCase())){toast('You already have that subject');return}
+    const col=($('[data-col] .on',R)||{}).dataset;
+    const ok=await busy(s,()=>CB.addSubject?CB.addSubject({name,color:col&&col.c||''}):false);
+    if(ok){hap('success');toast('Subject added');toQuick()}else toast('Could not save. Try again.')}}
+});
+
+/* Quiz -> your flashcards */
+replace('Quiz',{
+  html:()=>wrapD(`<div class="pg">${qhead('quiz','Quiz','Test yourself with your flashcards.')}<div class="card" style="margin-top:16px;border-radius:22px;font:400 15px/1.5 var(--body)">Your flashcards come back at growing intervals, so what you answer correctly is shown less often. Cards you miss return sooner.</div></div><button class="btn2 qcta" type="button" data-save="quiz">Open flashcards</button>`),
+  play(){S.mute=false;enter();R.onclick=e=>{
+    if(e.target.closest('[data-back]')){hap('light');toQuick();return}
+    if(e.target.closest('[data-save]')){hap('press');if(CB.open)CB.open('flashcards')}}}
+});
+
+/* Progress + Achievement = the real report and badges, back goes to Quick add */
+const reuse=(name,fromName)=>{const src=SCREENS[IDX(fromName)];if(!src)return;replace(name,{html:src.html,play(){src.play.call(this);const old=R.onclick;R.onclick=e=>{if(e.target.closest('.hd span:first-child')){hap('light');toQuick();return}old(e)}}})};
+reuse('Progress','Weekly report');reuse('Achievement','Badges');
+
+/* Reminder = everything saved, in one place (real notes + tasks) */
+let RF='All';
+replace('Reminder',{
+  html:()=>{
+    const notes=(D.notes||[]).map(n=>({k:'Note',t:n.title,s:n.subject}));
+    const tasks=(D.tasks||[]).map(n=>({k:'Task',t:n.title,s:n.subject,done:n.done}));
+    const plans=(D.plans||[]).map(n=>({k:'Plan',t:n.title,s:n.subject,done:n.done,x:n.day}));
+    const all=(RF==='Notes'?notes:RF==='Tasks'?tasks:RF==='Plans'?plans:[...tasks,...plans,...notes]);
+    const rows=all.length?all.slice(0,80).map(x=>`<div class="trow" data-rk="${x.k}" style="height:auto;min-height:56px;margin-top:8px"><div style="flex:1"><div class="tt"${x.done?' style="text-decoration:line-through;opacity:.6"':''}>${esc(x.t)}</div><div class="meta"><span class="tag">${esc(x.s||'Personal')}</span><span class="mt">${x.x?esc(x.x)+' · Plan':x.k}</span></div></div></div>`).join(''):`<div class="card" style="margin-top:14px;border-radius:20px;text-align:center;color:var(--mut);font:600 14px var(--body);padding:18px">Nothing saved yet.</div>`;
+    return wrapD(`<div class="pg">${qhead('remind','Reminder','Everything you saved, in one place.')}<div class="chips" style="margin-top:14px">${['All','Notes','Tasks','Plans'].map(x=>`<span class="chip${x===RF?' on':''}" data-chip data-rf="${x}">${x}</span>`).join('')}</div>${rows}</div>`)},
+  play(){S.mute=false;enter();R.onclick=e=>{
+    if(e.target.closest('[data-back]')){hap('light');toQuick();return}
+    const c=e.target.closest('[data-rf]');if(c){RF=c.dataset.rf;hap('light');go('Reminder',true);return}
+    const r=e.target.closest('[data-rk]');if(r){hap('light');if(r.dataset.rk==='Task')go('Tasks');else if(r.dataset.rk==='Plan'){}else if(CB.open)CB.open('subjects')}}}
+});
+
+/* Upload file -> text files become notes */
+replace('Upload file',{
+  html:()=>wrapD(`<div class="pg">${qhead('upload','Upload file','Import a text file as a note.')}<div class="qdrop" data-pick style="cursor:pointer">${DZ.QI.upload}<b data-pt>Tap to choose a file</b><small>.txt or .md · up to 1 MB</small></div>${DZ.lb('Subject')}<div class="chips" data-subj>${DZ.ch(SUBJ2())}</div><input type="file" data-file accept=".txt,.md,text/plain,text/markdown" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px"></div>`),
+  play(){S.mute=false;enter();R.onclick=async e=>{
+    if(e.target.closest('[data-back]')){hap('light');toQuick();return}
+    const c=e.target.closest('[data-chip]');if(c){$$('[data-chip]',c.parentNode).forEach(x=>x.classList.remove('on'));c.classList.add('on');hap('light');return}
+    if(e.target.closest('[data-pick]')){hap('light');const fi=$('[data-file]',R);fi.value='';fi.onchange=async()=>{
+      const f=fi.files&&fi.files[0];if(!f)return;
+      if(!/\.(txt|md)$/i.test(f.name)&&!/^text\//.test(f.type)){toast('Only text files (.txt, .md) can be imported for now');return}
+      if(f.size>1048576){toast('That file is over 1 MB');return}
+      let text='';try{text=await f.text()}catch(_){toast('Could not read that file');return}
+      if(!text.trim()){toast('That file is empty');return}
+      $('[data-pt]',R).textContent='Saving…';
+      const ok=CB.addNote?await CB.addNote({title:f.name.replace(/\.[^.]+$/,'').slice(0,120),subject:pickOn('[data-subj]')||SUBJ2()[0],content:text.slice(0,20000)}):false;
+      if(ok){hap('success');toast('Imported as a note');toQuick()}else{$('[data-pt]',R).textContent='Tap to choose a file';toast('Could not save. Try again.')}};fi.click()}}}
+});
+
+/* Search: tasks, notes, subjects */
+let SQ='',SFROM='Home';
+const searchRes=()=>{
+  const q=SQ.trim().toLowerCase();
+  if(!q)return `<div class="mut" style="font:400 14px var(--body);margin-top:18px">Search your tasks, notes and subjects.</div>`;
+  const has=s=>String(s||'').toLowerCase().includes(q);
+  const t=(D.tasks||[]).filter(x=>has(x.title)||has(x.subject)).slice(0,20);
+  const n=(D.notes||[]).filter(x=>has(x.title)||has(x.subject)).slice(0,20);
+  const s=(D.subjects||[]).filter(has).slice(0,10);
+  const sec=(h,items)=>items.length?`<div class="sec" style="margin-top:16px">${h}</div>${items.join('')}`:'';
+  const row=(k,title,sub)=>`<div class="trow" data-sk="${k}" style="height:auto;min-height:54px;margin-top:8px"><div style="flex:1"><div class="tt">${esc(title)}</div>${sub?`<div class="meta"><span class="mt">${esc(sub)}</span></div>`:''}</div></div>`;
+  const out=sec('Tasks',t.map(x=>row('task',x.title,x.subject)))+sec('Notes',n.map(x=>row('note',x.title,x.subject)))+sec('Subjects',s.map(x=>row('subject',x,'')));
+  return out||`<div class="mut" style="font:600 14px var(--body);margin-top:18px">No results for “${esc(SQ.trim())}”.</div>`;
+};
+replace('Search',{
+  html:()=>wrapD(`<div class="pg" style="padding-top:40px"><div style="display:flex;align-items:center;gap:14px"><span data-sback style="color:var(--ink)">${ICO.back}</span><div class="card rw" style="flex:1;margin:0;height:46px;border-radius:23px;padding:0 14px;justify-content:flex-start;gap:10px"><span style="color:var(--ink);display:flex">${ICO.search.replace('class="ic"','class="ic" style="width:20px;height:20px"')}</span><input data-sq value="${esc(SQ)}" maxlength="60" placeholder="Search tasks, notes, subjects" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:400 15px var(--body);color:var(--ink)"></div></div><div data-sres>${searchRes()}</div></div>`),
+  play(){S.mute=false;enter();const inp=$('[data-sq]',R);inp.oninput=()=>{SQ=inp.value;$('[data-sres]',R).innerHTML=searchRes()};
+    R.onclick=e=>{
+      if(e.target.closest('[data-sback]')){hap('light');go(SFROM);return}
+      const r=e.target.closest('[data-sk]');if(r){hap('light');if(r.dataset.sk==='task')go('Tasks');else if(CB.open)CB.open('subjects')}}}
+});
+host.addEventListener('click',e=>{
+  const ic=e.target.closest('.tb > svg');
+  if(ic&&SCREENS[CUR]&&['Home','Tasks','Study'].includes(SCREENS[CUR].t)){SFROM=SCREENS[CUR].t;SQ='';hap('light');go('Search')}
+},true);
+}
+
+
+/* Profile: real achievements */
+{
+  const k=IDX('Profile'),ph=SCREENS[k].html;
+  SCREENS[k].html=()=>{
+    let h=ph();
+    const list=DZ.badgeList?DZ.badgeList():[];
+    const on=list.filter(b=>b[1]);
+    const z=h.indexOf('</div></div><div class="pfbar"');
+    if(z>0){
+      const grid=on.length?`<div style="display:grid;grid-template-columns:repeat(3,1fr);row-gap:10px">${on.slice(0,6).map(b=>bdg(hex(b[2],b[3](b[2])),b[0])).join('')}</div>`:`<div style="font:600 14px var(--body);color:#8b98a2">Finish tasks and keep your streak to earn badges.</div>`;
+      h=h.slice(0,z)+'<div class="sec" style="margin-top:18px">Achievements</div>'+grid+h.slice(z);
+    }
+    return h;
+  };
+}
 /* ---- tab bar ---- */
 host.addEventListener('click',e=>{
   const n=e.target.closest('.nv[data-k]');if(!n)return;
@@ -936,8 +1065,11 @@ const ro=new ResizeObserver(layout);ro.observe(host);layout();
 const KEEP=['Home','Tasks','Friends','Study'];
 function refresh(){if(CUR>=0&&KEEP.includes(SCREENS[CUR].t)){const sc=$('.pg',R);const y=sc?sc.scrollTop:0;go(CUR,true)}}
 function togKey(el,i){return 'dz_tg_'+(SCREENS[CUR]?SCREENS[CUR].t:'')+'_'+i}
-function restoreToggles(){try{$$('.ptg,.rtg',R).forEach((el,i)=>{const v=localStorage.getItem(togKey(el,i));if(v==='0')el.classList.add('off');else if(v==='1')el.classList.remove('off')})}catch(_){}}
-host.addEventListener('click',()=>{setTimeout(()=>{try{if(!R)return;$$('.ptg,.rtg',R).forEach((el,i)=>localStorage.setItem(togKey(el,i),el.classList.contains('off')?'0':'1'))}catch(_){}},60)},true);
+const TSEEN={};
+const sKey=k=>k.replace(/[^A-Za-z0-9_-]/g,'').slice(0,64);
+function restoreToggles(){try{$$('.ptg,.rtg',R).forEach((el,i)=>{const k=togKey(el,i),sk=sKey(k);let v=D.prefs&&D.prefs[sk];if(typeof v!=='boolean'){const l=localStorage.getItem(k);v=l===null?undefined:l==='1'}
+  if(v===false)el.classList.add('off');else if(v===true)el.classList.remove('off');TSEEN[sk]=!el.classList.contains('off')})}catch(_){}}
+host.addEventListener('click',()=>{setTimeout(()=>{try{if(!R)return;$$('.ptg,.rtg',R).forEach((el,i)=>{const k=togKey(el,i),sk=sKey(k),on=!el.classList.contains('off');localStorage.setItem(k,on?'1':'0');if(TSEEN[sk]!==on){TSEEN[sk]=on;if(CB.savePref)CB.savePref(sk,on)}})}catch(_){}},60)},true);
 const api={navOnly,refresh,go,screen:()=>SCREENS[CUR]&&SCREENS[CUR].t,names:()=>SCREENS.map(s=>s.t),
   update(d){Object.assign(D,d);refresh()},
   destroy(){RUN++;timers.forEach(clearTimeout);ro.disconnect();host.innerHTML='';host.classList.remove('dz')}};

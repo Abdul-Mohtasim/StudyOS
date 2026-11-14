@@ -164,6 +164,9 @@ function dateKeyLabel(key) {
 const LONG_BREAK_MINUTES = 15;
 const POMODORO_CYCLE = 4;
 
+// The link friends get when you invite them (set VITE_INVITE_URL to your website or store page).
+const INVITE_URL = (import.meta.env.VITE_INVITE_URL || "https://play.google.com/store/apps/details?id=com.studyos.app").trim();
+
 const API_BASE_URL = import.meta.env.DEV
   ? ""
   : (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
@@ -1992,6 +1995,8 @@ useEffect(() => {
           throw new Error("The server did not return your saved settings.");
         }
 
+        setAccountPrefs(saved.prefs && typeof saved.prefs === "object" ? saved.prefs : {});
+
         const minutes = saved.dailyGoalMinutes;
 
         if (Number.isInteger(minutes) && minutes >= 1 && minutes <= 720) {
@@ -2687,15 +2692,17 @@ useEffect(() => {
     haptic.welcome();
   }
   async function inviteForFlow() {
-    const text = "Study with me on StudyOS! It keeps my streak going every day.";
+    const name = (student?.displayName || student?.name || "").trim().split(/\s+/)[0];
+    const text = `${name ? `${name} is` : "I'm"} studying with StudyOS, the app that keeps your study streak going every day. Join me:`;
+    const full = `${text} ${INVITE_URL}`;
     try {
-      await Share.share({ title: "StudyOS", text, dialogTitle: "Invite friends" });
+      await Share.share({ title: "Join me on StudyOS", text, url: INVITE_URL, dialogTitle: "Invite friends" });
       return { ok: true };
     } catch (error) {
       const msg = String(error?.message || "").toLowerCase();
       if (msg.includes("cancel")) return { ok: false, cancelled: true };
-      try { await navigator.clipboard?.writeText(text); } catch { /* ignore */ }
-      return { ok: false, error: "Could not open sharing on this phone." };
+      try { await navigator.clipboard?.writeText(full); return { ok: false, error: "Sharing is not available, so the invite link was copied." }; } catch { /* ignore */ }
+      return { ok: false, error: `Could not open sharing. Send this link: ${INVITE_URL}` };
     }
   }
   // Find phone contacts (by email) who already use StudyOS.
@@ -2718,7 +2725,9 @@ useEffect(() => {
       const data = await response.json();
       return { ok: true, matches: data.matches || [] };
     } catch (error) {
-      return { ok: false, error: "Could not read your contacts." };
+      const reason = String(error?.message || "").toLowerCase();
+      if (reason.includes("denied") || reason.includes("permission")) return { ok: false, denied: true };
+      return { ok: false, error: "Could not read your contacts. You can still invite friends with a link." };
     }
   }
   function finishNewUserFlow(info) {
@@ -2777,6 +2786,7 @@ useEffect(() => {
     setNotice("");
     setGemsServer(null);
     setSocial(null);
+    setAccountPrefs({});
     setActiveSection("dashboard");
   };
 
@@ -2785,6 +2795,7 @@ useEffect(() => {
   }, [student?.id, student?.guest]);
 
   // ---------- Native app: gems and friends (stored on the server) ----------
+  const [accountPrefs, setAccountPrefs] = useState({});
   const [gemsServer, setGemsServer] = useState(null);
   const [social, setSocial] = useState(null); // { following, followers, leaderboard }
 
@@ -3329,6 +3340,11 @@ const visibleTasks = sortTasks(
           color: colors[byName.size % colors.length],
         });
       }
+    });
+    (Array.isArray(accountPrefs.subjects) ? accountPrefs.subjects : []).forEach((item) => {
+      const name = (item?.name || "").trim();
+      if (!name || byName.has(name.toLowerCase())) return;
+      byName.set(name.toLowerCase(), { name, detail: `Your ${name} tasks`, color: "purple", custom: true });
     });
     return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name));
   })();
@@ -4811,6 +4827,9 @@ async function undoDeleteTask() {
       }),
       friends: (social?.friends || []).map((u) => ({ id: u.id, name: u.name, gems: u.gems || 0 })),
       incoming: (social?.incoming || []).map((u) => ({ id: u.id, name: u.name })),
+      prefs: accountPrefs,
+      plans: weeklyPlan.slice(0, 100).map((x) => ({ id: x.id, title: x.title, subject: x.subject, day: x.day, done: x.completed })),
+      notes: subjectNotes.slice(0, 200).map((n) => ({ id: n.id, title: n.title || "Untitled", subject: n.subject || "" })),
       notesCount: subjectNotes.length,
       subjectProgress: subjects
         .map((x) => {
@@ -4963,6 +4982,54 @@ async function undoDeleteTask() {
       }
     },
     help: () => setNotice("Need help? Email us from the StudyOS website."),
+    savePref: async (key, value) => {
+      setAccountPrefs((current) => ({ ...current, [key]: value }));
+      if (!authToken) return;
+      try {
+        await fetchAuth(`${API_BASE_URL}/api/settings`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({ prefs: { [key]: value } }),
+        });
+      } catch { /* kept on this phone; it syncs the next time it is changed */ }
+    },
+    addSubject: async ({ name, color }) => {
+      if (!authToken) { setNotice("Create your profile first to save subjects."); return false; }
+      const custom = (Array.isArray(accountPrefs.subjects) ? accountPrefs.subjects : []).map((x) => ({ name: x.name, color: x.color || "" }));
+      custom.push({ name: String(name).trim().slice(0, 60), color: color || "" });
+      try {
+        const response = await fetchAuth(`${API_BASE_URL}/api/settings`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({ prefs: { subjects: custom } }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Could not save the subject.");
+        setAccountPrefs((current) => ({ ...current, subjects: custom }));
+        return true;
+      } catch (error) {
+        setNotice(error.message || "Could not save the subject.");
+        return false;
+      }
+    },
+    addPlan: async ({ title, subject, day }) => {
+      if (!authToken) { setNotice("Create your profile first to use the planner."); return false; }
+      try {
+        const response = await fetchAuth(`${API_BASE_URL}/api/planner`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({ title: String(title).trim().slice(0, 120), subject, day }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.task) throw new Error(data.message || "Could not save to the planner.");
+        const saved = normalizePlannerTask(data.task);
+        setWeeklyPlan((current) => [saved, ...current.filter((x) => x.id !== saved.id)]);
+        return true;
+      } catch (error) {
+        setNotice(error.message || "Could not save to the planner.");
+        return false;
+      }
+    },
     toggleTheme: () => saveSettings({ theme: settingsTheme === "dark" ? "light" : "dark" }),
   } : null;
 
