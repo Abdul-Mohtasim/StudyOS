@@ -234,6 +234,31 @@ const API_BASE_URL = import.meta.env.DEV
   ? ""
   : (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
+// Native Google Sign-In must be initialized exactly once, and signIn() must wait for it.
+let googleInitPromise = null;
+function ensureGoogleSignInReady() {
+  const clientId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
+  if (!clientId) {
+    return Promise.reject(new Error("Google sign-in is not configured in this build (missing VITE_GOOGLE_CLIENT_ID). Rebuild the app with it set."));
+  }
+  if (!googleInitPromise) {
+    googleInitPromise = GoogleSignIn.initialize({ clientId }).catch((error) => {
+      googleInitPromise = null; // allow a retry on the next tap
+      throw error;
+    });
+  }
+  return googleInitPromise;
+}
+
+// On the phone the app is served from the device itself, so a missing server address
+// would hit the app's own index.html (HTTP 200, not JSON). Catch that early.
+function serverAddressProblem() {
+  if (Capacitor.isNativePlatform() && !API_BASE_URL) {
+    return "This build has no server address (missing VITE_API_URL). Rebuild the app with it set.";
+  }
+  return "";
+}
+
 
 const reminders = [
   {
@@ -969,17 +994,10 @@ useEffect(() => {
     return;
   }
 
-  GoogleSignIn.initialize({
-    clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-  })
-    .then(() => {
-      console.log("Native Google Sign-In initialized.");
-    })
+  ensureGoogleSignInReady()
+    .then(() => setGoogleSignInReady(true))
     .catch((error) => {
-      console.error(
-        "Google Sign-In initialization failed:",
-        error
-      );
+      console.error("Google Sign-In initialization failed:", error);
     });
 }, []);
 
@@ -1957,6 +1975,9 @@ useEffect(() => {
     setAuthError("");
 
     try {
+      const problem = serverAddressProblem();
+      if (problem) throw new Error(problem);
+      await ensureGoogleSignInReady();
       const result = await GoogleSignIn.signIn();
 
       if (!result?.idToken) {
@@ -2064,7 +2085,7 @@ useEffect(() => {
       const text = await response.text();
       let data = {};
       if (text.trim()) {
-        try { data = JSON.parse(text); } catch { return { ok: false, error: `Server returned an invalid response (HTTP ${response.status}).` }; }
+        try { data = JSON.parse(text); } catch { return { ok: false, error: serverAddressProblem() || `Server returned an invalid response (HTTP ${response.status}).` }; }
       }
       if (!response.ok) return { ok: false, error: data.error || data.message || `Request failed (HTTP ${response.status}).` };
       if (!data.student || !data.token) return { ok: false, error: "The server response is missing account data." };
@@ -2085,6 +2106,9 @@ useEffect(() => {
   }
   async function googleForFlow() {
     try {
+      const problem = serverAddressProblem();
+      if (problem) return { ok: false, error: problem };
+      await ensureGoogleSignInReady();
       const result = await GoogleSignIn.signIn();
       if (!result?.idToken) return { ok: false, error: "Google did not return an ID token. Please try again." };
       const r = await flowPost("google", { credential: result.idToken });

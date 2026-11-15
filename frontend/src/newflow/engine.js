@@ -5,7 +5,7 @@ import { haptic } from "../haptics";
 import zunoUrl from "./assets/zuno0.png";
 import introUrl from "./assets/intro.mp3";
 import clip0Url from "./assets/clip0.mp3";
-import lessonUrl from "./assets/lesson_trimmed.mp3";
+import lessonUrl from "./assets/zuno/lesson_trimmed.mp3";
 import "./flow.css";
 import { znHtml, znInit, znStopAll, znSet, znTalk, znFace } from "./zuno";
 
