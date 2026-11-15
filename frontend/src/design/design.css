@@ -678,3 +678,13 @@
 .dz .lgl h5{font:700 16px var(--display);margin:18px 0 6px;color:#f4f2f3}
 .dz .lgl p{font:400 14px/1.55 var(--body);color:#cfd2d6;margin:0}
 .dz .lgl b{color:#f4f2f3}
+
+.dz .n .badge .bimg{position:relative;width:64px;height:76px}
+.dz .n .badge .bimg svg{width:100%;height:100%;display:block}
+.dz .n .badge.lk .bimg svg{filter:grayscale(1) brightness(1.08) opacity(.5)}
+.dz .n .badge .lkc{position:absolute;right:4px;bottom:8px;width:22px;height:22px;border-radius:50%;background:#8b98a2;display:grid;place-items:center;border:2px solid var(--pg,#dfe0e3);font-style:normal}
+.dz .n .badge .bprog{font:600 11px var(--body);color:var(--mut);margin-top:-3px}
+
+/* Urdu / Arabic: right-to-left text inside the left-to-right stage */
+.i18n-rtl .dz :where(div,span,b,small,p,h1,h2,h3,h4,h5,button,label,li,a){unicode-bidi:plaintext}
+.i18n-rtl .np :where(div,span,b,small,p,h1,h2,h3,h4,h5,button,label,li,a){unicode-bidi:plaintext}

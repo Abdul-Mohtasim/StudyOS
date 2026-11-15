@@ -3,6 +3,7 @@
 import { haptic } from "../haptics";
 import "./design.css";
 import qrcode from "qrcode-generator";
+import { LANGS, setLanguage, getLanguage, translate as tr, englishText as en0 } from "../i18n";
 
 export function mountDesign(host, opts = {}) {
 host.classList.add('dz');host.setAttribute('data-own-haptics','');
@@ -627,7 +628,7 @@ const tasksPlay=()=>{
   R.onclick=e=>{
     if(e.target.closest('[data-cb]'))return;
     if(e.target.closest('[data-undo]')){hap('light');if(lastDel&&CB.undoDelete)CB.undoDelete(lastDel);lastDel=null;if(sn)sn.style.display='none';return}
-    const sp=e.target.closest('[data-tseg] span');if(sp){TF=sp.textContent;hap('tick');go('Tasks');return}
+    const sp=e.target.closest('[data-tseg] span');if(sp){TF=en0(sp).trim();hap('tick');go('Tasks');return}
     if(e.target.closest('.fab,[data-addtask]')){hap('light');go('Add task');return}
   };
 };
@@ -730,7 +731,7 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
 {
   const SUBJR=()=>(D.subjects&&D.subjects.length?D.subjects:['Biology','Maths','Physics','Chemistry']);
   const mk=(title,icon,sub,body,cta,kind)=>{const p=DZ.qpage(title,icon,sub,body,cta,kind);return p};
-  const pick=(sel)=>{const el=$(sel+' .on',R);return el?el.textContent.trim():''};
+  const pick=(sel)=>{const el=$(sel+' .on',R);return el?en0(el).trim():''};
   const addTaskPage=()=>{
     const p=mk('Add task','task','Write it down so you can tick it off.','','Add task','task');
     const oh=p.html;
@@ -798,11 +799,12 @@ function tick(){
   if(F.left<=0){finish();return}
   if(onFocusScreen())paintTimer();
 }
-function start(){if(F.running)return;F.running=true;F.end=Date.now()+F.left*1000;clearInterval(tickId);tickId=setInterval(tick,250)}
-function pause(){F.left=Math.max(0,(F.end-Date.now())/1000);F.running=false;clearInterval(tickId)}
-function stop(){clearInterval(tickId);F.running=false;setMode('focus',F.len)}
+function start(){if(F.running)return;F.running=true;F.end=Date.now()+F.left*1000;clearInterval(tickId);tickId=setInterval(tick,250);
+  if(CB.timerAlert){const foc=F.mode==='focus';CB.timerAlert({at:F.end,title:tr(foc?'Focus round complete':'Break over'),body:tr(foc?(F.round>=4?'Great work! Take a 15 minute break.':'Great work! Take a 5 minute break.'):'Ready for your next focus round?')})}}
+function pause(){F.left=Math.max(0,(F.end-Date.now())/1000);F.running=false;clearInterval(tickId);if(CB.timerCancel)CB.timerCancel()}
+function stop(){clearInterval(tickId);F.running=false;setMode('focus',F.len);if(CB.timerCancel)CB.timerCancel()}
 function finish(){
-  clearInterval(tickId);F.running=false;
+  clearInterval(tickId);F.running=false;if(CB.timerCancel)CB.timerCancel();
   const was=F.mode;
   hap('success');
   if(was==='focus'){
@@ -838,18 +840,27 @@ const focusPlay=()=>{
 SCREENS.push({t:'Focus',d:'Real focus timer',spec:{m:'',h:'',s:NS},html:focusHtml,play:focusPlay});
 
 /* badges from real numbers */
+const BSVG=import.meta.glob('./badges/*.svg',{query:'?raw',import:'default',eager:true});
+const badgeArt=k=>BSVG['./badges/'+k+'.svg']||'';
+const LOCKI='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>';
+const bdg2=(b,showProg)=>`<div class="badge${b[1]?'':' lk'}"><div class="bimg">${badgeArt(b[2])}${b[1]?'':`<i class="lkc">${LOCKI}</i>`}</div><span>${b[0]}</span>${!b[1]&&showProg?`<small class="bprog">${Math.min(b[3],b[4])>=1?Math.floor(Math.min(b[3],b[4])):0} / ${b[4]}</small>`:''}</div>`;
 const badgeList=()=>{
-  const t=D.tasksDone||0,s=D.streak||0,h=D.hours||0,n=D.notesCount||0;
+  const t=D.tasksDone||0,s=Math.max(D.streak||0,D.bestStreak||0),h=D.hours||0,n=D.notesCount||0,ss=D.sessionsCount||0;
+  const L=(label,key,cur,need)=>[label,cur>=need,key,cur,need];
   return [
-    ['First 10 tasks',t>=10,'#2e8059',CKB],['7 day streak',s>=7,'#5f7482',CKB],['30 day streak',s>=30,'#e1a63b',STAR],
-    ['100 day streak',s>=100,'#c0503e',STAR],['50 notes',n>=50,'#4060b8',()=>BOOK],['20 hours',h>=20,'#e8832a',()=>CLKH]
+    L('First task','first-task',t,1),L('10 tasks','10-tasks',t,10),L('50 tasks','50-tasks',t,50),L('100 tasks','100-tasks',t,100),
+    L('3 day streak','3-day-streak',s,3),L('7 day streak','7-day-streak',s,7),L('14 day streak','14-day-streak',s,14),L('30 day streak','30-day-streak',s,30),L('100 day streak','100-day-streak',s,100),
+    L('First session','first-session',ss,1),L('10 sessions','10-sessions',ss,10),
+    L('5 hours','5-hours',h,5),L('20 hours','20-hours',h,20),L('50 hours','50-hours',h,50),
+    L('First note','first-note',n,1),L('10 notes','10-notes',n,10)
   ];
 };
 DZ.badgeList=badgeList;
+DZ.bdg2=bdg2;
 const badgesHtml=()=>{
   const xp=Math.round((D.hours||0)*60+(D.tasksDone||0)*10),lv=1+Math.floor(xp/1000),cur=xp%1000;
   const list=badgeList(),on=list.filter(b=>b[1]),off=list.filter(b=>!b[1]);
-  const one=b=>b[1]?bdg(hex(b[2],b[3](b[2])),b[0]):bdg(hex('#c8c6c8',b[3]('#3d5163')),b[0],1);
+  const one=b=>bdg2(b,true);
   return wrapD(`<div class="pg" style="padding-top:38px">${head('Badges',ICO.back)}
 <div class="card dkc" style="border-radius:26px;padding:16px 18px"><div class="rw" style="align-items:baseline"><b style="font:700 34px var(--display);color:#c9b8c3">Level ${lv}</b><span style="font:600 14px var(--body);color:#cfd2d6">${cur} / 1000 XP</span></div><div class="bar2" style="background:#3c4450;margin:10px 0 8px;height:10px;border-radius:5px"><i style="width:${cur/10}%;background:#c9b8c3;border-radius:5px"></i></div><div style="font:400 13px var(--body);color:#cfd2d6">${1000-cur} XP to Level ${lv+1}</div></div>
 <div class="rw" style="margin-top:16px"><b style="font:700 22px var(--display)">Unlocked</b><span class="mut" style="font:600 13px var(--body)">${on.length} of ${list.length}</span></div>
@@ -867,7 +878,7 @@ const weekHtml=()=>{
 <div class="bars" style="display:flex;align-items:flex-end;gap:8px;height:96px;margin-top:14px">${w.bars.map((m,i)=>`<i style="flex:1;height:${Math.max(6,Math.round(m/mx*96))}px;border-radius:9px;background:${i===6?'#ede9ea':'#c9b8c3'}"></i>`).join('')}</div>
 <div style="display:flex;gap:8px;margin-top:8px">${w.labels.map(l=>`<span style="flex:1;text-align:center;font:700 12px var(--body);color:#bfc4c9">${l}</span>`).join('')}</div></div>
 <div class="sw2"><div class="card"><b>${w.sessions||0}</b><small>Sessions</small></div><div class="card"><b style="font-size:19px;line-height:1.35">${esc(w.best||'—')}</b><small>Best subject</small></div><div class="card"><b>${streak} ${streak===1?'day':'days'}</b><small>Streak</small></div><div class="card"><b>${w.tasks||0}</b><small>Tasks done</small></div></div>
-<div class="card rw" style="justify-content:flex-start;gap:14px;border-radius:24px"><div style="width:44px;height:50px">${hex(streak>=7?'#e1a63b':'#c8c6c8',STAR(streak>=7?'#fff':'#3d5163'))}</div><div><div style="font:700 16px var(--body)">${streak>=7?'Badge unlocked: 7 day streak':'Next badge: 7 day streak'}</div><div class="mut" style="font:400 13px var(--body)">${streak>=7?'Studied '+streak+' days in a row':'Study 7 days in a row to earn it'}</div></div></div>
+${(()=>{const bs=Math.max(streak,D.bestStreak||0),nx=[3,7,14,30,100].find(n=>n>bs);const k=nx?nx+'-day-streak':'100-day-streak';return `<div class="card rw" style="justify-content:flex-start;gap:14px;border-radius:24px"><div class="badge${nx?' lk':''}" style="flex:none"><div class="bimg" style="width:44px;height:52px">${badgeArt(k)}</div></div><div><div style="font:700 16px var(--body)">${nx?'Next badge: '+nx+' day streak':'All streak badges unlocked'}</div><div class="mut" style="font:400 13px var(--body)">${nx?'Study '+nx+' days in a row to earn it':'Amazing consistency'}</div></div></div>`})()}
 <div class="btn2" data-share style="margin-top:12px;border-radius:24px">Share my week</div></div>`);
 };
 const examHtml=()=>{
@@ -885,11 +896,11 @@ ${sp.length?`<div class="card" style="border-radius:22px;display:grid;gap:10px">
 };
 const studyHtml=()=>{
   const w=D.week||{minutes:0},ex=D.exam,nb=badgeList().filter(b=>b[1]).length;
-  const row=(attr,t,m)=>`<div class="trow" ${attr} style="height:auto;min-height:62px;margin-top:8px;cursor:pointer"><div style="flex:1"><div class="tt">${t}</div><div class="meta"><span class="mt">${m}</span></div></div><span style="color:var(--mut);font:700 20px var(--body)">›</span></div>`;
+  const row=(attr,t,m)=>`<div class="trow" ${attr} style="height:auto;min-height:62px;margin-top:8px;cursor:pointer"><div style="flex:1"><div class="tt" data-tr>${t}</div><div class="meta"><span class="mt">${m}</span></div></div><span style="color:var(--mut);font:700 20px var(--body)">›</span></div>`;
   return wrapD(`<div class="pg">${tb()}<div class="ttl" style="margin-top:12px">Study</div><div class="sub2">Reports, exams and your study tools.</div>
 <div style="margin-top:8px">${row('data-sgo="Weekly report"','Weekly report',fmtM(w.minutes)+' studied this week')}
 ${row('data-sgo="Exam mode"','Exam mode',ex?esc(ex.subject)+' · '+(ex.days===0?'today':ex.days+(ex.days===1?' day':' days'))+' · '+ex.ready+'% ready':'No exam set')}
-${row('data-sgo="Badges"','Badges',nb+' of 6 unlocked')}
+${row('data-sgo="Badges"','Badges',nb+' of '+badgeList().length+' unlocked')}
 ${row('data-open="flashcards"','Flashcards','Review and create cards')}
 ${row('data-open="subjects"','Notes and subjects',(D.subjectCount||0)+' '+((D.subjectCount||0)===1?'subject':'subjects'))}
 ${row('data-open="grades"','Grades','Track your marks')}</div>
@@ -911,7 +922,7 @@ wire('Weekly report',weekHtml);wire('Badges',badgesHtml);wire('Exam mode',examHt
 /* ---- Real Search, Planner, Add subject, Quiz, Progress, Achievement, Reminder, Upload ---- */
 {
 const SUBJ2=()=>(D.subjects&&D.subjects.length?D.subjects:['Biology','Maths','Physics','Chemistry']);
-const pickOn=(sel)=>{const el=$(sel+' .on',R);return el?el.textContent.trim():''};
+const pickOn=(sel)=>{const el=$(sel+' .on',R);return el?en0(el).trim():''};
 const fld=(attr,ph,ml=120)=>`<input class="input dz-in" ${attr} maxlength="${ml}" placeholder="${ph}" style="width:100%;border:0;outline:0;color:#1b1e25;font-weight:500">`;
 const qhead=(icon,title,sub)=>`<div class="qh"><button class="qback" type="button" data-back aria-label="Back">${DZ.BACK}</button><div class="qhi">${DZ.QI[icon]}</div></div><div class="qpt">${title}</div><div class="qps">${sub}</div>`;
 const replace=(name,obj)=>{const k=IDX(name);if(k>=0)SCREENS.splice(k,1);SCREENS.push(Object.assign({t:name,d:name,g:'Quick add pages',spec:{m:'',h:'',s:NS}},obj))};
@@ -1030,7 +1041,7 @@ host.addEventListener('click',e=>{
     const on=list.filter(b=>b[1]);
     const z=h.indexOf('</div></div><div class="pfbar"');
     if(z>0){
-      const grid=on.length?`<div style="display:grid;grid-template-columns:repeat(3,1fr);row-gap:10px">${on.slice(0,6).map(b=>bdg(hex(b[2],b[3](b[2])),b[0])).join('')}</div>`:`<div style="font:600 14px var(--body);color:#8b98a2">Finish tasks and keep your streak to earn badges.</div>`;
+      const grid=on.length?`<div style="display:grid;grid-template-columns:repeat(3,1fr);row-gap:10px">${on.slice(0,6).map(b=>DZ.bdg2(b,false)).join('')}</div>`:`<div style="font:600 14px var(--body);color:#8b98a2">Finish tasks and keep your streak to earn badges.</div>`;
       h=h.slice(0,z)+'<div class="sec" style="margin-top:18px">Achievements</div>'+grid+h.slice(z);
     }
     return h;
@@ -1152,10 +1163,15 @@ ${row(I.eye,'Contacts','If you choose Find friends from contacts, email addresse
 
   /* Language */
   set('Language',{d:'App language',
-    html:()=>scr('Language',`<div class="sill">${grab('Language',ILLRE).replace(/^<div class="sill"[^>]*>|<\/div>$/g,'').replace(/<rect x="30" y="58"[^>]*\/><path d="M42 84[^>]*\/><text[^>]*>[^<]*<\/text>/,'')}</div><div class="sh1">App language</div><div class="sh2">StudyOS is available in English for now.</div>
-<div class="sgrp" style="margin-top:14px"><div class="sit rd on"><div><span>English</span><small>Selected</small></div><span class="rad"></span></div></div>
-<div class="snote">More languages will be added in future updates.</div>`),
-    play(){S.mute=false;rise();baseBack()}});
+    html:()=>{const cur=getLanguage();return scr('Language',`<div class="sill">${grab('Language',ILLRE).replace(/^<div class="sill"[^>]*>|<\/div>$/g,'').replace(/<rect x="30" y="58"[^>]*\/><path d="M42 84[^>]*\/><text[^>]*>[^<]*<\/text>/,'')}</div><div class="sh1">App language</div><div class="sh2">Choose the language for menus, buttons and messages.</div>
+<div class="sgrp" style="margin-top:14px">${LANGS.map(l=>`<div class="sit rd${l.code===cur?' on':''}" data-lang="${l.code}"><div><span data-notr>${l.native}</span></div><span class="rad"></span></div>`).join('')}</div>`)},
+    play(){S.mute=false;rise();
+      R.onclick=e=>{
+        if(e.target.closest('[data-back]')){hap('light');go(IDX('Settings'));return}
+        const r=e.target.closest('[data-lang]');if(!r)return;
+        const code=r.dataset.lang;if(code===getLanguage())return;
+        $$('[data-lang]',R).forEach(x=>x.classList.toggle('on',x===r));hap('medium');
+        setLanguage(code);if(CB.savePref)CB.savePref('lang',code);toast('Language changed')}}});
 
   /* Themes */
   set('Themes',{d:'Light or dark',
@@ -1171,7 +1187,8 @@ ${row(I.eye,'Contacts','If you choose Find friends from contacts, email addresse
   {
     const contact=()=>D.supportEmail?`<b>${esc(D.supportEmail)}</b>`:'the support contact on the StudyOS store page';
     const sec=(h,p)=>`<h5>${h}</h5><p>${p}</p>`;
-    const TERMS=()=>`<div class="lgl"><p style="color:#9aa6b0">Last updated: November 15, 2026</p>`+
+    const NOTE=()=>getLanguage()!=='en'?'<p style="color:#9aa6b0;margin-bottom:6px">The full text of this page is shown in English.</p>':'';
+    const TERMS=()=>`<p style="color:#9aa6b0">Last updated: November 15, 2026</p>${NOTE()}<div class="lgl" data-notr>`+
       sec('Using StudyOS','StudyOS is a study planner for tasks, notes, flashcards, grades, focus timers and friends. By creating an account or using the app you agree to these terms. If you do not agree, please do not use the app.')+
       sec('Your account','You are responsible for what happens under your account and for keeping your password safe. Give us true information and tell us if you think someone else is using your account. You must be old enough to use online services where you live, or have a parent or guardian agree for you.')+
       sec('Your content','Tasks, notes and other things you add stay yours. You let StudyOS store and show them to you, and to friends only where the app says so (for example your name and focus minutes on a leaderboard). Do not add anything illegal, harmful or that belongs to someone else.')+
@@ -1179,7 +1196,7 @@ ${row(I.eye,'Contacts','If you choose Find friends from contacts, email addresse
       sec('Keeping the app working','We work to keep StudyOS available and your data safe, but an app can have bugs or downtime. Offline changes are saved on your phone and sent later, so please keep your phone online now and then. Do not try to break, copy or misuse the app or its servers.')+
       sec('Ending your account','You can delete your account any time in Settings, Privacy, Delete my account. This removes your data permanently. We may suspend accounts that break these terms.')+
       sec('Changes and contact','We may update these terms and will change the date above when we do. Questions: '+contact()+'.')+`</div>`;
-    const PRIV=()=>`<div class="lgl"><p style="color:#9aa6b0">Last updated: November 15, 2026</p>`+
+    const PRIV=()=>`<p style="color:#9aa6b0">Last updated: November 15, 2026</p>${NOTE()}<div class="lgl" data-notr>`+
       sec('What we collect','Your name, email and profile picture if you sign in with Google. Your password is stored only as a one way scrambled value, never as plain text. The study data you create: tasks, notes, flashcards, grades, exams, planner items, focus sessions, subjects and your settings. Friends, requests and gems. Sign in device details (a device label and IP address) so we can warn you about a new device.')+
       sec('How we use it','To run the app, sync your data between your devices, show your streak and progress, and send emails you need: verification, welcome, new device alerts, and reminders or reports you leave switched on. We do not show ads and we do not sell your data.')+
       sec('What friends can see','Friends can see your name, picture, gems and focus minutes. They cannot see your tasks, notes, grades or email.')+
@@ -1238,7 +1255,7 @@ ${row(I.eye,'Contacts','If you choose Find friends from contacts, email addresse
     SCREENS[k].html=()=>(SCREENS[IDX('Profile')].html().replace(/<\/div><\/div>$/,'')+overlay()).replace(/(<div class="qimg">)[\s\S]*?<\/svg>/,'$1'+realQr()).replace('Friends scan this to add you on StudyOS.','Friends scan this to get StudyOS.').replace(/<button type="button" data-sh><svg(?:(?!<\/button>)[\s\S])*?Save<\/button>/,'');
     SCREENS[k].play=()=>{qp();const old=R.onclick;R.onclick=e=>{
       const b=e.target.closest('[data-sh]');
-      if(b){const txt=(b.textContent||'').trim();
+      if(b){const txt=en0(b).trim();
         if(/Copy/.test(txt)){try{navigator.clipboard.writeText(D.inviteUrl||'').then(()=>toast('Link copied')).catch(()=>toast('Could not copy'))}catch(_){toast('Could not copy')}hap('medium');return}
         if(/Share/.test(txt)){hap('medium');if(CB.invite)CB.invite();return}}
       old(e)}}}

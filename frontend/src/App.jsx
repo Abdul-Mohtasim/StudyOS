@@ -121,7 +121,9 @@ import { App as CapApp } from "@capacitor/app";
 import { Contacts } from "@capacitor-community/contacts";
 import "./skeleton.css";
 import { ForgotPasswordModal, EmailSettingsCard, EmailNoteButton, EmailFlashcardsButton } from "./EmailFeatures";
-import { loadReminderPrefs, saveReminderPrefs, syncReminders } from "./reminders";
+import { loadReminderPrefs, saveReminderPrefs, syncReminders, reminderPermission, requestReminderPermission } from "./reminders";
+import { LocalNotifications } from "@capacitor/local-notifications";
+import { setLanguage, getLanguage } from "./i18n";
 import {
   PRIORITIES,
   PRIORITY_LABEL,
@@ -172,6 +174,61 @@ const POMODORO_CYCLE = 4;
 
 // The link friends get when you invite them (set VITE_INVITE_URL to your website or store page).
 const INVITE_URL = (import.meta.env.VITE_INVITE_URL || "https://play.google.com/store/apps/details?id=com.studyos.app").trim();
+
+// Focus timer alert: a notification that fires when the round or break ends, even if the app is closed.
+const TIMER_NOTIFY_ID = 9001;
+let timerChannelReady = false;
+let timerPermissionAsked = false;
+async function ensureTimerChannel() {
+  if (timerChannelReady) return;
+  try {
+    await LocalNotifications.createChannel({
+      id: "studyos-timer",
+      name: "Focus timer",
+      description: "Tells you when a focus round or break ends",
+      importance: 4,
+      sound: "studyos_notify.mp3",
+      vibration: true,
+      visibility: 1,
+    });
+    timerChannelReady = true;
+  } catch {
+    /* the default channel is used */
+  }
+}
+async function scheduleTimerAlert({ at, title, body }) {
+  if (!IS_NATIVE || !Number.isFinite(at) || at <= Date.now()) return;
+  try {
+    if ((await reminderPermission()) !== "granted") {
+      if (timerPermissionAsked) return;
+      timerPermissionAsked = true;
+      const asked = await requestReminderPermission();
+      if (asked.state !== "granted") return;
+    }
+    await ensureTimerChannel();
+    await LocalNotifications.schedule({
+      notifications: [{
+        id: TIMER_NOTIFY_ID,
+        title,
+        body,
+        channelId: "studyos-timer",
+        smallIcon: "ic_stat_studyos",
+        schedule: { at: new Date(at), allowWhileIdle: true },
+      }],
+    });
+  } catch {
+    /* the timer still works inside the app */
+  }
+}
+async function cancelTimerAlert() {
+  if (!IS_NATIVE) return;
+  try {
+    await LocalNotifications.cancel({ notifications: [{ id: TIMER_NOTIFY_ID }] });
+    await LocalNotifications.removeDeliveredNotifications({ notifications: [{ id: TIMER_NOTIFY_ID }] });
+  } catch {
+    /* nothing to cancel */
+  }
+}
 
 const API_BASE_URL = import.meta.env.DEV
   ? ""
@@ -930,6 +987,7 @@ useEffect(() => {
   // ---------- Tasks ----------
   const [tasks, setTasks] = useState([]);
   const firstLoadDoneRef = useRef(false);
+  const [bestStreak, setBestStreak] = useState(0);
   const [tasksLoading, setTasksLoading] = useState(false);
   const [tasksError, setTasksError] = useState("");
   const [newTask, setNewTask] = useState("");
@@ -2153,6 +2211,10 @@ useEffect(() => {
 
   // ---------- Native app: gems and friends (stored on the server) ----------
   const [accountPrefs, setAccountPrefs] = useState({});
+  useEffect(() => {
+    const wanted = accountPrefs && typeof accountPrefs.lang === "string" ? accountPrefs.lang : "";
+    if (wanted && wanted !== getLanguage()) setLanguage(wanted);
+  }, [accountPrefs]);
 
   // Android back button: close things step by step instead of leaving the app.
   const backState = useRef({});
@@ -2547,6 +2609,31 @@ useEffect(() => {
     saveReminderPrefs(reminderPrefs);
     syncReminders(reminderPrefs, { streak: studyStreak, studiedToday });
   }, [authToken, reminderPrefs, studyStreak, studiedToday]);
+
+  // The best streak ever reached on this phone, so streak badges stay earned after a streak ends.
+  useEffect(() => {
+    const uid = student?.id || student?._id;
+    if (!uid) {
+      setBestStreak(0);
+      return;
+    }
+    const key = `studyos-best-streak:${uid}`;
+    let saved = 0;
+    try {
+      saved = Number(localStorage.getItem(key)) || 0;
+    } catch {
+      saved = 0;
+    }
+    const best = Math.max(saved, studyStreak);
+    if (best !== saved) {
+      try {
+        localStorage.setItem(key, String(best));
+      } catch {
+        /* ignore */
+      }
+    }
+    setBestStreak(best);
+  }, [student?.id, student?._id, studyStreak]);
 
   // Activity for the last seven calendar days.
   const weeklyActivity = Array.from({ length: 7 }, (_, index) => {
@@ -4191,12 +4278,16 @@ async function undoDeleteTask() {
       joinedYear: Number.isFinite(joined) ? joined : new Date().getFullYear(),
       score: Math.round(todayFocusMinutes),
       streak: studyStreak,
+      bestStreak,
       gems: gemsServer ?? 0,
       goalMin: dailyGoalMinutes,
       todayMin: todayFocusMinutes,
       exam: ex ? { subject: ex.subject, days: ex.countdown.days, ready, dateLabel: new Date(`${ex.date}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }) } : null,
       subjects: subjects.map((x) => x.name),
       subjectCount: subjects.length,
+      sessionsCount: focusSessions.length,
+      flashcardCount: Array.isArray(flashcards?.cards) ? flashcards.cards.length : 0,
+      gradeCount: Array.isArray(gradeTracker?.grades) ? gradeTracker.grades.length : 0,
       tasksDone: tasks.filter((t) => t.completed).length,
       hours: Math.round(totalFocusMinutes / 60),
       tasks: tasks.map((t) => {
@@ -4443,6 +4534,8 @@ async function undoDeleteTask() {
         return false;
       }
     },
+    timerAlert: scheduleTimerAlert,
+    timerCancel: cancelTimerAlert,
     toggleTheme: () => saveSettings({ theme: settingsTheme === "dark" ? "light" : "dark" }),
     setTheme: (mode) => { if (mode !== settingsTheme && (mode === "dark" || mode === "light")) saveSettings({ theme: mode }); },
     syncNow: async () => {

@@ -7,6 +7,7 @@ import { EmailLinkScreen } from "./EmailFeatures";
 import { installGlobalHaptics } from "./haptics";
 import "./perf.css";
 import { installOfflineLayer } from "./offline";
+import { initLanguage } from "./i18n";
 
 // Offline mode: cache API reads and queue edits made without a connection.
 installOfflineLayer(import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL || "").replace(/\/+$/, ""));
@@ -47,6 +48,7 @@ if (emailLinkKind) {
   window.history.replaceState(null, "", window.location.pathname);
 }
 
+initLanguage();
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     {emailLinkKind ? (

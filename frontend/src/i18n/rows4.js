@@ -1,0 +1,17 @@
+export const ROWS4 = [
+  ["Themes", "थीम", "تھیمز", "السمات", "Temas", "Thèmes"],
+  ["DONE", "हो गया", "مکمل", "تم", "LISTO", "TERMINÉ"],
+  ["Smart scheduling", "स्मार्ट शेड्यूलिंग", "اسمارٹ شیڈولنگ", "الجدولة الذكية", "Programación inteligente", "Planification intelligente"],
+  ["Streak Freeze Used", "स्ट्रीक फ्रीज़ इस्तेमाल हुआ", "اسٹریک فریز استعمال ہوا", "تم استخدام تجميد السلسلة", "Congelación de racha usada", "Gel de série utilisé"],
+  ["Streak Saver", "स्ट्रीक सेवर", "اسٹریک سیور", "منقذ السلسلة", "Salvarrachas", "Sauveur de série"],
+  ["Calendar integration", "कैलेंडर इंटीग्रेशन", "کیلنڈر انٹیگریشن", "تكامل التقويم", "Integración de calendario", "Intégration du calendrier"],
+  ["Friend Streak invites", "फ्रेंड स्ट्रीक आमंत्रण", "دوست اسٹریک کی دعوتیں", "دعوات سلسلة الأصدقاء", "Invitaciones de racha de amigos", "Invitations de série d’amis"],
+  ["League status", "लीग की स्थिति", "لیگ کی صورتحال", "حالة الدوري", "Estado de la liga", "Statut de la ligue"],
+  ["Study Quests", "स्टडी क्वेस्ट", "اسٹڈی کوئسٹس", "مهام الدراسة", "Misiones de estudio", "Quêtes d’étude"],
+  ["News + promotions", "समाचार + प्रचार", "خبریں + پروموشنز", "الأخبار + العروض", "Noticias + promociones", "Actualités + promotions"],
+  ["Product updates + learning tips", "प्रोडक्ट अपडेट + सीखने के टिप्स", "پروڈکٹ اپ ڈیٹس + سیکھنے کے مشورے", "تحديثات المنتج + نصائح التعلم", "Novedades + consejos de aprendizaje", "Nouveautés + conseils d’apprentissage"],
+  ["Research invitations", "रिसर्च आमंत्रण", "تحقیقی دعوتیں", "دعوات البحث", "Invitaciones de investigación", "Invitations à la recherche"],
+  ["Updates on new followers and your friends’ achievements", "नए फ़ॉलोअर्स और दोस्तों की उपलब्धियों के अपडेट", "نئے فالوورز اور دوستوں کی کامیابیوں کی اپ ڈیٹس", "تحديثات عن المتابعين الجدد وإنجازات أصدقائك", "Novedades sobre nuevos seguidores y logros de tus amigos", "Nouveautés sur les nouveaux abonnés et les succès de vos amis"],
+  ["Progress updates on your league", "आपकी लीग की प्रगति के अपडेट", "آپ کی لیگ کی پیش رفت کی اپ ڈیٹس", "تحديثات تقدمك في الدوري", "Novedades del progreso de tu liga", "Mises à jour sur la progression de votre ligue"],
+  ["Updates on new features, promotions, and events", "नए फीचर, प्रचार और इवेंट के अपडेट", "نئے فیچرز، پروموشنز اور ایونٹس کی اپ ڈیٹس", "تحديثات عن الميزات والعروض والفعاليات", "Novedades sobre funciones, promociones y eventos", "Nouveautés sur les fonctionnalités, promotions et événements"],
+];
