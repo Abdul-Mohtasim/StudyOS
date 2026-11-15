@@ -2,10 +2,11 @@
 // StudyOS new-user flow (app only). Intro with Zuno, placement exam, streak, gems, profile.
 // Ported from the approved design file StudyOS_Final_Design_v14.html.
 import { haptic } from "../haptics";
+import { translate as tr } from "../i18n";
 import zunoUrl from "./assets/zuno0.png";
 import introUrl from "./assets/intro.mp3";
 import clip0Url from "./assets/clip0.mp3";
-import lessonUrl from "./assets/zuno/lesson_trimmed.mp3";
+import lessonUrl from "./assets/lesson.mp3";
 import "./flow.css";
 import { znHtml, znInit, znStopAll, znSet, znTalk, znFace } from "./zuno";
 
@@ -163,7 +164,7 @@ function iRender(){
   const m=iq('.ipz'),z=iq('.ipm .zn'),r0=m.getBoundingClientRect();znInit(R);
   iq('.ipp i').style.width=(U.i/(IPG.length-1)*100)+'%';iq('.ipp').style.opacity=big&&U.i<2?0:1;iq('.ipb').style.visibility='visible';
   const wasBig=R.classList.contains('big');R.classList.toggle('big',big);
-  const sy=sayOf(p);
+  const sy0=sayOf(p);const sy={say:tr(sy0.say),hl:sy0.hl?tr(sy0.hl):sy0.hl};
   const html=sy.hl?sy.say.replace(sy.hl,'<span style="color:#e8a83a">'+sy.hl+'</span>'):sy.say;
   iq('.ipbody').innerHTML=iBody(p);iCTA();
   // mascot: slide from where it was to where it is now, with a little hop at the end
@@ -405,7 +406,7 @@ function sgHtml(){
  <div class="xflw" id="gfw">${[3,7,14,30].map(n=>`<div class="gfl" data-n="${n}" style="opacity:${n===X.goal?1:0}">${FLC(n,130,156)}</div>`).join('')}</div>
  <div class="xgt"><b id="gtt">${X.goal}-day streak goal</b><small>Pick a goal. You can change it any time.</small></div>
  <div class="xl xgls">${GOALS.map(([n,t,d])=>`<button class="xo xgo${n===X.goal?' on':''}" type="button" data-a="goal" data-n="${n}"><span class="xgn">${n}</span><span><b>${t}</b><small>${d}</small></span>${n===7?'<em>Popular</em>':''}</button>`).join('')}</div>
- <div class="xbar">${btn('Commit to '+X.goal+' days','go','fc')}</div>`);
+ <div class="xbar">${btn(tr('Commit to '+X.goal+' days'),'go','fc')}</div>`);
 }
 function setFlame(n,anim){
  const o=GC[n];X.goal=n;
@@ -422,7 +423,7 @@ function sgPlay(){
  fx($('#gfw'),[{opacity:0,transform:'translateY(30px) scale(.7)'},{opacity:1,transform:'none'}],{duration:480});hap('light');
  R.onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
   if(a==='back'){hap('light');go(IDX('Streak: day 1'))}
-  else if(a==='goal'){const n=+b.dataset.n;$$('.xgo',R).forEach(el=>el.classList.toggle('on',el===b));$('[data-a=go]').textContent='Commit to '+n+' days';b.animate([{transform:'scale(.96)'},{transform:'none'}],{duration:180});setFlame(n,true)}
+  else if(a==='goal'){const n=+b.dataset.n;$$('.xgo',R).forEach(el=>el.classList.toggle('on',el===b));$('[data-a=go]').textContent=tr('Commit to '+n+' days');b.animate([{transform:'scale(.96)'},{transform:'none'}],{duration:180});setFlame(n,true)}
   else if(a==='go'){hap('hard');burst(190,700,16,{up:true,colors:[GC[X.goal].s,GC[X.goal].h],speed:300,fall:200});at(260,()=>go(IDX('Gems reward')))}};
 }
 /* ----- gems reward ----- */
@@ -431,7 +432,7 @@ function gmHtml(){
  X.gems=calcGems();
  return nx(`<div class="xt">${BKB()}</div>
  <div class="gmc" id="gmc" style="opacity:0"><small>+${X.gems}</small><span><i id="gmi">${GEM(24)}</i><b id="gmn">0</b></span></div>
- <div class="xbub nob xtl" id="gmb" style="position:absolute;left:34px;right:34px;top:250px;opacity:0;font-size:20px;line-height:1.5">${X.gems>=30?'Great exam! Here are':'Here are'} <b style="color:#3db8ff">${X.gems} gems</b> to start you off!</div>
+ <div class="xbub nob xtl" id="gmb" style="position:absolute;left:34px;right:34px;top:250px;opacity:0;font-size:20px;line-height:1.5">${tr(X.gems>=30?'Great exam! Here are':'Here are')} <b style="color:#3db8ff">${tr(X.gems+' gems')}</b> ${tr('to start you off!')}</div>
  <div class="gmz"><div class="gmf" id="gmf">${FLC(X.goal,128,154)}</div>${znHtml(158,'gmzu')}</div>`);
 }
 function rel(el){const r=R.getBoundingClientRect(),t=el.getBoundingClientRect(),k=r.width/R.offsetWidth;return[(t.left-r.left+t.width/2)/k,(t.top-r.top+t.height/2)/k]}
@@ -510,7 +511,7 @@ function scHtml(){
 function scPlay(){
  S.mute=false;const sc=calcScore();X.score=sc;{const t=$('.scn',R);if(sc>=100){t.setAttribute('font-size','46');t.setAttribute('x','194')}}
  const say=sc>=110?`You're starting strong at Score ${sc}!`:sc>=70?`Based on your exam, you start at Score ${sc}!`:`Your exam shows you start at Score ${sc}. Let's grow it together!`;
- U.tok++;typeIn($('#scb',R),say.replace('Score '+sc,'<b style="color:#fff">Score '+sc+'</b>'),U.tok,$('.zn',R));at(900,()=>znSet($('.zn',R),sc>=110?'success':sc>=70?'greet':'explain'));
+ U.tok++;typeIn($('#scb',R),tr(say).replace(String(sc),'<b style="color:#fff">'+sc+'</b>'),U.tok,$('.zn',R));at(900,()=>znSet($('.zn',R),sc>=110?'success':sc>=70?'greet':'explain'));
  const m=$('.ipm img',R);fx(m,[{transform:'translateY(16px) scale(.8)',opacity:.4},{transform:'translateY(-6px) scale(1.05)',opacity:1,offset:.6},{transform:'none',opacity:1}],{duration:520});
  fx($('#scb',R),[{opacity:0,transform:'scale(.7)'},{opacity:1,transform:'none'}],{duration:420,delay:120});
  const arc=$('.scarc',R),n=$('.scn',R);arc.animate([{strokeDasharray:'0 100'},{strokeDasharray:(sc/160*100)+' 100'}],{duration:1500,delay:350,easing:'cubic-bezier(.3,.1,.2,1)',fill:'forwards'});
@@ -530,7 +531,7 @@ function ffRender(){
  if(F.st==='home')el.innerHTML=bubble('Study is better with friends! See who you know is already here, or invite someone.')+err+`<div class="xbar"><button class="xbtn" type="button" data-a="contacts">Find friends from contacts</button><button class="xbtn sec" type="button" data-a="invite">Invite friends</button><button class="xbtn sec" type="button" data-a="later">${F.shared?'Continue':'Maybe later'}</button></div>`;
  else if(F.st==='load')el.innerHTML=bubble('Looking through your contacts...')+`<div style="position:absolute;left:0;right:0;top:300px;text-align:center">${dots}</div>`;
  else if(F.st==='none')el.innerHTML=bubble(F.denied?'Contacts access is off. You can turn it on in your phone settings, or invite friends with a link.':'None of your contacts are on StudyOS yet. Invite them and study together!')+err+`<div class="xbar"><button class="xbtn" type="button" data-a="invite">Invite friends</button><button class="xbtn sec" type="button" data-a="later">${F.shared?'Continue':'Maybe later'}</button></div>`;
- else if(F.st==='list'){const n=F.sel.size;el.innerHTML=`<div class="xb"><h2 class="xh" style="margin-top:56px">These friends are already on StudyOS</h2>${F.list.map((f,i)=>`<div class="xfr" data-a="tog" data-i="${i}"><span class="av" style="background:${FCOL[i%5]}">${esc((f.name||'?')[0].toUpperCase())}</span><span><b>${esc(f.name)}</b><small>${esc(f.email)}</small></span><span class="xck${F.sel.has(i)?' on':''}">${F.sel.has(i)?IC.tk:''}</span></div>`).join('')}</div><div class="xbar"><button class="xbtn" type="button" data-a="add">${n?'Add '+n+(n>1?' friends':' friend'):'Next'}</button><button class="xbtn sec" type="button" data-a="invite">Invite more friends</button></div>`}
+ else if(F.st==='list'){const n=F.sel.size;el.innerHTML=`<div class="xb"><h2 class="xh" style="margin-top:56px">These friends are already on StudyOS</h2>${F.list.map((f,i)=>`<div class="xfr" data-a="tog" data-i="${i}"><span class="av" style="background:${FCOL[i%5]}">${esc((f.name||'?')[0].toUpperCase())}</span><span><b>${esc(f.name)}</b><small>${esc(f.email)}</small></span><span class="xck${F.sel.has(i)?' on':''}">${F.sel.has(i)?IC.tk:''}</span></div>`).join('')}</div><div class="xbar"><button class="xbtn" type="button" data-a="add">${n?tr(n>1?'Add '+n+' friends':'Add 1 friend'):tr('Next')}</button><button class="xbtn sec" type="button" data-a="invite">Invite more friends</button></div>`}
 }
 function ffPlay(){
  S.mute=false;X.ff={st:'home',list:[],sel:new Set(),shared:false,err:'',denied:false};ffRender();rise('.xz',100);rise('.xbar',300);
@@ -555,7 +556,7 @@ function ffPlay(){
 }
 
 /* ================= 7. WELCOME ================= */
-function wcHtml(){return nx(`<div style="position:absolute;left:0;right:0;top:210px;text-align:center"><div class="xbub" id="wb" style="display:inline-block;margin:0 28px;text-align:center;font-size:17px">Welcome, ${nm()}! Your profile has been successfully created.</div><div style="height:30px"></div>${znHtml(196,'wz')}</div><div class="xbar">${btn('Continue','go')}</div>`).replace('class="xbub"','class="xbub nob"')}
+function wcHtml(){return nx(`<div style="position:absolute;left:0;right:0;top:210px;text-align:center"><div class="xbub" id="wb" style="display:inline-block;margin:0 28px;text-align:center;font-size:17px">${tr('Welcome, '+nm()+'! Your profile has been successfully created.')}</div><div style="height:30px"></div>${znHtml(196,'wz')}</div><div class="xbar">${btn('Continue','go')}</div>`).replace('class="xbub"','class="xbub nob"')}
 function wcPlay(){
  S.mute=false;const b=$('#wb');b.style.setProperty('--x','0');
  fx($('#wz'),[{transform:'translateY(60px) scale(.5)',opacity:0},{transform:'translateY(-24px) scale(1.12)',offset:.6,opacity:1},{transform:'none',opacity:1}],{duration:700});

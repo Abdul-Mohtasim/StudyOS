@@ -234,31 +234,6 @@ const API_BASE_URL = import.meta.env.DEV
   ? ""
   : (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
-// Native Google Sign-In must be initialized exactly once, and signIn() must wait for it.
-let googleInitPromise = null;
-function ensureGoogleSignInReady() {
-  const clientId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
-  if (!clientId) {
-    return Promise.reject(new Error("Google sign-in is not configured in this build (missing VITE_GOOGLE_CLIENT_ID). Rebuild the app with it set."));
-  }
-  if (!googleInitPromise) {
-    googleInitPromise = GoogleSignIn.initialize({ clientId }).catch((error) => {
-      googleInitPromise = null; // allow a retry on the next tap
-      throw error;
-    });
-  }
-  return googleInitPromise;
-}
-
-// On the phone the app is served from the device itself, so a missing server address
-// would hit the app's own index.html (HTTP 200, not JSON). Catch that early.
-function serverAddressProblem() {
-  if (Capacitor.isNativePlatform() && !API_BASE_URL) {
-    return "This build has no server address (missing VITE_API_URL). Rebuild the app with it set.";
-  }
-  return "";
-}
-
 
 const reminders = [
   {
@@ -961,6 +936,37 @@ function BannerScene({ done, total, streak, minutes, goalPercent }) {
 const IS_NATIVE = Capacitor.isNativePlatform();
 const GUEST_STUDENT = { id: "guest", guest: true, name: "Guest", displayName: "Guest", email: "" };
 
+
+// Native Google sign-in must be initialised once before signIn(). Every caller awaits this,
+// so a tap that happens early (or after a failed first attempt) still works.
+let googleInitPromise = null;
+function ensureGoogleInit() {
+  if (!googleInitPromise) {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      return Promise.reject(new Error("Google sign-in is not set up in this build (missing VITE_GOOGLE_CLIENT_ID)."));
+    }
+    googleInitPromise = Promise.resolve(GoogleSignIn.initialize({ clientId })).catch((e) => {
+      googleInitPromise = null;
+      throw e;
+    });
+  }
+  return googleInitPromise;
+}
+async function nativeGoogleSignIn() {
+  await ensureGoogleInit();
+  try {
+    return await GoogleSignIn.signIn();
+  } catch (e) {
+    if (/not initialized|initialize\(\)/i.test(String(e?.message || e))) {
+      googleInitPromise = null;
+      await ensureGoogleInit();
+      return await GoogleSignIn.signIn();
+    }
+    throw e;
+  }
+}
+
 export default function App() {
   // ---------- Authentication ----------
   const [student, setStudent] = useState(null);
@@ -990,15 +996,7 @@ const [deletedTasks, setDeletedTasks] = useState([]);
 const [undoLoading, setUndoLoading] = useState(false);
 
 useEffect(() => {
-  if (Capacitor.getPlatform() !== "android") {
-    return;
-  }
-
-  ensureGoogleSignInReady()
-    .then(() => setGoogleSignInReady(true))
-    .catch((error) => {
-      console.error("Google Sign-In initialization failed:", error);
-    });
+  if (Capacitor.getPlatform() === "android") ensureGoogleInit().catch(() => {});
 }, []);
 
 
@@ -1975,10 +1973,7 @@ useEffect(() => {
     setAuthError("");
 
     try {
-      const problem = serverAddressProblem();
-      if (problem) throw new Error(problem);
-      await ensureGoogleSignInReady();
-      const result = await GoogleSignIn.signIn();
+      const result = await nativeGoogleSignIn();
 
       if (!result?.idToken) {
         throw new Error("Google did not return an ID token. Please try again.");
@@ -2085,7 +2080,7 @@ useEffect(() => {
       const text = await response.text();
       let data = {};
       if (text.trim()) {
-        try { data = JSON.parse(text); } catch { return { ok: false, error: serverAddressProblem() || `Server returned an invalid response (HTTP ${response.status}).` }; }
+        try { data = JSON.parse(text); } catch { return { ok: false, error: `Server returned an invalid response (HTTP ${response.status}).` }; }
       }
       if (!response.ok) return { ok: false, error: data.error || data.message || `Request failed (HTTP ${response.status}).` };
       if (!data.student || !data.token) return { ok: false, error: "The server response is missing account data." };
@@ -2106,10 +2101,7 @@ useEffect(() => {
   }
   async function googleForFlow() {
     try {
-      const problem = serverAddressProblem();
-      if (problem) return { ok: false, error: problem };
-      await ensureGoogleSignInReady();
-      const result = await GoogleSignIn.signIn();
+      const result = await nativeGoogleSignIn();
       if (!result?.idToken) return { ok: false, error: "Google did not return an ID token. Please try again." };
       const r = await flowPost("google", { credential: result.idToken });
       if (!r.ok) return r;
@@ -4015,7 +4007,7 @@ async function undoDeleteTask() {
 
           <div className="au-brand">
             <img src={STUDYOS_LOGO_SRC} alt="" />
-            <span>
+            <span data-notr>
               Study<b>OS</b>
             </span>
           </div>
@@ -4641,7 +4633,7 @@ async function undoDeleteTask() {
     alt="StudyOS logo"
   />
 
-  <span>
+  <span data-notr>
     Study<span className="brand-accent">OS</span>
   </span>
 
@@ -4800,7 +4792,7 @@ async function undoDeleteTask() {
           <nav className={`mobile-top-nav${menuOpen ? " menu-open" : ""}`} aria-label="Main navigation">
             <a className="mobile-navbar-brand" href="#dashboard" aria-label="StudyOS home">
               <img src={STUDYOS_LOGO_SRC} alt="" />
-              <span>Study<span className="brand-accent">OS</span></span>
+              <span><span data-notr>Study<span className="brand-accent">OS</span></span></span>
             </a>
             <div className="mobile-navbar-links">
             <a className={`nav-link ${activeSection === "dashboard" ? "active" : ""}`} href="#dashboard" onClick={() => setActiveSection("dashboard")} aria-label="Dashboard" title="Dashboard"><LayoutDashboard size={17} /><span>Dashboard</span></a>

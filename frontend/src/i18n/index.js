@@ -4,6 +4,7 @@ import { ROWS1 } from "./rows1";
 import { ROWS2 } from "./rows2";
 import { ROWS3 } from "./rows3";
 import { ROWS4 } from "./rows4";
+import { ROWS5 } from "./rows5";
 
 export const LANGS = [
   { code: "en", native: "English", rtl: false },
@@ -15,7 +16,7 @@ export const LANGS = [
 ];
 
 const COLUMN = { hi: 1, ur: 2, ar: 3, es: 4, fr: 5 };
-const ALL = [...ROWS1, ...ROWS2, ...ROWS3, ...ROWS4];
+const ALL = [...ROWS1, ...ROWS2, ...ROWS3, ...ROWS4, ...ROWS5];
 const KEY = "studyos-lang";
 const ATTRS = ["placeholder", "aria-label", "title"];
 const SKIP = "script,style,textarea,input,select,[data-notr],.tt:not([data-tr])";

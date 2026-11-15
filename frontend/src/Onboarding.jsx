@@ -138,7 +138,7 @@ const head2=(t,d)=>`<div class="ob-head"><h2>${t}</h2><p>${d}</p></div>`;
 /* ===== the six screens ===== */
 const screens=[
  {html:`
-  <div class="ob-logo"><b>${ic('grad',1.8)}</b><span>Study<em>OS</em></span></div>
+  <div class="ob-logo"><b>${ic('grad',1.8)}</b><span data-notr>Study<em>OS</em></span></div>
   <div class="ob-hero">${hero()}</div>
   <h1 class="ob-h1">Plan, focus and learn in one calm place.</h1>
   <p class="ob-lead">Tasks, notes, flashcards and a focus timer that work even without internet.</p>
