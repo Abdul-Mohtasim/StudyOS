@@ -1,0 +1,3 @@
+// StudyOS logo (inline SVG, so no extra file is needed).
+export const STUDYOS_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -8 144 144" width="128" height="128" role="img" aria-label="StudyOS logo"><g fill="#E4585F" transform="translate(0 -5)"><path d="M64 24L124 54L64 84L4 54Z"/><path d="M28 74L64 92L100 74V96C100 106 84 114 64 114C44 114 28 106 28 96Z"/><path d="M112 60V97" stroke="#E4585F" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="112" cy="101" r="5"/></g></svg>`;
+export const STUDYOS_LOGO_SRC = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(STUDYOS_LOGO_SVG)}`;

@@ -8,11 +8,13 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "postinstall": "node scripts/patch-contacts.cjs"
+    "postinstall": "node scripts/patch-contacts.cjs",
+    "build:app": "vite build --mode app --outDir dist-app --emptyOutDir && node scripts/clean-app.cjs"
   },
   "dependencies": {
     "@capacitor-community/contacts": "^8.0.0",
     "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.3",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/local-notifications": "^8.3.0",

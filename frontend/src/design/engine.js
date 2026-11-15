@@ -2,6 +2,7 @@
 // StudyOS main app screens (app only). Ported from the approved design file StudyOS_Final_Design_v14.html.
 import { haptic } from "../haptics";
 import "./design.css";
+import qrcode from "qrcode-generator";
 
 export function mountDesign(host, opts = {}) {
 host.classList.add('dz');host.setAttribute('data-own-haptics','');
@@ -514,9 +515,11 @@ s.spec={m:'The storage card, search field and file groups rise in one after anot
 })();
 /* ---- notifications ---- */
 (()=>{
+const PHN='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>';
 const MLN='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 8l8 5.500L20 8"/></svg>';
 const CHN='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#8f9ca8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
 const BKS='<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const NS={smart:1,cal:1,rt:17*60,st:20*60+30};
 const fm=m=>{const h=Math.floor(m/60),mm=m%60;return ((h+11)%12+1)+':'+String(mm).padStart(2,'0')+' '+(h<12?'AM':'PM')};
 const nic=(l,c)=>`<div class="nr"><b>${l}</b>${[...c].map(k=>{const id=l+k;if(NS[id]===undefined)NS[id]=1;return `<button class="nib${NS[id]?' on':''}" type="button" data-a="ic" data-k="${id}" aria-label="${k==='p'?'Push':'Email'} ${l}">${k==='p'?PHN:MLN}</button>`}).join('')}</div>`;
 const ntg=(l,k)=>`<div class="nr" data-a="tg" data-k="${k}"><b>${l}</b><div class="ptg${NS[k]?'':' off'}"><i></i></div></div>`;
@@ -558,7 +561,7 @@ const homeInnerReal=()=>{
   const rows=homeTasks();
   const tl=rows.length?rows.map(t=>trowR(t)).join(''):`<div class="card" style="margin-top:8px;border-radius:20px;text-align:center;color:var(--mut);font:600 14px var(--body);padding:18px">${D.guest?'Create your profile to add tasks.':'Nothing due. Tap + to add a task.'}</div>`;
   return `<div class="pg">${tb()}
-<div class="sync"><i${D.online===false?' style="background:#d49a3a"':''}></i>${D.online===false?'Offline · changes saved on this phone':'Synced just now · works offline'}</div>
+<div class="sync"><i${D.online===false||D.pending?' style="background:#d49a3a"':''}></i>${D.syncing?'Syncing your changes...':D.online===false?(D.pending?'Offline · '+D.pending+(D.pending===1?' change':' changes')+' saved on this phone':'Offline · everything is saved on this phone'):D.pending?D.pending+(D.pending===1?' change':' changes')+' waiting to sync':'All changes synced · works offline'}</div>
 <div class="ttl">Hi, ${esc(D.first||'there')}</div><div class="sub2">Make today count.</div>
 <div class="card dkc rw" style="gap:16px;height:130px;border-radius:26px;justify-content:flex-start;margin-top:14px"><div class="ring2">${ring(94,9,pct,'#c9b8c3','#3c4450')}<div class="c">${tm}m</div></div><div><div style="font:700 17px var(--display);color:#ebe8ea">Daily goal</div><div style="font:400 13px var(--body);color:#cfd2d6;margin:4px 0 9px">${tm} of ${g} min studied</div><span class="tag" style="display:inline-flex;align-items:center;gap:6px;border-radius:16px;padding:6px 12px;font-size:13px">${FLM('#1b1e25','#c9b8c3',11,14)} ${D.streak||0} day streak</span></div></div>
 <div class="card" data-exam><div style="font:600 11px var(--body);letter-spacing:.1em;color:var(--mut)">EXAM MODE</div><div class="rw"><b style="font:700 21px var(--display)">${hasEx?esc(ex.subject)+' · '+(ex.days===0?'today':ex.days+(ex.days===1?' day':' days')):'No exam set'}</b><b style="font:700 13px var(--body)">${hasEx?ex.ready+'% ready':''}</b></div><div class="bar2" style="margin-top:10px"><i style="width:${hasEx?ex.ready:0}%"></i></div></div>
@@ -706,7 +709,6 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
     if(e.target.closest('[data-out]')){hap('press');if(CB.signOut)CB.signOut();return}
     const it=e.target.closest('[data-it]');
     if(it&&(it.dataset.it==='Help Center'||it.dataset.it==='Feedback')){hap('light');if(CB.help)CB.help(it.dataset.it);return}
-    if(it&&it.dataset.it==='Appearance'&&CB.toggleTheme){hap('light');CB.toggleTheme();toast('Theme changed');return}
     old(e)}};
 }
 
@@ -780,7 +782,7 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
 /* ---- Focus timer + Study hub (real data) ---- */
 {
 const F={mode:'focus',len:25,round:1,total:1500,left:1500,running:false,end:0};
-F.subj='';
+F.subj='';F.edit=false;
 let tickId=0;
 const MODES={focus:'Focus',short:'Short break',long:'Long break'};
 const fmtT=s=>{s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
@@ -818,16 +820,18 @@ const focusHtml=()=>{
 <div style="text-align:center;font:700 13px var(--body);letter-spacing:.1em;color:#bfc4c9;margin-top:22px">${MODES[F.mode].toUpperCase()}</div>
 <div class="ring2" style="margin:20px auto 0;width:250px;height:250px">${ring(250,24,pct,'#c9b8c3','#2d3740')}<div class="c" style="font-size:62px" id="fct">${fmtT(F.left)}</div></div>
 <div style="text-align:center;font:600 15px var(--body);color:#cfd2d6;margin-top:30px">Round ${F.round} of 4 · ${nextText()}</div>
-${idleFocus?`<div style="display:flex;justify-content:center;gap:8px;margin-top:20px">${[15,25,45,60].map(m=>`<span class="chip" data-flen="${m}" style="border-radius:18px;height:40px;gap:8px;padding:0 14px;font-size:14px;color:#ebe8ea${F.len===m?';background:var(--mv);color:#1b1e25':''}">${m} min</span>`).join('')}</div>`:''}</div>
-<div style="position:absolute;left:22px;right:22px;bottom:${run?22:104}px;display:flex;gap:10px">${isIdle()?'':`<div class="btn2 dk2" data-fstop style="flex:0 0 104px;height:54px;border-radius:26px">Stop</div>`}<div class="btn2 mv" data-fgo style="flex:1;height:54px;border-radius:26px">${run?'Pause':(isIdle()?'Start':'Resume')}</div></div>${run?'':nav('focus')}`,true);
+${idleFocus?(F.edit?`<div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:20px"><input data-fin type="number" inputmode="numeric" min="1" max="180" value="${F.len}" aria-label="Minutes" style="width:96px;height:44px;border-radius:18px;border:2px solid var(--mv);background:#161b21;color:#ebe8ea;font:700 20px var(--body);text-align:center;outline:0"><span style="font:600 15px var(--body);color:#cfd2d6">min</span><span class="chip" data-fset style="border-radius:18px;height:44px;padding:0 18px;font-size:15px;background:var(--mv);color:#1b1e25">Set</span></div><div style="text-align:center;font:400 12.5px var(--body);color:#9aa3ab;margin-top:8px">Choose 1 to 180 minutes</div>`:`<div style="display:flex;justify-content:center;gap:8px;margin-top:20px;flex-wrap:wrap">${[15,25,45,60].map(m=>`<span class="chip" data-flen="${m}" style="border-radius:18px;height:40px;gap:8px;padding:0 14px;font-size:14px;color:#ebe8ea${F.len===m?';background:var(--mv);color:#1b1e25':''}">${m} min</span>`).join('')}<span class="chip" data-fcustom style="border-radius:18px;height:40px;gap:8px;padding:0 14px;font-size:14px;color:#ebe8ea${[15,25,45,60].includes(F.len)?'':';background:var(--mv);color:#1b1e25'}">${[15,25,45,60].includes(F.len)?'Custom':F.len+' min'}</span></div>`):''}</div>
+<div class="fbtns" style="position:absolute;left:22px;right:22px;bottom:${run?22:104}px;display:flex;gap:10px">${isIdle()?'':`<div class="btn2 dk2" data-fstop style="flex:0 0 104px;height:54px;border-radius:26px">Stop</div>`}<div class="btn2 mv" data-fgo style="flex:1;height:54px;border-radius:26px">${run?'Pause':(isIdle()?'Start':'Resume')}</div></div>${run?'':nav('focus')}`,true);
 };
 const focusPlay=()=>{
   enter();
   R.onclick=e=>{
     if(e.target.closest('[data-fgo]')){hap('press');if(F.running)pause();else start();go('Focus',true);return}
     if(e.target.closest('[data-fstop]')){hap('light');stop();go('Focus',true);return}
+    if(e.target.closest('[data-fcustom]')&&isIdle()&&F.mode==='focus'){hap('light');F.edit=true;go('Focus',true);const i=$('[data-fin]',R);if(i){i.focus();i.select()}return}
+    if(e.target.closest('[data-fset]')){const i=$('[data-fin]',R),v=Math.round(+(i&&i.value));if(!(v>=1&&v<=180)){hap('error');toast('Enter 1 to 180 minutes');return}F.edit=false;F.len=v;setMode('focus',v);hap('success');go('Focus',true);return}
     const ln=e.target.closest('[data-flen]');
-    if(ln&&isIdle()&&F.mode==='focus'){F.len=+ln.dataset.flen;setMode('focus',F.len);hap('tick');go('Focus',true);return}
+    if(ln&&isIdle()&&F.mode==='focus'){F.edit=false;F.len=+ln.dataset.flen;setMode('focus',F.len);hap('tick');go('Focus',true);return}
     if(e.target.closest('[data-fsubj]')&&!F.running){const l=['',...(D.subjects||[])];F.subj=l[(l.indexOf(F.subj)+1)%l.length];hap('tick');go('Focus',true);return}
   };
 };
@@ -1012,7 +1016,7 @@ replace('Search',{
 });
 host.addEventListener('click',e=>{
   const ic=e.target.closest('.tb > svg');
-  if(ic&&SCREENS[CUR]&&['Home','Tasks','Study'].includes(SCREENS[CUR].t)){SFROM=SCREENS[CUR].t;SQ='';hap('light');go('Search')}
+  if(ic&&SCREENS[CUR]&&['Home','Tasks','Study'].includes(SCREENS[CUR].t)){SFROM=SCREENS[CUR].t;DZ.searchFrom=SFROM;SQ='';hap('light');go('Search')}
 },true);
 }
 
@@ -1031,6 +1035,228 @@ host.addEventListener('click',e=>{
     }
     return h;
   };
+}
+
+/* keyboard: bottom buttons and the tab bar step aside while typing; Enter submits */
+{
+  let kbT=0;
+  const FIELD='input:not([type=file]):not([type=date]):not([type=checkbox]),textarea';
+  host.addEventListener('focusin',e=>{if(e.target.matches&&e.target.matches(FIELD)){clearTimeout(kbT);host.classList.add('dz-kb');const t=e.target;setTimeout(()=>{try{t.scrollIntoView({block:'center',behavior:'smooth'})}catch(_){}},260)}});
+  host.addEventListener('focusout',()=>{clearTimeout(kbT);kbT=setTimeout(()=>{const a=document.activeElement;if(!(a&&host.contains(a)&&a.matches&&a.matches(FIELD)))host.classList.remove('dz-kb')},150)});
+  host.addEventListener('keydown',e=>{
+    if(e.key!=='Enter'||!e.target.matches||!e.target.matches('input'))return;
+    const b=R&&R.querySelector('[data-save],[data-savep],[data-send],[data-fset]');
+    if(b){e.preventDefault();e.target.blur();b.click()}
+  });
+}
+/* ---- v39: real Sync, Storage, Export, Privacy, Language, Themes, QR, skeleton ---- */
+{
+  const BKI='<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const LC='fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"';
+  const I={
+    cloud:`<svg viewBox="0 0 24 24" ${LC}><path d="M7 18a4.500 4.500 0 01-.5-9A6 6 0 0118 10a4 4 0 01-1 8z"/></svg>`,
+    wifi:`<svg viewBox="0 0 24 24" ${LC}><path d="M2 9a15 15 0 0120 0M5.500 12.500a10 10 0 0113 0M9 16a5 5 0 016 0"/><circle cx="12" cy="19.500" r="1" fill="currentColor"/></svg>`,
+    refresh:`<svg viewBox="0 0 24 24" ${LC}><path d="M20 11a8 8 0 00-14-4.500L4 9M4 4v5h5M4 13a8 8 0 0014 4.500L20 15M20 20v-5h-5"/></svg>`,
+    note:`<svg viewBox="0 0 24 24" ${LC}><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8zM14 3v5h5M9 13h6M9 17h6"/></svg>`,
+    task:`<svg viewBox="0 0 24 24" ${LC}><path d="M5 12l4 4 10-10"/></svg>`,
+    card:`<svg viewBox="0 0 24 24" ${LC}><rect x="3" y="6" width="18" height="12" rx="3"/><path d="M7 10h10"/></svg>`,
+    clock:`<svg viewBox="0 0 24 24" ${LC}><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+    dl:`<svg viewBox="0 0 24 24" ${LC}><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>`,
+    trash:`<svg viewBox="0 0 24 24" ${LC}><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>`,
+    lock:`<svg viewBox="0 0 24 24" ${LC}><rect x="5" y="11" width="14" height="10" rx="2.500"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>`,
+    eye:`<svg viewBox="0 0 24 24" ${LC}><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>`,
+    people:`<svg viewBox="0 0 24 24" ${LC}><circle cx="9" cy="8" r="3.500"/><path d="M2.500 20c0-3.500 3-5.500 6.500-5.500M16 11a3 3 0 100-6M17 14.500c2.500.5 4.500 2.300 4.500 5.500"/></svg>`,
+    book:`<svg viewBox="0 0 24 24" ${LC}><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h11"/></svg>`
+  };
+  const hdr=t=>`<div class="shd"><button class="sbk" type="button" data-back aria-label="Back">${BKI}</button><b>${t}</b></div>`;
+  const scr=(t,body)=>`<div class="scr n nd" style="--pg:#181b22"><div class="ss">${hdr(t)}<div class="ssc">${body}</div></div></div>`;
+  const ci=(svg,extra)=>`<div class="ci"${extra?` style="${extra}"`:''}><span style="width:24px;height:24px;display:block">${svg}</span></div>`;
+  const info=t=>`<div class="spill"><div class="pi">i</div><div>${t}</div></div>`;
+  const grab=(t,re)=>{try{const h=SCREENS[IDX(t)].origHtml();const m=h.match(re);return m?m[0]:''}catch(_){return ''}};
+  const ago=ts=>{if(!ts)return'Not yet';const m=Math.round((Date.now()-ts)/60000);if(m<1)return'Just now';if(m<60)return m+' min ago';const h=Math.round(m/60);if(h<24)return h+' h ago';return new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'})};
+  const bytes=b=>b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB';
+  const stInfo=()=>{try{return CB.storageInfo?CB.storageInfo():{bytes:0,entries:0,pending:D.pending||0,lastSyncAt:0,tasks:0,notes:0,flashcards:0}}catch(_){return {bytes:0,entries:0,pending:0,lastSyncAt:0,tasks:0,notes:0,flashcards:0}}};
+  ['Sync and offline','Export my data','Storage and downloads','Privacy settings','Language'].forEach(t=>{const k=IDX(t);if(k>=0)SCREENS[k].origHtml=SCREENS[k].html});
+  const ILLRE=/<div class="sill"[^>]*>[\s\S]*?<\/svg><\/div>/;
+  const baseBack=()=>{R.onclick=e=>{if(e.target.closest('[data-back]')){hap('light');go(IDX('Settings'))}}};
+  const rise=()=>{$$('.ss .ssc > *',R).forEach((e,i)=>e.animate([{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:360,delay:i*45,easing:'cubic-bezier(.2,.9,.3,1)',fill:'backwards'}));hap('light')};
+  const set=(t,o)=>{const k=IDX(t);if(k>=0)Object.assign(SCREENS[k],o)};
+
+  /* Sync and offline */
+  const syncState=()=>{const i=stInfo(),on=D.online!==false,p=D.pending||i.pending||0;
+    return {on,p,title:D.syncing?'Syncing now...':!on?'You are offline':p?p+(p===1?' change is':' changes are')+' waiting':'Everything is synced',
+      sub:!on?'Your changes are saved on this phone and will sync when you are back online.':p?'They will be sent to your account automatically.':'Your account and this phone match.',last:'Last synced: '+ago(i.lastSyncAt)}};
+  set('Sync and offline',{d:'Real sync status, waiting changes and Sync now',
+    html:()=>{const s=syncState();return scr('Sync and offline',`<div class="sill">${grab('Sync and offline',ILLRE).replace(/^<div class="sill"[^>]*>|<\/div>$/g,'')}</div><div class="sh1">Keep your data in sync</div><div class="sh2">Your study data is saved on this phone, so StudyOS works without internet. It syncs to your account by itself when you are online.</div>
+<div class="scd"><div class="ci" data-ic style="color:${s.on?'#3d9d5f':'#d49a3a'}"><span style="width:26px;height:26px;display:block">${s.on?I.cloud:I.wifi}</span></div><div class="tx"><b data-st>${s.title}</b><small data-ss>${s.sub}</small></div></div>
+<div class="scd" style="margin-top:8px">${ci(I.clock)}<div class="tx"><small style="margin:0;font-size:14px;color:#cfd2d6" data-last>${s.last}</small></div><button class="sref" type="button" data-ref aria-label="Sync now">${I.refresh}</button></div>
+${info('Tasks, notes, flashcards, grades and focus sessions you add offline are saved here and sent when your connection returns.')}`)},
+    play(){S.mute=false;rise();
+      const fill=()=>{const s=syncState();const a=$('[data-st]',R),b=$('[data-ss]',R),c=$('[data-last]',R),d=$('[data-ic]',R);if(a)a.textContent=s.title;if(b)b.textContent=s.sub;if(c)c.textContent=s.last;if(d){d.style.color=s.on?'#3d9d5f':'#d49a3a';d.firstElementChild.innerHTML=s.on?I.cloud:I.wifi}};
+      R.onclick=async e=>{
+        if(e.target.closest('[data-back]')){hap('light');go(IDX('Settings'));return}
+        const r=e.target.closest('[data-ref]');if(!r||r.dataset.busy)return;
+        if(D.online===false){hap('light');toast('You are offline. Changes will sync when you are back online.');return}
+        r.dataset.busy=1;hap('light');const an=r.animate([{transform:'rotate(0)'},{transform:'rotate(360deg)'}],{duration:800,iterations:Infinity,easing:'linear'});
+        try{if(CB.syncNow)await CB.syncNow()}catch(_){}
+        an.cancel();delete r.dataset.busy;if(R&&R.isConnected){fill();hap('success');toast('Synced')}}}});
+
+  /* Storage */
+  set('Storage and downloads',{d:'What this phone holds for offline use',
+    html:()=>{const i=stInfo();const art=grab('Storage and downloads',/<div style="width:96px;flex:none">[\s\S]*?<\/svg><\/div>/);
+      const rows=[[I.task,'Tasks',i.tasks],[I.note,'Notes',i.notes],[I.card,'Flashcards',i.flashcards],[I.clock,'Changes waiting to sync',i.pending]];
+      return scr('Storage',`<div class="scd" style="gap:16px;padding:16px">${art}<div class="tx"><b style="font:700 28px var(--display)">${bytes(i.bytes)}</b><small style="font-size:15px;color:#cfd2d6">Saved on this phone for offline use</small></div></div>
+${info('This copy lets StudyOS open your tasks, notes and flashcards without internet. It refreshes itself whenever you are online.')}
+<div class="sgt">On this phone</div><div class="sgrp">${rows.map(([ic,t,n])=>`<div class="sit rd"><div style="flex-direction:row;align-items:center;gap:14px"><span class="ci" style="width:26px;height:26px;display:grid;place-items:center"><span style="width:24px;height:24px;display:block">${ic}</span></span><div style="gap:0"><span>${t}</span></div></div><b style="font:700 16px var(--body);color:#f4f2f3">${n}</b></div>`).join('')}</div>
+<button class="sbtn" type="button" data-clr style="display:flex;align-items:center;justify-content:center;gap:10px;border-radius:30px;margin-top:16px"><span style="width:22px;height:22px;display:block">${I.trash}</span><span>Clear saved copy</span></button><div class="snote" data-cn>Removes only the copy on this phone. Your account keeps everything.</div>`)},
+    play(){S.mute=false;rise();
+      R.onclick=e=>{
+        if(e.target.closest('[data-back]')){hap('light');go(IDX('Settings'));return}
+        const b=e.target.closest('[data-clr]');if(!b)return;
+        const i=stInfo(),n=$('[data-cn]',R);
+        if(D.online===false){hap('light');n.textContent='Go online first so your data can be saved again after clearing.';return}
+        if(i.pending>0){hap('light');n.textContent='Wait until your waiting changes finish syncing, then clear.';return}
+        hap('success');if(CB.clearSaved)CB.clearSaved();toast('Saved copy cleared. It refreshes in a moment.');setTimeout(()=>{if(R&&R.isConnected&&SCREENS[CUR].t==='Storage and downloads')go(CUR,true)},900)}}});
+
+  /* Export */
+  set('Export my data',{d:'Share a copy of your tasks, notes and progress',
+    html:()=>scr('Export my data',`<div class="sill">${grab('Export my data',ILLRE).replace(/^<div class="sill"[^>]*>|<\/div>$/g,'')}</div><div class="sh1">Export your StudyOS data</div><div class="sh2">Get a copy of your data as a file you can save, send or keep as a backup.</div>
+<div class="scd" style="flex-direction:column;align-items:stretch;gap:2px;padding:10px 12px;margin-top:14px">${['Tasks ('+(D.tasks||[]).length+')','Notes ('+(D.notesCount||0)+')','Total focus time and streak','Account name and email'].map(t=>`<div class="sck"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg></i>${t}</div>`).join('')}</div>
+<button class="sbtn fill" type="button" data-exp style="margin-top:14px;display:flex;align-items:center;justify-content:center;gap:10px"><span style="width:22px;height:22px;display:block">${I.dl}</span><span data-et>Export data</span></button><div class="snote" style="display:flex;justify-content:center;align-items:center;gap:6px"><span style="width:14px;height:14px;display:block">${I.lock}</span>You choose where the file goes.</div>`),
+    play(){S.mute=false;rise();
+      R.onclick=async e=>{
+        if(e.target.closest('[data-back]')){hap('light');go(IDX('Settings'));return}
+        const b=e.target.closest('[data-exp]');if(!b||b.dataset.busy)return;
+        if(D.guest){hap('light');toast('Create your profile first to export your data.');return}
+        b.dataset.busy=1;hap('light');const t=$('[data-et]',R);t.textContent='Preparing your data...';
+        let ok=false;try{ok=CB.exportData?await CB.exportData():false}catch(_){ok=false}
+        delete b.dataset.busy;if(!R||!R.isConnected)return;
+        t.textContent='Export data';if(ok){hap('success');toast(ok==='copied'?'Copied to your clipboard':'Your data is ready')}else toast('Could not export. Try again.')}}});
+
+  /* Privacy */
+  set('Privacy settings',{d:'What StudyOS keeps and who can see it',
+    html:()=>{const row=(ic,t,s)=>`<div class="scd" style="margin-top:8px;align-items:flex-start">${ci(ic)}<div class="tx"><b>${t}</b><small style="line-height:1.4">${s}</small></div></div>`;
+      const L=D.links||{};const lk=[L.terms&&['TERMS',L.terms],L.privacy&&['PRIVACY POLICY',L.privacy]].filter(Boolean);
+      return scr('Privacy',`<div class="sill">${I.lock?`<div style="width:120px;height:120px;margin:0 auto;border-radius:34px;background:#2a2740;color:#a99be2;display:grid;place-items:center"><span style="width:64px;height:64px;display:block">${I.lock}</span></div>`:''}</div><div class="sh1">Your privacy</div><div class="sh2">What StudyOS keeps, and who can see it.</div>
+${row(I.book,'Your study data','Tasks, notes, flashcards, grades and focus time belong to your account. Only you can see them.')}
+${row(I.people,'What friends see','Friends can see your name, picture, gems and focus minutes on the leaderboard. Nothing else.')}
+${row(I.eye,'Contacts','If you choose Find friends from contacts, email addresses are only used once to find people who already use StudyOS.')}
+<button class="sbtn" type="button" data-go="Export my data" style="margin-top:16px">EXPORT MY DATA</button><button class="sbtn red" type="button" data-del>DELETE MY ACCOUNT</button>
+<div class="slk"><span data-legal="Terms of Service">TERMS</span><span data-legal="Privacy Policy">PRIVACY POLICY</span></div>`)},
+    play(){S.mute=false;rise();
+      R.onclick=e=>{
+        if(e.target.closest('[data-back]')){hap('light');go(IDX('Settings'));return}
+        const g=e.target.closest('[data-go]');if(g){hap('light');go(IDX(g.dataset.go));return}
+        if(e.target.closest('[data-del]')){hap('light');toast('To delete your account, contact support.');return}
+        const u=e.target.closest('[data-url]');if(u){hap('light');try{window.open(u.dataset.url,'_blank')}catch(_){}}}}});
+
+  /* Language */
+  set('Language',{d:'App language',
+    html:()=>scr('Language',`<div class="sill">${grab('Language',ILLRE).replace(/^<div class="sill"[^>]*>|<\/div>$/g,'').replace(/<rect x="30" y="58"[^>]*\/><path d="M42 84[^>]*\/><text[^>]*>[^<]*<\/text>/,'')}</div><div class="sh1">App language</div><div class="sh2">StudyOS is available in English for now.</div>
+<div class="sgrp" style="margin-top:14px"><div class="sit rd on"><div><span>English</span><small>Selected</small></div><span class="rad"></span></div></div>
+<div class="snote">More languages will be added in future updates.</div>`),
+    play(){S.mute=false;rise();baseBack()}});
+
+  /* Themes */
+  set('Themes',{d:'Light or dark',
+    html:()=>{const cur=D.dark?'dark':'light';return scr('Themes',`<div class="sh1" style="margin-top:6px">Choose your look</div><div class="sh2">Your choice is saved to your account.</div>
+<div class="sgrp" style="margin-top:14px">${[['light','Light','Bright and clean'],['dark','Dark','Easy on the eyes at night']].map(([k,n,s])=>`<div class="sit rd${k===cur?' on':''}" data-theme="${k}"><div><span>${n}</span><small>${s}</small></div><span class="rad"></span></div>`).join('')}</div>`)},
+    play(){S.mute=false;rise();
+      R.onclick=e=>{
+        if(e.target.closest('[data-back]')){hap('light');go(IDX('Settings'));return}
+        const t=e.target.closest('[data-theme]');if(!t)return;
+        $$('[data-theme]',R).forEach(x=>x.classList.toggle('on',x===t));hap('medium');if(CB.setTheme)CB.setTheme(t.dataset.theme)}}});
+
+  /* Delete account + in-app Terms and Privacy Policy */
+  {
+    const contact=()=>D.supportEmail?`<b>${esc(D.supportEmail)}</b>`:'the support contact on the StudyOS store page';
+    const sec=(h,p)=>`<h5>${h}</h5><p>${p}</p>`;
+    const TERMS=()=>`<div class="lgl"><p style="color:#9aa6b0">Last updated: November 15, 2026</p>`+
+      sec('Using StudyOS','StudyOS is a study planner for tasks, notes, flashcards, grades, focus timers and friends. By creating an account or using the app you agree to these terms. If you do not agree, please do not use the app.')+
+      sec('Your account','You are responsible for what happens under your account and for keeping your password safe. Give us true information and tell us if you think someone else is using your account. You must be old enough to use online services where you live, or have a parent or guardian agree for you.')+
+      sec('Your content','Tasks, notes and other things you add stay yours. You let StudyOS store and show them to you, and to friends only where the app says so (for example your name and focus minutes on a leaderboard). Do not add anything illegal, harmful or that belongs to someone else.')+
+      sec('Friends and gems','Be kind to other students. Do not harass people, send spam, or try to cheat gems or leaderboards. We may limit or close accounts that do.')+
+      sec('Keeping the app working','We work to keep StudyOS available and your data safe, but an app can have bugs or downtime. Offline changes are saved on your phone and sent later, so please keep your phone online now and then. Do not try to break, copy or misuse the app or its servers.')+
+      sec('Ending your account','You can delete your account any time in Settings, Privacy, Delete my account. This removes your data permanently. We may suspend accounts that break these terms.')+
+      sec('Changes and contact','We may update these terms and will change the date above when we do. Questions: '+contact()+'.')+`</div>`;
+    const PRIV=()=>`<div class="lgl"><p style="color:#9aa6b0">Last updated: November 15, 2026</p>`+
+      sec('What we collect','Your name, email and profile picture if you sign in with Google. Your password is stored only as a one way scrambled value, never as plain text. The study data you create: tasks, notes, flashcards, grades, exams, planner items, focus sessions, subjects and your settings. Friends, requests and gems. Sign in device details (a device label and IP address) so we can warn you about a new device.')+
+      sec('How we use it','To run the app, sync your data between your devices, show your streak and progress, and send emails you need: verification, welcome, new device alerts, and reminders or reports you leave switched on. We do not show ads and we do not sell your data.')+
+      sec('What friends can see','Friends can see your name, picture, gems and focus minutes. They cannot see your tasks, notes, grades or email.')+
+      sec('Contacts','Only if you tap Find friends from contacts, the email addresses in your contacts are sent once to check which people already use StudyOS. They are not saved.')+
+      sec('On your phone','So StudyOS works offline, a copy of your data is kept on your phone. You can remove it in Settings, Storage and downloads, or with Forget saved accounts on the sign in screen.')+
+      sec('Sharing','We use services that host the app and send email for us, and Google when you choose Google sign in. They only handle data to provide those services.')+
+      sec('Your choices','Export your data in Settings, Export my data. Change what we email you in your notification settings. Delete your account and all of your data in Settings, Privacy, Delete my account. Deleting is permanent.')+
+      sec('Contact','Privacy questions: '+contact()+'. We will update this page and its date if our practices change.')+`</div>`;
+    const legal=(t,d,fn)=>({t,d,g:'Settings pages',spec:{m:'Plain text page that scrolls.',h:'Light tap on Back.',s:'No sounds.'},
+      html:()=>scr(t,fn()),play(){S.mute=false;rise();baseBack()}});
+    const DEL=()=>`<div class="sh1" style="margin-top:6px">Delete your account</div><div class="sh2">This permanently removes your account and everything in it. It cannot be undone.</div>
+<div class="scd" style="flex-direction:column;align-items:stretch;gap:2px;padding:10px 12px;margin-top:14px">${['Tasks, notes, flashcards, grades and exams','Focus sessions, streak, gems and settings','Friendships and notifications','Your saved copy on this phone'].map(t=>`<div class="sck"><i style="background:#c8553d;border-color:#c8553d"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></i>${t}</div>`).join('')}</div>
+<div class="sfl">Password (leave empty if you use Google sign in)</div><input class="sin" type="password" data-dpw autocomplete="current-password" maxlength="100">
+<div class="sfl">Type DELETE to confirm</div><input class="sin" data-dcf autocapitalize="characters" autocomplete="off" maxlength="10">
+<button class="sbtn red" type="button" data-send style="margin-top:18px">DELETE MY ACCOUNT</button><div class="snote" data-dnote>You need an internet connection to delete your account.</div>`;
+    SCREENS.push(legal('Terms of Service','Terms of using StudyOS',TERMS),legal('Privacy Policy','How StudyOS handles your data',PRIV),
+      {t:'Delete account',d:'Permanently delete your account and data',g:'Settings pages',spec:{m:'Warning list and two fields.',h:'Light tap, success pattern when done.',s:'No sounds.'},html:()=>scr('Delete account',DEL()),
+       play(){S.mute=false;rise();
+         R.onclick=async e=>{
+          if(e.target.closest('[data-back]')){hap('light');go(IDX('Privacy settings'));return}
+          const b=e.target.closest('[data-send]');if(!b||b.dataset.busy)return;
+          if(D.guest){hap('light');toast('You have no account to delete.');return}
+          if(D.online===false){hap('light');toast('Connect to the internet to delete your account.');return}
+          if($('[data-dcf]',R).value.trim().toUpperCase()!=='DELETE'){hap('light');toast('Type DELETE to confirm.');return}
+          b.dataset.busy=1;hap('press');const t0=b.textContent;b.textContent='DELETING...';
+          let r={ok:false,message:'Could not delete your account.'};try{if(CB.deleteAccount)r=await CB.deleteAccount($('[data-dpw]',R).value)}catch(_){}
+          if(!r.ok&&R&&R.isConnected){delete b.dataset.busy;b.textContent=t0;hap('light');toast(r.message||'Could not delete your account.')}}}});
+    /* point the existing buttons and links at them */
+    const hook=(t,fn)=>{const k=IDX(t),p=SCREENS[k].play;SCREENS[k].play=()=>{p();const old=R.onclick;R.onclick=e=>fn(e)||old(e)}};
+    hook('Privacy settings',e=>{if(e.target.closest('[data-del]')){hap('light');go(IDX('Delete account'));return true}});
+    hook('Edit profile',e=>{if(e.target.closest('[data-del]')){hap('light');go(IDX('Delete account'));return true}});
+    {const k=IDX('Settings');
+      const sp=SCREENS[k].play;SCREENS[k].play=()=>{sp();const old=R.onclick;R.onclick=e=>{const l=e.target.closest('[data-legal]');if(l){hap('light');go(IDX(l.dataset.legal));return}old(e)}}}
+    hook('Privacy settings',e=>{const l=e.target.closest('[data-legal]');if(l){hap('light');go(IDX(l.dataset.legal));return true}});
+  }
+
+  /* demo-only screens that nothing in the app opens */
+  ['Widgets','Daily goal reached','Focus timer'].forEach(t=>{const k=IDX(t);if(k>=0)SCREENS.splice(k,1)});
+
+  /* Settings list: no dead rows */
+  {const k=IDX('Settings'),sh=SCREENS[k].html;SCREENS[k].html=()=>{let h=sh();
+    h=h.replace(/<div class="sit" data-it="Accessibility">[\s\S]*?<\/svg><\/div>/,'');
+    const L=D.links||{};const lk=[L.terms&&['TERMS',L.terms],L.privacy&&['PRIVACY POLICY',L.privacy]].filter(Boolean);
+    h=h.replace(/<div class="slk">[\s\S]*?<\/div>(?=<\/div><\/div><\/div>$)/,'<div class="slk"><span data-legal="Terms of Service">TERMS</span><span data-legal="Privacy Policy">PRIVACY POLICY</span></div>');
+    return h};
+    const sp=SCREENS[k].play;SCREENS[k].play=()=>{sp();const old=R.onclick;R.onclick=e=>{const u=e.target.closest('[data-url]');if(u){hap('light');try{window.open(u.dataset.url,'_blank')}catch(_){}return}old(e)}}}
+
+  /* Profile QR: a real code for the invite link */
+  {const k=IDX('Profile QR'),qh=SCREENS[k].html,qp=SCREENS[k].play;
+    const realQr=()=>{try{const q=qrcode(0,'H');q.addData(D.inviteUrl||'https://studyos.app');q.make();const n=q.getModuleCount(),m=1,s=n+m*2;let d='';
+      const fin=(r,c)=>(r<7&&c<7)||(r<7&&c>=n-7)||(r>=n-7&&c<7),mid=(r,c)=>Math.abs(r-n/2+.5)<n*.12&&Math.abs(c-n/2+.5)<n*.12;
+      for(let r=0;r<n;r++)for(let c=0;c<n;c++){if(!q.isDark(r,c)||fin(r,c)||mid(r,c))continue;d+=`<rect x="${c+m+.06}" y="${r+m+.06}" width=".88" height=".88" rx=".4"/>`}
+      let f='';[[0,0],[0,n-7],[n-7,0]].forEach(([r,c])=>{const x=c+m,y=r+m;f+=`<rect x="${x+.5}" y="${y+.5}" width="6" height="6" rx="1.9" fill="none" stroke="#181b22" stroke-width="1"/><rect x="${x+2}" y="${y+2}" width="3" height="3" rx="1" fill="#181b22"/>`});
+      return `<svg viewBox="0 0 ${s} ${s}"><g fill="#181b22">${d}</g>${f}</svg>`}catch(_){return ''}};
+    const overlay=()=>{const h=qh();const i=h.indexOf('<div class="ov"');return h.slice(i)};
+    SCREENS[k].html=()=>(SCREENS[IDX('Profile')].html().replace(/<\/div><\/div>$/,'')+overlay()).replace(/(<div class="qimg">)[\s\S]*?<\/svg>/,'$1'+realQr()).replace('Friends scan this to add you on StudyOS.','Friends scan this to get StudyOS.').replace(/<button type="button" data-sh><svg(?:(?!<\/button>)[\s\S])*?Save<\/button>/,'');
+    SCREENS[k].play=()=>{qp();const old=R.onclick;R.onclick=e=>{
+      const b=e.target.closest('[data-sh]');
+      if(b){const txt=(b.textContent||'').trim();
+        if(/Copy/.test(txt)){try{navigator.clipboard.writeText(D.inviteUrl||'').then(()=>toast('Link copied')).catch(()=>toast('Could not copy'))}catch(_){toast('Could not copy')}hap('medium');return}
+        if(/Share/.test(txt)){hap('medium');if(CB.invite)CB.invite();return}}
+      old(e)}}}
+
+  /* Skeleton loading in the app's own look */
+  {const bar=(w,h,x)=>`<div class="sk" style="width:${w};height:${h}px;${x||''}"></div>`;
+    const rowsS=n=>Array.from({length:n},(_,i)=>`<div class="skc" style="margin-top:${i?10:0}px;display:flex;align-items:center;gap:12px"><div class="sk" style="width:26px;height:26px;border-radius:9px;flex:none"></div><div style="flex:1;display:grid;gap:8px">${bar(i%2?'64%':'78%',13)}${bar('38%',10)}</div></div>`).join('');
+    const SK={
+      Home:()=>`<div class="pg">${tb()}${bar('46%',26,'margin-top:14px')}${bar('34%',14,'margin-top:10px')}
+<div class="skc" style="margin-top:18px;display:flex;align-items:center;gap:18px;padding:20px"><div class="sk" style="width:92px;height:92px;border-radius:50%;flex:none"></div><div style="flex:1;display:grid;gap:10px">${bar('70%',16)}${bar('50%',12)}${bar('62%',12)}</div></div>
+<div style="margin-top:20px">${bar('30%',18)}</div><div style="margin-top:12px">${rowsS(3)}</div></div>${nav('home')}`,
+      Tasks:()=>`<div class="pg">${tb()}${bar('32%',26,'margin-top:14px')}${bar('62%',13,'margin-top:10px')}${bar('100%',40,'margin-top:16px;border-radius:20px')}<div style="margin-top:16px">${rowsS(5)}</div></div>${nav('tasks')}`,
+      Study:()=>`<div class="pg">${tb()}${bar('32%',26,'margin-top:14px')}${bar('58%',13,'margin-top:10px')}<div style="margin-top:16px;display:grid;gap:10px">${[0,1,2,3].map(()=>`<div class="skc" style="padding:18px;display:grid;gap:10px">${bar('46%',16)}${bar('72%',12)}</div>`).join('')}</div></div>${nav('study')}`,
+      Friends:()=>`<div class="pg">${tb()}${bar('38%',26,'margin-top:14px')}<div style="margin-top:18px">${Array.from({length:5},(_,i)=>`<div class="skc" style="margin-top:${i?10:0}px;display:flex;align-items:center;gap:12px"><div class="sk" style="width:40px;height:40px;border-radius:50%;flex:none"></div><div style="flex:1;display:grid;gap:8px">${bar('50%',14)}${bar('28%',10)}</div>${bar('34px',14)}</div>`).join('')}</div></div>${nav('profile')}`
+    };
+    Object.keys(SK).forEach(t=>{const k=IDX(t);if(k<0)return;const oh=SCREENS[k].html,op=SCREENS[k].play;
+      SCREENS[k].html=()=>D.loading?wrapD(`<div role="status" aria-label="Loading your data" style="display:contents">${SK[t]()}</div>`):oh();
+      SCREENS[k].play=()=>{if(D.loading){S.mute=false;return}op()}})}
 }
 /* ---- tab bar ---- */
 host.addEventListener('click',e=>{
@@ -1062,7 +1288,7 @@ function layout(){
   stage.style.transform='scale('+K+')';stage.style.transformOrigin='0 0';
 }
 const ro=new ResizeObserver(layout);ro.observe(host);layout();
-const KEEP=['Home','Tasks','Friends','Study'];
+const KEEP=['Home','Tasks','Friends','Study','Sync and offline'];
 function refresh(){if(CUR>=0&&KEEP.includes(SCREENS[CUR].t)){const sc=$('.pg',R);const y=sc?sc.scrollTop:0;go(CUR,true)}}
 function togKey(el,i){return 'dz_tg_'+(SCREENS[CUR]?SCREENS[CUR].t:'')+'_'+i}
 const TSEEN={};
@@ -1070,7 +1296,22 @@ const sKey=k=>k.replace(/[^A-Za-z0-9_-]/g,'').slice(0,64);
 function restoreToggles(){try{$$('.ptg,.rtg',R).forEach((el,i)=>{const k=togKey(el,i),sk=sKey(k);let v=D.prefs&&D.prefs[sk];if(typeof v!=='boolean'){const l=localStorage.getItem(k);v=l===null?undefined:l==='1'}
   if(v===false)el.classList.add('off');else if(v===true)el.classList.remove('off');TSEEN[sk]=!el.classList.contains('off')})}catch(_){}}
 host.addEventListener('click',()=>{setTimeout(()=>{try{if(!R)return;$$('.ptg,.rtg',R).forEach((el,i)=>{const k=togKey(el,i),sk=sKey(k),on=!el.classList.contains('off');localStorage.setItem(k,on?'1':'0');if(TSEEN[sk]!==on){TSEEN[sk]=on;if(CB.savePref)CB.savePref(sk,on)}})}catch(_){}},60)},true);
-const api={navOnly,refresh,go,screen:()=>SCREENS[CUR]&&SCREENS[CUR].t,names:()=>SCREENS.map(s=>s.t),
+function back(){
+  const t=SCREENS[CUR]&&SCREENS[CUR].t;if(!t)return false;
+  if(t==='Home')return false;
+  if(host.classList.contains('dz-kb')&&document.activeElement&&document.activeElement.blur){document.activeElement.blur();return true}
+  const Q=['Add note','Planner','Add subject','Quiz','Progress','Achievement','Reminder','Upload file'];
+  let to='Settings';
+  if(['Tasks','Focus','Study','Profile','Quick add'].includes(t))to='Home';
+  else if(t==='Add task')to='Tasks';
+  else if(Q.includes(t))to='Quick add';
+  else if(t==='Delete account')to='Privacy settings';
+  else if(['Weekly report','Badges','Exam mode'].includes(t))to='Study';
+  else if(['Friends','Edit profile','Settings'].includes(t))to='Profile';
+  else if(t==='Search')to=DZ.searchFrom||'Home';
+  hap('light');go(to);return true;
+}
+const api={navOnly,refresh,go,back,screen:()=>SCREENS[CUR]&&SCREENS[CUR].t,names:()=>SCREENS.map(s=>s.t),
   update(d){Object.assign(D,d);refresh()},
   destroy(){RUN++;timers.forEach(clearTimeout);ro.disconnect();host.innerHTML='';host.classList.remove('dz')}};
 go(opts.start||'Home');

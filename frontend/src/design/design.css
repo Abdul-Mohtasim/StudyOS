@@ -661,3 +661,20 @@
 .study-app.native-tabs > .sidebar,.study-app.native-tabs > .mobile-overlay,.study-app.native-tabs .mobile-top-nav,.study-app.native-tabs .topbar,.study-app.native-tabs .app-footer{display:none!important}
 .study-app.native-tabs .main-content{margin-left:0!important;padding-top:64px!important;padding-bottom:24px!important}
 .native-back-pill{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:14px;z-index:90;height:38px;padding:0 16px;border:0;border-radius:19px;background:#1b1e25;color:#ebe8ea;font:700 15px 'Inter',system-ui,sans-serif;box-shadow:0 6px 18px -8px rgba(0,0,0,.5)}
+
+.dz.dz-kb .qcta,.dz.dz-kb .nav,.dz.dz-kb .fbtns{display:none!important}
+.dz [data-fin]::-webkit-outer-spin-button,.dz [data-fin]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* skeleton loading (app palette: card tone with a soft mauve sweep) */
+.dz .sk{border-radius:12px;background:linear-gradient(100deg,var(--card) 30%,rgba(201,184,195,.5) 50%,var(--card) 70%);background-size:240% 100%;animation:dzsk 1.5s ease-in-out infinite}
+.dz .scr.n .skc{background:var(--card);border-radius:22px;padding:14px 16px}
+.dz .scr.n .skc .sk{background:linear-gradient(100deg,var(--chip) 30%,rgba(201,184,195,.55) 50%,var(--chip) 70%);background-size:240% 100%}
+.dz .scr.n .sk{background:linear-gradient(100deg,var(--card) 30%,rgba(201,184,195,.55) 50%,var(--card) 70%);background-size:240% 100%}
+.dz .scr.n .skc .sk{background:linear-gradient(100deg,var(--chip) 30%,rgba(201,184,195,.55) 50%,var(--chip) 70%);background-size:240% 100%}
+@keyframes dzsk{0%{background-position:120% 0}100%{background-position:-120% 0}}
+@media (prefers-reduced-motion:reduce){.dz .sk{animation:none}}
+.dz .qsh h2{color:#3a2a37}
+
+.dz .lgl h5{font:700 16px var(--display);margin:18px 0 6px;color:#f4f2f3}
+.dz .lgl p{font:400 14px/1.55 var(--body);color:#cfd2d6;margin:0}
+.dz .lgl b{color:#f4f2f3}

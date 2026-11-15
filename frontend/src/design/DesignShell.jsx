@@ -25,6 +25,7 @@ export default function DesignShell({ data, actions, onTab, section }) {
       start: SECTION_SCREEN[sectionRef.current] || "Home",
     });
     apiRef.current = api;
+    if (import.meta.env.DEV) window.__dz = api;
     return () => { api.destroy(); apiRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -43,6 +44,15 @@ export default function DesignShell({ data, actions, onTab, section }) {
     // Stay on a sub-page (Settings, Weekly report...) unless another main tab is open.
     if (cur !== target && (!cur || TOP.includes(cur))) api.go(target);
   }, [section]);
+
+  // Android back button: DesignShell asks the design screens first.
+  useEffect(() => {
+    const handler = (event) => {
+      if (apiRef.current?.back?.()) event.preventDefault?.();
+    };
+    window.__studyosDesignBack = () => Boolean(apiRef.current?.back?.());
+    return () => { delete window.__studyosDesignBack; };
+  }, []);
 
   const covering = Boolean(SECTION_SCREEN[section]);
   return (

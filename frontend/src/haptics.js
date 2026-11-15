@@ -236,7 +236,7 @@ export const haptic = Object.fromEntries(
 const INTERACTIVE =
   'button, a[href], [role="button"], [role="tab"], [role="switch"], ' +
   'input[type="checkbox"], input[type="radio"], select, summary';
-const NAV = /(^|\s)(nav-link|as-tab|pl-nav-link|bottom-nav|menu-link)(\s|$)|\[role=tab\]/;
+const NAV = /(^|\s)(nav-link|as-tab|bottom-nav|menu-link)(\s|$)|\[role=tab\]/;
 const DESTRUCTIVE = /delete|remove|trash|logout|log out|sign out/i;
 const SWITCH = /switch|toggle|settings-theme-option|checkbox|radio/i;
 const PRIMARY = /primary|start|save|add|submit|cta|create|continue|get started|google/i;

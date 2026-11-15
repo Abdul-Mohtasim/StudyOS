@@ -390,4 +390,39 @@ router.patch("/profile", requireAuth, async (req, res) => {
   }
 });
 
+// Permanently delete the signed-in student and everything that belongs to them.
+// Email/password accounts must send their password; Google accounts confirm with the word DELETE.
+router.delete("/account", requireAuth, async (req, res) => {
+  try {
+    const { password, confirm } = req.body || {};
+    if (String(confirm || "").trim().toUpperCase() !== "DELETE") {
+      return res.status(400).json({ error: "Type DELETE to confirm." });
+    }
+
+    const student = await Student.findById(req.student._id).select("+passwordHash");
+    if (!student) return res.status(404).json({ error: "Account not found." });
+
+    if (student.passwordHash) {
+      if (typeof password !== "string" || !password || !(await bcrypt.compare(password, student.passwordHash))) {
+        return res.status(401).json({ error: "That password is not correct." });
+      }
+    }
+
+    const id = student._id;
+    const own = ["Task", "Note", "FocusSession", "PlannerTask", "StudentSettings", "Exam", "Flashcard", "Grade", "EmailPreferences", "EmailToken", "EmailLog", "LoginDevice"];
+    for (const name of own) {
+      await require("../models/" + name).deleteMany({ student: id });
+    }
+    await require("../models/Friendship").deleteMany({ $or: [{ requester: id }, { recipient: id }] });
+    await require("../models/Notification").deleteMany({ $or: [{ student: id }, { from: id }] });
+    await Student.deleteOne({ _id: id });
+    requireAuth.forgetStudent(id);
+
+    return res.status(200).json({ message: "Your account and data were deleted." });
+  } catch (error) {
+    console.error("Delete account error:", error);
+    return res.status(500).json({ error: "Could not delete your account. Try again." });
+  }
+});
+
 module.exports = router;

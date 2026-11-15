@@ -14,6 +14,23 @@ import { nextSchedule } from "./srs";
 const CACHE_PREFIX = "studyos-cache:";
 const QUEUE_KEY = "studyos-offline-queue";
 const MAX_QUEUE = 500;
+const SYNC_KEY = "studyos-last-sync";
+let lastSyncAt = 0;
+try {
+  lastSyncAt = Number(localStorage.getItem(SYNC_KEY)) || 0;
+} catch {
+  lastSyncAt = 0;
+}
+function markSynced() {
+  const now = Date.now();
+  if (now - lastSyncAt < 3000) return;
+  lastSyncAt = now;
+  try {
+    localStorage.setItem(SYNC_KEY, String(now));
+  } catch {
+    /* ignore */
+  }
+}
 
 // collection path -> [key in list response, key in item response]
 const COLLECTIONS = {
@@ -211,6 +228,45 @@ export function readCachedMe(token) {
   if (!uid) return null;
   const data = readCache(uid, "/api/auth/me");
   return data && data.student ? data : null;
+}
+
+// What this phone is holding for the signed-in student (for the Storage and Sync pages).
+export function getOfflineInfo() {
+  let uid = null;
+  try {
+    uid = currentUid();
+  } catch {
+    uid = null;
+  }
+  let chars = 0;
+  let entries = 0;
+  if (uid) {
+    cacheKeysFor(uid, "").forEach((k) => {
+      entries += 1;
+      try {
+        chars += k.length + (localStorage.getItem(k) || "").length;
+      } catch {
+        /* ignore */
+      }
+    });
+  }
+  return { bytes: chars * 2, entries, pending: queue.filter((q) => !uid || q.uid === uid).length, lastSyncAt, online: status.online };
+}
+
+// Drop this student's saved copy (only the copy; waiting changes stay queued). Reloads the app's data.
+export function clearSavedCopy() {
+  const uid = currentUid();
+  if (!uid) return 0;
+  const keys = cacheKeysFor(uid, "");
+  keys.forEach((k) => {
+    try {
+      localStorage.removeItem(k);
+    } catch {
+      /* ignore */
+    }
+  });
+  window.dispatchEvent(new CustomEvent("studyos:synced"));
+  return keys.length;
 }
 
 // Remove cached account data (called when the student signs out).
@@ -579,6 +635,7 @@ export function flushOfflineQueue() {
     }
 
     setStatus({ syncing: false });
+    if (changed) markSynced();
     if (changed) window.dispatchEvent(new CustomEvent("studyos:synced"));
     return changed;
   })().finally(() => {
@@ -623,6 +680,7 @@ export function installOfflineLayer(base = "") {
             if (saved) return jsonResponse(saved);
           }
           if (!status.online) setStatus({ online: true });
+          if (res.ok) markSynced();
           return res;
         } catch (err) {
           if (!isNetworkError(err)) throw err;
@@ -633,6 +691,34 @@ export function installOfflineLayer(base = "") {
       const cached = readCache(uid, parsed.key);
       if (cached) return jsonResponse(cached);
       return realFetch(input, init); // nothing cached: fail the normal way
+    }
+
+    // ----- settings writes (preferences, custom subjects, theme) -----
+    if (collection === "settings" && method === "PUT" && parsed.segs.length === 1) {
+      if (navigator.onLine !== false || status.online) {
+        try {
+          const res = await realFetch(input, init);
+          if (!status.online) setStatus({ online: true });
+          if (res.ok) res.clone().json().then((data) => data && data.settings && writeCache(uid, parsed.key, data)).catch(() => {});
+          return res;
+        } catch (err) {
+          if (!isNetworkError(err)) throw err;
+          setStatus({ online: false });
+        }
+      }
+      let sbody = {};
+      try {
+        sbody = init && init.body ? JSON.parse(init.body) : {};
+      } catch {
+        sbody = {};
+      }
+      const cachedS = readCache(uid, parsed.key) || { settings: {} };
+      const cur = cachedS.settings || {};
+      const merged = { ...cur, ...sbody };
+      if (sbody.prefs && typeof sbody.prefs === "object") merged.prefs = { ...(cur.prefs || {}), ...sbody.prefs };
+      writeCache(uid, parsed.key, { ...cachedS, settings: merged });
+      enqueue({ id: newTempId(), uid, method: "PUT", path: parsed.path, body: sbody, ts: new Date().toISOString() });
+      return jsonResponse({ settings: merged });
     }
 
     // ----- writes -----

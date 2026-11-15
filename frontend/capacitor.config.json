@@ -1,7 +1,7 @@
 {
   "appId": "com.studyos.app",
   "appName": "StudyOS",
-  "webDir": "dist",
+  "webDir": "dist-app",
   "plugins": {
     "LocalNotifications": {
       "smallIcon": "ic_stat_studyos",

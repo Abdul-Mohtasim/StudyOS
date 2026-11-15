@@ -1,0 +1,59 @@
+/* App-only pages (Flashcards, Notes & subjects, Grades) in the StudyOS design palette. */
+.np{--ink:#1b1e25;--card:#edebec;--mut:#4b5d6d;--mv:#c9b8c3;--chip:#e1e0e2;--pg:#dfe0e3;--line:#c8c6c8;position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;background:var(--pg);color:var(--ink);font-family:'Inter',system-ui,sans-serif}
+.np.np-dark{--ink:#ebe8ea;--card:#1b2229;--mut:#9aa6b0;--chip:#232b33;--pg:#0f1317;--line:#2d3740}
+.np *{box-sizing:border-box}
+.np-head{padding:calc(14px + env(safe-area-inset-top,0px)) 18px 0}
+.np-back{width:44px;height:44px;border-radius:22px;border:0;background:var(--card);color:var(--ink);font:400 30px/1 'Inter',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:0 0 4px}
+.np-scroll{flex:1;overflow-y:auto;padding:8px 18px calc(28px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
+.np-title{font:700 32px/1.1 'Space Grotesk',system-ui,sans-serif;margin:10px 0 4px}
+.np-sub{margin:0 0 14px;color:var(--mut);font:400 15px/1.4 'Inter',system-ui,sans-serif}
+.np-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 14px}
+.np-stats>div{background:var(--card);border-radius:20px;padding:12px 10px;text-align:center}
+.np-stats b{display:block;font:700 22px 'Space Grotesk',system-ui,sans-serif}
+.np-stats small{color:var(--mut);font:600 12px 'Inter',system-ui,sans-serif}
+.np-tabs{display:flex;gap:6px;background:var(--chip);border-radius:22px;padding:4px;margin-bottom:14px}
+.np-tabs button{flex:1;height:38px;border:0;border-radius:18px;background:transparent;color:var(--mut);font:700 14px 'Inter',system-ui,sans-serif}
+.np-tabs button.on{background:var(--ink);color:var(--pg)}
+.np-chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+.np-chip{height:38px;padding:0 16px;border:0;border-radius:19px;background:var(--chip);color:var(--ink);font:600 14px 'Inter',system-ui,sans-serif}
+.np-chip.on{background:var(--mv);color:#1b1e25}
+.np-card{background:var(--card);border-radius:24px;padding:16px;margin-bottom:12px}
+.np-fc{text-align:center;padding:20px 16px}
+.np-tag{display:inline-block;background:var(--mv);color:#1b1e25;border-radius:12px;padding:5px 12px;font:700 12px 'Inter',system-ui,sans-serif}
+.np-q{font:700 22px/1.3 'Space Grotesk',system-ui,sans-serif;margin:16px 0}
+.np-a{font:400 17px/1.45 'Inter',system-ui,sans-serif;color:var(--mut);margin:0 0 16px;padding-top:14px;border-top:1px solid var(--line)}
+.np-grades{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.np-g{border:0;border-radius:16px;height:58px;background:var(--chip);color:var(--ink);font:700 14px 'Inter',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.np-g small{font:500 11px 'Inter',system-ui,sans-serif;color:var(--mut)}
+.np-g2{background:var(--mv);color:#1b1e25}.np-g2 small{color:#4b5d6d}
+.np-label{display:block;margin:10px 0 6px;font:700 13px 'Inter',system-ui,sans-serif;color:var(--mut)}
+.np-input{width:100%;border:2px solid transparent;border-radius:18px;background:var(--chip);color:var(--ink);padding:12px 14px;font:500 16px 'Inter',system-ui,sans-serif;outline:0;resize:vertical}
+.np-input:focus{border-color:var(--mv)}
+.np-input::placeholder{color:var(--mut);opacity:.7}
+.np-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.np-primary{width:100%;height:54px;border:0;border-radius:27px;background:var(--ink);color:var(--pg);font:700 16px 'Inter',system-ui,sans-serif;margin-top:12px}
+.np-primary:disabled{opacity:.5}
+.np-danger{width:100%;height:48px;border:0;border-radius:24px;background:transparent;color:#c0503e;font:700 15px 'Inter',system-ui,sans-serif;margin-top:6px}
+.np-mini{height:38px;padding:0 16px;border:0;border-radius:19px;background:var(--ink);color:var(--pg);font:700 13px 'Inter',system-ui,sans-serif;white-space:nowrap}
+.np-row{width:100%;display:flex;align-items:center;gap:10px;background:var(--card);border:0;border-radius:20px;padding:12px 14px;margin-bottom:8px;text-align:left;color:var(--ink);font-family:'Inter',system-ui,sans-serif}
+.np-rowtxt{flex:1;min-width:0}
+.np-rowtxt b{display:block;font:700 15px 'Inter',system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.np-rowtxt small{display:block;color:var(--mut);font:500 13px 'Inter',system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.np-x{width:34px;height:34px;border:0;border-radius:17px;background:var(--chip);color:var(--mut);font-size:14px}
+.np-chev{color:var(--mut);font:700 22px 'Inter',system-ui,sans-serif}
+.np-score{font:700 16px 'Space Grotesk',system-ui,sans-serif}
+.np-empty{background:var(--card);border-radius:20px;padding:22px 16px;text-align:center;color:var(--mut);font:600 14px/1.45 'Inter',system-ui,sans-serif}
+.np-search{display:flex;gap:8px;margin-bottom:12px}
+.np-search .np-input{flex:1;min-width:0}
+.np-subjhead{display:flex;justify-content:space-between;font:700 16px 'Inter',system-ui,sans-serif;margin-bottom:8px}
+.np-bar{height:8px;border-radius:4px;background:var(--chip);overflow:hidden;margin-bottom:8px}
+.np-bar i{display:block;height:100%;background:var(--mv);border-radius:4px}
+.np-subj small{color:var(--mut);font:500 13px 'Inter',system-ui,sans-serif}
+.au-native .au-brand img{display:none}
+
+.np-skel{display:grid;gap:10px;margin-top:8px}
+.np-skc{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:22px;padding:14px 16px}
+.np-sk{border-radius:12px;background:linear-gradient(100deg,var(--chip) 30%,rgba(201,184,195,.55) 50%,var(--chip) 70%);background-size:240% 100%;animation:npsk 1.5s ease-in-out infinite}
+.np-skel>.np-sk{background:linear-gradient(100deg,var(--card) 30%,rgba(201,184,195,.55) 50%,var(--card) 70%);background-size:240% 100%}
+@keyframes npsk{0%{background-position:120% 0}100%{background-position:-120% 0}}
+@media (prefers-reduced-motion:reduce){.np-sk{animation:none}}
