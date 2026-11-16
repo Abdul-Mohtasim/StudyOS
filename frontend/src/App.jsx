@@ -2299,10 +2299,10 @@ useEffect(() => {
       // Premium items this account has bought (for example "sound"). An older server sends none.
       owned: Array.isArray(data.owned) ? data.owned.filter((key) => typeof key === "string") : prev?.owned || [],
       prices: data.prices || prev?.prices || null,
+      // Pack choices per item (an older server sends none, then only single purchases are offered).
+      packs: data.packs && typeof data.packs === "object" ? data.packs : prev?.packs || null,
       // Which items are finished. Missing on an older server: the shop then treats only the old items as live.
       live: data.live && typeof data.live === "object" ? data.live : prev?.live || null,
-      // Pack sizes (1 / 5 / 15). Missing on an older server: the shop then offers single purchases only.
-      packs: Array.isArray(data.packs) ? data.packs : prev?.packs || null,
     };
   }
 
@@ -2346,12 +2346,11 @@ useEffect(() => {
     if (!token) return { ok: false, message: "Create your profile to use the shop." };
     const body = { item };
     if (item === "repair") body.date = extra?.date || "";
-    const qty = [1, 5, 15].includes(Number(extra?.qty)) ? Number(extra.qty) : 1;
-    if (qty > 1) body.qty = qty;
+    if (Number.isInteger(extra?.qty) && extra.qty > 1) body.qty = extra.qty;
     const { ok, data, status } = await nativeApi("/api/shop/buy", "POST", body, token);
     if (Number.isFinite(data.gems)) setGemsServer(data.gems);
     if (data.freezes !== undefined) setShopServer((prev) => shopFrom(data, prev));
-    if (ok) return { ok: true, message: SHOP_BOUGHT[item] || "Done!", qty };
+    if (ok) return { ok: true, message: SHOP_BOUGHT[item] || "Done!" };
     if (data.message) return { ok: false, message: data.message };
     if (status === 0) return { ok: false, message: "Could not reach the server. Check your connection and try again." };
     return { ok: false, message: `The shop server answered with an error (code ${status}). The backend may need to be redeployed.` };

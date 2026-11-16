@@ -12,14 +12,14 @@ function send(res, result) {
   return res.status(result.status || 400).json({ message: result.message, ...(result.state || {}) });
 }
 
-// GET /api/shop -> { gems, freezes, doubleUntil, protectedDays, owned, prices, live, packs }
+// GET /api/shop -> { gems, freezes, doubleUntil, protectedDays, owned, prices, packs, live }
 //   owned  = premium items this account has bought, for example ["sound", "theme_ocean"]
 //   prices = price of every item (and the gift amount)
 //   live   = which items are finished and can be bought
 router.get("/", async (req, res) => {
   try {
     const state = await shop.state(req.student._id);
-    res.json({ ...state, prices: shop.prices(), live: shop.live(), packs: shop.packs() });
+    res.json({ ...state, prices: shop.prices(), packs: shop.packs(), live: shop.live() });
   } catch (error) {
     req.log?.error?.(error);
     res.status(500).json({ message: "Could not load the shop." });
@@ -29,12 +29,12 @@ router.get("/", async (req, res) => {
 // POST /api/shop/buy { item, date? }
 //   item: any key from the catalog (see services/shop.js)
 //   date: "YYYY-MM-DD", only for item "repair" (the missed day to bring back)
-//   qty:  pack size 1 (default), 5 or 15. 5 costs 4x the price, 15 costs 10x.
+//   qty:  how many (a pack size from `packs`; default 1)
 router.post("/buy", async (req, res) => {
   try {
     const item = String(req.body?.item || "").slice(0, 40);
     const date = typeof req.body?.date === "string" ? req.body.date.slice(0, 10) : "";
-    const qty = req.body?.qty === undefined ? 1 : Number(req.body.qty);
+    const qty = Number.isInteger(req.body?.qty) ? req.body.qty : 1;
     send(res, await shop.buy(req.student._id, item, { date, qty }));
   } catch (error) {
     req.log?.error?.(error);

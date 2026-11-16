@@ -9,10 +9,6 @@ import { LANGS, setLanguage, getLanguage, translate as tr, englishText as en0 } 
 export function mountDesign(host, opts = {}) {
 host.classList.add('dz');host.setAttribute('data-own-haptics','');
 const stage=document.createElement('div');stage.className='dz-stage';host.appendChild(stage);
-// A second layer above the stage for bottom sheets. The stage is rebuilt on every redraw, the layer is not.
-const layer=document.createElement('div');layer.className='dz-stage dz-layer';layer.style.cssText='position:absolute;left:0;top:0;pointer-events:none;z-index:60';host.appendChild(layer);
-if(getComputedStyle(host).position==='static')host.style.position='relative';
-let CLOSESHEET=null;
 let R=null,RUN=0,CUR=0;
 const SCREENS=[];
 const IDX=t=>SCREENS.findIndex(s=>s.t===t);
@@ -1128,7 +1124,7 @@ const SHI={
  heart:'<svg viewBox="0 0 64 64"><path d="M32 58C9 41 5 29 5 21 5 12 12 7 19 7c6 0 10 3 13 8 3-5 7-8 13-8 7 0 14 5 14 14 0 8-4 20-27 37z" fill="#ff5a7a"/></svg>'
 };
 const PR=()=>Object.assign({freeze:100,repair:150,double:120,sound:180,focusplus:220,report:200,exam:300,widgets:160,frames:140,badges:120,theme_ocean:250,theme_forest:250,theme_sunset:250,theme_mono:250,gift:25},(D.shop&&D.shop.prices)||{});
-let SMSG=null,SHY=0,GHY=0,SBUSY=false,STXT='',STUNTIL=0,SARM='',SARMT=0,SBT=0,SBST=0;
+let SHEET=null,SMSG=null,SHY=0,GHY=0,SBUSY=false,STXT='',STUNTIL=0,SARM='',SARMT=0,SBT=0,SBST=0;
 let DBG=[];
 const tn=el=>{try{return (el.tagName||'?')+'.'+String((el.className&&el.className.baseVal!==undefined?el.className.baseVal:el.className)||'').split(' ')[0]}catch(_){return '?'}};
 const dbg=m=>{DBG.push(new Date().toTimeString().slice(3,8)+' '+m);if(DBG.length>6)DBG.shift();try{const el=R&&R.querySelector('.sh-dbg');if(el)el.textContent=DBG.join('\n')}catch(_){}};
@@ -1197,10 +1193,39 @@ function whyNot(k,price){
   if(D.guest)return 'Create your profile to use the shop.';
   if(!D.shop)return shopWait();
   if(k==='freeze'&&(sh.freezes||0)>=2)return 'You already hold the most Streak Freezes (2).';
+  if(k==='double'&&(sh.doubleUntil||0)>Date.now())return 'Double Gems is already running.';
   if(k==='repair'&&!D.repair)return 'Your streak is safe. There is no missed day to repair.';
   if((D.gems||0)<price)return 'You need '+ntxt(price-(D.gems||0))+' more gems. Study to earn them.';
   return '';
 }
+/* ---- the buy sheet: tap a price and a half page rises from the bottom with the pack choices ---- */
+const shopDef=k=>{for(const sc of SHOP_SECTIONS)for(const it of sc.items)if(it.k===k)return it;const th=SHOP_THEMES.find(x=>x[0]===k);return {k,t:th?th[1]+' theme':k,c:'#8b7bf0'}};
+const packsOf=k=>{const p=D.shop&&D.shop.packs&&D.shop.packs[k];return Array.isArray(p)&&p.length?p:[{n:1,price:PR()[k]}]};
+const packName=n=>n===1?'Single':n+' pack';
+// A pack that would go past what you can hold (Streak Freeze holds 2) cannot be picked.
+const packOff=(k,n)=>k==='freeze'&&((D.shop&&D.shop.freezes)||0)+n>2;
+function sheetPick(){
+  const pk=packsOf(SHEET.k),ok=pk.filter(p=>!packOff(SHEET.k,p.n));
+  return pk.find(p=>p.n===SHEET.n&&!packOff(SHEET.k,p.n))||ok[0]||pk[0];
+}
+// Items that are bought once and kept (everything except Streak Freeze, Streak Repair and Double Gems).
+const ITEMS_ONCE=['sound','focusplus','report','exam','widgets','frames','badges','theme_ocean','theme_forest','theme_sunset','theme_mono'];
+function sheetHtml(){
+  if(!SHEET)return '';
+  const k=SHEET.k,def=shopDef(k),ic=SI[k]||SHI.gem;
+  if(SHEET.done){
+    return `<div class="sh2-sheet" data-sheetbg role="dialog" aria-label="Purchase complete"><div class="sh2-sp done"><div class="sh2-big" style="--c:${def.c}">${ic}</div><b class="sh2-bt">${esc(def.t)}</b><span class="sh2-bx">x${SHEET.done}</span><button type="button" class="sh2-go" data-sheetclose>BACK TO SHOP</button></div></div>`;
+  }
+  const pk=packsOf(k),sel=sheetPick(),need=sel.price-(D.gems||0);
+  const cards=pk.map(p=>{
+    const on=p.n===sel.n,off=packOff(k,p.n);
+    return `<button type="button" class="sh2-pk${on?' on':''}${off?' off':''}" data-pack="${p.n}"${off?' disabled':''} aria-pressed="${on}" aria-label="${packName(p.n)}, ${p.price} gems">${p.n===3?'<small class="sh2-pop">POPULAR</small>':''}${on?'<i class="sh2-ck">'+LI('<path d="M5 12.5l4.500 4.500L19 7.500"/>')+'</i>':''}<span class="sh2-pi" style="--c:${def.c}">${ic}</span><b>${packName(p.n)}</b><span class="sh2-pp">${gmI}${ntxt(p.price)}</span></button>`;
+  }).join('');
+  const again=ITEMS_ONCE.indexOf(k)>=0&&hasItem(k)?'<p class="sh2-sn">You already have this. Buying it again does not add anything more.</p>':'';
+  const btn=need>0?`<button type="button" class="sh2-go off" data-sheetwhy>NEED ${ntxt(need)} MORE GEMS</button>`:`<button type="button" class="sh2-go" data-sheetbuy>GET ${esc(def.t.toUpperCase())}</button>`;
+  return `<div class="sh2-sheet" data-sheetbg role="dialog" aria-label="How many would you like?"><div class="sh2-sp"><div class="sh2-grab"></div><h2 class="sh2-q">How many would you like?</h2><div class="sh2-pks" style="--n:${pk.length}">${cards}</div>${again}${btn}<button type="button" class="sh2-no" data-sheetclose>NO THANKS</button></div></div>`;
+}
+DZ.closeSheet=()=>{if(!SHEET)return false;SHEET=null;go('Gem Shop',true);return true};
 const shopHtml=()=>{
   const pr=PR(),sh=D.shop||{},fr=sh.freezes||0,until=sh.doubleUntil||0,on=until>Date.now();
   const row=def=>{
@@ -1214,7 +1239,7 @@ const shopHtml=()=>{
     }else{
       const why=whyNot(k,price);
       let text=gmI+ntxt(price);
-      if(k==='freeze'&&fr>=2)text='Full';
+      if(k==='freeze'&&fr>=2)text='Full';else if(k==='double'&&on)text='Active';
       act=`<button type="button" class="sh2-pill${why?' off':''}" data-buy="${k}" data-price="${price}" data-why="${esc(why)}"${k==='repair'&&D.repair?` data-date="${esc(D.repair)}"`:''} aria-label="Buy ${esc(def.t)} for ${price} gems">${text}</button>`;
     }
     if(k==='freeze'&&fr>0)status=`<em class="sh2-st on">You have ${fr} of 2</em>`;
@@ -1234,7 +1259,7 @@ const shopHtml=()=>{
   const body=SHOP_SECTIONS.map(sec=>`<section class="sh2-sec"><div class="sh2-h"><b>${sec.h}</b><span>${sec.s}</span></div>${sec.items.map(row).join('')}</section>`).join('');
   return wrapD(`<div class="sh2" data-sc>
 <div class="sh2-top"><button type="button" class="sh2-back" data-shback aria-label="Back">${SI.back}</button><div class="sh2-bal" aria-label="You have ${ntxt(D.gems)} gems">${gmI}<span>${ntxt(D.gems)}</span></div></div>
-<h1 class="sh2-title">Gem Shop</h1><p class="sh2-sub">Turn the gems you earn into real study power. <span style="opacity:.45">· build 12e</span></p><pre class="sh-dbg" style="margin:6px 0 0;padding:6px 8px;border-radius:10px;background:var(--chip);color:var(--mut);font:11px/1.35 monospace;white-space:pre-wrap;min-height:20px">${esc(DBG.join('\n')||'log: waiting for a tap')}</pre>
+<h1 class="sh2-title">Gem Shop</h1><p class="sh2-sub">Turn the gems you earn into real study power. <span style="opacity:.45">· build 12f</span></p>
 <div class="sh-hero"><span class="sh-hg">${SHI.gem}</span><div><small>Your gems</small><b>${ntxt(D.gems)}</b><span>Earn 1 gem for every 5 minutes you focus.</span></div></div>
 ${banner}
 ${body}
@@ -1243,82 +1268,11 @@ ${body}
 <div class="sh-earn"><span class="sh-ei">${SHI.clock}</span><div><b>Focus sessions</b><p>1 gem for every 5 minutes, up to 10 per session.</p></div></div>
 <div class="sh-earn"><span class="sh-ei">${SHI.sand}</span><div><b>Daily limit</b><p>Up to 80 gems a day, or 160 with Double Gems.</p></div></div>
 <div class="sh-earn"><span class="sh-ei">${SHI.heart}</span><div><b>Friends</b><p>You both earn 10 gems when a friend joins you.</p></div></div>
-</section></div>`);
+</section></div>${sheetHtml()}`);
 };
-/* ---- "How many would you like?" sheet: slides up from the bottom when a price is tapped ---- */
-const PACKS=[{n:1,x:1,l:'Single'},{n:5,x:4,l:'5 pack',pop:1},{n:15,x:10,l:'15 pack'}];
-let PK=null,PKT=null;
-const itemDef=k=>{for(const sec of SHOP_SECTIONS)for(const it of sec.items)if(it.k===k)return it;const th=SHOP_THEMES.find(t=>t[0]===k);return th?{k,t:th[1]+' theme',c:th[3]}:null};
-// Packs need a server that knows them; an older server only sells one at a time.
-const packsFor=k=>k==='repair'||!(D.shop&&D.shop.packs)?[PACKS[0]]:PACKS;
-const packTotal=(k,p)=>(PR()[k]||0)*p.x;
-// Why a pack cannot be picked (empty text = it can).
-function packWhy(k,p){
-  if(k==='freeze'){const room=2-((D.shop&&D.shop.freezes)||0);if(p.n>room)return 'Holds up to 2'}
-  if((D.gems||0)<packTotal(k,p))return 'Not enough gems';
-  return '';
-}
-const CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
-function packHtml(){
-  const def=itemDef(PK.k)||{t:'Item',c:'#8b7bf0'},list=packsFor(PK.k),dark=!!D.dark;
-  const open=`<div class="pk-ov ${dark?'nd':''}" data-pkov style="--c:${def.c}"><div class="pk-sheet" role="dialog" aria-modal="true" aria-label="${PK.done?esc(def.t):'How many would you like?'}"><div class="pk-hdl"></div>`;
-  if(PK.done){
-    return open+`<div class="pk-done"><div class="pk-rays"></div><div class="pk-big">${SI[PK.k]||`<span class="pk-dot"></span>`}</div><h2>${esc(def.t)}</h2><p class="pk-x">x${PK.done.qty}</p></div><button type="button" class="pk-go" data-pkno>Back to shop</button></div></div>`;
-  }
-  const sel=list.find(p=>p.n===PK.sel)||list[0];
-  const opts=list.map(p=>{
-    const why=packWhy(PK.k,p),on=p===sel&&!why;
-    return `<button type="button" class="pk-opt${on?' sel':''}${why?' off':''}" data-pk="${p.n}"${why?` data-pkwhy="${esc(why)}"`:''} aria-pressed="${on}" aria-label="${p.l}, ${ntxt(packTotal(PK.k,p))} gems${why?'. '+esc(why):''}">${p.pop&&!why?'<small class="pk-pop">Popular</small>':''}${on?`<i class="pk-ck">${CHK}</i>`:''}<span class="pk-ico" style="--n:${p.n}">${SI[PK.k]||'<span class="pk-dot"></span>'}${p.n>1?`<em>x${p.n}</em>`:''}</span><b>${p.l}</b><span class="pk-pr">${gmI}${ntxt(packTotal(PK.k,p))}</span>${why?`<span class="pk-why">${esc(why)}</span>`:''}</button>`}).join('');
-  const bad=packWhy(PK.k,sel);
-  const go=PK.busy?'<span class="pk-dots"><i></i><i></i><i></i></span>':(bad?esc(bad):'Get '+esc(def.t));
-  return open+`<div class="pk-bal" aria-label="You have ${ntxt(D.gems)} gems">${gmI}<span>${ntxt(D.gems)}</span></div><h2 class="pk-h">${list.length>1?'How many would you like?':'Confirm your purchase'}</h2><div class="pk-opts pk-n${list.length}">${opts}</div><div class="pk-err" role="alert">${PK.err?esc(PK.err):''}</div><button type="button" class="pk-go${bad||PK.busy?' off':''}" data-pkgo>${go}</button><button type="button" class="pk-no" data-pkno>No thanks</button></div></div>`;
-}
-function drawPack(){layer.innerHTML=PK?packHtml():''}
-function closePack(){
-  if(!PK)return;
-  PK=null;clearTimeout(PKT);
-  const ov=$('.pk-ov',layer);
-  if(ov){const sh=$('.pk-sheet',ov);ov.style.pointerEvents='none';ov.animate([{opacity:1},{opacity:0}],{duration:200,fill:'forwards'});if(sh)sh.animate([{transform:'none'},{transform:'translateY(100%)'}],{duration:220,easing:'ease-in',fill:'forwards'});setTimeout(()=>{if(!PK)layer.innerHTML=''},230)}
-}
-CLOSESHEET=()=>{PK=null;layer.innerHTML=''};
-function openPack(k,date){
-  if(!itemDef(k))return;
-  PK={k,date,sel:1,busy:false,done:null,err:''};
-  drawPack();
-}
-let PKD=null,PKL=0;
-async function packTap(e){
-  if(!PK)return;
-  const t=e.target;
-  if(t.closest('[data-pkno]')){hap('light');closePack();return}
-  if(!t.closest('.pk-sheet')&&t.closest('[data-pkov]')){if(!PK.busy){hap('light');closePack()}return}
-  const o=t.closest('[data-pk]');
-  if(o&&!PK.busy){
-    if(o.dataset.pkwhy){hap('light');PK.err=o.dataset.pkwhy;drawPack();return}
-    hap('light');PK.sel=Number(o.dataset.pk);PK.err='';drawPack();return;
-  }
-  if(t.closest('[data-pkgo]')){
-    if(PK.busy)return;
-    const list=packsFor(PK.k),p=list.find(x=>x.n===PK.sel)||list[0],why=packWhy(PK.k,p);
-    if(why){hap('light');PK.err=why;drawPack();return}
-    PK.busy=true;PK.err='';drawPack();hap('light');
-    // never leave the sheet stuck if no answer comes
-    const mine=PK;PKT=setTimeout(()=>{if(PK===mine&&mine.busy){mine.busy=false;mine.err='No answer from the server. Try again.';drawPack()}},22000);
-    let r=null;try{r=CB.shopBuy?await CB.shopBuy(PK.k,{date:PK.date,qty:p.n}):null}catch(_){r=null}
-    clearTimeout(PKT);
-    if(PK!==mine)return; // closed while waiting
-    mine.busy=false;
-    if(r&&r.ok){mine.done={qty:p.n};hap('success');drawPack();const sh=$('.pk-sheet',layer);if(sh)sh.animate([{transform:'scale(.97)'},{transform:'none'}],{duration:260,easing:'cubic-bezier(.2,1.4,.4,1)'});return}
-    hap('light');mine.err=(r&&r.message)||'Could not reach the server. Try again.';drawPack();
-  }
-}
-// Pointer up counts as a tap (a WebView can drop the click); the click is the fallback.
-layer.onpointerdown=e=>{PKD={x:e.clientX,y:e.clientY}};
-layer.onpointerup=e=>{if(!PKD)return;const m=Math.hypot(e.clientX-PKD.x,e.clientY-PKD.y);PKD=null;if(m>10)return;PKL=Date.now();packTap(e)};
-layer.onclick=e=>{if(Date.now()-PKL<600)return;PKL=Date.now();packTap(e)};
 const armBtn=(b,label,key)=>{SARM=key||'';SARMT=Date.now()+4000;b.classList.add('armed');b.dataset.html=b.innerHTML;b.textContent=label;clearTimeout(b._t);b._t=setTimeout(()=>{if(SARM===key&&Date.now()>=SARMT-50)SARM='';if(b.isConnected&&b.classList.contains('armed')){b.classList.remove('armed');b.innerHTML=b.dataset.html}},4000)};
 const shopPlay=()=>{
-  if(!SOFT){SMSG=null;STXT='';SARM='';SBUSY=false;rise('.sh2-top,.sh2-title,.sh2-sub,.sh-hero,.sh2-off,.sh2-sec',0,45);hap('light')}
+  if(!SOFT){SHEET=null;SMSG=null;STXT='';SARM='';SBUSY=false;rise('.sh2-top,.sh2-title,.sh2-sub,.sh-hero,.sh2-off,.sh2-sec',0,45);hap('light')}
   const sb=$('.sh2',R);if(sb){sb.scrollTop=SHY;sb.onscroll=()=>{SHY=sb.scrollTop}}
   if(!SOFT&&CB.shopRefresh)CB.shopRefresh();
   // Messages show as a toast, so they stay visible wherever the page is scrolled to.
@@ -1327,18 +1281,38 @@ const shopPlay=()=>{
   if(STXT&&Date.now()<STUNTIL)toast(STXT);
   const handle=async e=>{
    try{
+    if(SHEET){
+      // While the sheet is open, taps only go to the sheet.
+      const t=e.target;
+      if(SBUSY&&Date.now()-SBST<20000)return;
+      if(t.closest('[data-sheetclose]')||(t.classList&&t.classList.contains('sh2-sheet'))){hap('light');SHEET=null;go('Gem Shop',true);return}
+      const pk=t.closest('[data-pack]');
+      if(pk){if(!pk.disabled){hap('tick');SHEET.n=+pk.dataset.pack;go('Gem Shop',true)}return}
+      if(t.closest('[data-sheetwhy]')){hap('light');say('You need more gems for this. Study to earn them.');return}
+      if(t.closest('[data-sheetbuy]')){
+        const k=SHEET.k,n=sheetPick().n;
+        SBUSY=true;SBST=Date.now();clearTimeout(SBT);SBT=setTimeout(()=>{SBUSY=false},20000);
+        const bt=t.closest('[data-sheetbuy]');bt.classList.add('busy');bt.textContent='...';
+        let r=null;try{r=CB.shopBuy?await CB.shopBuy(k,{date:SHEET.date||'',qty:n}):null}catch(_){r=null}
+        clearTimeout(SBT);SBUSY=false;
+        if(r&&r.ok){hap('success');if(SHEET&&SHEET.k===k)SHEET.done=n;if(SCREENS[CUR]&&SCREENS[CUR].t==='Gem Shop')go('Gem Shop',true)}
+        else{hap('light');say((r&&r.message)||'Could not reach the server. Try again.')}
+      }
+      return;
+    }
     if(e.target.closest('[data-shback]')){back();return}
     if(e.target.closest('[data-retry]')){hap('light');if(CB.shopRefresh)CB.shopRefresh();return}
     if(e.target.closest('[data-giftpage]')){hap('light');GHY=0;SMSG=null;go('Gift gems');return}
     const th=e.target.closest('[data-theme]');
-    if(th){hap('light');if(CB.setTheme)CB.setTheme(th.dataset.theme);return}
+    if(th&&th!==R&&R.contains(th)){hap('light');if(CB.setTheme)CB.setTheme(th.dataset.theme);return}
     const b=e.target.closest('[data-buy],[data-why]');if(!b){dbg('tap missed a button: '+tn(e.target));return}
     dbg('button '+(b.dataset.buy||'info')+(b.classList.contains('armed')?' (armed)':'')+(SBUSY?' BUSY':''));
     if(SBUSY&&Date.now()-SBST<20000){toast('Working on your last request...');return}
     if(b.dataset.why){hap('light');say(b.dataset.why);return}
     if(!b.dataset.buy)return;
-    // Tapping a price opens the "How many would you like?" sheet from the bottom.
-    hap('light');openPack(b.dataset.buy,b.dataset.date||'');
+    // Open the pack sheet (the first pack you can pick is selected).
+    hap('light');SHEET={k:b.dataset.buy,n:1,date:b.dataset.date||''};
+    go('Gem Shop',true);
    }catch(err){SBUSY=false;clearTimeout(SBT);toast('Shop error: '+((err&&err.message)||err))}
   };
   // Listen to the finger lifting as well as to click, so a tap still counts if the WebView drops the click.
@@ -1539,7 +1513,7 @@ ${row(I.eye,'Contacts','If you choose Find friends from contacts, email addresse
     play(){S.mute=false;rise();
       R.onclick=e=>{
         if(e.target.closest('[data-back]')){hap('light');go(IDX('Settings'));return}
-        const t=e.target.closest('[data-theme]');if(!t)return;
+        const t=e.target.closest('[data-theme]');if(!t||t===R||!R.contains(t))return;
         $$('[data-theme]',R).forEach(x=>x.classList.toggle('on',x===t));hap('medium');if(CB.setTheme)CB.setTheme(t.dataset.theme)}}});
 
   /* Delete account + in-app Terms and Privacy Policy */
@@ -1652,7 +1626,6 @@ function go(i,soft){
   if(typeof i==='string')i=IDX(i);
   if(i<0)return;
   RUN++;timers.forEach(clearTimeout);timers.length=0;
-  if(!soft&&CLOSESHEET)CLOSESHEET();
   CUR=i;const H0=SCREENS[i].html();stage.innerHTML=H0;LASTH=H0;LASTI=i;R=stage.firstElementChild;
   S.mute=false;SOFT=!!soft;
   SCREENS[i].play();SOFT=false;
@@ -1663,7 +1636,6 @@ function layout(){
   const w=host.clientWidth||360,h=host.clientHeight||760,K=w/360;
   stage.style.width='360px';stage.style.height=(h/K)+'px';
   stage.style.transform='scale('+K+')';stage.style.transformOrigin='0 0';
-  layer.style.width='360px';layer.style.height=(h/K)+'px';layer.style.transform='scale('+K+')';layer.style.transformOrigin='0 0';
 }
 const ro=new ResizeObserver(layout);ro.observe(host);layout();
 const KEEP=['Home','Tasks','Friends','Study','Sync and offline','Gem Shop','Gift gems'];
@@ -1693,7 +1665,7 @@ function back(){
   else if(['Weekly report','Badges','Exam mode'].includes(t))to='Study';
   else if(['Friends','Edit profile','Settings'].includes(t))to='Profile';
   else if(t==='Search')to=DZ.searchFrom||'Home';
-  else if(t==='Gem Shop')to=DZ.shopFrom||'Home';
+  else if(t==='Gem Shop'){if(DZ.closeSheet&&DZ.closeSheet())return true;to=DZ.shopFrom||'Home'}
   else if(t==='Gift gems')to='Gem Shop';
   hap('light');go(to);return true;
 }

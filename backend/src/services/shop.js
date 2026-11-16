@@ -9,8 +9,7 @@ const { forgetStudent } = require("../middleware/auth");
 // kind "stock"  : can be bought again and again, up to `max` in stock (Streak Freeze)
 // kind "repair" : spends gems on one action for one day (Streak Repair)
 // kind "timed"  : a boost that runs for `hours` (Double Gems)
-// kind "unlock" : unlocks a premium feature or theme for good. It can be bought again (gems are
-//                 spent each time), the feature simply stays unlocked.
+// kind "unlock" : bought once and kept forever (every premium feature and theme)
 //
 // live: false  = the feature is not finished yet. The shop shows "Soon" and the server
 // refuses the purchase, so nobody can spend gems on something that does nothing.
@@ -35,10 +34,21 @@ const ITEMS = {
   theme_sunset: { kind: "unlock", price: 250, live: false },
   theme_mono: { kind: "unlock", price: 250, live: false },
 };
-// How many a person can take in one purchase, and what that costs (times the item price).
-// 5 pack = 4x the price (20% off), 15 pack = 10x the price (33% off).
-const PACKS = { 1: 1, 5: 4, 15: 10 };
 const GIFT_AMOUNT = 25;
+
+// Pack sizes the shop offers. A bigger pack costs a little less per item.
+// Streak Freeze is limited by how many you can hold (max 2), Streak Repair is one day at a time,
+// and a one-time feature is bought one at a time.
+const PACK_FACTOR = { 1: 1, 2: 0.95, 3: 0.9, 5: 0.8 };
+const PACKS = { freeze: [1, 2], repair: [1], double: [1, 3, 5] };
+const packSizes = (item) => PACKS[item] || [1];
+const packCost = (item, n) => Math.round(ITEMS[item].price * n * (PACK_FACTOR[n] || 1));
+// What the app needs to draw the pack choices: { freeze: [{ n: 1, price: 100 }, ...], ... }
+function packs() {
+  const out = {};
+  for (const key of Object.keys(ITEMS)) out[key] = packSizes(key).map((n) => ({ n, price: packCost(key, n) }));
+  return out;
+}
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 // Own-property check, so a name like "constructor" or "__proto__" is never treated as an item.
@@ -49,9 +59,6 @@ function prices() {
   const out = { gift: GIFT_AMOUNT };
   for (const key of Object.keys(ITEMS)) out[key] = ITEMS[key].price;
   return out;
-}
-function packs() {
-  return Object.keys(PACKS).map((n) => ({ n: Number(n), x: PACKS[n] }));
 }
 function live() {
   const out = {};
@@ -96,50 +103,30 @@ function repairWindow() {
 }
 
 // Spends gems. Every rule is inside one database update so two taps can never spend twice.
-// `extra.date` is the day for Streak Repair ("YYYY-MM-DD"); `extra.qty` is the pack size (1, 5 or 15).
+// `extra` carries the day for Streak Repair: { date: "YYYY-MM-DD" }.
 async function buy(studentId, item, extra = {}) {
   if (!isItem(item)) return { ok: false, status: 400, message: "That item is not in the shop." };
   const def = ITEMS[item];
   if (!def.live) return { ok: false, status: 409, message: "This is coming soon. Gems are not spent yet.", state: await state(studentId) };
 
-  const qty = extra && extra.qty !== undefined && extra.qty !== null ? Number(extra.qty) : 1;
-  if (!Object.prototype.hasOwnProperty.call(PACKS, qty)) return { ok: false, status: 400, message: "Pick a pack size: 1, 5 or 15." };
-  if (def.kind === "repair" && qty !== 1) return { ok: false, status: 400, message: "Streak Repair is bought one day at a time." };
-  const total = def.price * PACKS[qty];
+  // How many in one purchase: 1, or one of the pack sizes this item offers.
+  const qty = extra && extra.qty !== undefined ? extra.qty : 1;
+  if (!Number.isInteger(qty) || !packSizes(item).includes(qty)) {
+    return { ok: false, status: 400, message: "That pack size is not available.", state: await state(studentId) };
+  }
+  const cost = packCost(item, qty);
 
-  const filter = { _id: studentId, gems: { $gte: total } };
+  const filter = { _id: studentId, gems: { $gte: cost } };
   let update;
   if (def.kind === "stock") {
-    if (qty > def.max) return { ok: false, status: 409, message: `You can hold at most ${def.max} Streak Freezes.`, state: await state(studentId) };
     // Older accounts do not have the field yet, so a missing value counts as zero.
     filter.$or = [{ shopFreezes: { $exists: false } }, { shopFreezes: { $lte: def.max - qty } }];
-    update = { $inc: { gems: -total, shopFreezes: qty } };
+    update = { $inc: { gems: -cost, shopFreezes: qty } };
   } else if (def.kind === "timed") {
-    // Buying again while it is running adds the time on top of what is left.
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      const cur = await Student.findById(studentId).select("gems doubleGemsUntil").lean();
-      if (!cur) return { ok: false, status: 404, message: "Account not found." };
-      if ((cur.gems || 0) < total) break; // falls through to the "Not enough gems" message below
-      const now = Date.now();
-      const end = cur.doubleGemsUntil ? new Date(cur.doubleGemsUntil).getTime() : 0;
-      const until = new Date(Math.max(now, end) + def.hours * qty * 3600 * 1000);
-      const done = await Student.findOneAndUpdate(
-        { _id: studentId, gems: { $gte: total }, doubleGemsUntil: cur.doubleGemsUntil || null },
-        { $inc: { gems: -total }, $set: { doubleGemsUntil: until } },
-        { new: true }
-      ).select(FIELDS).lean();
-      if (done) {
-        forgetStudent(studentId);
-        return { ok: true, state: view(done) };
-      }
-    }
-    const doc = await Student.findById(studentId).select(FIELDS).lean();
-    const now = view(doc || {});
-    return {
-      ok: false,
-      status: 409,
-      message: now.gems >= total ? "Could not complete the purchase. Please try again." : "Not enough gems.",
-      state: now,
+    filter.$or = [{ doubleGemsUntil: null }, { doubleGemsUntil: { $lte: new Date() } }];
+    update = {
+      $inc: { gems: -cost },
+      $set: { doubleGemsUntil: new Date(Date.now() + def.hours * qty * 3600 * 1000) },
     };
   } else if (def.kind === "repair") {
     const date = extra && extra.date;
@@ -148,12 +135,12 @@ async function buy(studentId, item, extra = {}) {
     if (date < lo || date > hi) return { ok: false, status: 409, message: "That day is too old to repair. Repair works for 24 hours." };
     filter.protectedDays = { $ne: date };
     update = {
-      $inc: { gems: -total },
+      $inc: { gems: -cost },
       $push: { protectedDays: { $each: [date], $slice: -90 } },
     };
   } else {
-    // unlock: can be bought again. Gems are spent every time; the feature stays unlocked.
-    update = { $inc: { gems: -total }, $addToSet: { shopOwned: item } };
+    // unlock: the feature stays unlocked. Buying it again is allowed while you have the gems.
+    update = { $inc: { gems: -cost }, $addToSet: { shopOwned: item } };
   }
 
   const done = await Student.findOneAndUpdate(filter, update, { new: true }).select(FIELDS).lean();
@@ -164,10 +151,11 @@ async function buy(studentId, item, extra = {}) {
   const doc = await Student.findById(studentId).select(FIELDS).lean();
   const now = view(doc || {});
   let message = "Not enough gems.";
-  if (now.gems >= total) {
-    if (def.kind === "stock") message = `You can hold at most ${def.max} Streak Freezes. Pick a smaller pack.`;
+  if (now.gems >= cost) {
+    if (def.kind === "stock") message = "You can not hold that many Streak Freezes (the most is 2).";
+    else if (def.kind === "timed") message = "Double Gems is already running.";
     else if (def.kind === "repair") message = "That day is already covered. Your streak is safe.";
-    else message = "Could not complete the purchase. Please try again.";
+    else message = "Could not complete that purchase. Try again.";
   }
   return { ok: false, status: 409, message, state: now };
 }
@@ -220,4 +208,4 @@ async function gift(studentId, toId) {
   return { ok: true, state: view(taken) };
 }
 
-module.exports = { ITEMS, PACKS, GIFT_AMOUNT, packs, isItem, prices, live, state, buy, protect, gift };
+module.exports = { ITEMS, GIFT_AMOUNT, isItem, prices, packs, live, state, buy, protect, gift };
