@@ -2339,19 +2339,24 @@ useEffect(() => {
 
   // extra.date is only used by Streak Repair: the missed day to bring back.
   async function shopBuy(item, extra) {
-    if (!authToken || student?.guest) return { ok: false, message: "Create your profile to use the shop." };
+    // The shop screen can hold on to an older copy of this function, so read the saved sign-in token directly.
+    const token = localStorage.getItem("studyos_auth_token") || authToken;
+    if (!token) return { ok: false, message: "Create your profile to use the shop." };
     const body = { item };
     if (item === "repair") body.date = extra?.date || "";
-    const { ok, data, status } = await nativeApi("/api/shop/buy", "POST", body);
+    const { ok, data, status } = await nativeApi("/api/shop/buy", "POST", body, token);
     if (Number.isFinite(data.gems)) setGemsServer(data.gems);
     if (data.freezes !== undefined) setShopServer((prev) => shopFrom(data, prev));
     if (ok) return { ok: true, message: SHOP_BOUGHT[item] || "Done!" };
-    return { ok: false, message: data.message || (status === 0 ? "Could not reach the server. Try again." : "Could not complete that purchase. Try again.") };
+    if (data.message) return { ok: false, message: data.message };
+    if (status === 0) return { ok: false, message: "Could not reach the server. Check your connection and try again." };
+    return { ok: false, message: `The shop server answered with an error (code ${status}). The backend may need to be redeployed.` };
   }
 
   async function shopGift(userId) {
-    if (!authToken || student?.guest) return { ok: false, message: "Create your profile to gift gems." };
-    const { ok, data } = await nativeApi("/api/shop/gift", "POST", { userId });
+    const token = localStorage.getItem("studyos_auth_token") || authToken;
+    if (!token) return { ok: false, message: "Create your profile to gift gems." };
+    const { ok, data } = await nativeApi("/api/shop/gift", "POST", { userId }, token);
     if (Number.isFinite(data.gems)) setGemsServer(data.gems);
     if (ok) {
       loadSocial();

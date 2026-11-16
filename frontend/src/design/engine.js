@@ -1575,7 +1575,7 @@ function go(i,soft){
   if(typeof i==='string')i=IDX(i);
   if(i<0)return;
   RUN++;timers.forEach(clearTimeout);timers.length=0;
-  CUR=i;stage.innerHTML=SCREENS[i].html();R=stage.firstElementChild;
+  CUR=i;const H0=SCREENS[i].html();stage.innerHTML=H0;LASTH=H0;LASTI=i;R=stage.firstElementChild;
   S.mute=false;SOFT=!!soft;
   SCREENS[i].play();SOFT=false;
   restoreToggles();
@@ -1588,7 +1588,13 @@ function layout(){
 }
 const ro=new ResizeObserver(layout);ro.observe(host);layout();
 const KEEP=['Home','Tasks','Friends','Study','Sync and offline','Gem Shop','Gift gems'];
-function refresh(){if(CUR>=0&&KEEP.includes(SCREENS[CUR].t)){const sc=$('.pg',R);const y=sc?sc.scrollTop:0;go(CUR,true)}}
+let LASTH='',LASTI=-1;
+function refresh(){if(CUR>=0&&KEEP.includes(SCREENS[CUR].t)){
+  // On the shop pages, only redraw when something on screen really changed. A redraw while a finger is
+  // down replaces the button under it, and the tap is lost.
+  if(/^(Gem Shop|Gift gems)$/.test(SCREENS[CUR].t)){let h='';try{h=SCREENS[CUR].html()}catch(_){}if(h&&LASTI===CUR&&h===LASTH)return;LASTH=h;LASTI=CUR}
+  else LASTI=-1;
+  go(CUR,true)}}
 function togKey(el,i){return 'dz_tg_'+(SCREENS[CUR]?SCREENS[CUR].t:'')+'_'+i}
 const TSEEN={};
 const sKey=k=>k.replace(/[^A-Za-z0-9_-]/g,'').slice(0,64);
