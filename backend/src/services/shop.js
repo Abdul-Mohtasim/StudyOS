@@ -20,8 +20,8 @@ const ITEMS = {
   repair: { kind: "repair", price: 150, live: true },
   double: { kind: "timed", price: 120, hours: 24, live: true },
   // Focus and study
-  sound: { kind: "unlock", price: 180, live: false }, // Focus Soundscapes
-  focusplus: { kind: "unlock", price: 220, live: false }, // Focus Plus
+  sound: { kind: "unlock", price: 180, live: true }, // Focus Soundscapes
+  focusplus: { kind: "unlock", price: 220, live: true }, // Focus Plus
   report: { kind: "unlock", price: 200, live: false }, // Weekly Report Plus
   exam: { kind: "unlock", price: 300, live: false }, // Exam Mode Pro
   widgets: { kind: "unlock", price: 160, live: false }, // Widget Pack

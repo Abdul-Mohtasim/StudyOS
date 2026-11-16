@@ -3,6 +3,7 @@
 import { haptic } from "../haptics";
 import "./design.css";
 import qrcode from "qrcode-generator";
+import { SCENES, createSoundscape } from "./soundscapes";
 import { LANGS, setLanguage, getLanguage, translate as tr, englishText as en0 } from "../i18n";
 
 export function mountDesign(host, opts = {}) {
@@ -783,13 +784,48 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
 /* ---- Focus timer + Study hub (real data) ---- */
 {
 const F={mode:'focus',len:25,round:1,total:1500,left:1500,running:false,end:0};
-F.subj='';F.edit=false;
+F.subj='';F.edit=false;F.plusEdit=false;F.sndEdit=false;
 let tickId=0;
+/* ---- Focus Plus: your own break lengths and rounds (kept on this phone) ----
+   Without Focus Plus the timer always uses the original 5 min short break, 15 min long break and 4 rounds. */
+const FP_KEY='studyos-focusplus',FP_DEF={sb:5,lb:15,rounds:4},FP_RANGE={sb:[1,30],lb:[5,60],rounds:[2,8]};
+const FP=(()=>{const r=Object.assign({},FP_DEF);try{const o=JSON.parse(localStorage.getItem(FP_KEY)||'{}')||{};for(const k in FP_DEF){const v=Math.round(+o[k]);if(v>=FP_RANGE[k][0]&&v<=FP_RANGE[k][1])r[k]=v}}catch(_){}return r})();
+const fpSave=()=>{try{localStorage.setItem(FP_KEY,JSON.stringify(FP))}catch(_){}};
+// Which shop features this account owns. The list is saved on the phone each time the shop loads,
+// so Soundscapes and Focus Plus still work when you open the app with no connection.
+let ownSaved='';
+const ownKey=()=>'studyos-owned:'+(D.email||D.handle||D.name||'');
+const owns=k=>{
+  try{
+    if(D.shop&&Array.isArray(D.shop.owned)){
+      const j=JSON.stringify(D.shop.owned);
+      if(j!==ownSaved&&!D.guest){ownSaved=j;localStorage.setItem(ownKey(),j)}
+      return D.shop.owned.indexOf(k)>=0;
+    }
+    if(D.guest)return false;
+    const c=JSON.parse(localStorage.getItem(ownKey())||'[]');
+    return Array.isArray(c)&&c.indexOf(k)>=0;
+  }catch(_){return false}
+};
+const plusOn=()=>owns('focusplus')&&!D.guest;
+const shortMin=()=>plusOn()?FP.sb:5, longMin=()=>plusOn()?FP.lb:15, roundsN=()=>plusOn()?FP.rounds:4;
+/* ---- Focus Soundscapes: rain, library or cafe sound while a focus round runs ---- */
+const SND=createSoundscape();DZ.stopSound=()=>SND.stop(0.1);
+const SND_KEY='studyos-soundscape',SND_VOL='studyos-soundscape-vol';
+F.snd='';F.vol=0.6;
+try{const k=localStorage.getItem(SND_KEY);if(SCENES.some(x=>x.k===k))F.snd=k;const v=parseFloat(localStorage.getItem(SND_VOL));if(v>=0.05&&v<=1)F.vol=v}catch(_){}
+const soundOn=()=>owns('sound')&&!D.guest;
+const sceneName=k=>{const x=SCENES.find(y=>y.k===k);return x?x.t:'Sound off'};
+// Plays only while a focus round is running. Pause, Stop, a break or the end of the round silence it.
+function syncSound(){
+  if(F.running&&F.mode==='focus'&&F.snd&&soundOn())SND.play(F.snd,F.vol,Math.max(0,(F.end-Date.now())/1000));
+  else SND.stop(0.6);
+}
 const MODES={focus:'Focus',short:'Short break',long:'Long break'};
 const fmtT=s=>{s=Math.max(0,Math.ceil(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 const fmtM=m=>{m=Math.round(m||0);return m>=60?Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m':m+'m'};
 const isIdle=()=>!F.running&&F.left===F.total;
-const nextText=()=>F.mode==='focus'?(F.round>=4?'15 min break next':'5 min break next'):'Back to focus next';
+const nextText=()=>F.mode==='focus'?(F.round>=roundsN()?longMin()+' min break next':shortMin()+' min break next'):'Back to focus next';
 function setMode(m,mins){F.mode=m;F.total=mins*60;F.left=F.total;F.running=false}
 function paintTimer(){const e=$('#fct',R);if(!e)return;e.textContent=fmtT(F.left);const c=$('.rp',R);if(c){const L=+c.dataset.c;c.style.strokeDashoffset=L*(1-Math.max(0,Math.min(1,F.left/F.total)))}}
 function onFocusScreen(){return SCREENS[CUR]&&SCREENS[CUR].t==='Focus'}
@@ -800,37 +836,88 @@ function tick(){
   if(onFocusScreen())paintTimer();
 }
 function start(){if(F.running)return;F.running=true;F.end=Date.now()+F.left*1000;clearInterval(tickId);tickId=setInterval(tick,250);
-  if(CB.timerAlert){const foc=F.mode==='focus';CB.timerAlert({at:F.end,title:tr(foc?'Focus round complete':'Break over'),body:tr(foc?(F.round>=4?'Great work! Take a 15 minute break.':'Great work! Take a 5 minute break.'):'Ready for your next focus round?')})}}
-function pause(){F.left=Math.max(0,(F.end-Date.now())/1000);F.running=false;clearInterval(tickId);if(CB.timerCancel)CB.timerCancel()}
-function stop(){clearInterval(tickId);F.running=false;setMode('focus',F.len);if(CB.timerCancel)CB.timerCancel()}
+  if(CB.timerAlert){const foc=F.mode==='focus';CB.timerAlert({at:F.end,title:tr(foc?'Focus round complete':'Break over'),body:tr(foc?'Great work! Take a '+(F.round>=roundsN()?longMin():shortMin())+' minute break.':'Ready for your next focus round?')})}
+  syncSound()}
+function pause(){F.left=Math.max(0,(F.end-Date.now())/1000);F.running=false;clearInterval(tickId);if(CB.timerCancel)CB.timerCancel();syncSound()}
+function stop(){clearInterval(tickId);F.running=false;setMode('focus',F.len);if(CB.timerCancel)CB.timerCancel();syncSound()}
 function finish(){
   clearInterval(tickId);F.running=false;if(CB.timerCancel)CB.timerCancel();
   const was=F.mode;
   hap('success');
   if(was==='focus'){
     if(CB.saveSession)CB.saveSession({minutes:F.len,subject:F.subj});
-    if(F.round>=4)setMode('long',15);else setMode('short',5);
+    if(F.round>=roundsN())setMode('long',longMin());else setMode('short',shortMin());
   }else{
     if(was==='long')F.round=1;else F.round++;
     setMode('focus',F.len);
   }
+  syncSound();
   if(onFocusScreen()){go('Focus',true);toast(was==='focus'?'Session complete! Take a break.':'Break over. Ready to focus?')}
+}
+/* ---- the two shop features on the Focus page: a sound chip, a Breaks chip and the Focus Plus panel ---- */
+const fxSvg=d=>`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const FXI={sound:fxSvg('<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>'),plus:fxSvg('<path d="M10 2h4"/><path d="M12 14l3-3"/><circle cx="12" cy="14" r="8"/>'),check:fxSvg('<path d="M5 12.5l4.500 4.500L19 7.500"/>'),lock:fxSvg('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>')};
+// Round icon buttons at the two top corners: Focus Plus (left, only before a round starts) and Soundscapes (right).
+function fxBtn(which,show){
+  if(!show||F.mode!=='focus')return '';
+  const sound=which==='sound',owned=sound?soundOn():plusOn();
+  const on=owned&&(sound?!!F.snd:F.plusEdit||F.sndEdit);
+  const label=sound?(owned?'Focus Soundscapes: '+sceneName(F.snd):'Focus Soundscapes (locked)'):(owned?'Focus Plus: breaks '+shortMin()+' and '+longMin()+' minutes':'Focus Plus (locked)');
+  return `<span class="fx-btn${on?' on':''}" data-${sound?'fsound':'fplus'} role="button" aria-label="${esc(label)}" style="${sound?'right':'left'}:8px">${sound?FXI.sound:FXI.plus}${owned?'':'<i class="fx-lk">'+FXI.lock+'</i>'}</span>`;
+}
+const fxStep=(k,label,unit)=>{const r=FP_RANGE[k];return `<div class="fx-st"><span>${label}</span><div><button type="button" data-fpstep="${k}:-1" aria-label="Less ${label}"${FP[k]<=r[0]?' disabled':''}>−</button><b>${FP[k]} ${unit}</b><button type="button" data-fpstep="${k}:1" aria-label="More ${label}"${FP[k]>=r[1]?' disabled':''}>+</button></div></div>`};
+// Soundscapes and Focus Plus settings open as a sheet over the page, so nothing on the timer is covered by mistake.
+function fxSheet(){
+  if(F.sndEdit&&soundOn()){
+    const opts=[{k:'',t:'Sound off'}].concat(SCENES);
+    return `<div class="fx-sheet" data-fpclose role="dialog" aria-label="Focus Soundscapes"><div class="fx-panel"><div class="fx-hd"><b>Focus Soundscapes</b><span><button type="button" class="fx-done" data-fpclose>Done</button></span></div>${opts.map(o=>`<button type="button" class="fx-opt${F.snd===o.k?' on':''}" data-fsel="${o.k}" aria-pressed="${F.snd===o.k}"><span>${o.t}</span>${F.snd===o.k?'<i>'+FXI.check+'</i>':''}</button>`).join('')}<div class="fx-vol${F.snd?'':' off'}"><span>${FXI.sound}</span><input type="range" data-fvol min="5" max="100" step="5" value="${Math.round(F.vol*100)}" aria-label="Sound volume"${F.snd?'':' disabled'}></div><p class="fx-note">Plays while a focus round is running.</p></div></div>`;
+  }
+  if(!(plusOn()&&isIdle()&&F.mode==='focus'&&F.plusEdit))return '';
+  return `<div class="fx-sheet" data-fpclose role="dialog" aria-label="Focus Plus settings"><div class="fx-panel"><div class="fx-hd"><b>Focus Plus</b><span><button type="button" class="fx-link" data-fpreset>Reset</button><button type="button" class="fx-done" data-fpclose>Done</button></span></div>${fxStep('sb','Short break','min')}${fxStep('lb','Long break','min')}${fxStep('rounds','Long break after','rounds')}</div></div>`;
+}
+// A locked chip takes you to the shop (never while a round is running).
+function fxLocked(name){
+  if(D.guest){hap('light');toast('Create your profile to use the shop.');return}
+  if(F.running){hap('light');toast(name+' is in the Gem Shop.');return}
+  DZ.openShop('Focus');toast('Unlock '+name+' under Focus and study.');
 }
 const focusHtml=()=>{
   const run=F.running,idleFocus=isIdle()&&F.mode==='focus',pct=F.left/F.total;
-  return wrap(`<div class="pg" style="padding-bottom:0"><div style="position:relative;height:40px">${run?`<span data-fstop style="position:absolute;left:8px;top:6px;color:#c9c9cc">${ICO.x}</span>`:''}<span class="tag" data-fsubj style="position:absolute;left:50%;transform:translateX(-50%);top:2px;padding:9px 18px;border-radius:16px;font-size:14px;font-weight:700;white-space:nowrap">${esc(F.subj||'No subject')}</span></div>
+  return wrap(`<div class="pg" style="padding-bottom:0"><div style="position:relative;height:40px">${run?`<span data-fstop style="position:absolute;left:8px;top:6px;color:#c9c9cc">${ICO.x}</span>`:fxBtn('plus',idleFocus)}${fxBtn('sound',true)}<span class="tag" data-fsubj style="position:absolute;left:50%;transform:translateX(-50%);top:2px;padding:9px 18px;border-radius:16px;font-size:14px;font-weight:700;white-space:nowrap;max-width:calc(100% - 128px);overflow:hidden;text-overflow:ellipsis">${esc(F.subj||'No subject')}</span></div>
 <div style="text-align:center;font:700 13px var(--body);letter-spacing:.1em;color:#bfc4c9;margin-top:22px">${MODES[F.mode].toUpperCase()}</div>
 <div class="ring2" style="margin:20px auto 0;width:250px;height:250px">${ring(250,24,pct,'#c9b8c3','#2d3740')}<div class="c" style="font-size:62px" id="fct">${fmtT(F.left)}</div></div>
-<div style="text-align:center;font:600 15px var(--body);color:#cfd2d6;margin-top:30px">Round ${F.round} of 4 · ${nextText()}</div>
+<div style="text-align:center;font:600 15px var(--body);color:#cfd2d6;margin-top:30px">Round ${F.round} of ${roundsN()} · ${nextText()}</div>
 ${idleFocus?(F.edit?`<div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:20px"><input data-fin type="number" inputmode="numeric" min="1" max="180" value="${F.len}" aria-label="Minutes" style="width:96px;height:44px;border-radius:18px;border:2px solid var(--mv);background:#161b21;color:#ebe8ea;font:700 20px var(--body);text-align:center;outline:0"><span style="font:600 15px var(--body);color:#cfd2d6">min</span><span class="chip" data-fset style="border-radius:18px;height:44px;padding:0 18px;font-size:15px;background:var(--mv);color:#1b1e25">Set</span></div><div style="text-align:center;font:400 12.5px var(--body);color:#9aa3ab;margin-top:8px">Choose 1 to 180 minutes</div>`:`<div style="display:flex;justify-content:center;gap:8px;margin-top:20px;flex-wrap:wrap">${[15,25,45,60].map(m=>`<span class="chip" data-flen="${m}" style="border-radius:18px;height:40px;gap:8px;padding:0 14px;font-size:14px;color:#ebe8ea${F.len===m?';background:var(--mv);color:#1b1e25':''}">${m} min</span>`).join('')}<span class="chip" data-fcustom style="border-radius:18px;height:40px;gap:8px;padding:0 14px;font-size:14px;color:#ebe8ea${[15,25,45,60].includes(F.len)?'':';background:var(--mv);color:#1b1e25'}">${[15,25,45,60].includes(F.len)?'Custom':F.len+' min'}</span></div>`):''}</div>
-<div class="fbtns" style="position:absolute;left:22px;right:22px;bottom:${run?22:104}px;display:flex;gap:10px">${isIdle()?'':`<div class="btn2 dk2" data-fstop style="flex:0 0 104px;height:54px;border-radius:26px">Stop</div>`}<div class="btn2 mv" data-fgo style="flex:1;height:54px;border-radius:26px">${run?'Pause':(isIdle()?'Start':'Resume')}</div></div>${run?'':nav('focus')}`,true);
+<div class="fbtns" style="position:absolute;left:22px;right:22px;bottom:${run?22:104}px;display:flex;gap:10px">${isIdle()?'':`<div class="btn2 dk2" data-fstop style="flex:0 0 104px;height:54px;border-radius:26px">Stop</div>`}<div class="btn2 mv" data-fgo style="flex:1;height:54px;border-radius:26px">${run?'Pause':(isIdle()?'Start':'Resume')}</div></div>${run?'':nav('focus')}${fxSheet()}`,true);
 };
 const focusPlay=()=>{
   enter();
+  R.oninput=e=>{const t=e.target;if(t&&t.matches&&t.matches('[data-fvol]')){F.vol=Math.max(0.05,Math.min(1,(+t.value)/100));SND.setVolume(F.vol);try{localStorage.setItem(SND_VOL,String(F.vol))}catch(_){}}};
   R.onclick=e=>{
+    if(e.target.closest('[data-fsound]')){
+      if(!soundOn()){fxLocked('Focus Soundscapes');return}
+      F.sndEdit=true;F.plusEdit=false;hap('light');go('Focus',true);return}
+    const so=e.target.closest('[data-fsel]');
+    if(so){
+      if(!soundOn())return;
+      F.snd=so.dataset.fsel;
+      try{localStorage.setItem(SND_KEY,F.snd)}catch(_){}
+      hap('tick');syncSound();go('Focus',true);return}
+    if(e.target.closest('[data-fplus]')){
+      if(!plusOn()){fxLocked('Focus Plus');return}
+      F.plusEdit=!F.plusEdit;F.sndEdit=false;F.edit=false;hap('light');go('Focus',true);return}
+    if(e.target.closest('[data-fpreset]')){Object.assign(FP,FP_DEF);fpSave();if(F.round>FP.rounds)F.round=FP.rounds;hap('tick');go('Focus',true);return}
+    if(e.target.closest('button[data-fpclose]')||e.target.classList.contains('fx-sheet')){F.plusEdit=false;F.sndEdit=false;hap('light');go('Focus',true);return}
+    const fs=e.target.closest('[data-fpstep]');
+    if(fs){
+      if(plusOn()&&isIdle()&&F.mode==='focus'){
+        const [k,d]=fs.dataset.fpstep.split(':'),r=FP_RANGE[k];
+        if(r){const v=Math.max(r[0],Math.min(r[1],FP[k]+(+d)));if(v!==FP[k]){FP[k]=v;fpSave();if(k==='rounds'&&F.round>v)F.round=v;hap('tick')}}
+        go('Focus',true)}
+      return}
     if(e.target.closest('[data-fgo]')){hap('press');if(F.running)pause();else start();go('Focus',true);return}
     if(e.target.closest('[data-fstop]')){hap('light');stop();go('Focus',true);return}
-    if(e.target.closest('[data-fcustom]')&&isIdle()&&F.mode==='focus'){hap('light');F.edit=true;go('Focus',true);const i=$('[data-fin]',R);if(i){i.focus();i.select()}return}
+    if(e.target.closest('[data-fcustom]')&&isIdle()&&F.mode==='focus'){hap('light');F.edit=true;F.plusEdit=false;go('Focus',true);const i=$('[data-fin]',R);if(i){i.focus();i.select()}return}
     if(e.target.closest('[data-fset]')){const i=$('[data-fin]',R),v=Math.round(+(i&&i.value));if(!(v>=1&&v<=180)){hap('error');toast('Enter 1 to 180 minutes');return}F.edit=false;F.len=v;setMode('focus',v);hap('success');go('Focus',true);return}
     const ln=e.target.closest('[data-flen]');
     if(ln&&isIdle()&&F.mode==='focus'){F.edit=false;F.len=+ln.dataset.flen;setMode('focus',F.len);hap('tick');go('Focus',true);return}
@@ -1085,7 +1172,7 @@ const SHOP_SECTIONS=[
   {k:'double',t:'Double Gems',tag:'Popular',d:'Earn 2x gems from focus sessions for 24 hours.',c:'#e0508a'}]},
  {h:'Focus and study',s:'Upgrade how you work',items:[
   {k:'sound',t:'Focus Soundscapes',d:'Rain, library and cafe sounds that play during Focus sessions.',c:'#3fbf8f'},
-  {k:'focusplus',t:'Focus Plus',d:'Custom focus and break lengths, plus long breaks every 4 rounds.',c:'#8b7bf0'},
+  {k:'focusplus',t:'Focus Plus',d:'Set your own short and long break lengths, and how many rounds come before a long break.',c:'#8b7bf0'},
   {k:'report',t:'Weekly Report Plus',d:'See your best study hour, subject breakdown and month-by-month trends.',c:'#4f9ae8'},
   {k:'exam',t:'Exam Mode Pro',d:'Countdown on your Home screen and a daily study target for each exam.',c:'#e3a53c'},
   {k:'widgets',t:'Widget Pack',d:'New Home widgets: streak flame, today\'s tasks and focus minutes.',c:'#3fbf8f'}]},
@@ -1212,9 +1299,10 @@ const giftPlay=()=>{
 };
 SCREENS.push({t:'Gem Shop',d:'Spend gems on streak boosts, premium features, themes and gifts',spec:{m:'Balance, boosts, premium features and themes with a two-tap confirm, gifting and how gems are earned.',h:'Light tap on each press, success on a purchase.',s:NS},html:shopHtml,play:shopPlay});
 SCREENS.push({t:'Gift gems',d:'Send gems to a friend',spec:{m:'Friend list with a two-tap send.',h:'Light tap, success when sent.',s:NS},html:giftHtml,play:giftPlay});
+DZ.openShop=from=>{DZ.shopFrom=from;SHY=0;SMSG=null;hap('light');go('Gem Shop')};
 host.addEventListener('click',e=>{
   const g=e.target.closest('[data-shopgo]');if(!g||!SCREENS[CUR]||!['Home','Tasks','Study'].includes(SCREENS[CUR].t))return;
-  e.stopPropagation();DZ.shopFrom=SCREENS[CUR].t;SHY=0;SMSG=null;hap('light');go('Gem Shop');
+  e.stopPropagation();DZ.openShop(SCREENS[CUR].t);
 },true);
 }
 host.addEventListener('click',e=>{
@@ -1524,7 +1612,7 @@ function back(){
 }
 const api={navOnly,refresh,go,back,screen:()=>SCREENS[CUR]&&SCREENS[CUR].t,names:()=>SCREENS.map(s=>s.t),
   update(d){Object.assign(D,d);refresh()},
-  destroy(){RUN++;timers.forEach(clearTimeout);ro.disconnect();host.innerHTML='';host.classList.remove('dz')}};
+  destroy(){if(DZ.stopSound)DZ.stopSound();RUN++;timers.forEach(clearTimeout);ro.disconnect();host.innerHTML='';host.classList.remove('dz')}};
 go(opts.start||'Home');
 return api;
 }
