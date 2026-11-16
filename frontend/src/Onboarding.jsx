@@ -1,3 +1,4 @@
+import { LANGS, getLanguage, setLanguage } from "./i18n";
 import React, { useEffect, useState } from "react";
 import "./onboarding.css";
 
@@ -197,6 +198,14 @@ const screens=[
 export default function Onboarding({ onLogin, onRegister, onGetStarted }) {
   const [step, setStep] = useState(0);
   const last = screens.length - 1;
+  const [langOpen, setLangOpen] = useState(false);
+  const [curLang, setCurLang] = useState(getLanguage());
+  const curNative = (LANGS.find((l) => l.code === curLang) || LANGS[0]).native;
+  function pickLang(code) {
+    setLanguage(code);
+    setCurLang(code);
+    setLangOpen(false);
+  }
 
   // Match the page edges to the light screen while onboarding is open.
   useEffect(() => {
@@ -224,6 +233,26 @@ export default function Onboarding({ onLogin, onRegister, onGetStarted }) {
   return (
     <main className="ob" aria-label={"Welcome to StudyOS, screen " + (step + 1) + " of " + screens.length}>
       <div className="ob-screen" onClick={handleClick}>
+        {step === 0 && (
+          <button type="button" className="ob-lang" data-notr aria-label="Select language" onClick={() => setLangOpen(true)}>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3c2.6 2.6 3.9 5.6 3.9 9s-1.3 6.4-3.9 9c-2.6-2.6-3.9-5.6-3.9-9S9.4 5.6 12 3z" /></svg>
+            <span>{curNative}</span>
+          </button>
+        )}
+        {langOpen && (
+          <div className="ob-lsheet" role="dialog" aria-modal="true" aria-label="Select language" onClick={() => setLangOpen(false)}>
+            <div className="ob-lcard" onClick={(e) => e.stopPropagation()}>
+              <div className="ob-lgrab" />
+              <h3>Select language</h3>
+              {LANGS.map((l) => (
+                <button type="button" key={l.code} data-notr className={"ob-lopt" + (l.code === curLang ? " on" : "")} onClick={() => pickLang(l.code)}>
+                  <span>{l.native}</span>
+                  {l.code === curLang && <b>✓</b>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div
           key={step}
           className="ob-in"

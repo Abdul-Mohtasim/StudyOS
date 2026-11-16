@@ -1,4 +1,5 @@
 export const ROWS4 = [
+  ["Select language", "भाषा चुनें", "زبان منتخب کریں", "اختر اللغة", "Elegir idioma", "Choisir la langue"],
   ["Themes", "थीम", "تھیمز", "السمات", "Temas", "Thèmes"],
   ["DONE", "हो गया", "مکمل", "تم", "LISTO", "TERMINÉ"],
   ["Smart scheduling", "स्मार्ट शेड्यूलिंग", "اسمارٹ شیڈولنگ", "الجدولة الذكية", "Programación inteligente", "Planification intelligente"],

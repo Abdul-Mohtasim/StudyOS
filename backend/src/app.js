@@ -21,6 +21,7 @@ const emailRoutes = require("./routes/email");
 const cronRoutes = require("./routes/cron");
 const friendRoutes = require("./routes/friends");
 const gemRoutes = require("./routes/gems");
+const shopRoutes = require("./routes/shop");
 const notificationRoutes = require("./routes/notifications");
 const {
   connectDatabase,
@@ -138,6 +139,7 @@ app.use("/api/email", emailRoutes);
 app.use("/api/cron", cronRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/gems", gemRoutes);
+app.use("/api/shop", shopRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 app.get("/", (req, res) => {

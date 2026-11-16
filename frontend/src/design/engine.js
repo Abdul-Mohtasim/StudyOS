@@ -32,7 +32,7 @@ const D=opts.data||{};   // live data from the app (see App.jsx)
 const CB=opts.actions||{};
 
 /* ---------- icons ---------- */
-const CUBE='<svg viewBox="0 0 24 24"><path d="M12 2l9 5-9 5-9-5z" fill="#b4c7d8"/><path d="M12 12v10l-9-5V7z" fill="#6a8196"/><path d="M12 12l9-5v10l-9 5z" fill="#8aa1b5"/></svg>';
+const CUBE='<svg viewBox="40 0 385 466"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>';
 const BOLT='<svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="#e8a83a"/></svg>';
 const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const SHARE='<svg viewBox="0 0 24 24" fill="none" stroke="#ebe8ea" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>';
@@ -94,7 +94,7 @@ const NAVI={
  profile:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7.500" r="4.500"/><path d="M3.500 21c0-4.500 3.800-7 8.500-7s8.500 2.500 8.500 7z"/></svg>'
 };
 const nav=a=>`<div class="nav">${[['home','Home'],['tasks','Tasks'],['focus','Focus'],['study','Study'],['profile','Profile']].map(([k,l])=>`<div class="nv${k===a?' on':''}" data-k="${k}">${NAVI[k]}${l}</div>`).join('')}</div>`;
-const tb=()=>`<div class="tb"><div class="ringi"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="8" fill="none" stroke="#c9b8c3" stroke-width="4"/><circle cx="13" cy="13" r="2.600" fill="#c9b8c3"/></svg></div><span>${D.score!=null?D.score:"–"}</span>${FLM('currentColor','var(--pg)',20,24)}<span>${D.streak||0}</span><div style="width:22px;height:22px">${CUBE}</div><span>${(D.gems||0).toLocaleString()}</span><div class="sp"></div>${ICO.search}</div>`;
+const tb=()=>`<div class="tb"><div style="width:24px;height:24px;display:block"><svg viewBox="0 0 24 24"><path d="M12 1L19.5 4.5L23 12L19.5 19.5L12 23L4.5 19.5L1 12L4.5 4.5Z" fill="#3aa0ff"/><path d="M12 1L19.5 4.5L23 12L12 12Z" fill="#6cbcff"/><path d="M12 12L23 12L19.5 19.5L12 23Z" fill="#2b86e6"/><path d="M12 12L12 23L4.5 19.5L1 12Z" fill="#1f6fcc"/><path d="M12 6.2L17.8 12L12 17.8L6.2 12Z" fill="#eaf5ff"/><path d="M12 9.2L14.8 12L12 14.8L9.2 12Z" fill="#2b86e6"/></svg></div><span>${D.score!=null?D.score:"–"}</span>${FLM('currentColor','var(--pg)',20,24)}<span>${D.streak||0}</span><div data-shopgo role="button" aria-label="Open the Gem Shop" style="display:flex;align-items:center;gap:7px;cursor:pointer"><div style="width:22px;height:22px">${CUBE}</div><span>${(D.gems||0).toLocaleString()}</span></div><div class="sp"></div>${ICO.search}</div>`;
 const ring=(sz,sw,pct,col,tr)=>{const r=(sz-sw)/2,c=2*Math.PI*r;return `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${tr}" stroke-width="${sw}"/><circle class="rp" data-c="${c}" data-p="${pct}" cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${c} ${c}" stroke-dashoffset="${c*(1-pct)}"/></svg>`};
 const hdr=(l,r)=>`<div class="hd"><span style="width:24px">${l||''}</span><b>%T%</b><span style="width:24px">${r||''}</span></div>`;
 const head=(t,l,r)=>hdr(l,r).replace('%T%',t);
@@ -1025,6 +1025,198 @@ replace('Search',{
       if(e.target.closest('[data-sback]')){hap('light');go(SFROM);return}
       const r=e.target.closest('[data-sk]');if(r){hap('light');if(r.dataset.sk==='task')go('Tasks');else if(CB.open)CB.open('subjects')}}}
 });
+/* ---- Gem Shop (purchases are checked and stored on the server) ---- */
+{
+const SHI={
+ gem:'<svg viewBox="40 0 385 466"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>',
+ freeze:'<svg viewBox="0 0 64 64"><path d="M32 3 55 11v19c0 15-9.500 25-23 31C18.500 55 9 45 9 30V11z" fill="#f59a3f"/><path d="M32 3 55 11v19c0 15-9.500 25-23 31z" fill="#e8812a"/><path d="M32 19l4.300 8.700 9.600 1.400-7 6.800 1.700 9.600L32 40.800l-8.600 4.500 1.700-9.600-7-6.800 9.600-1.400z" fill="#fff0d2"/></svg>',
+ bolt:'<svg viewBox="0 0 64 64"><path d="M38 3 12 35h15l-4 26 29-35H36z" fill="#a95cf2"/><path d="M38 3 36 26h16L23 61l4-26z" fill="#c28dff"/></svg>',
+ gift:'<svg viewBox="0 0 64 64"><path d="M32 25C24 25 16 21 19 14c3-6 11-1 13 11z" fill="#5fd49b"/><path d="M32 25c8 0 16-4 13-11-3-6-11-1-13 11z" fill="#5fd49b"/><rect x="9" y="25" width="46" height="12" rx="4" fill="#5fd49b"/><rect x="12" y="35" width="40" height="25" rx="4" fill="#38b878"/><rect x="28" y="25" width="8" height="35" fill="#2a9d65"/></svg>',
+ clock:'<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="#43c590"/><rect x="29" y="14" width="6" height="20" rx="3" fill="#fff"/><rect x="29" y="29" width="18" height="6" rx="3" fill="#fff"/></svg>',
+ sand:'<svg viewBox="0 0 64 64"><path d="M16 5h32v7c0 10-8 14-10 20 2 6 10 10 10 20v7H16v-7c0-10 8-14 10-20-2-6-10-10-10-20z" fill="#f0d9a8"/><path d="M23 54c2-7 7-10 9-10s7 3 9 10v4H23z" fill="#e1a63b"/></svg>',
+ heart:'<svg viewBox="0 0 64 64"><path d="M32 58C9 41 5 29 5 21 5 12 12 7 19 7c6 0 10 3 13 8 3-5 7-8 13-8 7 0 14 5 14 14 0 8-4 20-27 37z" fill="#ff5a7a"/></svg>'
+};
+const PR=()=>Object.assign({freeze:100,repair:150,double:120,sound:180,focusplus:220,report:200,exam:300,widgets:160,frames:140,badges:120,theme_ocean:250,theme_forest:250,theme_sunset:250,theme_mono:250,gift:25},(D.shop&&D.shop.prices)||{});
+let SMSG=null,SHY=0,GHY=0,SBUSY=false,STXT='',STUNTIL=0;
+const ntxt=n=>(n||0).toLocaleString();
+const gmI='<span class="sh-gi">'+SHI.gem+'</span>';
+const leftTxt=ms=>{const m=Math.max(1,Math.ceil(ms/60000)),h=Math.floor(m/60);return h>0?h+'h '+(m%60)+'m left':m+'m left'};
+// Why the shop has no data: still loading, no connection, or the server refused.
+function shopWait(){
+  if(D.shopStatus==='offline')return 'The shop is offline. Check your connection.';
+  if(D.shopStatus==='error')return 'The shop is not available right now'+(D.shopCode?' (code '+D.shopCode+')':'')+'. Try again later.';
+  return 'The shop is still loading. One moment.';
+}
+// Why a button cannot be used right now (empty text = it can).
+function blocked(price,extra){
+  if(D.guest)return 'Create your profile to use the shop.';
+  if(!D.shop)return shopWait();
+  if(extra)return extra;
+  if((D.gems||0)<price)return 'You need '+ntxt(price-(D.gems||0))+' more gems. Study to earn them.';
+  return '';
+}
+// Items the server has finished. An older server sends no list, so only the original items count.
+const LIVE0={freeze:1,double:1};
+const isLive=k=>{const lv=D.shop&&D.shop.live;return lv?!!lv[k]:!!LIVE0[k]};
+const hasItem=k=>!!(D.shop&&(D.shop.owned||[]).indexOf(k)>=0);
+const msgHtml=()=>SMSG?`<div class="sh-msg${SMSG.ok?' ok':''}" role="status">${esc(SMSG.text)}</div>`:'';
+
+/* ---- the Gem Shop page ---- */
+const LI=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const SI={
+ freeze:LI('<path d="M12 2.5v19M3.8 7.25l16.4 9.5M3.8 16.75l16.4-9.5"/><path d="M9.6 4.2 12 6.2l2.4-2M9.6 19.8 12 17.8l2.4 2"/>'),
+ repair:LI('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>'),
+ double:LI('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'),
+ sound:LI('<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>'),
+ focusplus:LI('<path d="M10 2h4"/><path d="M12 14l3-3"/><circle cx="12" cy="14" r="8"/>'),
+ report:LI('<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>'),
+ exam:LI('<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/>'),
+ widgets:LI('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>'),
+ frames:LI('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/>'),
+ badges:LI('<circle cx="12" cy="8" r="6"/><path d="M15.48 12.89 17 22l-5-3-5 3 1.52-9.11"/>'),
+ gift:LI('<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>'),
+ back:LI('<path d="M15 5l-7 7 7 7"/>')
+};
+// What each row says. Prices come from the server; the words and colours live here.
+const SHOP_SECTIONS=[
+ {h:'Streak boosts',s:'Never lose your flame',items:[
+  {k:'freeze',t:'Streak Freeze',d:'Miss a day and your streak stays safe. Holds up to 2.',c:'#4fb3e8'},
+  {k:'repair',t:'Streak Repair',d:'Broke your streak? Bring it back within 24 hours.',c:'#ee8a4a'},
+  {k:'double',t:'Double Gems',tag:'Popular',d:'Earn 2x gems from focus sessions for 24 hours.',c:'#e0508a'}]},
+ {h:'Focus and study',s:'Upgrade how you work',items:[
+  {k:'sound',t:'Focus Soundscapes',d:'Rain, library and cafe sounds that play during Focus sessions.',c:'#3fbf8f'},
+  {k:'focusplus',t:'Focus Plus',d:'Custom focus and break lengths, plus long breaks every 4 rounds.',c:'#8b7bf0'},
+  {k:'report',t:'Weekly Report Plus',d:'See your best study hour, subject breakdown and month-by-month trends.',c:'#4f9ae8'},
+  {k:'exam',t:'Exam Mode Pro',d:'Countdown on your Home screen and a daily study target for each exam.',c:'#e3a53c'},
+  {k:'widgets',t:'Widget Pack',d:'New Home widgets: streak flame, today\'s tasks and focus minutes.',c:'#3fbf8f'}]},
+ {h:'Profile and friends',s:'Stand on the leaderboard',items:[
+  {k:'frames',t:'Avatar Frames',d:'Gold, ruby and aurora frames your friends see.',c:'#e0508a'},
+  {k:'badges',t:'Badge Showcase',d:'Pin your three favourite badges to the top of your profile.',c:'#e3a53c'},
+  {k:'gift',t:'Gift Gems',d:'Send 25 gems to a friend to cheer them on before an exam.',c:'#8b7bf0'}]}
+];
+// Free themes switch light and dark. Paid themes unlock in a later update (Soon until then).
+const SHOP_THEMES=[['light','Calm Mauve','#dfe0e3','#1b1e25','#edebec',0],['dark','Midnight','#12161a','#c9b8c3','#1f252d',0],['theme_ocean','Ocean','#d6e8f1','#2b6082','#eaf3fb',1],['theme_forest','Forest','#dde8df','#2f6b4a','#eaf4ec',1],['theme_sunset','Sunset','#f1ddd5','#b4532f','#f9ece6',1],['theme_mono','Mono','#e6e6e6','#1e1e1e','#f5f5f5',1]];
+// Why a paid item cannot be bought right now (empty text = it can).
+function whyNot(k,price){
+  const sh=D.shop||{};
+  if(D.guest)return 'Create your profile to use the shop.';
+  if(!D.shop)return shopWait();
+  if(k==='freeze'&&(sh.freezes||0)>=2)return 'You already hold the most Streak Freezes (2).';
+  if(k==='double'&&(sh.doubleUntil||0)>Date.now())return 'Double Gems is already running.';
+  if(k==='repair'&&!D.repair)return 'Your streak is safe. There is no missed day to repair.';
+  if((D.gems||0)<price)return 'You need '+ntxt(price-(D.gems||0))+' more gems. Study to earn them.';
+  return '';
+}
+const shopHtml=()=>{
+  const pr=PR(),sh=D.shop||{},fr=sh.freezes||0,until=sh.doubleUntil||0,on=until>Date.now();
+  const row=def=>{
+    const k=def.k,price=pr[k];
+    let status='',act='';
+    if(k==='gift'){
+      const why=blocked(pr.gift);
+      act=`<button type="button" class="sh2-pill${why?' off':''}"${why?` data-why="${esc(why)}"`:' data-giftpage'} aria-label="Choose a friend to gift">${gmI}${ntxt(pr.gift)}</button>`;
+    }else if(hasItem(k)){
+      act='<span class="sh2-own">Owned</span>';
+    }else if(!isLive(k)){
+      act=`<button type="button" class="sh2-pill soon" data-why="${esc(def.t+' is coming soon. Your gems stay safe until it is ready.')}" aria-label="${esc(def.t)}, coming soon">Soon</button>`;
+    }else{
+      const why=whyNot(k,price);
+      let text=gmI+ntxt(price);
+      if(k==='freeze'&&fr>=2)text='Full';else if(k==='double'&&on)text='Active';
+      act=`<button type="button" class="sh2-pill${why?' off':''}" data-buy="${k}" data-price="${price}" data-why="${esc(why)}"${k==='repair'&&D.repair?` data-date="${esc(D.repair)}"`:''} aria-label="Buy ${esc(def.t)} for ${price} gems">${text}</button>`;
+    }
+    if(k==='freeze'&&fr>0)status=`<em class="sh2-st on">You have ${fr} of 2</em>`;
+    else if(k==='double'&&on)status=`<em class="sh2-st on">Active · ${leftTxt(until-Date.now())}</em>`;
+    else if(k==='repair'&&isLive('repair')&&D.shop&&D.repair)status='<em class="sh2-st on">You missed yesterday. Repair it now.</em>';
+    return `<div class="sh2-it"><div class="sh2-ico" style="--c:${def.c}">${SI[k]||''}</div><div class="sh2-t">${def.tag?`<small class="sh2-tag">${def.tag}</small>`:''}<b>${def.t}</b><p>${def.d.replace('Send 25 gems','Send '+pr.gift+' gems')}</p>${status}</div>${act}</div>`;
+  };
+  const theme=([k,n,bg,bar,cd,paid])=>{
+    let sub,cls='',attr='';
+    if(!paid){const cur=(k==='dark')===!!D.dark;sub=cur?'In use':'Free';cls=cur?' sel':'';attr=` data-theme="${k}" role="button" aria-label="Use the ${n} theme"`}
+    else if(!isLive(k))sub='Soon',attr=` data-why="${esc(n+' is coming soon. Your gems stay safe until it is ready.')}" role="button" aria-label="${n} theme, coming soon"`;
+    else if(hasItem(k))sub='Owned';
+    else{const why=whyNot(k,pr[k]);sub=`<button type="button" class="sh2-pill sm${why?' off':''}" data-buy="${k}" data-price="${pr[k]}" data-why="${esc(why)}" aria-label="Buy the ${n} theme for ${pr[k]} gems">${gmI}${ntxt(pr[k])}</button>`}
+    return `<div class="sh2-th${cls}"${attr}><div class="sh2-pv" style="background:${bg}"><i style="background:${bar}"></i><u style="background:${cd}"></u></div><b>${n}</b><small>${sub}</small></div>`;
+  };
+  const banner=D.guest?'<div class="sh2-off"><span>Create your profile to use the shop.</span></div>'
+    :D.shop?'':`<div class="sh2-off"><span>${esc(shopWait())}</span>${D.shopStatus==='loading'||!D.shopStatus?'':'<button type="button" class="sh2-retry" data-retry>Try again</button>'}</div>`;
+  const body=SHOP_SECTIONS.map(sec=>`<section class="sh2-sec"><div class="sh2-h"><b>${sec.h}</b><span>${sec.s}</span></div>${sec.items.map(row).join('')}</section>`).join('');
+  return wrapD(`<div class="sh2" data-sc>
+<div class="sh2-top"><button type="button" class="sh2-back" data-shback aria-label="Back">${SI.back}</button><div class="sh2-bal" aria-label="You have ${ntxt(D.gems)} gems">${gmI}<span>${ntxt(D.gems)}</span></div></div>
+<h1 class="sh2-title">Gem Shop</h1><p class="sh2-sub">Turn the gems you earn into real study power.</p>
+<div class="sh-hero"><span class="sh-hg">${SHI.gem}</span><div><small>Your gems</small><b>${ntxt(D.gems)}</b><span>Earn 1 gem for every 5 minutes you focus.</span></div></div>
+${banner}
+${body}
+<section class="sh2-sec"><div class="sh2-h"><b>Themes</b><span>${SHOP_THEMES.length} available</span></div><div class="sh2-thg">${SHOP_THEMES.map(theme).join('')}</div></section>
+<section class="sh2-sec"><div class="sh2-h"><b>Ways to earn gems</b></div>
+<div class="sh-earn"><span class="sh-ei">${SHI.clock}</span><div><b>Focus sessions</b><p>1 gem for every 5 minutes, up to 10 per session.</p></div></div>
+<div class="sh-earn"><span class="sh-ei">${SHI.sand}</span><div><b>Daily limit</b><p>Up to 80 gems a day, or 160 with Double Gems.</p></div></div>
+<div class="sh-earn"><span class="sh-ei">${SHI.heart}</span><div><b>Friends</b><p>You both earn 10 gems when a friend joins you.</p></div></div>
+</section></div>`);
+};
+const armBtn=(b,label)=>{b.classList.add('armed');b.dataset.html=b.innerHTML;b.textContent=label;clearTimeout(b._t);b._t=setTimeout(()=>{if(b.isConnected&&b.classList.contains('armed')){b.classList.remove('armed');b.innerHTML=b.dataset.html}},3000)};
+const shopPlay=()=>{
+  if(!SOFT){SMSG=null;STXT='';rise('.sh2-top,.sh2-title,.sh2-sub,.sh-hero,.sh2-off,.sh2-sec',0,45);hap('light')}
+  const sb=$('.sh2',R);if(sb){sb.scrollTop=SHY;sb.onscroll=()=>{SHY=sb.scrollTop}}
+  if(!SOFT&&CB.shopRefresh)CB.shopRefresh();
+  // Messages show as a toast, so they stay visible wherever the page is scrolled to.
+  // The page redraws when new shop data arrives, so a fresh toast is put back for a moment.
+  const say=text=>{STXT=text;STUNTIL=Date.now()+1800;go('Gem Shop',true)};
+  if(STXT&&Date.now()<STUNTIL)toast(STXT);
+  R.onclick=async e=>{
+    if(e.target.closest('[data-shback]')){back();return}
+    if(e.target.closest('[data-retry]')){hap('light');if(CB.shopRefresh)CB.shopRefresh();return}
+    if(e.target.closest('[data-giftpage]')){hap('light');GHY=0;SMSG=null;go('Gift gems');return}
+    const th=e.target.closest('[data-theme]');
+    if(th){hap('light');if(CB.setTheme)CB.setTheme(th.dataset.theme);return}
+    const b=e.target.closest('[data-buy],[data-why]');if(!b)return;
+    if(SBUSY)return;
+    if(b.dataset.why){hap('light');say(b.dataset.why);return}
+    if(!b.dataset.buy)return;
+    if(!b.classList.contains('armed')){hap('light');armBtn(b,'Confirm');return}
+    SBUSY=true;b.classList.remove('armed');b.classList.add('busy');b.textContent='…';
+    let r=null;try{r=CB.shopBuy?await CB.shopBuy(b.dataset.buy,{date:b.dataset.date||''}):null}catch(_){r=null}
+    SBUSY=false;
+    hap(r&&r.ok?'success':'light');
+    const text=(r&&r.message)||(r&&r.ok?'Done!':'Could not reach the server. Try again.');
+    if(SCREENS[CUR]&&SCREENS[CUR].t==='Gem Shop')say(text);
+  };
+};
+const giftHtml=()=>{
+  const pr=PR(),fr=(D.friends||[]),why=blocked(pr.gift);
+  const rows=fr.map(f=>`<div class="sh-fr"><span class="ava">${esc((f.name||'?').charAt(0).toUpperCase())}</span><span class="sh-fn">${esc(f.name)}</span><button type="button" class="sh-btn sm${why?' off':''}" data-gift="${esc(f.id)}" data-why="${esc(why)}" aria-label="Send ${pr.gift} gems to ${esc(f.name)}">${gmI}${pr.gift}</button></div>`).join('');
+  return wrapD(`<div class="pg shp" style="padding-top:38px">${head('Gift gems',ICO.back)}<div class="shb">
+<div class="sh-hero"><span class="sh-hg">${SHI.gift}</span><div><small>Your gems</small><b>${ntxt(D.gems)}</b><span>Send ${pr.gift} gems to a friend. Gifts cannot be taken back.</span></div></div>
+${msgHtml()}
+<div class="sh-h">Your friends</div>
+${rows||`<div class="mut" style="font:400 14px/1.5 var(--body);margin:8px 4px;text-align:center">No friends yet. Add a friend first and you both earn 10 gems.</div>`}
+</div></div>`);
+};
+const giftPlay=()=>{
+  if(!SOFT)SMSG=null;
+  enter();
+  const sb=$('.shb',R);if(sb){sb.scrollTop=GHY;sb.onscroll=()=>{GHY=sb.scrollTop}}
+  if(!SOFT&&CB.shopRefresh)CB.shopRefresh();
+  R.onclick=async e=>{
+    if(e.target.closest('.hd span:first-child')){back();return}
+    const b=e.target.closest('[data-gift]');if(!b||SBUSY)return;
+    if(b.dataset.why){hap('light');SMSG={text:b.dataset.why};go('Gift gems',true);return}
+    if(!b.classList.contains('armed')){hap('light');armBtn(b,'Confirm');return}
+    SBUSY=true;b.classList.remove('armed');b.classList.add('busy');b.textContent='…';
+    let r=null;try{r=CB.shopGift?await CB.shopGift(b.dataset.gift):null}catch(_){r=null}
+    SBUSY=false;
+    SMSG=r&&r.ok?{ok:1,text:r.message||'Gift sent!'}:{text:(r&&r.message)||'Could not reach the server. Try again.'};
+    hap(r&&r.ok?'success':'light');
+    if(SCREENS[CUR]&&SCREENS[CUR].t==='Gift gems')go('Gift gems',true);
+  };
+};
+SCREENS.push({t:'Gem Shop',d:'Spend gems on streak boosts, premium features, themes and gifts',spec:{m:'Balance, boosts, premium features and themes with a two-tap confirm, gifting and how gems are earned.',h:'Light tap on each press, success on a purchase.',s:NS},html:shopHtml,play:shopPlay});
+SCREENS.push({t:'Gift gems',d:'Send gems to a friend',spec:{m:'Friend list with a two-tap send.',h:'Light tap, success when sent.',s:NS},html:giftHtml,play:giftPlay});
+host.addEventListener('click',e=>{
+  const g=e.target.closest('[data-shopgo]');if(!g||!SCREENS[CUR]||!['Home','Tasks','Study'].includes(SCREENS[CUR].t))return;
+  e.stopPropagation();DZ.shopFrom=SCREENS[CUR].t;SHY=0;SMSG=null;hap('light');go('Gem Shop');
+},true);
+}
 host.addEventListener('click',e=>{
   const ic=e.target.closest('.tb > svg');
   if(ic&&SCREENS[CUR]&&['Home','Tasks','Study'].includes(SCREENS[CUR].t)){SFROM=SCREENS[CUR].t;DZ.searchFrom=SFROM;SQ='';hap('light');go('Search')}
@@ -1305,7 +1497,7 @@ function layout(){
   stage.style.transform='scale('+K+')';stage.style.transformOrigin='0 0';
 }
 const ro=new ResizeObserver(layout);ro.observe(host);layout();
-const KEEP=['Home','Tasks','Friends','Study','Sync and offline'];
+const KEEP=['Home','Tasks','Friends','Study','Sync and offline','Gem Shop','Gift gems'];
 function refresh(){if(CUR>=0&&KEEP.includes(SCREENS[CUR].t)){const sc=$('.pg',R);const y=sc?sc.scrollTop:0;go(CUR,true)}}
 function togKey(el,i){return 'dz_tg_'+(SCREENS[CUR]?SCREENS[CUR].t:'')+'_'+i}
 const TSEEN={};
@@ -1326,6 +1518,8 @@ function back(){
   else if(['Weekly report','Badges','Exam mode'].includes(t))to='Study';
   else if(['Friends','Edit profile','Settings'].includes(t))to='Profile';
   else if(t==='Search')to=DZ.searchFrom||'Home';
+  else if(t==='Gem Shop')to=DZ.shopFrom||'Home';
+  else if(t==='Gift gems')to='Gem Shop';
   hap('light');go(to);return true;
 }
 const api={navOnly,refresh,go,back,screen:()=>SCREENS[CUR]&&SCREENS[CUR].t,names:()=>SCREENS.map(s=>s.t),

@@ -115,7 +115,7 @@ function applyText(node) {
   if (out !== current) {
     textRecord.set(node, { en, out });
     node.nodeValue = out;
-  } else if (rec && en !== current) {
+  } else if (rec && out === en) {
     textRecord.delete(node);
   }
 }

@@ -96,3 +96,15 @@
 
 .ob-compact .ob-card{padding:3.2cqw}
 .ob .ob-reserve.ob-r16{padding-top:16cqw}
+
+/* language picker on the first welcome screen */
+.ob-screen{position:relative}
+.ob-lang{position:absolute;top:max(14px,env(safe-area-inset-top,0px));right:16px;z-index:5;display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border:0;border-radius:18px;background:rgba(27,30,37,.08);color:#1b1e25;font:600 13px/1 system-ui,sans-serif;cursor:pointer}
+.ob-lang:active{transform:scale(.96)}
+.ob-lsheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;background:rgba(10,12,16,.45)}
+.ob-lcard{width:100%;max-width:480px;background:#f4f2f3;color:#1b1e25;border-radius:22px 22px 0 0;padding:10px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:oblup .22s ease-out}
+.ob-lgrab{width:40px;height:4px;border-radius:2px;background:#c9c6c8;margin:2px auto 12px}
+.ob-lcard h3{margin:0 0 10px;font:700 17px/1.2 system-ui,sans-serif}
+.ob-lopt{display:flex;align-items:center;justify-content:space-between;width:100%;height:50px;margin-top:8px;padding:0 16px;border:2px solid #dcd9db;border-radius:14px;background:#fff;color:#1b1e25;font:600 16px/1 system-ui,sans-serif;cursor:pointer}
+.ob-lopt.on{border-color:#1b1e25;background:#ece8eb}
+@keyframes oblup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}

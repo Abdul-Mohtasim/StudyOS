@@ -19,10 +19,12 @@ async function awardDaily(studentId, amount) {
 
   // Start a new day's counter when the stored day is old, then add up to the cap.
   await Student.updateOne({ _id: studentId, gemsDay: { $ne: day } }, { $set: { gemsDay: day, gemsToday: 0 } });
-  const doc = await Student.findById(studentId).select("gems gemsToday").lean();
+  const doc = await Student.findById(studentId).select("gems gemsToday doubleGemsUntil").lean();
   if (!doc) return null;
-  const room = Math.max(0, DAILY_CAP - (doc.gemsToday || 0));
-  const add = Math.min(gain, room);
+  // The Double Gems boost from the shop doubles both what a session pays and the daily cap.
+  const boosted = doc.doubleGemsUntil && new Date(doc.doubleGemsUntil).getTime() > Date.now();
+  const room = Math.max(0, DAILY_CAP * (boosted ? 2 : 1) - (doc.gemsToday || 0));
+  const add = Math.min(gain * (boosted ? 2 : 1), room);
   if (!add) return { balance: doc.gems || 0, added: 0 };
   const updated = await Student.findOneAndUpdate(
     { _id: studentId },

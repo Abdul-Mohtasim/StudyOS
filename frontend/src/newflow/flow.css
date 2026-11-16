@@ -203,10 +203,10 @@
 .nuf .nx .xo.on .xgn{background:var(--gc,#c9b8c3);color:#1a1418}
 .nuf .nx .xbtn.fc{background:var(--gc,#c9b8c3);box-shadow:0 4px 0 var(--gd,#8d7c88);transition:background .3s}
 .nuf .nx .gmc{position:absolute;right:22px;top:54px;text-align:right}
-.nuf .nx .gmc small{display:block;font:700 18px var(--display);color:#3db8ff}
+.nuf .nx .gmc small{display:block;font:700 18px var(--display);color:#ff4a6d}
 .nuf .nx .gmc span{display:flex;gap:8px;align-items:center;justify-content:flex-end}
 .nuf .nx .gmc i{display:block;height:28px}
-.nuf .nx .gmc b{font:700 22px var(--display);color:#3db8ff;min-width:34px;text-align:left}
+.nuf .nx .gmc b{font:700 22px var(--display);color:#ff4a6d;min-width:34px;text-align:left}
 .nuf .nx .gmg{position:absolute;left:0;top:0;width:24px;height:28px;z-index:8}
 .nuf .nx .gmg svg{width:24px;height:28px;display:block}
 .nuf .nx .gmz{position:absolute;left:0;right:0;top:400px;height:190px}

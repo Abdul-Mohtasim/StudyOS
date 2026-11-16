@@ -2216,6 +2216,8 @@ useEffect(() => {
     setShowNotifications(false);
     setNotice("");
     setGemsServer(null);
+    setShopServer(null);
+    setShopStatus({ state: "loading", code: 0 });
     setSocial(null);
     setAccountPrefs({});
     setActiveSection("dashboard");
@@ -2254,10 +2256,13 @@ useEffect(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [gemsServer, setGemsServer] = useState(null);
+  const [shopServer, setShopServer] = useState(null); // Gem Shop: { freezes, doubleUntil, protectedDays, owned, prices, live }
+  // Why the shop has no data yet: "loading", "offline" (no answer at all) or "error" (the server answered with a failure).
+  const [shopStatus, setShopStatus] = useState({ state: "loading", code: 0 });
   const [social, setSocial] = useState(null); // { following, followers, leaderboard }
 
   async function nativeApi(path, method = "GET", body, token = authToken) {
-    if (!token) return { ok: false, data: {} };
+    if (!token) return { ok: false, data: {}, status: 0 };
     try {
       const response = await fetch(`${API_BASE_URL}${path}`, {
         method,
@@ -2265,9 +2270,9 @@ useEffect(() => {
         ...(body ? { body: JSON.stringify(body) } : {}),
       });
       const data = await response.json().catch(() => ({}));
-      return { ok: response.ok, data };
+      return { ok: response.ok, data, status: response.status };
     } catch {
-      return { ok: false, data: {} };
+      return { ok: false, data: {}, status: 0 };
     }
   }
 
@@ -2278,6 +2283,75 @@ useEffect(() => {
   async function loadGems(token = authToken) {
     const { ok, data } = await nativeApi("/api/gems", "GET", null, token);
     if (ok && Number.isFinite(data.gems) && tokenIsCurrent(token)) setGemsServer(data.gems);
+  }
+
+  function shopFrom(data, prev) {
+    return {
+      freezes: Math.max(0, Number(data.freezes) || 0),
+      doubleUntil: Number(data.doubleUntil) || 0,
+      protectedDays: Array.isArray(data.protectedDays) ? data.protectedDays : [],
+      // Premium items this account has bought (for example "sound"). An older server sends none.
+      owned: Array.isArray(data.owned) ? data.owned.filter((key) => typeof key === "string") : prev?.owned || [],
+      prices: data.prices || prev?.prices || null,
+      // Which items are finished. Missing on an older server: the shop then treats only the old items as live.
+      live: data.live && typeof data.live === "object" ? data.live : prev?.live || null,
+    };
+  }
+
+  async function loadShop(token = authToken) {
+    // Keep showing the last good data while retrying; only a shop with no data shows "loading".
+    setShopStatus((prev) => (prev.state === "ok" ? prev : { state: "loading", code: 0 }));
+    const { ok, data, status } = await nativeApi("/api/shop", "GET", null, token);
+    if (!tokenIsCurrent(token)) return;
+    if (ok && Number.isFinite(data.gems)) {
+      setGemsServer(data.gems);
+      setShopServer((prev) => shopFrom(data, prev));
+      setShopStatus({ state: "ok", code: 200 });
+    } else {
+      // status 0 = the phone got no answer; anything else = the server answered but refused (404 means the shop is not on that server yet).
+      setShopStatus({ state: status === 0 ? "offline" : "error", code: status });
+      if (status !== 0) console.warn("[shop] /api/shop answered with status", status);
+    }
+  }
+
+  const SHOP_BOUGHT = {
+    freeze: "Streak Freeze added. Your streak is safer now.",
+    repair: "Streak repaired! Your streak is back.",
+    double: "Double Gems is on for the next 24 hours!",
+    sound: "Focus Soundscapes unlocked!",
+    focusplus: "Focus Plus unlocked!",
+    report: "Weekly Report Plus unlocked!",
+    exam: "Exam Mode Pro unlocked!",
+    widgets: "Widget Pack unlocked!",
+    frames: "Avatar Frames unlocked!",
+    badges: "Badge Showcase unlocked!",
+    theme_ocean: "Ocean theme unlocked!",
+    theme_forest: "Forest theme unlocked!",
+    theme_sunset: "Sunset theme unlocked!",
+    theme_mono: "Mono theme unlocked!",
+  };
+
+  // extra.date is only used by Streak Repair: the missed day to bring back.
+  async function shopBuy(item, extra) {
+    if (!authToken || student?.guest) return { ok: false, message: "Create your profile to use the shop." };
+    const body = { item };
+    if (item === "repair") body.date = extra?.date || "";
+    const { ok, data, status } = await nativeApi("/api/shop/buy", "POST", body);
+    if (Number.isFinite(data.gems)) setGemsServer(data.gems);
+    if (data.freezes !== undefined) setShopServer((prev) => shopFrom(data, prev));
+    if (ok) return { ok: true, message: SHOP_BOUGHT[item] || "Done!" };
+    return { ok: false, message: data.message || (status === 0 ? "Could not reach the server. Try again." : "Could not complete that purchase. Try again.") };
+  }
+
+  async function shopGift(userId) {
+    if (!authToken || student?.guest) return { ok: false, message: "Create your profile to gift gems." };
+    const { ok, data } = await nativeApi("/api/shop/gift", "POST", { userId });
+    if (Number.isFinite(data.gems)) setGemsServer(data.gems);
+    if (ok) {
+      loadSocial();
+      return { ok: true, message: "Gift sent! Your friend will see the gems." };
+    }
+    return { ok: false, message: data.message || "Could not reach the server. Try again." };
   }
 
   async function loadSocial(token = authToken) {
@@ -2310,11 +2384,19 @@ useEffect(() => {
       await claimLocalGems(authToken);
       if (!alive) return;
       loadGems(authToken);
+      loadShop(authToken);
       loadSocial(authToken);
     })();
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken, student?.guest]);
+
+  // The phone got its connection back: load the shop if it has no data yet.
+  useEffect(() => {
+    if (!IS_NATIVE || !authToken || student?.guest || !netOnline || shopStatus.state === "ok") return;
+    loadShop(authToken);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [netOnline]);
 
   // Refresh when the person opens a screen that shows this data.
   useEffect(() => {
@@ -2584,6 +2666,8 @@ useEffect(() => {
       .filter((date) => !Number.isNaN(date.getTime()))
       .map(getLocalDateKey)
   );
+  // Days a Streak Freeze covered count as studied for the streak.
+  (shopServer?.protectedDays || []).forEach((key) => sessionDateKeys.add(key));
 
   const todayFocusMinutes = focusSessions.reduce((total, session) => {
     const completedAt = new Date(session.completedAt);
@@ -2620,6 +2704,28 @@ useEffect(() => {
 
   // Keep study reminders in step with the streak and today's progress.
   const studiedToday = sessionDateKeys.has(todayKey);
+
+  // A Streak Freeze covers one missed day: yesterday was missed but the day before was studied.
+  const freezeBusy = useRef(false);
+  useEffect(() => {
+    if (!IS_NATIVE || !authToken || student?.guest || !shopServer || shopServer.freezes < 1 || freezeBusy.current) return;
+    const dayKey = (back) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - back); return getLocalDateKey(d); };
+    const yesterday = dayKey(1);
+    if (sessionDateKeys.has(yesterday) || !sessionDateKeys.has(dayKey(2))) return;
+    freezeBusy.current = true;
+    nativeApi("/api/shop/protect", "POST", { date: yesterday })
+      .then(({ ok, data }) => { if (data.freezes !== undefined && (ok || data.protectedDays)) setShopServer((prev) => shopFrom(data, prev)); })
+      .finally(() => { freezeBusy.current = false; });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shopServer, focusSessions, authToken]);
+  // Streak Repair: yesterday was missed but the day before it was studied, so a streak was just lost.
+  // The shop offers to bring yesterday back for gems. Needs the shop data so a Freeze has had its chance first.
+  const repairDate = (() => {
+    if (!IS_NATIVE || !shopServer) return null;
+    const dayKey = (back) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - back); return getLocalDateKey(d); };
+    const yesterday = dayKey(1);
+    return !sessionDateKeys.has(yesterday) && sessionDateKeys.has(dayKey(2)) ? yesterday : null;
+  })();
   useEffect(() => {
     if (!authToken) return;
     saveReminderPrefs(reminderPrefs);
@@ -4296,6 +4402,10 @@ async function undoDeleteTask() {
       streak: studyStreak,
       bestStreak,
       gems: gemsServer ?? 0,
+      shop: shopServer,
+      shopStatus: shopStatus.state,
+      shopCode: shopStatus.code,
+      repair: repairDate,
       goalMin: dailyGoalMinutes,
       todayMin: todayFocusMinutes,
       exam: ex ? { subject: ex.subject, days: ex.countdown.days, ready, dateLabel: new Date(`${ex.date}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }) } : null,
@@ -4371,6 +4481,9 @@ async function undoDeleteTask() {
   })() : null;
 
   const designActions = IS_NATIVE ? {
+    shopBuy,
+    shopGift,
+    shopRefresh: () => { if (authToken && !student?.guest) { loadShop(); } },
     toggleTask: (id, forceDone) => {
       const t = tasks.find((x) => x.id === id);
       if (forceDone && t?.completed) return;

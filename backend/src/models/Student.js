@@ -48,6 +48,12 @@ const studentSchema = new mongoose.Schema(
     gemsToday: { type: Number, default: 0 }, // gems earned from daily-capped sources today
     onboardingGemsClaimed: { type: Boolean, default: false },
 
+    // Gem Shop purchases (see services/shop.js).
+    shopFreezes: { type: Number, default: 0, min: 0 }, // Streak Freezes in stock
+    doubleGemsUntil: { type: Date, default: null }, // Double Gems boost end time
+    protectedDays: { type: [String], default: [] }, // YYYY-MM-DD days a Streak Freeze or Streak Repair covered
+    shopOwned: { type: [String], default: [] }, // premium items bought once and kept (keys in services/shop.js)
+
     // Email addresses from Google sign-in count as verified (see services/accountEmails.js).
     emailVerified: {
       type: Boolean,

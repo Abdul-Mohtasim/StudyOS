@@ -250,7 +250,7 @@ const Q=[
  {s:'Biology',topic:'Cells',k:'mc',h:'Which part of a cell makes most of its ATP?',opts:['Ribosome','Nucleus','Mitochondria','Golgi body'],a:2,why:'Mitochondria release energy from glucose and store it as ATP.'}
 ];
 const BKB=(a='back')=>`<button class="xi bk" data-a="${a}" type="button" aria-label="Back">${IC.back}Back</button>`;
-const GEM=w=>`<svg viewBox="0 0 24 28" style="width:${w}px;height:${w*28/24}px;display:block"><path d="M12 1l10 6v14l-10 6L2 21V7z" fill="#1fa6ff"/><path d="M12 1l10 6-10 6L2 7z" fill="#8fdcff"/><path d="M12 13v14L2 21V7z" fill="#1b90e6"/><path d="M12 13l10-6v14l-10 6z" fill="#1578c8"/></svg>`;
+const GEM=w=>`<svg viewBox="40 0 385 466" style="width:${w*385/466}px;height:${w}px;display:block"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>`;
 const FLAME=(w,h)=>FLM('#f0243a','#ff9a3a',w,h);
 const dots='<div class="xdots"><i></i><i></i><i></i></div>';
 const MZ=()=>znHtml(92);
@@ -432,7 +432,7 @@ function gmHtml(){
  X.gems=calcGems();
  return nx(`<div class="xt">${BKB()}</div>
  <div class="gmc" id="gmc" style="opacity:0"><small>+${X.gems}</small><span><i id="gmi">${GEM(24)}</i><b id="gmn">0</b></span></div>
- <div class="xbub nob xtl" id="gmb" style="position:absolute;left:34px;right:34px;top:250px;opacity:0;font-size:20px;line-height:1.5">${tr(X.gems>=30?'Great exam! Here are':'Here are')} <b style="color:#3db8ff">${tr(X.gems+' gems')}</b> ${tr('to start you off!')}</div>
+ <div class="xbub nob xtl" id="gmb" style="position:absolute;left:34px;right:34px;top:250px;opacity:0;font-size:20px;line-height:1.5">${tr(X.gems>=30?'Great exam! Here are':'Here are')} <b style="color:#ff4a6d">${tr(X.gems+' gems')}</b> ${tr('to start you off!')}</div>
  <div class="gmz"><div class="gmf" id="gmf">${FLC(X.goal,128,154)}</div>${znHtml(158,'gmzu')}</div>`);
 }
 function rel(el){const r=R.getBoundingClientRect(),t=el.getBoundingClientRect(),k=r.width/R.offsetWidth;return[(t.left-r.left+t.width/2)/k,(t.top-r.top+t.height/2)/k]}
