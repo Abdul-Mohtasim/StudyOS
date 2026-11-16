@@ -2263,16 +2263,22 @@ useEffect(() => {
 
   async function nativeApi(path, method = "GET", body, token = authToken) {
     if (!token) return { ok: false, data: {}, status: 0 };
+    // A request that never answers must not leave a button stuck, so give up after 20 seconds.
+    const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), 20000) : 0;
     try {
       const response = await fetch(`${API_BASE_URL}${path}`, {
         method,
         headers: { Authorization: `Bearer ${token}`, ...(body ? { "Content-Type": "application/json" } : {}) },
         ...(body ? { body: JSON.stringify(body) } : {}),
+        ...(controller ? { signal: controller.signal } : {}),
       });
       const data = await response.json().catch(() => ({}));
       return { ok: response.ok, data, status: response.status };
     } catch {
       return { ok: false, data: {}, status: 0 };
+    } finally {
+      if (timer) clearTimeout(timer);
     }
   }
 

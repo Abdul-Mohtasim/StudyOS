@@ -1124,7 +1124,8 @@ const SHI={
  heart:'<svg viewBox="0 0 64 64"><path d="M32 58C9 41 5 29 5 21 5 12 12 7 19 7c6 0 10 3 13 8 3-5 7-8 13-8 7 0 14 5 14 14 0 8-4 20-27 37z" fill="#ff5a7a"/></svg>'
 };
 const PR=()=>Object.assign({freeze:100,repair:150,double:120,sound:180,focusplus:220,report:200,exam:300,widgets:160,frames:140,badges:120,theme_ocean:250,theme_forest:250,theme_sunset:250,theme_mono:250,gift:25},(D.shop&&D.shop.prices)||{});
-let SMSG=null,SHY=0,GHY=0,SBUSY=false,STXT='',STUNTIL=0;
+let SMSG=null,SHY=0,GHY=0,SBUSY=false,STXT='',STUNTIL=0,SARM='',SARMT=0,SBT=0;
+const isArm=k=>SARM===k&&Date.now()<SARMT;
 const ntxt=n=>(n||0).toLocaleString();
 const gmI='<span class="sh-gi">'+SHI.gem+'</span>';
 const leftTxt=ms=>{const m=Math.max(1,Math.ceil(ms/60000)),h=Math.floor(m/60);return h>0?h+'h '+(m%60)+'m left':m+'m left'};
@@ -1210,7 +1211,8 @@ const shopHtml=()=>{
       const why=whyNot(k,price);
       let text=gmI+ntxt(price);
       if(k==='freeze'&&fr>=2)text='Full';else if(k==='double'&&on)text='Active';
-      act=`<button type="button" class="sh2-pill${why?' off':''}" data-buy="${k}" data-price="${price}" data-why="${esc(why)}"${k==='repair'&&D.repair?` data-date="${esc(D.repair)}"`:''} aria-label="Buy ${esc(def.t)} for ${price} gems">${text}</button>`;
+      const arm=!why&&isArm(k);if(arm)text='Confirm';
+      act=`<button type="button" class="sh2-pill${why?' off':''}${arm?' armed':''}" data-buy="${k}" data-price="${price}" data-why="${esc(why)}"${k==='repair'&&D.repair?` data-date="${esc(D.repair)}"`:''} aria-label="Buy ${esc(def.t)} for ${price} gems">${text}</button>`;
     }
     if(k==='freeze'&&fr>0)status=`<em class="sh2-st on">You have ${fr} of 2</em>`;
     else if(k==='double'&&on)status=`<em class="sh2-st on">Active · ${leftTxt(until-Date.now())}</em>`;
@@ -1222,7 +1224,7 @@ const shopHtml=()=>{
     if(!paid){const cur=(k==='dark')===!!D.dark;sub=cur?'In use':'Free';cls=cur?' sel':'';attr=` data-theme="${k}" role="button" aria-label="Use the ${n} theme"`}
     else if(!isLive(k))sub='Soon',attr=` data-why="${esc(n+' is coming soon. Your gems stay safe until it is ready.')}" role="button" aria-label="${n} theme, coming soon"`;
     else if(hasItem(k))sub='Owned';
-    else{const why=whyNot(k,pr[k]);sub=`<button type="button" class="sh2-pill sm${why?' off':''}" data-buy="${k}" data-price="${pr[k]}" data-why="${esc(why)}" aria-label="Buy the ${n} theme for ${pr[k]} gems">${gmI}${ntxt(pr[k])}</button>`}
+    else{const why=whyNot(k,pr[k]);const arm=!why&&isArm(k);sub=`<button type="button" class="sh2-pill sm${why?' off':''}${arm?' armed':''}" data-buy="${k}" data-price="${pr[k]}" data-why="${esc(why)}" aria-label="Buy the ${n} theme for ${pr[k]} gems">${arm?'Confirm':gmI+ntxt(pr[k])}</button>`}
     return `<div class="sh2-th${cls}"${attr}><div class="sh2-pv" style="background:${bg}"><i style="background:${bar}"></i><u style="background:${cd}"></u></div><b>${n}</b><small>${sub}</small></div>`;
   };
   const banner=D.guest?'<div class="sh2-off"><span>Create your profile to use the shop.</span></div>'
@@ -1241,9 +1243,9 @@ ${body}
 <div class="sh-earn"><span class="sh-ei">${SHI.heart}</span><div><b>Friends</b><p>You both earn 10 gems when a friend joins you.</p></div></div>
 </section></div>`);
 };
-const armBtn=(b,label)=>{b.classList.add('armed');b.dataset.html=b.innerHTML;b.textContent=label;clearTimeout(b._t);b._t=setTimeout(()=>{if(b.isConnected&&b.classList.contains('armed')){b.classList.remove('armed');b.innerHTML=b.dataset.html}},3000)};
+const armBtn=(b,label,key)=>{SARM=key||'';SARMT=Date.now()+4000;b.classList.add('armed');b.dataset.html=b.innerHTML;b.textContent=label;clearTimeout(b._t);b._t=setTimeout(()=>{if(SARM===key&&Date.now()>=SARMT-50)SARM='';if(b.isConnected&&b.classList.contains('armed')){b.classList.remove('armed');b.innerHTML=b.dataset.html}},4000)};
 const shopPlay=()=>{
-  if(!SOFT){SMSG=null;STXT='';rise('.sh2-top,.sh2-title,.sh2-sub,.sh-hero,.sh2-off,.sh2-sec',0,45);hap('light')}
+  if(!SOFT){SMSG=null;STXT='';SARM='';SBUSY=false;rise('.sh2-top,.sh2-title,.sh2-sub,.sh-hero,.sh2-off,.sh2-sec',0,45);hap('light')}
   const sb=$('.sh2',R);if(sb){sb.scrollTop=SHY;sb.onscroll=()=>{SHY=sb.scrollTop}}
   if(!SOFT&&CB.shopRefresh)CB.shopRefresh();
   // Messages show as a toast, so they stay visible wherever the page is scrolled to.
@@ -1260,10 +1262,10 @@ const shopPlay=()=>{
     if(SBUSY)return;
     if(b.dataset.why){hap('light');say(b.dataset.why);return}
     if(!b.dataset.buy)return;
-    if(!b.classList.contains('armed')){hap('light');armBtn(b,'Confirm');return}
-    SBUSY=true;b.classList.remove('armed');b.classList.add('busy');b.textContent='…';
+    if(!b.classList.contains('armed')){hap('light');armBtn(b,'Confirm',b.dataset.buy);return}
+    SARM='';SBUSY=true;clearTimeout(SBT);SBT=setTimeout(()=>{SBUSY=false},20000);b.classList.remove('armed');b.classList.add('busy');b.textContent='…';
     let r=null;try{r=CB.shopBuy?await CB.shopBuy(b.dataset.buy,{date:b.dataset.date||''}):null}catch(_){r=null}
-    SBUSY=false;
+    clearTimeout(SBT);SBUSY=false;
     hap(r&&r.ok?'success':'light');
     const text=(r&&r.message)||(r&&r.ok?'Done!':'Could not reach the server. Try again.');
     if(SCREENS[CUR]&&SCREENS[CUR].t==='Gem Shop')say(text);
@@ -1271,7 +1273,7 @@ const shopPlay=()=>{
 };
 const giftHtml=()=>{
   const pr=PR(),fr=(D.friends||[]),why=blocked(pr.gift);
-  const rows=fr.map(f=>`<div class="sh-fr"><span class="ava">${esc((f.name||'?').charAt(0).toUpperCase())}</span><span class="sh-fn">${esc(f.name)}</span><button type="button" class="sh-btn sm${why?' off':''}" data-gift="${esc(f.id)}" data-why="${esc(why)}" aria-label="Send ${pr.gift} gems to ${esc(f.name)}">${gmI}${pr.gift}</button></div>`).join('');
+  const rows=fr.map(f=>`<div class="sh-fr"><span class="ava">${esc((f.name||'?').charAt(0).toUpperCase())}</span><span class="sh-fn">${esc(f.name)}</span><button type="button" class="sh-btn sm${why?' off':''}${!why&&isArm('g:'+f.id)?' armed':''}" data-gift="${esc(f.id)}" data-why="${esc(why)}" aria-label="Send ${pr.gift} gems to ${esc(f.name)}">${!why&&isArm('g:'+f.id)?'Confirm':gmI+pr.gift}</button></div>`).join('');
   return wrapD(`<div class="pg shp" style="padding-top:38px">${head('Gift gems',ICO.back)}<div class="shb">
 <div class="sh-hero"><span class="sh-hg">${SHI.gift}</span><div><small>Your gems</small><b>${ntxt(D.gems)}</b><span>Send ${pr.gift} gems to a friend. Gifts cannot be taken back.</span></div></div>
 ${msgHtml()}
@@ -1280,7 +1282,7 @@ ${rows||`<div class="mut" style="font:400 14px/1.5 var(--body);margin:8px 4px;te
 </div></div>`);
 };
 const giftPlay=()=>{
-  if(!SOFT)SMSG=null;
+  if(!SOFT){SMSG=null;SARM='';SBUSY=false}
   enter();
   const sb=$('.shb',R);if(sb){sb.scrollTop=GHY;sb.onscroll=()=>{GHY=sb.scrollTop}}
   if(!SOFT&&CB.shopRefresh)CB.shopRefresh();
@@ -1288,10 +1290,10 @@ const giftPlay=()=>{
     if(e.target.closest('.hd span:first-child')){back();return}
     const b=e.target.closest('[data-gift]');if(!b||SBUSY)return;
     if(b.dataset.why){hap('light');SMSG={text:b.dataset.why};go('Gift gems',true);return}
-    if(!b.classList.contains('armed')){hap('light');armBtn(b,'Confirm');return}
-    SBUSY=true;b.classList.remove('armed');b.classList.add('busy');b.textContent='…';
+    if(!b.classList.contains('armed')){hap('light');armBtn(b,'Confirm','g:'+b.dataset.gift);return}
+    SARM='';SBUSY=true;clearTimeout(SBT);SBT=setTimeout(()=>{SBUSY=false},20000);b.classList.remove('armed');b.classList.add('busy');b.textContent='…';
     let r=null;try{r=CB.shopGift?await CB.shopGift(b.dataset.gift):null}catch(_){r=null}
-    SBUSY=false;
+    clearTimeout(SBT);SBUSY=false;
     SMSG=r&&r.ok?{ok:1,text:r.message||'Gift sent!'}:{text:(r&&r.message)||'Could not reach the server. Try again.'};
     hap(r&&r.ok?'success':'light');
     if(SCREENS[CUR]&&SCREENS[CUR].t==='Gift gems')go('Gift gems',true);
