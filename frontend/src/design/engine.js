@@ -1124,7 +1124,10 @@ const SHI={
  heart:'<svg viewBox="0 0 64 64"><path d="M32 58C9 41 5 29 5 21 5 12 12 7 19 7c6 0 10 3 13 8 3-5 7-8 13-8 7 0 14 5 14 14 0 8-4 20-27 37z" fill="#ff5a7a"/></svg>'
 };
 const PR=()=>Object.assign({freeze:100,repair:150,double:120,sound:180,focusplus:220,report:200,exam:300,widgets:160,frames:140,badges:120,theme_ocean:250,theme_forest:250,theme_sunset:250,theme_mono:250,gift:25},(D.shop&&D.shop.prices)||{});
-let SMSG=null,SHY=0,GHY=0,SBUSY=false,STXT='',STUNTIL=0,SARM='',SARMT=0,SBT=0;
+let SMSG=null,SHY=0,GHY=0,SBUSY=false,STXT='',STUNTIL=0,SARM='',SARMT=0,SBT=0,SBST=0;
+let DBG=[];
+const tn=el=>{try{return (el.tagName||'?')+'.'+String((el.className&&el.className.baseVal!==undefined?el.className.baseVal:el.className)||'').split(' ')[0]}catch(_){return '?'}};
+const dbg=m=>{DBG.push(new Date().toTimeString().slice(3,8)+' '+m);if(DBG.length>6)DBG.shift();try{const el=R&&R.querySelector('.sh-dbg');if(el)el.textContent=DBG.join('\n')}catch(_){}};
 const isArm=k=>SARM===k&&Date.now()<SARMT;
 const ntxt=n=>(n||0).toLocaleString();
 const gmI='<span class="sh-gi">'+SHI.gem+'</span>';
@@ -1232,7 +1235,7 @@ const shopHtml=()=>{
   const body=SHOP_SECTIONS.map(sec=>`<section class="sh2-sec"><div class="sh2-h"><b>${sec.h}</b><span>${sec.s}</span></div>${sec.items.map(row).join('')}</section>`).join('');
   return wrapD(`<div class="sh2" data-sc>
 <div class="sh2-top"><button type="button" class="sh2-back" data-shback aria-label="Back">${SI.back}</button><div class="sh2-bal" aria-label="You have ${ntxt(D.gems)} gems">${gmI}<span>${ntxt(D.gems)}</span></div></div>
-<h1 class="sh2-title">Gem Shop</h1><p class="sh2-sub">Turn the gems you earn into real study power.</p>
+<h1 class="sh2-title">Gem Shop</h1><p class="sh2-sub">Turn the gems you earn into real study power. <span style="opacity:.45">· build 12f</span></p>
 <div class="sh-hero"><span class="sh-hg">${SHI.gem}</span><div><small>Your gems</small><b>${ntxt(D.gems)}</b><span>Earn 1 gem for every 5 minutes you focus.</span></div></div>
 ${banner}
 ${body}
@@ -1252,24 +1255,32 @@ const shopPlay=()=>{
   // The page redraws when new shop data arrives, so a fresh toast is put back for a moment.
   const say=text=>{STXT=text;STUNTIL=Date.now()+1800;go('Gem Shop',true)};
   if(STXT&&Date.now()<STUNTIL)toast(STXT);
-  R.onclick=async e=>{
+  const handle=async e=>{
+   try{
     if(e.target.closest('[data-shback]')){back();return}
     if(e.target.closest('[data-retry]')){hap('light');if(CB.shopRefresh)CB.shopRefresh();return}
     if(e.target.closest('[data-giftpage]')){hap('light');GHY=0;SMSG=null;go('Gift gems');return}
     const th=e.target.closest('[data-theme]');
-    if(th){hap('light');if(CB.setTheme)CB.setTheme(th.dataset.theme);return}
-    const b=e.target.closest('[data-buy],[data-why]');if(!b)return;
-    if(SBUSY)return;
+    if(th&&th!==R&&R.contains(th)){hap('light');if(CB.setTheme)CB.setTheme(th.dataset.theme);return}
+    const b=e.target.closest('[data-buy],[data-why]');if(!b){dbg('tap missed a button: '+tn(e.target));return}
+    dbg('button '+(b.dataset.buy||'info')+(b.classList.contains('armed')?' (armed)':'')+(SBUSY?' BUSY':''));
+    if(SBUSY&&Date.now()-SBST<20000){toast('Working on your last request...');return}
     if(b.dataset.why){hap('light');say(b.dataset.why);return}
     if(!b.dataset.buy)return;
     if(!b.classList.contains('armed')){hap('light');armBtn(b,'Confirm',b.dataset.buy);return}
-    SARM='';SBUSY=true;clearTimeout(SBT);SBT=setTimeout(()=>{SBUSY=false},20000);b.classList.remove('armed');b.classList.add('busy');b.textContent='…';
+    SARM='';SBUSY=true;SBST=Date.now();clearTimeout(SBT);SBT=setTimeout(()=>{SBUSY=false},20000);b.classList.remove('armed');b.classList.add('busy');b.textContent='…';
     let r=null;try{r=CB.shopBuy?await CB.shopBuy(b.dataset.buy,{date:b.dataset.date||''}):null}catch(_){r=null}
     clearTimeout(SBT);SBUSY=false;
     hap(r&&r.ok?'success':'light');
-    const text=(r&&r.message)||(r&&r.ok?'Done!':'Could not reach the server. Try again.');
+    const text=(r&&r.message)||(r&&r.ok?'Done!':'Could not reach the server. Try again.');dbg('result '+(r&&r.ok?'OK':'FAILED')+': '+text.slice(0,60));
     if(SCREENS[CUR]&&SCREENS[CUR].t==='Gem Shop')say(text);
+   }catch(err){SBUSY=false;clearTimeout(SBT);toast('Shop error: '+((err&&err.message)||err))}
   };
+  // Listen to the finger lifting as well as to click, so a tap still counts if the WebView drops the click.
+  let PD=null,LT=0;
+  R.onpointerdown=e=>{PD={x:e.clientX,y:e.clientY}};
+  R.onpointerup=e=>{if(!PD)return;const m=Math.hypot(e.clientX-PD.x,e.clientY-PD.y);PD=null;if(m>10)return;LT=Date.now();handle(e)};
+  R.onclick=e=>{if(Date.now()-LT<600)return;LT=Date.now();handle(e)};
 };
 const giftHtml=()=>{
   const pr=PR(),fr=(D.friends||[]),why=blocked(pr.gift);
@@ -1302,6 +1313,7 @@ const giftPlay=()=>{
 SCREENS.push({t:'Gem Shop',d:'Spend gems on streak boosts, premium features, themes and gifts',spec:{m:'Balance, boosts, premium features and themes with a two-tap confirm, gifting and how gems are earned.',h:'Light tap on each press, success on a purchase.',s:NS},html:shopHtml,play:shopPlay});
 SCREENS.push({t:'Gift gems',d:'Send gems to a friend',spec:{m:'Friend list with a two-tap send.',h:'Light tap, success when sent.',s:NS},html:giftHtml,play:giftPlay});
 DZ.openShop=from=>{DZ.shopFrom=from;SHY=0;SMSG=null;hap('light');go('Gem Shop')};
+['pointerdown','pointerup','click'].forEach(ev=>host.addEventListener(ev,e=>{if(SCREENS[CUR]&&SCREENS[CUR].t==='Gem Shop')dbg(ev+' on '+tn(e.target))},true));
 host.addEventListener('click',e=>{
   const g=e.target.closest('[data-shopgo]');if(!g||!SCREENS[CUR]||!['Home','Tasks','Study'].includes(SCREENS[CUR].t))return;
   e.stopPropagation();DZ.openShop(SCREENS[CUR].t);
@@ -1462,7 +1474,7 @@ ${row(I.eye,'Contacts','If you choose Find friends from contacts, email addresse
     play(){S.mute=false;rise();
       R.onclick=e=>{
         if(e.target.closest('[data-back]')){hap('light');go(IDX('Settings'));return}
-        const t=e.target.closest('[data-theme]');if(!t)return;
+        const t=e.target.closest('[data-theme]');if(!t||t===R||!R.contains(t))return;
         $$('[data-theme]',R).forEach(x=>x.classList.toggle('on',x===t));hap('medium');if(CB.setTheme)CB.setTheme(t.dataset.theme)}}});
 
   /* Delete account + in-app Terms and Privacy Policy */

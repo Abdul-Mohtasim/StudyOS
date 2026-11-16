@@ -9,7 +9,8 @@ const { forgetStudent } = require("../middleware/auth");
 // kind "stock"  : can be bought again and again, up to `max` in stock (Streak Freeze)
 // kind "repair" : spends gems on one action for one day (Streak Repair)
 // kind "timed"  : a boost that runs for `hours` (Double Gems)
-// kind "unlock" : bought once and kept forever (every premium feature and theme)
+// kind "unlock" : unlocks a premium feature or theme for good. It can be bought again (gems are
+//                 spent each time), the feature simply stays unlocked.
 //
 // live: false  = the feature is not finished yet. The shop shows "Soon" and the server
 // refuses the purchase, so nobody can spend gems on something that does nothing.
@@ -34,6 +35,9 @@ const ITEMS = {
   theme_sunset: { kind: "unlock", price: 250, live: false },
   theme_mono: { kind: "unlock", price: 250, live: false },
 };
+// How many a person can take in one purchase, and what that costs (times the item price).
+// 5 pack = 4x the price (20% off), 15 pack = 10x the price (33% off).
+const PACKS = { 1: 1, 5: 4, 15: 10 };
 const GIFT_AMOUNT = 25;
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -45,6 +49,9 @@ function prices() {
   const out = { gift: GIFT_AMOUNT };
   for (const key of Object.keys(ITEMS)) out[key] = ITEMS[key].price;
   return out;
+}
+function packs() {
+  return Object.keys(PACKS).map((n) => ({ n: Number(n), x: PACKS[n] }));
 }
 function live() {
   const out = {};
@@ -89,23 +96,50 @@ function repairWindow() {
 }
 
 // Spends gems. Every rule is inside one database update so two taps can never spend twice.
-// `extra` carries the day for Streak Repair: { date: "YYYY-MM-DD" }.
+// `extra.date` is the day for Streak Repair ("YYYY-MM-DD"); `extra.qty` is the pack size (1, 5 or 15).
 async function buy(studentId, item, extra = {}) {
   if (!isItem(item)) return { ok: false, status: 400, message: "That item is not in the shop." };
   const def = ITEMS[item];
   if (!def.live) return { ok: false, status: 409, message: "This is coming soon. Gems are not spent yet.", state: await state(studentId) };
 
-  const filter = { _id: studentId, gems: { $gte: def.price } };
+  const qty = extra && extra.qty !== undefined && extra.qty !== null ? Number(extra.qty) : 1;
+  if (!Object.prototype.hasOwnProperty.call(PACKS, qty)) return { ok: false, status: 400, message: "Pick a pack size: 1, 5 or 15." };
+  if (def.kind === "repair" && qty !== 1) return { ok: false, status: 400, message: "Streak Repair is bought one day at a time." };
+  const total = def.price * PACKS[qty];
+
+  const filter = { _id: studentId, gems: { $gte: total } };
   let update;
   if (def.kind === "stock") {
+    if (qty > def.max) return { ok: false, status: 409, message: `You can hold at most ${def.max} Streak Freezes.`, state: await state(studentId) };
     // Older accounts do not have the field yet, so a missing value counts as zero.
-    filter.$or = [{ shopFreezes: { $exists: false } }, { shopFreezes: { $lt: def.max } }];
-    update = { $inc: { gems: -def.price, shopFreezes: 1 } };
+    filter.$or = [{ shopFreezes: { $exists: false } }, { shopFreezes: { $lte: def.max - qty } }];
+    update = { $inc: { gems: -total, shopFreezes: qty } };
   } else if (def.kind === "timed") {
-    filter.$or = [{ doubleGemsUntil: null }, { doubleGemsUntil: { $lte: new Date() } }];
-    update = {
-      $inc: { gems: -def.price },
-      $set: { doubleGemsUntil: new Date(Date.now() + def.hours * 3600 * 1000) },
+    // Buying again while it is running adds the time on top of what is left.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const cur = await Student.findById(studentId).select("gems doubleGemsUntil").lean();
+      if (!cur) return { ok: false, status: 404, message: "Account not found." };
+      if ((cur.gems || 0) < total) break; // falls through to the "Not enough gems" message below
+      const now = Date.now();
+      const end = cur.doubleGemsUntil ? new Date(cur.doubleGemsUntil).getTime() : 0;
+      const until = new Date(Math.max(now, end) + def.hours * qty * 3600 * 1000);
+      const done = await Student.findOneAndUpdate(
+        { _id: studentId, gems: { $gte: total }, doubleGemsUntil: cur.doubleGemsUntil || null },
+        { $inc: { gems: -total }, $set: { doubleGemsUntil: until } },
+        { new: true }
+      ).select(FIELDS).lean();
+      if (done) {
+        forgetStudent(studentId);
+        return { ok: true, state: view(done) };
+      }
+    }
+    const doc = await Student.findById(studentId).select(FIELDS).lean();
+    const now = view(doc || {});
+    return {
+      ok: false,
+      status: 409,
+      message: now.gems >= total ? "Could not complete the purchase. Please try again." : "Not enough gems.",
+      state: now,
     };
   } else if (def.kind === "repair") {
     const date = extra && extra.date;
@@ -114,13 +148,12 @@ async function buy(studentId, item, extra = {}) {
     if (date < lo || date > hi) return { ok: false, status: 409, message: "That day is too old to repair. Repair works for 24 hours." };
     filter.protectedDays = { $ne: date };
     update = {
-      $inc: { gems: -def.price },
+      $inc: { gems: -total },
       $push: { protectedDays: { $each: [date], $slice: -90 } },
     };
   } else {
-    // unlock: one purchase per account. $ne on an array means "does not contain".
-    filter.shopOwned = { $ne: item };
-    update = { $inc: { gems: -def.price }, $addToSet: { shopOwned: item } };
+    // unlock: can be bought again. Gems are spent every time; the feature stays unlocked.
+    update = { $inc: { gems: -total }, $addToSet: { shopOwned: item } };
   }
 
   const done = await Student.findOneAndUpdate(filter, update, { new: true }).select(FIELDS).lean();
@@ -131,11 +164,10 @@ async function buy(studentId, item, extra = {}) {
   const doc = await Student.findById(studentId).select(FIELDS).lean();
   const now = view(doc || {});
   let message = "Not enough gems.";
-  if (now.gems >= def.price) {
-    if (def.kind === "stock") message = "You already have the most Streak Freezes you can hold.";
-    else if (def.kind === "timed") message = "Double Gems is already running.";
+  if (now.gems >= total) {
+    if (def.kind === "stock") message = `You can hold at most ${def.max} Streak Freezes. Pick a smaller pack.`;
     else if (def.kind === "repair") message = "That day is already covered. Your streak is safe.";
-    else message = "You already own this.";
+    else message = "Could not complete the purchase. Please try again.";
   }
   return { ok: false, status: 409, message, state: now };
 }
@@ -188,4 +220,4 @@ async function gift(studentId, toId) {
   return { ok: true, state: view(taken) };
 }
 
-module.exports = { ITEMS, GIFT_AMOUNT, isItem, prices, live, state, buy, protect, gift };
+module.exports = { ITEMS, PACKS, GIFT_AMOUNT, packs, isItem, prices, live, state, buy, protect, gift };

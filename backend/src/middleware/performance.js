@@ -92,41 +92,39 @@ function compress() {
 }
 
 // ---------- overload guard ----------
-// A worker that is overloaded answers 503 + Retry-After quickly. The app retries
-// such reads by itself, and the load balancer / other workers take the traffic.
+// Only for REAL overload. On a small or shared server one slow moment (starting up, a
+// sign-in, a slow database call) must never turn into "server busy" for people, so:
+//   * it does nothing during the first 30 seconds after the server starts,
+//   * the event loop must be stuck for several seconds IN A ROW before it says "busy",
+//   * sign-in, sign-up and health checks are never refused.
 function guard({
-  maxInFlight = Number(process.env.MAX_IN_FLIGHT) || 300,
-  maxLagMs = Number(process.env.MAX_EVENT_LOOP_LAG_MS) || 3000,
-  strikesNeeded = Number(process.env.MAX_LAG_STRIKES) || 3,
+  maxInFlight = Number(process.env.MAX_IN_FLIGHT) || 400,
+  maxLagMs = Number(process.env.MAX_EVENT_LOOP_LAG_MS) || 4000,
+  warmupMs = 30000,
+  strikes = 3,
 } = {}) {
+  const startedAt = Date.now();
   const histogram = monitorEventLoopDelay({ resolution: 20 });
   histogram.enable();
   let lagMs = 0;
-  let strikes = 0;
-  const startedAt = Date.now();
+  let hot = 0; // how many checks in a row were overloaded
   const sampler = setInterval(() => {
-    // Use the 99th percentile, not the single worst sample: one hiccup (garbage collection,
-    // a cold start, loading Google's keys) must not make the whole server look "busy".
-    lagMs = histogram.percentile(99) / 1e6; // nanoseconds -> ms
+    lagMs = histogram.max / 1e6; // nanoseconds -> ms
     histogram.reset();
-    // Overloaded only if it stays slow for several seconds in a row.
-    strikes = lagMs > maxLagMs ? strikes + 1 : 0;
+    hot = lagMs > maxLagMs ? hot + 1 : 0;
   }, 1000);
   sampler.unref();
 
   let inFlight = 0;
 
-  // Sign-in, sign-up and password routes are never turned away: a student who cannot
-  // sign in cannot use the app at all, and these routes are already rate limited.
-  const ALWAYS_ALLOWED = /^\/(health|health\/live|ping)$|^\/auth(\/|$)/;
-
   function middleware(req, res, next) {
-    if (ALWAYS_ALLOWED.test(req.path)) return next();
+    // req.path is relative to "/api"
+    if (req.path === "/health" || req.path === "/health/live" || req.path === "/ping" || req.path.startsWith("/auth/") || req.path.startsWith("/cron/")) {
+      return next();
+    }
 
-    // First 20 seconds after the process starts: the server is still warming up, never refuse.
-    const warmingUp = Date.now() - startedAt < 20000;
-
-    if (inFlight >= maxInFlight || (!warmingUp && strikes >= strikesNeeded)) {
+    const warm = Date.now() - startedAt > warmupMs;
+    if (warm && (inFlight >= maxInFlight || hot >= strikes)) {
       res.setHeader("Retry-After", "2");
       return res.status(503).json({ error: "The server is busy right now. Please try again in a moment." });
     }
@@ -143,7 +141,7 @@ function guard({
     next();
   }
 
-  middleware.stats = () => ({ inFlight, eventLoopLagMs: Math.round(lagMs) });
+  middleware.stats = () => ({ inFlight, eventLoopLagMs: Math.round(lagMs), hot });
   return middleware;
 }
 
