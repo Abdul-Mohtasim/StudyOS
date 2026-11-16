@@ -2301,6 +2301,8 @@ useEffect(() => {
       prices: data.prices || prev?.prices || null,
       // Which items are finished. Missing on an older server: the shop then treats only the old items as live.
       live: data.live && typeof data.live === "object" ? data.live : prev?.live || null,
+      // Pack sizes (1 / 5 / 15). Missing on an older server: the shop then offers single purchases only.
+      packs: Array.isArray(data.packs) ? data.packs : prev?.packs || null,
     };
   }
 
@@ -2344,10 +2346,12 @@ useEffect(() => {
     if (!token) return { ok: false, message: "Create your profile to use the shop." };
     const body = { item };
     if (item === "repair") body.date = extra?.date || "";
+    const qty = [1, 5, 15].includes(Number(extra?.qty)) ? Number(extra.qty) : 1;
+    if (qty > 1) body.qty = qty;
     const { ok, data, status } = await nativeApi("/api/shop/buy", "POST", body, token);
     if (Number.isFinite(data.gems)) setGemsServer(data.gems);
     if (data.freezes !== undefined) setShopServer((prev) => shopFrom(data, prev));
-    if (ok) return { ok: true, message: SHOP_BOUGHT[item] || "Done!" };
+    if (ok) return { ok: true, message: SHOP_BOUGHT[item] || "Done!", qty };
     if (data.message) return { ok: false, message: data.message };
     if (status === 0) return { ok: false, message: "Could not reach the server. Check your connection and try again." };
     return { ok: false, message: `The shop server answered with an error (code ${status}). The backend may need to be redeployed.` };

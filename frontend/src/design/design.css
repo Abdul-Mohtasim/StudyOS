@@ -805,3 +805,67 @@
 .dz .fx-vol{display:flex;align-items:center;gap:10px;color:#c9b8c3}
 .dz .fx-vol>span{display:flex}
 .dz .fx-vol input{flex:1;min-width:0;height:28px;accent-color:#c9b8c3;background:transparent}
+
+/* ---- Gem Shop: "How many would you like?" bottom sheet ---- */
+.dz .pk-ov{--ink:#1b1e25;--card:#edebec;--mut:#4b5d6d;--chip:#e1e0e2;--sheet:#f6f4f5;--line:#d4d1d3;
+  position:absolute;inset:0;display:flex;align-items:flex-end;background:rgba(5,8,10,.55);pointer-events:auto;
+  font-family:var(--body);color:var(--ink);animation:pk-fade .22s ease both}
+.dz .pk-ov.nd{--ink:#ebe8ea;--card:#1f252d;--mut:#9aa6b0;--chip:#2a323a;--sheet:#161d23;--line:#2f3a44}
+.dz .pk-sheet{position:relative;width:100%;max-height:92%;overflow:hidden auto;background:var(--sheet);border-radius:26px 26px 0 0;
+  padding:10px 14px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -12px 40px rgba(0,0,0,.4);
+  animation:pk-up .34s cubic-bezier(.2,.9,.3,1) both;box-sizing:border-box}
+.dz .pk-hdl{width:44px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
+.dz .pk-bal{display:flex;align-items:center;justify-content:flex-end;gap:6px;font:700 14px var(--display);color:var(--mut);font-variant-numeric:tabular-nums;min-height:22px}
+.dz .pk-bal .sh-gi{width:14px;height:17px}.dz .pk-bal .sh-gi svg{width:14px;height:17px;display:block}
+.dz .pk-h{margin:4px 0 16px;text-align:center;font:700 21px/1.2 var(--display);color:var(--ink)}
+.dz .pk-opts{display:grid;gap:10px;grid-template-columns:repeat(3,1fr);align-items:stretch}
+.dz .pk-opts.pk-n1{grid-template-columns:minmax(0,150px);justify-content:center}
+.dz .pk-opt{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px;min-width:0;
+  padding:22px 4px 12px;border:2px solid var(--line);border-radius:18px;background:transparent;color:var(--ink);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .1s,border-color .15s,background .15s;font-family:var(--body)}
+.dz .pk-opt:active{transform:scale(.97)}
+.dz .pk-opt.sel{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+.dz .pk-opt.off{opacity:.55}
+.dz .pk-opt b{font:700 14px/1.1 var(--display);color:var(--ink);text-align:center}
+.dz .pk-pr{display:flex;align-items:center;gap:4px;font:700 14px var(--display);font-variant-numeric:tabular-nums;color:#2d9ae8}
+.dz .pk-pr .sh-gi{width:12px;height:15px}.dz .pk-pr .sh-gi svg{width:12px;height:15px;display:block}
+.dz .pk-why{font:600 10.5px/1.2 var(--body);color:var(--mut);text-align:center}
+.dz .pk-pop{position:absolute;left:-2px;right:-2px;top:-2px;height:18px;border-radius:16px 16px 0 0;background:var(--c);color:#fff;
+  font:800 9.5px/18px var(--body);letter-spacing:.08em;text-transform:uppercase;text-align:center}
+.dz .pk-ck{position:absolute;right:-9px;top:-9px;width:24px;height:24px;border-radius:50%;background:var(--c);color:#fff;display:grid;place-items:center;
+  border:2px solid var(--sheet);z-index:2;animation:pk-pop .25s cubic-bezier(.3,1.6,.5,1) both}
+.dz .pk-ck svg{width:13px;height:13px;display:block}
+.dz .pk-ico{position:relative;width:54px;height:54px;border-radius:16px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 18%,transparent)}
+.dz .pk-ico>svg{width:28px;height:28px;display:block}
+.dz .pk-ico em{position:absolute;right:-6px;bottom:-6px;min-width:24px;height:20px;padding:0 5px;border-radius:10px;background:var(--c);color:#fff;
+  font:800 11px/20px var(--display);font-style:normal;text-align:center}
+.dz .pk-dot{width:26px;height:26px;border-radius:50%;background:var(--c);display:block}
+.dz .pk-err{min-height:20px;margin:10px 4px 2px;text-align:center;font:600 13px/1.35 var(--body);color:#ff5a7a}
+.dz .pk-go{display:flex;align-items:center;justify-content:center;width:100%;height:50px;margin-top:4px;padding:0 14px;border:0;border-radius:16px;
+  background:var(--c);color:#fff;font:800 14px var(--display);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;
+  box-shadow:0 4px 0 rgba(0,0,0,.28);-webkit-tap-highlight-color:transparent;transition:transform .08s,box-shadow .08s;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dz .pk-go:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.dz .pk-go.off{background:var(--chip);color:var(--mut);box-shadow:none}
+.dz .pk-no{display:block;width:100%;height:46px;margin-top:6px;border:0;background:transparent;color:var(--c);cursor:pointer;
+  font:800 13px var(--display);letter-spacing:.08em;text-transform:uppercase;-webkit-tap-highlight-color:transparent}
+.dz .pk-dots{display:inline-flex;gap:6px}
+.dz .pk-dots i{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pk-dot 1s infinite ease-in-out both}
+.dz .pk-dots i:nth-child(2){animation-delay:.15s}.dz .pk-dots i:nth-child(3){animation-delay:.3s}
+.dz .pk-done{position:relative;display:flex;flex-direction:column;align-items:center;padding:18px 0 22px;overflow:hidden}
+.dz .pk-rays{position:absolute;left:50%;top:92px;width:320px;height:320px;margin:-160px 0 0 -160px;border-radius:50%;opacity:.5;
+  background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--c) 38%,transparent) 0 10deg,transparent 10deg 20deg);
+  -webkit-mask-image:radial-gradient(circle,#000 0,transparent 68%);mask-image:radial-gradient(circle,#000 0,transparent 68%);
+  animation:pk-spin 14s linear infinite}
+.dz .pk-big{position:relative;width:112px;height:112px;border-radius:32px;display:grid;place-items:center;color:var(--c);
+  background:color-mix(in srgb,var(--c) 22%,var(--sheet));box-shadow:0 10px 30px rgba(0,0,0,.3);animation:pk-pop .45s cubic-bezier(.3,1.5,.5,1) both}
+.dz .pk-big>svg{width:60px;height:60px;display:block}
+.dz .pk-big .pk-dot{width:54px;height:54px}
+.dz .pk-done h2{position:relative;margin:18px 0 0;font:700 22px/1.2 var(--display);color:var(--ink);text-align:center}
+.dz .pk-x{position:relative;margin:4px 0 0;font:700 20px var(--display);color:var(--mut)}
+@keyframes pk-fade{from{opacity:0}to{opacity:1}}
+@keyframes pk-up{from{transform:translateY(100%)}to{transform:none}}
+@keyframes pk-pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+@keyframes pk-dot{0%,80%,100%{transform:scale(.5);opacity:.5}40%{transform:scale(1);opacity:1}}
+@keyframes pk-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.dz .pk-ov,.dz .pk-sheet,.dz .pk-ck,.dz .pk-big,.dz .pk-rays,.dz .pk-dots i{animation:none}}
