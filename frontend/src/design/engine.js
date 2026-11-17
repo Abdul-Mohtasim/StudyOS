@@ -92,9 +92,11 @@ const NAVI={
  tasks:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="currentColor"/><path d="M7.5 12.500l3 3 6-6.500" fill="none" stroke="var(--cut)" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/></svg>',
  focus:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="9.500" y="1.500" width="5" height="3" rx="1"/><circle cx="12" cy="13.500" r="8.500"/><path d="M12 8.500v5l2.800 2" fill="none" stroke="var(--cut)" stroke-width="2.200" stroke-linecap="round"/></svg>',
  study:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="8" y="3" width="13" height="13" rx="2.500"/><path d="M5 7.500v10a2.500 2.500 0 002.500 2.500H17v-2H7.500a.5.5 0 01-.5-.5v-10z"/></svg>',
- profile:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7.500" r="4.500"/><path d="M3.500 21c0-4.500 3.800-7 8.500-7s8.500 2.500 8.500 7z"/></svg>'
+ profile:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7.500" r="4.500"/><path d="M3.500 21c0-4.500 3.800-7 8.500-7s8.500 2.500 8.500 7z"/></svg>',
+ more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><circle cx="7.500" cy="12" r="1.700" fill="var(--cut)"/><circle cx="12" cy="12" r="1.700" fill="var(--cut)"/><circle cx="16.500" cy="12" r="1.700" fill="var(--cut)"/></svg>'
 };
-const nav=a=>`<div class="nav">${[['home','Home'],['tasks','Tasks'],['focus','Focus'],['study','Study'],['profile','Profile']].map(([k,l])=>`<div class="nv${k===a?' on':''}" data-k="${k}">${NAVI[k]}${l}</div>`).join('')}</div>`;
+// The last tab is "More". It opens a small menu with Shop and Profile, so the Profile page lights up "More" too.
+const nav=a=>`<div class="nav">${[['home','Home'],['tasks','Tasks'],['focus','Focus'],['study','Study'],['more','More']].map(([k,l])=>`<div class="nv${k===a||(k==='more'&&a==='profile')?' on':''}" data-k="${k}"${k==='more'?' role="button" aria-haspopup="menu" aria-label="More: Shop and Profile"':''}>${NAVI[k]}${l}</div>`).join('')}</div>`;
 const tb=()=>`<div class="tb"><div style="width:24px;height:24px;display:block"><svg viewBox="0 0 24 24"><path d="M12 1L19.5 4.5L23 12L19.5 19.5L12 23L4.5 19.5L1 12L4.5 4.5Z" fill="#3aa0ff"/><path d="M12 1L19.5 4.5L23 12L12 12Z" fill="#6cbcff"/><path d="M12 12L23 12L19.5 19.5L12 23Z" fill="#2b86e6"/><path d="M12 12L12 23L4.5 19.5L1 12Z" fill="#1f6fcc"/><path d="M12 6.2L17.8 12L12 17.8L6.2 12Z" fill="#eaf5ff"/><path d="M12 9.2L14.8 12L12 14.8L9.2 12Z" fill="#2b86e6"/></svg></div><span>${D.score!=null?D.score:"–"}</span>${FLM('currentColor','var(--pg)',20,24)}<span>${D.streak||0}</span><div data-shopgo role="button" aria-label="Open the Gem Shop" style="display:flex;align-items:center;gap:7px;cursor:pointer"><div style="width:22px;height:22px">${CUBE}</div><span>${(D.gems||0).toLocaleString()}</span></div><div class="sp"></div>${ICO.search}</div>`;
 const ring=(sz,sw,pct,col,tr)=>{const r=(sz-sw)/2,c=2*Math.PI*r;return `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${tr}" stroke-width="${sw}"/><circle class="rp" data-c="${c}" data-p="${pct}" cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${c} ${c}" stroke-dashoffset="${c*(1-pct)}"/></svg>`};
 const hdr=(l,r)=>`<div class="hd"><span style="width:24px">${l||''}</span><b>%T%</b><span style="width:24px">${r||''}</span></div>`;
@@ -552,11 +554,24 @@ const NSC=[
 /* ================= REAL DATA + ACTIONS (the design screens above are used as drawn) ================= */
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const wrapD=h=>wrap(h,!!D.dark);
+// Shop features this account owns (Weekly Report Plus = 'report', Exam Mode Pro = 'exam'). Also true with no connection, from the saved list.
+const hasPro=k=>!!(DZ.owns&&DZ.owns(k))&&!D.guest;
+const LOCKI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+// Shown instead of a Plus feature when it is not owned. Tapping it opens the Gem Shop.
+const proLock=(k,t,d)=>`<div class="card pl-lock" data-prolock="${k}" role="button" aria-label="${esc(t)} is locked. Open the Gem Shop"><span class="pl-lki">${LOCKI}</span><div><b>${esc(t)}</b><small>${esc(d)}</small></div><span class="pl-go">Gem Shop</span></div>`;
+const dayWord=n=>n===0?'today':n+(n===1?' day':' days');
 const emptyRing=1;
 function toast(t){const d=document.createElement('div');d.className='dz-toast';d.textContent=t;(R||stage).appendChild(d);d.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:220,fill:'both'});setTimeout(()=>{if(d.isConnected)d.animate([{opacity:1},{opacity:0}],{duration:240,fill:'forwards'}).onfinish=()=>d.remove()},2200)}
 
 /* ---- Home ---- */
 const homeTasks=()=>(D.tasks||[]).filter(t=>!t.done).slice(0,3);
+// Exam Mode Pro on Home: every upcoming exam with its countdown and today's study target (up to 3).
+const proHome=()=>{
+  if(!hasPro('exam'))return '';
+  const L=(D.exams||[]).slice(0,3);
+  if(!L.length)return '';
+  return `<div class="pl-hm">${L.map(x=>`<div class="pl-hr"><span>${esc(x.subject)} · ${dayWord(x.days)}</span><b>${Math.min(x.today,x.target)} / ${x.target} min today</b></div>`).join('')}</div>`;
+};
 const homeInnerReal=()=>{
   const g=Math.max(1,D.goalMin||60),tm=Math.max(0,Math.round(D.todayMin||0)),pct=Math.min(1,tm/g);
   const ex=D.exam,hasEx=!!ex;
@@ -566,7 +581,7 @@ const homeInnerReal=()=>{
 <div class="sync"><i${D.online===false||D.pending?' style="background:#d49a3a"':''}></i>${D.syncing?'Syncing your changes...':D.online===false?(D.pending?'Offline · '+D.pending+(D.pending===1?' change':' changes')+' saved on this phone':'Offline · everything is saved on this phone'):D.pending?D.pending+(D.pending===1?' change':' changes')+' waiting to sync':'All changes synced · works offline'}</div>
 <div class="ttl">Hi, ${esc(D.first||'there')}</div><div class="sub2">Make today count.</div>
 <div class="card dkc rw" style="gap:16px;height:130px;border-radius:26px;justify-content:flex-start;margin-top:14px"><div class="ring2">${ring(94,9,pct,'#c9b8c3','#3c4450')}<div class="c">${tm}m</div></div><div><div style="font:700 17px var(--display);color:#ebe8ea">Daily goal</div><div style="font:400 13px var(--body);color:#cfd2d6;margin:4px 0 9px">${tm} of ${g} min studied</div><span class="tag" style="display:inline-flex;align-items:center;gap:6px;border-radius:16px;padding:6px 12px;font-size:13px">${FLM('#1b1e25','#c9b8c3',11,14)} ${D.streak||0} day streak</span></div></div>
-<div class="card" data-exam><div style="font:600 11px var(--body);letter-spacing:.1em;color:var(--mut)">EXAM MODE</div><div class="rw"><b style="font:700 21px var(--display)">${hasEx?esc(ex.subject)+' · '+(ex.days===0?'today':ex.days+(ex.days===1?' day':' days')):'No exam set'}</b><b style="font:700 13px var(--body)">${hasEx?ex.ready+'% ready':''}</b></div><div class="bar2" style="margin-top:10px"><i style="width:${hasEx?ex.ready:0}%"></i></div></div>
+<div class="card" data-exam><div style="font:600 11px var(--body);letter-spacing:.1em;color:var(--mut)">EXAM MODE</div><div class="rw"><b style="font:700 21px var(--display)">${hasEx?esc(ex.subject)+' · '+(ex.days===0?'today':ex.days+(ex.days===1?' day':' days')):'No exam set'}</b><b style="font:700 13px var(--body)">${hasEx?ex.ready+'% ready':''}</b></div><div class="bar2" style="margin-top:10px"><i style="width:${hasEx?ex.ready:0}%"></i></div>${proHome()}</div>
 <div class="rw" style="margin-top:16px"><b style="font:700 20px var(--display)">Today</b><span class="mut" data-seeall style="font:600 13px var(--body)">See all</span></div>
 ${tl}
 </div><div class="fab">${ICO.plus}</div>${nav('home')}`;
@@ -807,6 +822,7 @@ const owns=k=>{
     return Array.isArray(c)&&c.indexOf(k)>=0;
   }catch(_){return false}
 };
+DZ.owns=owns;
 const plusOn=()=>owns('focusplus')&&!D.guest;
 const shortMin=()=>plusOn()?FP.sb:5, longMin=()=>plusOn()?FP.lb:15, roundsN=()=>plusOn()?FP.rounds:4;
 /* ---- Focus Soundscapes: rain, library or cafe sound while a focus round runs ---- */
@@ -955,6 +971,22 @@ ${on.length?`<div style="display:grid;grid-template-columns:repeat(3,1fr);margin
 <div style="font:700 22px var(--display);margin-top:16px">Locked</div>
 <div style="display:grid;grid-template-columns:repeat(3,1fr);margin-top:12px;row-gap:12px">${off.map(one).join('')}</div></div>`);
 };
+/* ---- Weekly Report Plus (shop item 'report'): best study hour, subject breakdown, month by month ---- */
+const hourName=h=>(h%12||12)+(h<12?' AM':' PM');
+const hrsTxt=m=>m>=60?(Math.round(m/6)/10)+'h':m+'m';
+const weekPlusBlock=()=>{
+  const head2=`<div class="rw" style="margin-top:16px"><b style="font:700 20px var(--display)">Weekly Report Plus</b><span class="pl-tag">PLUS</span></div>`;
+  if(!hasPro('report'))return proLock('report','Weekly Report Plus','Your best study hour, subject breakdown and month-by-month trends.');
+  const p=D.weekPlus||{},hrs=Array.isArray(p.hours)&&p.hours.length===24?p.hours:new Array(24).fill(0);
+  const hm=Math.max(1,...hrs),okHour=(p.sessions||0)>=3&&p.bestHour>=0;
+  const hourCard=`<div class="card"><div class="pl-h">Best study hour</div>${okHour?`<div class="pl-big">${hourName(p.bestHour)} – ${hourName((p.bestHour+1)%24)}</div><div class="pl-hours" aria-hidden="true">${hrs.map((m,h)=>`<i${h===p.bestHour?' class="on"':''} style="height:${Math.max(5,Math.round(m/hm*100))}%"></i>`).join('')}</div><div class="pl-ax"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span></div><div class="mut pl-note">Based on your last ${p.sessions} focus sessions.</div>`:`<div class="mut pl-note" style="margin-top:6px">Finish 3 focus sessions and your best study hour shows up here.</div>`}</div>`;
+  const sb=Array.isArray(p.subjects)?p.subjects:[];
+  const subCard=`<div class="card"><div class="pl-h">Subjects this week</div>${sb.length?`<div style="display:grid;gap:10px;margin-top:10px">${sb.map(x=>`<div><div class="rw" style="font:600 13px var(--body);margin-bottom:5px"><span>${esc(x.name)}</span><span class="mut">${fmtM(x.minutes)} · ${x.pct}%</span></div><div class="bar2"><i style="width:${x.pct}%"></i></div></div>`).join('')}</div>`:`<div class="mut pl-note" style="margin-top:6px">No focus sessions this week yet.</div>`}</div>`;
+  const mo=Array.isArray(p.months)?p.months:[],mm=Math.max(1,...mo.map(x=>x.minutes));
+  const best=mo.reduce((b,x)=>x.minutes>(b?b.minutes:0)?x:b,null);
+  const moCard=`<div class="card"><div class="pl-h">Month by month</div>${mo.length>=2?`<div class="pl-months">${mo.map(x=>`<div><span class="pl-mv">${hrsTxt(x.minutes)}</span><i${x.current?' class="on"':''} style="height:${Math.max(4,Math.round(x.minutes/mm*70))}px"></i><span class="pl-ml">${esc(x.label)}</span></div>`).join('')}</div><div class="mut pl-note">${best&&best.minutes>0?'Best month: '+esc(best.label)+' · '+fmtM(best.minutes)+'. ':''}This month is still in progress.</div>`:`<div class="mut pl-note" style="margin-top:6px">Your monthly trend appears once you have studied in two different months.</div>`}</div>`;
+  return head2+hourCard+subCard+moCard;
+};
 const weekHtml=()=>{
   const w=D.week||{minutes:0,bars:[0,0,0,0,0,0,0],labels:['M','T','W','T','F','S','S'],range:'',change:null,sessions:0,best:'',tasks:0};
   const mx=Math.max(1,...w.bars),ch=w.change;
@@ -966,7 +998,19 @@ const weekHtml=()=>{
 <div style="display:flex;gap:8px;margin-top:8px">${w.labels.map(l=>`<span style="flex:1;text-align:center;font:700 12px var(--body);color:#bfc4c9">${l}</span>`).join('')}</div></div>
 <div class="sw2"><div class="card"><b>${w.sessions||0}</b><small>Sessions</small></div><div class="card"><b style="font-size:19px;line-height:1.35">${esc(w.best||'—')}</b><small>Best subject</small></div><div class="card"><b>${streak} ${streak===1?'day':'days'}</b><small>Streak</small></div><div class="card"><b>${w.tasks||0}</b><small>Tasks done</small></div></div>
 ${(()=>{const bs=Math.max(streak,D.bestStreak||0),nx=[3,7,14,30,100].find(n=>n>bs);const k=nx?nx+'-day-streak':'100-day-streak';return `<div class="card rw" style="justify-content:flex-start;gap:14px;border-radius:24px"><div class="badge${nx?' lk':''}" style="flex:none"><div class="bimg" style="width:44px;height:52px">${badgeArt(k)}</div></div><div><div style="font:700 16px var(--body)">${nx?'Next badge: '+nx+' day streak':'All streak badges unlocked'}</div><div class="mut" style="font:400 13px var(--body)">${nx?'Study '+nx+' days in a row to earn it':'Amazing consistency'}</div></div></div>`})()}
+${weekPlusBlock()}
 <div class="btn2" data-share style="margin-top:12px;border-radius:24px">Share my week</div></div>`);
+};
+/* ---- Exam Mode Pro (shop item 'exam'): every exam with a countdown and a daily study target ---- */
+const examPlusBlock=()=>{
+  if(!hasPro('exam'))return proLock('exam','Exam Mode Pro','A countdown on Home and a daily study target for each exam.');
+  const L=D.exams||[];
+  const head2=`<div class="rw" style="margin-top:16px"><b style="font:700 20px var(--display)">Daily targets</b><span class="pl-tag">PRO</span></div>`;
+  if(!L.length)return head2+`<div class="card" style="border-radius:20px;text-align:center;color:var(--mut);font:600 14px var(--body);padding:16px">Add an exam date in Notes and subjects to get a daily target.</div>`;
+  return head2+L.map(x=>{
+    const done=Math.min(x.today,x.target),pct=Math.round(done/x.target*100);
+    return `<div class="card"><div class="rw"><b style="font:700 16px var(--body)">${esc(x.subject)}</b><span class="pl-chip">${dayWord(x.days)}</span></div><div class="mut pl-note">${esc(x.dateLabel)} · ${x.openTasks} open ${x.openTasks===1?'task':'tasks'}${x.openMin?' · '+x.openMin+' min of work':''}</div><div class="rw" style="margin-top:10px"><span style="font:600 13px var(--body)">Study today</span><b style="font:700 15px var(--display)">${x.target} min</b></div><div class="bar2" style="margin-top:6px"><i style="width:${pct}%"></i></div><div class="mut pl-note">${x.today>=x.target?'Target reached for today.':done+' of '+x.target+' min studied today.'}</div></div>`;
+  }).join('')+`<div class="mut" style="font:400 13px var(--body);margin-top:10px">The target spreads the minutes of your open tasks for the subject over the days left, with at least 20 minutes a day.</div>`;
 };
 const examHtml=()=>{
   const ex=D.exam,rd=ex?ex.ready:0;
@@ -974,6 +1018,7 @@ const examHtml=()=>{
   const sp=(D.subjectProgress||[]).slice(0,3);
   return wrapD(`<div class="pg" style="padding-top:38px">${head('Exam mode',ICO.back)}
 <div class="card dkc rw" style="justify-content:flex-start;gap:14px;border-radius:26px;height:114px"><div class="ring2">${ring(74,8,rd/100,'#c9b8c3','#3c4450')}<div class="c" style="font-size:17px">${rd}%</div></div><div><div style="font:700 ${ex?34:26}px/1 var(--display);color:#c9b8c3">${ex?(ex.days===0?'Today':ex.days+(ex.days===1?' day':' days')):'No exam set'}</div><div style="font:700 15px var(--body);color:#ebe8ea;margin-top:6px">${ex?esc(ex.subject)+(ex.dateLabel?' · '+esc(ex.dateLabel):''):'Add a date in Notes and subjects'}</div><div style="font:400 13px var(--body);color:#cfd2d6">${ex?'Readiness '+rd+'%':''}</div></div></div>
+${examPlusBlock()}
 <div class="rw" style="margin-top:16px"><b style="font:700 20px var(--display)">Today's plan</b><span class="mut" style="font:600 13px var(--body)">${plan.length} ${plan.length===1?'task':'tasks'}</span></div>
 ${plan.length?plan.map(t=>`<div class="trow" style="height:46px;margin-top:10px"><div class="cb"></div><div class="tt">${esc(t.title)}</div></div>`).join(''):`<div class="card" style="margin-top:10px;border-radius:20px;text-align:center;color:var(--mut);font:600 14px var(--body);padding:16px">Nothing planned for today.</div>`}
 <b style="display:block;font:700 20px var(--display);margin-top:18px">Subjects</b>
@@ -1000,6 +1045,7 @@ SCREENS.push({t:'Study',d:'Study hub',spec:{m:'',h:'',s:NS},html:studyHtml,play:
 }}});
 const wire=(name,html,extra)=>{const k=IDX(name);if(k>=0)SCREENS.splice(k,1);SCREENS.push({t:name,d:name,spec:{m:'',h:'',s:NS},html,play:()=>{enter();R.onclick=e=>{
   if(backTo(e))return;
+  if(e.target.closest('[data-prolock]')){hap('light');if(D.guest){toast('Create your profile to use the shop.');return}DZ.openShop(SCREENS[CUR].t);return}
   if(e.target.closest('[data-share]')||(name==='Weekly report'&&e.target.closest('.hd span:last-child'))){hap('light');if(CB.share){const w=D.week||{};CB.share('I studied '+fmtM(w.minutes)+' this week on StudyOS with a '+(D.streak||0)+' day streak!')}return}
   if(e.target.closest('[data-fstart]')){hap('press');go('Focus');return}
 }}})};
@@ -1124,7 +1170,7 @@ const SHI={
  heart:'<svg viewBox="0 0 64 64"><path d="M32 58C9 41 5 29 5 21 5 12 12 7 19 7c6 0 10 3 13 8 3-5 7-8 13-8 7 0 14 5 14 14 0 8-4 20-27 37z" fill="#ff5a7a"/></svg>'
 };
 const PR=()=>Object.assign({freeze:100,repair:150,double:120,sound:180,focusplus:220,report:200,exam:300,widgets:160,frames:140,badges:120,theme_ocean:250,theme_forest:250,theme_sunset:250,theme_mono:250,gift:25},(D.shop&&D.shop.prices)||{});
-let SHEET=null,SMSG=null,SHY=0,GHY=0,SBUSY=false,STXT='',STUNTIL=0,SARM='',SARMT=0,SBT=0,SBST=0;
+let SLT=0,SHEET=null,SMSG=null,SHY=0,GHY=0,SBUSY=false,STXT='',STUNTIL=0,SARM='',SARMT=0,SBT=0,SBST=0;
 let DBG=[];
 const tn=el=>{try{return (el.tagName||'?')+'.'+String((el.className&&el.className.baseVal!==undefined?el.className.baseVal:el.className)||'').split(' ')[0]}catch(_){return '?'}};
 const dbg=m=>{DBG.push(new Date().toTimeString().slice(3,8)+' '+m);if(DBG.length>6)DBG.shift();try{const el=R&&R.querySelector('.sh-dbg');if(el)el.textContent=DBG.join('\n')}catch(_){}};
@@ -1212,20 +1258,34 @@ function sheetPick(){
 const ITEMS_ONCE=['sound','focusplus','report','exam','widgets','frames','badges','theme_ocean','theme_forest','theme_sunset','theme_mono'];
 function sheetHtml(){
   if(!SHEET)return '';
+  const fx=SHEET.fx||'';SHEET.fx='';   // entrance effects play once, never again on a redraw
   const k=SHEET.k,def=shopDef(k),ic=SI[k]||SHI.gem;
   if(SHEET.done){
-    return `<div class="sh2-sheet" data-sheetbg role="dialog" aria-label="Purchase complete"><div class="sh2-sp done"><div class="sh2-big" style="--c:${def.c}">${ic}</div><b class="sh2-bt">${esc(def.t)}</b><span class="sh2-bx">x${SHEET.done}</span><button type="button" class="sh2-go" data-sheetclose>BACK TO SHOP</button></div></div>`;
+    return `<div class="sh2-sheet" data-sheetbg role="dialog" aria-label="Purchase complete"><div class="sh2-sp done${fx==='done'?' pop':''}"><div class="sh2-big" style="--c:${def.c}">${ic}</div><b class="sh2-bt">${esc(def.t)}</b><span class="sh2-bx">x${SHEET.done}</span><button type="button" class="sh2-go" data-sheetclose>BACK TO SHOP</button></div></div>`;
   }
   const pk=packsOf(k),sel=sheetPick(),need=sel.price-(D.gems||0);
   const cards=pk.map(p=>{
     const on=p.n===sel.n,off=packOff(k,p.n);
-    return `<button type="button" class="sh2-pk${on?' on':''}${off?' off':''}" data-pack="${p.n}"${off?' disabled':''} aria-pressed="${on}" aria-label="${packName(p.n)}, ${p.price} gems">${p.n===3?'<small class="sh2-pop">POPULAR</small>':''}${on?'<i class="sh2-ck">'+LI('<path d="M5 12.5l4.500 4.500L19 7.500"/>')+'</i>':''}<span class="sh2-pi" style="--c:${def.c}">${ic}</span><b>${packName(p.n)}</b><span class="sh2-pp">${gmI}${ntxt(p.price)}</span></button>`;
+    return `<button type="button" class="sh2-pk${on?' on':''}${off?' off':''}" data-pack="${p.n}"${off?' disabled':''} aria-pressed="${on}" aria-label="${packName(p.n)}, ${p.price} gems">${p.n===3?'<small class="sh2-pop">POPULAR</small>':''}<i class="sh2-ck">${LI('<path d="M5 12.5l4.500 4.500L19 7.500"/>')}</i><span class="sh2-pi" style="--c:${def.c}">${ic}</span><b>${packName(p.n)}</b><span class="sh2-pp">${gmI}${ntxt(p.price)}</span></button>`;
   }).join('');
   const again=ITEMS_ONCE.indexOf(k)>=0&&hasItem(k)?'<p class="sh2-sn">You already have this. Buying it again does not add anything more.</p>':'';
-  const btn=need>0?`<button type="button" class="sh2-go off" data-sheetwhy>NEED ${ntxt(need)} MORE GEMS</button>`:`<button type="button" class="sh2-go" data-sheetbuy>GET ${esc(def.t.toUpperCase())}</button>`;
-  return `<div class="sh2-sheet" data-sheetbg role="dialog" aria-label="How many would you like?"><div class="sh2-sp"><div class="sh2-grab"></div><h2 class="sh2-q">How many would you like?</h2><div class="sh2-pks" style="--n:${pk.length}">${cards}</div>${again}${btn}<button type="button" class="sh2-no" data-sheetclose>NO THANKS</button></div></div>`;
+  const btn=SHEET.buying?`<button type="button" class="sh2-go busy" data-sheetbuy>...</button>`:need>0?`<button type="button" class="sh2-go off" data-sheetwhy>NEED ${ntxt(need)} MORE GEMS</button>`:`<button type="button" class="sh2-go" data-sheetbuy>GET ${esc(def.t.toUpperCase())}</button>`;
+  return `<div class="sh2-sheet${fx==='in'?' in':''}" data-sheetbg role="dialog" aria-label="How many would you like?"><div class="sh2-sp"><div class="sh2-grab"></div><h2 class="sh2-q">How many would you like?</h2><div class="sh2-pks" style="--n:${pk.length}">${cards}</div>${again}${btn}<button type="button" class="sh2-no" data-sheetclose>NO THANKS</button></div></div>`;
 }
-DZ.closeSheet=()=>{if(!SHEET)return false;SHEET=null;go('Gem Shop',true);return true};
+const sheetEl=()=>R&&R.querySelector?R.querySelector('.sh2-sheet:not(.out)'):null;
+function sheetOpen(){const pg=R&&R.querySelector?R.querySelector('.sh2'):null;if(!pg||!pg.parentElement)return false;pg.parentElement.insertAdjacentHTML('beforeend',sheetHtml());return true}
+function sheetRepaint(){const old=sheetEl();if(!old)return;const t=document.createElement('div');t.innerHTML=sheetHtml();if(t.firstElementChild)old.replaceWith(t.firstElementChild)}
+function sheetClose(){const el=sheetEl(),had=!!SHEET;SHEET=null;if(el){el.classList.add('out');setTimeout(()=>{if(el.parentNode)el.remove()},260)}return had||!!el}
+// Picking a pack only switches highlights and the button text in place (so it can animate).
+function sheetPickUpdate(){
+  const el=sheetEl();if(!el||!SHEET||SHEET.done)return;
+  const sel=sheetPick(),need=sel.price-(D.gems||0),b=el.querySelector('.sh2-go');
+  el.querySelectorAll('[data-pack]').forEach(c=>{const on=+c.dataset.pack===sel.n;c.classList.toggle('on',on);c.setAttribute('aria-pressed',on)});
+  if(!b)return;
+  if(need>0){b.className='sh2-go off';b.removeAttribute('data-sheetbuy');b.setAttribute('data-sheetwhy','');b.textContent='NEED '+ntxt(need)+' MORE GEMS'}
+  else{b.className='sh2-go';b.removeAttribute('data-sheetwhy');b.setAttribute('data-sheetbuy','');b.textContent='GET '+shopDef(SHEET.k).t.toUpperCase()}
+}
+DZ.closeSheet=()=>sheetClose();
 const shopHtml=()=>{
   const pr=PR(),sh=D.shop||{},fr=sh.freezes||0,until=sh.doubleUntil||0,on=until>Date.now();
   const row=def=>{
@@ -1285,18 +1345,21 @@ const shopPlay=()=>{
       // While the sheet is open, taps only go to the sheet.
       const t=e.target;
       if(SBUSY&&Date.now()-SBST<20000)return;
-      if(t.closest('[data-sheetclose]')||(t.classList&&t.classList.contains('sh2-sheet'))){hap('light');SHEET=null;go('Gem Shop',true);return}
+      if(Date.now()-(SHEET.at||0)<450)return;
+      if(t.closest('[data-sheetclose]')||(t.classList&&t.classList.contains('sh2-sheet'))){hap('light');sheetClose();return}
       const pk=t.closest('[data-pack]');
-      if(pk){if(!pk.disabled){hap('tick');SHEET.n=+pk.dataset.pack;go('Gem Shop',true)}return}
+      if(pk){if(!pk.disabled){hap('tick');SHEET.n=+pk.dataset.pack;sheetPickUpdate()}return}
       if(t.closest('[data-sheetwhy]')){hap('light');say('You need more gems for this. Study to earn them.');return}
       if(t.closest('[data-sheetbuy]')){
+        // Never buy from a tap in the first moments (quick repeated taps on a price can land here).
+        if(Date.now()-(SHEET.at||0)<800)return;
         const k=SHEET.k,n=sheetPick().n;
         SBUSY=true;SBST=Date.now();clearTimeout(SBT);SBT=setTimeout(()=>{SBUSY=false},20000);
-        const bt=t.closest('[data-sheetbuy]');bt.classList.add('busy');bt.textContent='...';
+        const bt=t.closest('[data-sheetbuy]');SHEET.buying=true;bt.classList.add('busy');bt.textContent='...';
         let r=null;try{r=CB.shopBuy?await CB.shopBuy(k,{date:SHEET.date||'',qty:n}):null}catch(_){r=null}
-        clearTimeout(SBT);SBUSY=false;
-        if(r&&r.ok){hap('success');if(SHEET&&SHEET.k===k)SHEET.done=n;if(SCREENS[CUR]&&SCREENS[CUR].t==='Gem Shop')go('Gem Shop',true)}
-        else{hap('light');say((r&&r.message)||'Could not reach the server. Try again.')}
+        clearTimeout(SBT);SBUSY=false;if(SHEET)SHEET.buying=false;
+        if(r&&r.ok){hap('success');if(SHEET&&SHEET.k===k){SHEET.done=n;SHEET.at=Date.now();SHEET.fx='done';sheetRepaint()}}
+        else{hap('light');sheetPickUpdate();say((r&&r.message)||'Could not reach the server. Try again.')}
       }
       return;
     }
@@ -1311,15 +1374,15 @@ const shopPlay=()=>{
     if(b.dataset.why){hap('light');say(b.dataset.why);return}
     if(!b.dataset.buy)return;
     // Open the pack sheet (the first pack you can pick is selected).
-    hap('light');SHEET={k:b.dataset.buy,n:1,date:b.dataset.date||''};
-    go('Gem Shop',true);
+    hap('light');SHEET={k:b.dataset.buy,n:1,date:b.dataset.date||'',at:Date.now(),fx:'in'};
+    if(!sheetOpen())go('Gem Shop',true);
    }catch(err){SBUSY=false;clearTimeout(SBT);toast('Shop error: '+((err&&err.message)||err))}
   };
   // Listen to the finger lifting as well as to click, so a tap still counts if the WebView drops the click.
-  let PD=null,LT=0;
+  let PD=null;
   R.onpointerdown=e=>{PD={x:e.clientX,y:e.clientY}};
-  R.onpointerup=e=>{if(!PD)return;const m=Math.hypot(e.clientX-PD.x,e.clientY-PD.y);PD=null;if(m>10)return;LT=Date.now();handle(e)};
-  R.onclick=e=>{if(Date.now()-LT<600)return;LT=Date.now();handle(e)};
+  R.onpointerup=e=>{if(!PD)return;const m=Math.hypot(e.clientX-PD.x,e.clientY-PD.y);PD=null;if(m>10)return;SLT=Date.now();handle(e)};
+  R.onclick=e=>{if(Date.now()-SLT<700)return;SLT=Date.now();handle(e)};
 };
 const giftHtml=()=>{
   const pr=PR(),fr=(D.friends||[]),why=blocked(pr.gift);
@@ -1609,11 +1672,52 @@ ${row(I.eye,'Contacts','If you choose Find friends from contacts, email addresse
       SCREENS[k].play=()=>{if(D.loading){S.mute=false;return}op()}})}
 }
 /* ---- tab bar ---- */
+/* ---- More menu: a small sheet above the tab bar with Shop and Profile ---- */
+let MOREON=false,MOREPREV=null,MOREADDED=false;
+const MORE_ICONS={
+  shop:'<svg viewBox="0 0 24 24"><path d="M12 2L19.500 5.500L22 12L19.500 18.500L12 22L4.500 18.500L2 12L4.500 5.500Z" fill="#e0446c"/><path d="M12 2L19.500 5.500L22 12L12 12Z" fill="#f2708f"/><path d="M12 12L22 12L19.500 18.500L12 22Z" fill="#b92f55"/><path d="M12 12L12 22L4.500 18.500L2 12Z" fill="#9e2447"/><path d="M12 7L16.500 12L12 17L7.500 12Z" fill="#ffd9e3" opacity=".9"/></svg>',
+  profile:'<svg viewBox="0 0 24 24"><circle cx="12" cy="7.500" r="4.500" fill="#a98fa0"/><path d="M3.500 21c0-4.500 3.800-7 8.500-7s8.500 2.500 8.500 7z" fill="#a98fa0"/></svg>'
+};
+function openMore(still){
+  const nv=R&&R.querySelector?R.querySelector('.nv[data-k="more"]'):null;
+  if(!nv||R.querySelector('.more-menu'))return false;
+  R.insertAdjacentHTML('beforeend',`<div class="more-sc${still?' still':''}" data-moresc></div><div class="more-menu${still?' still':''}" role="menu" aria-label="More"><button type="button" class="more-row" role="menuitem" data-more="shop"><span class="mi">${MORE_ICONS.shop}</span>Shop</button><button type="button" class="more-row" role="menuitem" data-more="profile"><span class="mi">${MORE_ICONS.profile}</span>Profile</button></div>`);
+  if(!MOREON){const cur=R.querySelector('.nv.on');MOREADDED=!nv.classList.contains('on');MOREPREV=cur&&cur!==nv?cur:null}
+  MOREON=true;
+  if(MOREPREV)MOREPREV.classList.remove('on');
+  nv.classList.add('on');
+  return true;
+}
+// instant=true when the screen is about to change anyway.
+function closeMore(instant){
+  const was=MOREON;MOREON=false;
+  if(!R||!R.querySelectorAll){MOREPREV=null;return was}
+  const els=R.querySelectorAll('.more-sc:not(.out),.more-menu:not(.out)');
+  els.forEach(el=>{if(instant)el.remove();else{el.classList.add('out');setTimeout(()=>{if(el.parentNode)el.remove()},240)}});
+  const nv=R.querySelector('.nv[data-k="more"]');
+  if(nv&&MOREADDED)nv.classList.remove('on');
+  if(MOREPREV&&MOREPREV.isConnected)MOREPREV.classList.add('on');
+  MOREPREV=null;MOREADDED=false;
+  return was||els.length>0;
+}
+DZ.closeMore=()=>closeMore();
 host.addEventListener('click',e=>{
+  const mi=e.target.closest('[data-more]');
+  if(mi){
+    e.stopPropagation();hap('tick');
+    const which=mi.dataset.more,from=SCREENS[CUR]&&SCREENS[CUR].t;
+    closeMore(true);
+    if(which==='shop'){if(DZ.openShop)DZ.openShop(from||'Home')}
+    else{if(opts.onTab)opts.onTab('profile');if(from!=='Profile')go('Profile')}
+    return;
+  }
+  if(e.target.closest('[data-moresc]')){e.stopPropagation();hap('light');closeMore();return}
   const n=e.target.closest('.nv[data-k]');if(!n)return;
   const k=n.dataset.k;hap('tick');
+  if(k==='more'){e.stopPropagation();if(MOREON)closeMore();else openMore();return}
+  if(MOREON)closeMore();
   if(opts.onTab)opts.onTab(k);
-  const m={home:'Home',tasks:'Tasks',profile:'Profile',focus:'Focus',study:'Study'}[k];
+  const m={home:'Home',tasks:'Tasks',focus:'Focus',study:'Study'}[k];
   if(m&&SCREENS[CUR].t!==m)go(m);
 },true);
 function navOnly(active){
@@ -1626,9 +1730,11 @@ function go(i,soft){
   if(typeof i==='string')i=IDX(i);
   if(i<0)return;
   RUN++;timers.forEach(clearTimeout);timers.length=0;
+  const keepMore=!!soft&&MOREON;MOREON=false;MOREPREV=null;MOREADDED=false;
   CUR=i;const H0=SCREENS[i].html();stage.innerHTML=H0;LASTH=H0;LASTI=i;R=stage.firstElementChild;
   S.mute=false;SOFT=!!soft;
   SCREENS[i].play();SOFT=false;
+  if(keepMore)openMore(true);
   restoreToggles();
   if(opts.onScreen)opts.onScreen(SCREENS[i].t);
 }
@@ -1654,6 +1760,7 @@ function restoreToggles(){try{$$('.ptg,.rtg',R).forEach((el,i)=>{const k=togKey(
 host.addEventListener('click',()=>{setTimeout(()=>{try{if(!R)return;$$('.ptg,.rtg',R).forEach((el,i)=>{const k=togKey(el,i),sk=sKey(k),on=!el.classList.contains('off');localStorage.setItem(k,on?'1':'0');if(TSEEN[sk]!==on){TSEEN[sk]=on;if(CB.savePref)CB.savePref(sk,on)}})}catch(_){}},60)},true);
 function back(){
   const t=SCREENS[CUR]&&SCREENS[CUR].t;if(!t)return false;
+  if(closeMore())return true;
   if(t==='Home')return false;
   if(host.classList.contains('dz-kb')&&document.activeElement&&document.activeElement.blur){document.activeElement.blur();return true}
   const Q=['Add note','Planner','Add subject','Quiz','Progress','Achievement','Reminder','Upload file'];

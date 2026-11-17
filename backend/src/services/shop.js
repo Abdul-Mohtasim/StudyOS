@@ -22,8 +22,8 @@ const ITEMS = {
   // Focus and study
   sound: { kind: "unlock", price: 180, live: true }, // Focus Soundscapes
   focusplus: { kind: "unlock", price: 220, live: true }, // Focus Plus
-  report: { kind: "unlock", price: 200, live: false }, // Weekly Report Plus
-  exam: { kind: "unlock", price: 300, live: false }, // Exam Mode Pro
+  report: { kind: "unlock", price: 200, live: true }, // Weekly Report Plus
+  exam: { kind: "unlock", price: 300, live: true }, // Exam Mode Pro
   widgets: { kind: "unlock", price: 160, live: false }, // Widget Pack
   // Profile and friends
   frames: { kind: "unlock", price: 140, live: false }, // Avatar Frames

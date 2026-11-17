@@ -4423,6 +4423,31 @@ async function undoDeleteTask() {
       goalMin: dailyGoalMinutes,
       todayMin: todayFocusMinutes,
       exam: ex ? { subject: ex.subject, days: ex.countdown.days, ready, dateLabel: new Date(`${ex.date}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }) } : null,
+      // Exam Mode Pro: every upcoming exam with its daily study target.
+      // Target = the minutes of the subject's open tasks spread over the days left (today counts), rounded up to 5 min, between 20 and 180 min a day.
+      exams: upcomingExams.map((x) => {
+        const key = x.subject.trim().toLowerCase();
+        const same = tasks.filter((t) => (t.subject || "").trim().toLowerCase() === key);
+        const open = same.filter((t) => !t.completed);
+        const openMin = open.reduce((n, t) => n + (parseInt(t.time, 10) || 25), 0);
+        const daysLeft = x.countdown.days + 1;
+        const target = Math.min(180, Math.max(20, Math.ceil(openMin / daysLeft / 5) * 5));
+        const today = focusSessions.reduce((n, s) => {
+          const at = new Date(s.completedAt);
+          if (Number.isNaN(at.getTime()) || getLocalDateKey(at) !== todayKey) return n;
+          return (s.subject || "").trim().toLowerCase() === key ? n + (Number(s.durationMinutes) || 0) : n;
+        }, 0);
+        return {
+          subject: x.subject,
+          days: x.countdown.days,
+          dateLabel: new Date(`${x.date}T00:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          ready: same.length ? Math.round((same.filter((t) => t.completed).length / same.length) * 100) : 0,
+          openTasks: open.length,
+          openMin,
+          target,
+          today: Math.round(today),
+        };
+      }),
       subjects: subjects.map((x) => x.name),
       subjectCount: subjects.length,
       sessionsCount: focusSessions.length,
@@ -4489,6 +4514,74 @@ async function undoDeleteTask() {
           best: best ? best[0] : "",
           tasks: tasksDone,
           change: prev > 0 ? Math.round(((minutes - prev) / prev) * 100) : null,
+        };
+      })(),
+      // Weekly Report Plus: best study hour, this week's subject breakdown and the last six months.
+      weekPlus: (() => {
+        const now = new Date();
+        const dayStart = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+        const today0 = dayStart(now);
+        const hours = new Array(24).fill(0);
+        const bySubject = {};
+        const byMonth = {};
+        let counted = 0;
+        let oldest = Infinity;
+        focusSessions.forEach((x) => {
+          const end = new Date(x.completedAt).getTime();
+          const dur = Number(x.durationMinutes);
+          if (!Number.isFinite(end) || !(dur > 0)) return;
+          counted += 1;
+          if (end < oldest) oldest = end;
+          // Spread the session's minutes over the clock hours it covered.
+          let at = end - dur * 60000;
+          while (at < end) {
+            const next = new Date(at);
+            next.setMinutes(60, 0, 0);
+            const stop = Math.min(end, next.getTime());
+            if (stop <= at) break;
+            hours[new Date(at).getHours()] += (stop - at) / 60000;
+            at = stop;
+          }
+          const d = new Date(end);
+          const mKey = d.getFullYear() * 12 + d.getMonth();
+          byMonth[mKey] = (byMonth[mKey] || 0) + dur;
+          // Same seven days as the Weekly report above.
+          const idx = 6 - Math.floor((today0 - dayStart(d)) / 864e5);
+          if (idx >= 0 && idx <= 6) {
+            const name = (x.subject || "").trim() || "No subject";
+            bySubject[name] = (bySubject[name] || 0) + dur;
+          }
+        });
+        let bestHour = -1;
+        hours.forEach((m, h) => { if (m > 0 && (bestHour < 0 || m > hours[bestHour])) bestHour = h; });
+        const rows = Object.entries(bySubject).sort((a, b) => b[1] - a[1]);
+        const weekTotal = rows.reduce((n, r) => n + r[1], 0);
+        let subjects = rows.slice(0, 5).map(([name, minutes]) => ({ name, minutes, pct: Math.round((minutes / weekTotal) * 100) }));
+        if (rows.length > 5) {
+          const rest = rows.slice(5).reduce((n, r) => n + r[1], 0);
+          subjects = [...subjects.slice(0, 4), { name: "Other", minutes: subjects[4].minutes + rest, pct: 0 }];
+          subjects[4].pct = Math.round((subjects[4].minutes / weekTotal) * 100);
+        }
+        // Only history that was fully loaded is shown: when older sessions are still on the server,
+        // the month of the oldest loaded session (and anything before it) may be incomplete.
+        const nowKey = now.getFullYear() * 12 + now.getMonth();
+        const oldestKey = oldest === Infinity ? nowKey : new Date(oldest).getFullYear() * 12 + new Date(oldest).getMonth();
+        const firstKey = focusSessionsHasMore ? oldestKey + 1 : oldestKey;
+        const months = [];
+        for (let k = Math.max(nowKey - 5, firstKey); k <= nowKey; k += 1) {
+          months.push({
+            label: new Date(Math.floor(k / 12), k % 12, 1).toLocaleDateString("en-US", { month: "short" }),
+            minutes: Math.round(byMonth[k] || 0),
+            current: k === nowKey,
+          });
+        }
+        return {
+          sessions: counted,
+          bestHour,
+          hours: hours.map((m) => Math.round(m)),
+          subjects,
+          weekTotal,
+          months,
         };
       })(),
     };

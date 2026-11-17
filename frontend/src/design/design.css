@@ -807,13 +807,13 @@
 .dz .fx-vol input{flex:1;min-width:0;height:28px;accent-color:#c9b8c3;background:transparent}
 
 /* ---- Gem Shop: the buy sheet (a half page that rises from the bottom) ---- */
-.dz .sh2-sheet{position:absolute;inset:0;z-index:60;display:flex;align-items:flex-end;background:rgba(5,8,10,.55);animation:dz-sh2fade .2s ease-out}
-.dz .sh2-sp{width:100%;background:var(--card);color:var(--ink);border-radius:28px 28px 0 0;padding:10px 16px 22px;box-shadow:0 -10px 40px rgba(0,0,0,.25);animation:dz-sh2up .28s cubic-bezier(.2,.9,.3,1)}
+.dz .sh2-sheet{position:absolute;inset:0;z-index:60;display:flex;align-items:flex-end;background:rgba(5,8,10,.55)}
+.dz .sh2-sp{width:100%;background:var(--card);color:var(--ink);border-radius:28px 28px 0 0;padding:10px 16px 22px;box-shadow:0 -10px 40px rgba(0,0,0,.25);will-change:transform}
 .dz .sh2-grab{width:40px;height:4px;border-radius:2px;background:var(--mut);opacity:.5;margin:0 auto 14px}
 .dz .sh2-q{margin:0 0 16px;text-align:center;font:700 19px var(--display)}
 .dz .sh2-pks{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:10px;margin:0 auto 16px;max-width:360px}
-.dz .sh2-pk{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px 6px 12px;border-radius:18px;border:2px solid var(--chip);background:transparent;color:var(--ink);cursor:pointer;font:inherit;-webkit-tap-highlight-color:transparent}
-.dz .sh2-pk.on{border-color:#8b7bf0;background:rgba(139,123,240,.12)}
+.dz .sh2-pk{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:22px 6px 12px;border-radius:18px;border:2px solid var(--chip);background:transparent;color:var(--ink);cursor:pointer;font:inherit;-webkit-tap-highlight-color:transparent;transition:border-color .2s ease,background-color .2s ease,transform .2s ease,opacity .2s ease}
+.dz .sh2-pk.on{border-color:#8b7bf0;background:rgba(139,123,240,.12);transform:translateY(-2px)}
 .dz .sh2-pk.off{opacity:.35;cursor:default}
 .dz .sh2-pk b{font:700 14px var(--body)}
 .dz .sh2-pp{display:flex;align-items:center;gap:4px;font:700 14px var(--display)}
@@ -821,10 +821,11 @@
 .dz .sh2-pi::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--c);opacity:.18}
 .dz .sh2-pi svg{position:relative;width:24px;height:24px}
 .dz .sh2-pop{position:absolute;top:-2px;left:-2px;right:-2px;height:18px;border-radius:16px 16px 0 0;background:#8b7bf0;color:#fff;font:700 9.5px/18px var(--body);letter-spacing:.08em}
-.dz .sh2-ck{position:absolute;top:-9px;right:-7px;width:22px;height:22px;border-radius:11px;background:#8b7bf0;color:#fff;display:grid;place-items:center;z-index:1}
+.dz .sh2-ck{position:absolute;top:-9px;right:-7px;width:22px;height:22px;border-radius:11px;background:#8b7bf0;color:#fff;display:grid;place-items:center;z-index:1;opacity:0;transform:scale(.4);transition:opacity .18s ease,transform .22s cubic-bezier(.2,1.4,.4,1)}
+.dz .sh2-pk.on .sh2-ck{opacity:1;transform:none}
 .dz .sh2-ck svg{width:14px;height:14px}
 .dz .sh2-sn{margin:-4px 4px 12px;text-align:center;font:500 12.5px/1.4 var(--body);color:var(--mut)}
-.dz .sh2-go{display:block;width:100%;height:50px;border:0;border-radius:25px;background:#1b1e25;color:#fff;font:700 15px var(--display);letter-spacing:.04em;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.dz .sh2-go{display:block;width:100%;height:50px;border:0;border-radius:25px;background:#1b1e25;color:#fff;font:700 15px var(--display);letter-spacing:.04em;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color .2s ease,color .2s ease,opacity .2s ease}
 .dz .nd .sh2-go{background:#ebe8ea;color:#0d1114}
 .dz .sh2-go.off,.dz .nd .sh2-go.off{background:var(--chip);color:var(--mut)}
 .dz .sh2-go.busy{opacity:.6;pointer-events:none}
@@ -837,3 +838,60 @@
 .dz .sh2-bx{font:600 16px var(--body);color:var(--mut);margin-bottom:22px}
 @keyframes dz-sh2up{from{transform:translateY(100%)}to{transform:none}}
 @keyframes dz-sh2fade{from{opacity:0}to{opacity:1}}
+
+/* sheet motion: slide up and fade in once, slide down and fade out on close, soft pop on success */
+.dz .sh2-sheet.in{animation:dz-sh2fade .24s ease-out both}
+.dz .sh2-sheet.in .sh2-sp{animation:dz-sh2up .34s cubic-bezier(.22,1,.36,1) both}
+.dz .sh2-sheet.out{pointer-events:none;animation:dz-sh2fadeout .24s ease-in forwards}
+.dz .sh2-sheet.out .sh2-sp{animation:dz-sh2down .26s cubic-bezier(.4,0,1,1) forwards}
+.dz .sh2-sp.done.pop .sh2-big{animation:dz-sh2pop .5s cubic-bezier(.2,1.3,.4,1) both}
+.dz .sh2-sp.done.pop .sh2-bt,.dz .sh2-sp.done.pop .sh2-bx,.dz .sh2-sp.done.pop .sh2-go{animation:dz-sh2rise .4s ease-out .12s both}
+@keyframes dz-sh2fadeout{to{opacity:0}}
+@keyframes dz-sh2down{to{transform:translateY(100%)}}
+@keyframes dz-sh2pop{from{transform:scale(.55);opacity:0}to{transform:none;opacity:1}}
+@keyframes dz-sh2rise{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.dz .sh2-sheet.in,.dz .sh2-sheet.in .sh2-sp,.dz .sh2-sheet.out,.dz .sh2-sheet.out .sh2-sp{animation-duration:.01s}}
+
+/* ---- More menu above the tab bar ---- */
+.dz .n .nv{transition:background-color .22s ease,color .22s ease}
+.dz .more-sc{position:absolute;left:0;right:0;top:0;bottom:84px;z-index:40;background:rgba(5,8,10,.5);animation:dz-sh2fade .22s ease-out both}
+.dz .more-menu{position:absolute;left:11px;right:11px;bottom:86px;z-index:41;border-radius:22px;background:var(--card);color:var(--ink);overflow:hidden;box-shadow:0 -8px 30px rgba(0,0,0,.35);transform-origin:50% 100%;animation:dz-moreup .28s cubic-bezier(.22,1,.36,1) both}
+.dz .more-row{display:flex;align-items:center;gap:16px;width:100%;height:62px;padding:0 22px;border:0;background:transparent;color:inherit;font:700 17px var(--display);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color .15s ease}
+.dz .more-row+.more-row{border-top:1px solid var(--chip)}
+.dz .more-row:active{background:var(--chip)}
+.dz .more-row .mi{width:34px;height:34px;display:grid;place-items:center;flex:none}
+.dz .more-row .mi svg{width:30px;height:30px;display:block}
+.dz .more-sc.out{pointer-events:none;animation:dz-sh2fadeout .22s ease-in forwards}
+.dz .more-menu.out{pointer-events:none;animation:dz-moredown .22s cubic-bezier(.4,0,1,1) forwards}
+.dz .more-sc.still,.dz .more-menu.still{animation:none}
+@keyframes dz-moreup{from{transform:translateY(26px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+@keyframes dz-moredown{to{transform:translateY(26px) scale(.97);opacity:0}}
+@media (prefers-reduced-motion:reduce){.dz .more-sc,.dz .more-menu{animation-duration:.01s}}
+
+/* ---- Weekly Report Plus and Exam Mode Pro ---- */
+.dz .pl-tag{flex:none;font:700 11px var(--body);letter-spacing:.08em;background:var(--mv);color:#1b1e25;border-radius:8px;padding:3px 8px}
+.dz .pl-h{font:700 12px var(--body);letter-spacing:.08em;color:var(--mut);text-transform:uppercase}
+.dz .pl-big{font:700 26px/1.15 var(--display);color:var(--ink);margin-top:6px}
+.dz .pl-note{font:400 12.5px/1.4 var(--body);margin-top:8px}
+.dz .pl-hours{display:flex;align-items:flex-end;gap:3px;height:56px;margin-top:12px}
+.dz .pl-hours i{flex:1;border-radius:3px;background:var(--mv)}
+.dz .pl-hours i.on{background:var(--ink)}
+.dz .pl-ax{display:flex;justify-content:space-between;margin-top:6px;font:600 11px var(--body);color:var(--mut)}
+.dz .pl-months{display:flex;align-items:flex-end;gap:8px;margin-top:12px;height:112px}
+.dz .pl-months>div{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.dz .pl-months i{display:block;width:100%;border-radius:8px;background:var(--mv)}
+.dz .pl-months i.on{background:var(--ink)}
+.dz .pl-mv{font:700 11px var(--body);color:var(--ink);white-space:nowrap}
+.dz .pl-ml{font:600 11px var(--body);color:var(--mut)}
+.dz .pl-chip{flex:none;font:700 12.5px var(--body);background:var(--chip);color:var(--ink);border-radius:12px;padding:5px 10px}
+.dz .n .pl-lock{display:flex;align-items:center;gap:12px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.dz .pl-lock>div{flex:1;min-width:0}
+.dz .pl-lock b{display:block;font:700 15px var(--body);color:var(--ink)}
+.dz .pl-lock small{display:block;font:400 12.5px/1.35 var(--body);color:var(--mut);margin-top:2px}
+.dz .pl-lki{flex:none;width:38px;height:38px;border-radius:19px;background:var(--mv);color:#1b1e25;display:grid;place-items:center}
+.dz .pl-lki svg{width:19px;height:19px}
+.dz .pl-go{flex:none;font:700 12.5px var(--body);background:var(--chip);color:var(--ink);border-radius:14px;padding:7px 11px}
+.dz .pl-hm{margin-top:12px;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.dz .pl-hr{display:flex;align-items:center;justify-content:space-between;gap:10px;font:600 13px var(--body);color:var(--ink)}
+.dz .pl-hr span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz .pl-hr b{flex:none;font:700 12.5px var(--body);color:var(--mut)}
