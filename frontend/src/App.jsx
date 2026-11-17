@@ -934,6 +934,7 @@ function BannerScene({ done, total, streak, minutes, goalPercent }) {
 
 
 const IS_NATIVE = Capacitor.isNativePlatform();
+const PAID_PALETTES = ["theme_ocean", "theme_forest", "theme_sunset", "theme_mono"];
 const GUEST_STUDENT = { id: "guest", guest: true, name: "Guest", displayName: "Guest", email: "" };
 
 
@@ -1461,6 +1462,16 @@ useEffect(() => {
 
     return () => controller.abort();
   }, [authToken, reloadVersion]);
+
+  // Paid colour themes (Ocean, Forest, Sunset, Mono) sit on top of Light mode. Only a key from this list is ever applied.
+  const activePalette = (() => {
+    const key = accountPrefs && typeof accountPrefs.palette === "string" ? accountPrefs.palette : "";
+    return PAID_PALETTES.includes(key) && settingsTheme === "light" ? key : "";
+  })();
+  useEffect(() => {
+    if (activePalette) document.documentElement.dataset.palette = activePalette.replace("theme_", "");
+    else delete document.documentElement.dataset.palette;
+  }, [activePalette]);
 
   // Apply and persist the selected theme.
   useEffect(() => {
@@ -4403,6 +4414,7 @@ async function undoDeleteTask() {
       syncing: netSyncing,
       loading: Boolean(authToken) && !firstLoadDoneRef.current,
       theme: settingsTheme,
+      palette: activePalette,
       inviteUrl: INVITE_URL,
       supportEmail: (import.meta.env.VITE_SUPPORT_EMAIL || "").trim(),
       guest: Boolean(student?.guest),
@@ -4773,7 +4785,22 @@ async function undoDeleteTask() {
     timerAlert: scheduleTimerAlert,
     timerCancel: cancelTimerAlert,
     toggleTheme: () => saveSettings({ theme: settingsTheme === "dark" ? "light" : "dark" }),
-    setTheme: (mode) => { if (mode !== settingsTheme && (mode === "dark" || mode === "light")) saveSettings({ theme: mode }); },
+    setTheme: (mode) => {
+      if (mode === "dark" || mode === "light") {
+        if (mode !== settingsTheme) saveSettings({ theme: mode });
+        // Calm Mauve / Midnight / Light / Dark are the plain looks: drop any paid colour theme.
+        if (accountPrefs.palette) designActions.savePref("palette", "");
+      }
+    },
+    // Use a paid colour theme the student has bought (key like "theme_ocean"). Empty text turns it off.
+    setPalette: (key) => {
+      const next = typeof key === "string" ? key : "";
+      if (next) {
+        if (!PAID_PALETTES.includes(next) || !(shopServer?.owned || []).includes(next)) return;
+        if (settingsTheme !== "light") saveSettings({ theme: "light" });
+      }
+      if ((accountPrefs.palette || "") !== next) designActions.savePref("palette", next);
+    },
     syncNow: async () => {
       const before = getOfflineInfo();
       try { await flushOfflineQueue(); } catch { /* still offline */ }

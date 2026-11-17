@@ -29,10 +29,10 @@ const ITEMS = {
   frames: { kind: "unlock", price: 140, live: false }, // Avatar Frames
   badges: { kind: "unlock", price: 120, live: false }, // Badge Showcase
   // Themes (Calm Mauve and Midnight are free and are not sold)
-  theme_ocean: { kind: "unlock", price: 250, live: false },
-  theme_forest: { kind: "unlock", price: 250, live: false },
-  theme_sunset: { kind: "unlock", price: 250, live: false },
-  theme_mono: { kind: "unlock", price: 250, live: false },
+  theme_ocean: { kind: "unlock", price: 250, live: true },
+  theme_forest: { kind: "unlock", price: 250, live: true },
+  theme_sunset: { kind: "unlock", price: 250, live: true },
+  theme_mono: { kind: "unlock", price: 250, live: true },
 };
 const GIFT_AMOUNT = 25;
 

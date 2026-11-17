@@ -895,3 +895,9 @@
 .dz .pl-hr{display:flex;align-items:center;justify-content:space-between;gap:10px;font:600 13px var(--body);color:var(--ink)}
 .dz .pl-hr span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dz .pl-hr b{flex:none;font:700 12.5px var(--body);color:var(--mut)}
+
+/* ---- Paid colour themes (Gem Shop): Ocean, Forest, Sunset, Mono. They sit on top of Light mode. ---- */
+html[data-palette="ocean"] .dz .scr.n:not(.nd){--ink:#14303f;--card:#eaf3fb;--mut:#44677c;--mv:#8fb9d3;--chip:#c4dbe8;--pg:#d6e8f1;--track:#b7cfdd;--navbg:#14303f}
+html[data-palette="forest"] .dz .scr.n:not(.nd){--ink:#16301f;--card:#eaf4ec;--mut:#46654f;--mv:#93bda1;--chip:#cbdccf;--pg:#dde8df;--track:#bcd0c1;--navbg:#16301f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd){--ink:#3b1d12;--card:#f9ece6;--mut:#7a5446;--mv:#e0a78f;--chip:#e6cbc0;--pg:#f1ddd5;--track:#dcbfb3;--navbg:#3b1d12}
+html[data-palette="mono"] .dz .scr.n:not(.nd){--ink:#1e1e1e;--card:#f5f5f5;--mut:#5c5c5c;--mv:#a8a8a8;--chip:#d4d4d4;--pg:#e6e6e6;--track:#c4c4c4;--navbg:#1e1e1e}

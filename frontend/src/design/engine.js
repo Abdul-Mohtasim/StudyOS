@@ -1309,7 +1309,8 @@ const shopHtml=()=>{
   };
   const theme=([k,n,bg,bar,cd,paid])=>{
     let sub,cls='',attr='';
-    if(!paid){const cur=(k==='dark')===!!D.dark;sub=cur?'In use':'Free';cls=cur?' sel':'';attr=` data-theme="${k}" role="button" aria-label="Use the ${n} theme"`}
+    if(!paid){const cur=!D.palette&&(k==='dark')===!!D.dark;sub=cur?'In use':'Free';cls=cur?' sel':'';attr=` data-theme="${k}" role="button" aria-label="Use the ${n} theme"`}
+    else if(isLive(k)&&hasItem(k)){const cur=D.palette===k&&!D.dark;sub=cur?'In use':'Use';cls=cur?' sel':'';attr=` data-theme="${k}" role="button" aria-label="Use the ${n} theme"`}
     else if(!isLive(k))sub='Soon',attr=` data-why="${esc(n+' is coming soon. Your gems stay safe until it is ready.')}" role="button" aria-label="${n} theme, coming soon"`;
     else{const why=whyNot(k,pr[k]);sub=`<button type="button" class="sh2-pill sm${why?' off':''}" data-buy="${k}" data-price="${pr[k]}" data-why="${esc(why)}" aria-label="Buy the ${n} theme for ${pr[k]} gems">${gmI+ntxt(pr[k])}</button>`}
     return `<div class="sh2-th${cls}"${attr}><div class="sh2-pv" style="background:${bg}"><i style="background:${bar}"></i><u style="background:${cd}"></u></div><b>${n}</b><small>${sub}</small></div>`;
@@ -1367,7 +1368,7 @@ const shopPlay=()=>{
     if(e.target.closest('[data-retry]')){hap('light');if(CB.shopRefresh)CB.shopRefresh();return}
     if(e.target.closest('[data-giftpage]')){hap('light');GHY=0;SMSG=null;go('Gift gems');return}
     const th=e.target.closest('[data-theme]');
-    if(th&&th!==R&&R.contains(th)){hap('light');if(CB.setTheme)CB.setTheme(th.dataset.theme);return}
+    if(th&&th!==R&&R.contains(th)){hap('light');const tk=th.dataset.theme;if(tk.indexOf('theme_')===0){if(CB.setPalette)CB.setPalette(tk)}else{if(CB.setTheme)CB.setTheme(tk)}return}
     const b=e.target.closest('[data-buy],[data-why]');if(!b){dbg('tap missed a button: '+tn(e.target));return}
     dbg('button '+(b.dataset.buy||'info')+(b.classList.contains('armed')?' (armed)':'')+(SBUSY?' BUSY':''));
     if(SBUSY&&Date.now()-SBST<20000){toast('Working on your last request...');return}
