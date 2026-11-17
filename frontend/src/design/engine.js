@@ -1245,8 +1245,11 @@ function whyNot(k,price){
   return '';
 }
 /* ---- the buy sheet: tap a price and a half page rises from the bottom with the pack choices ---- */
-const shopDef=k=>{for(const sc of SHOP_SECTIONS)for(const it of sc.items)if(it.k===k)return it;const th=SHOP_THEMES.find(x=>x[0]===k);return {k,t:th?th[1]+' theme':k,c:'#8b7bf0'}};
-const packsOf=k=>{const p=D.shop&&D.shop.packs&&D.shop.packs[k];return Array.isArray(p)&&p.length?p:[{n:1,price:PR()[k]}]};
+const shopDef=k=>{for(const sc of SHOP_SECTIONS)for(const it of sc.items)if(it.k===k)return it;const th=SHOP_THEMES.find(x=>x[0]===k);return {k,t:th?th[1]+' theme':k,c:th?th[3]:'#8b7bf0'}};
+// Paid colour themes show their own little preview instead of an item icon, and are bought one at a time.
+const isTh=k=>String(k).indexOf('theme_')===0;
+const themePv=k=>{const th=SHOP_THEMES.find(x=>x[0]===k);return th?`<span class="sh2-tpv" style="background:${th[2]}"><i style="background:${th[3]}"></i><u style="background:${th[4]}"></u></span>`:''};
+const packsOf=k=>{if(isTh(k))return [{n:1,price:PR()[k]}];const p=D.shop&&D.shop.packs&&D.shop.packs[k];return Array.isArray(p)&&p.length?p:[{n:1,price:PR()[k]}]};
 const packName=n=>n===1?'Single':n+' pack';
 // A pack that would go past what you can hold (Streak Freeze holds 2) cannot be picked.
 const packOff=(k,n)=>k==='freeze'&&((D.shop&&D.shop.freezes)||0)+n>2;
@@ -1259,7 +1262,10 @@ const ITEMS_ONCE=['sound','focusplus','report','exam','widgets','frames','badges
 function sheetHtml(){
   if(!SHEET)return '';
   const fx=SHEET.fx||'';SHEET.fx='';   // entrance effects play once, never again on a redraw
-  const k=SHEET.k,def=shopDef(k),ic=SI[k]||SHI.gem;
+  const k=SHEET.k,def=shopDef(k),ic=isTh(k)?themePv(k):(SI[k]||SHI.gem);
+  if(SHEET.done&&isTh(k)){
+    return `<div class="sh2-sheet" data-sheetbg role="dialog" aria-label="Theme unlocked"><div class="sh2-sp done${fx==='done'?' pop':''}"><div class="sh2-big sh2-bigth" style="--c:${def.c}">${ic}</div><b class="sh2-bt">${esc(def.t)}</b><span class="sh2-bx">Unlocked</span><button type="button" class="sh2-go" data-sheetapply>APPLY THEME</button><button type="button" class="sh2-no" data-sheetclose>NOT NOW</button></div></div>`;
+  }
   if(SHEET.done){
     return `<div class="sh2-sheet" data-sheetbg role="dialog" aria-label="Purchase complete"><div class="sh2-sp done${fx==='done'?' pop':''}"><div class="sh2-big" style="--c:${def.c}">${ic}</div><b class="sh2-bt">${esc(def.t)}</b><span class="sh2-bx">x${SHEET.done}</span><button type="button" class="sh2-go" data-sheetclose>BACK TO SHOP</button></div></div>`;
   }
@@ -1347,6 +1353,8 @@ const shopPlay=()=>{
       const t=e.target;
       if(SBUSY&&Date.now()-SBST<20000)return;
       if(Date.now()-(SHEET.at||0)<450)return;
+      if(t.closest('[data-sheetapply]')){
+        const ak=SHEET.k;hap('success');if(CB.setPalette)CB.setPalette(ak,true);sheetClose();toast(shopDef(ak).t+' applied');return}
       if(t.closest('[data-sheetclose]')||(t.classList&&t.classList.contains('sh2-sheet'))){hap('light');sheetClose();return}
       const pk=t.closest('[data-pack]');
       if(pk){if(!pk.disabled){hap('tick');SHEET.n=+pk.dataset.pack;sheetPickUpdate()}return}

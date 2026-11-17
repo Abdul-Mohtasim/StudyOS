@@ -4793,10 +4793,10 @@ async function undoDeleteTask() {
       }
     },
     // Use a paid colour theme the student has bought (key like "theme_ocean"). Empty text turns it off.
-    setPalette: (key) => {
+    setPalette: (key, justBought) => {
       const next = typeof key === "string" ? key : "";
       if (next) {
-        if (!PAID_PALETTES.includes(next) || !(shopServer?.owned || []).includes(next)) return;
+        if (!PAID_PALETTES.includes(next) || (!justBought && !(shopServer?.owned || []).includes(next))) return;
         if (settingsTheme !== "light") saveSettings({ theme: "light" });
       }
       if ((accountPrefs.palette || "") !== next) designActions.savePref("palette", next);
