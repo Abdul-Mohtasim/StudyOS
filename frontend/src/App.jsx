@@ -1463,16 +1463,6 @@ useEffect(() => {
     return () => controller.abort();
   }, [authToken, reloadVersion]);
 
-  // Paid colour themes (Ocean, Forest, Sunset, Mono) sit on top of Light mode. Only a key from this list is ever applied.
-  const activePalette = (() => {
-    const key = accountPrefs && typeof accountPrefs.palette === "string" ? accountPrefs.palette : "";
-    return PAID_PALETTES.includes(key) && settingsTheme === "light" ? key : "";
-  })();
-  useEffect(() => {
-    if (activePalette) document.documentElement.dataset.palette = activePalette.replace("theme_", "");
-    else delete document.documentElement.dataset.palette;
-  }, [activePalette]);
-
   // Apply and persist the selected theme.
   useEffect(() => {
     document.documentElement.dataset.theme = settingsTheme;
@@ -2240,6 +2230,16 @@ useEffect(() => {
 
   // ---------- Native app: gems and friends (stored on the server) ----------
   const [accountPrefs, setAccountPrefs] = useState({});
+  // Paid colour themes (Ocean, Forest, Sunset, Mono) sit on top of Light mode. Only a key from this list is ever applied.
+  const activePalette = (() => {
+    const key = accountPrefs && typeof accountPrefs.palette === "string" ? accountPrefs.palette : "";
+    return PAID_PALETTES.includes(key) && settingsTheme === "light" ? key : "";
+  })();
+  useEffect(() => {
+    if (activePalette) document.documentElement.dataset.palette = activePalette.replace("theme_", "");
+    else delete document.documentElement.dataset.palette;
+  }, [activePalette]);
+
   useEffect(() => {
     const wanted = accountPrefs && typeof accountPrefs.lang === "string" ? accountPrefs.lang : "";
     if (wanted && wanted !== getLanguage()) setLanguage(wanted);
@@ -2370,13 +2370,54 @@ useEffect(() => {
   async function shopGift(userId) {
     const token = localStorage.getItem("studyos_auth_token") || authToken;
     if (!token) return { ok: false, message: "Create your profile to gift gems." };
-    const { ok, data } = await nativeApi("/api/shop/gift", "POST", { userId }, token);
+    // A busy or sleeping server (502/503/504 or no answer) gets one more try before we give up.
+    let result = await nativeApi("/api/shop/gift", "POST", { userId }, token);
+    if (!result.ok && [0, 502, 503, 504].includes(result.status)) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      result = await nativeApi("/api/shop/gift", "POST", { userId }, token);
+    }
+    const { ok, data, status } = result;
     if (Number.isFinite(data.gems)) setGemsServer(data.gems);
     if (ok) {
       loadSocial();
       return { ok: true, message: "Gift sent! Your friend will see the gems." };
     }
-    return { ok: false, message: data.message || "Could not reach the server. Try again." };
+    // Say what really happened instead of always blaming the connection.
+    const said = data.message || data.error;
+    if (said) return { ok: false, message: said };
+    if (status === 0) return { ok: false, message: "No internet connection. Check it and try again." };
+    if (status === 401) return { ok: false, message: "Your sign-in has expired. Please sign in again." };
+    if (status === 404) return { ok: false, message: "Gifting is not on your server yet. Deploy the latest backend." };
+    if (status === 429) return { ok: false, message: "Too many tries. Please wait a minute." };
+    return { ok: false, message: `The server could not send the gift (code ${status}). Please try again.` };
+  }
+
+  // A friend's real numbers for the Friend profile page.
+  async function friendProfile(userId) {
+    const token = localStorage.getItem("studyos_auth_token") || authToken;
+    if (!token) return { ok: false, message: "Sign in to see your friends." };
+    let result = await nativeApi(`/api/friends/${encodeURIComponent(userId)}/profile`, "GET", null, token);
+    if (!result.ok && [0, 502, 503, 504].includes(result.status)) {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      result = await nativeApi(`/api/friends/${encodeURIComponent(userId)}/profile`, "GET", null, token);
+    }
+    if (result.ok) return { ok: true, data: result.data };
+    const said = result.data.message || result.data.error;
+    if (said) return { ok: false, message: said };
+    if (result.status === 0) return { ok: false, message: "No internet connection. Check it and try again." };
+    if (result.status === 404) return { ok: false, message: "Friend profiles are not on your server yet. Deploy the latest backend." };
+    return { ok: false, message: `Could not load this profile (code ${result.status}).` };
+  }
+
+  async function removeFriend(userId) {
+    const token = localStorage.getItem("studyos_auth_token") || authToken;
+    if (!token) return { ok: false, message: "Sign in first." };
+    const { ok, data } = await nativeApi(`/api/friends/${encodeURIComponent(userId)}`, "DELETE", null, token);
+    if (ok) {
+      await loadSocial();
+      return { ok: true, message: "Friend removed." };
+    }
+    return { ok: false, message: data.message || data.error || "Could not remove that friend." };
   }
 
   async function loadSocial(token = authToken) {
@@ -4480,7 +4521,7 @@ async function undoDeleteTask() {
           when,
         };
       }),
-      friends: (social?.friends || []).map((u) => ({ id: u.id, name: u.name, gems: u.gems || 0 })),
+      friends: (social?.friends || []).map((u) => ({ id: u.id, name: u.name, gems: u.gems || 0, picture: u.picture || "" })),
       incoming: (social?.incoming || []).map((u) => ({ id: u.id, name: u.name })),
       prefs: accountPrefs,
       plans: weeklyPlan.slice(0, 100).map((x) => ({ id: x.id, title: x.title, subject: x.subject, day: x.day, done: x.completed })),
@@ -4602,6 +4643,8 @@ async function undoDeleteTask() {
   const designActions = IS_NATIVE ? {
     shopBuy,
     shopGift,
+    friendProfile,
+    removeFriend,
     shopRefresh: () => { if (authToken && !student?.guest) { loadShop(); } },
     toggleTask: (id, forceDone) => {
       const t = tasks.find((x) => x.id === id);

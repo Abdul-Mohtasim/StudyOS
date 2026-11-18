@@ -6,6 +6,7 @@ const Student = require("../models/Student");
 const Friendship = require("../models/Friendship");
 const Notification = require("../models/Notification");
 const FocusSession = require("../models/FocusSession");
+const Task = require("../models/Task");
 const requireAuth = require("../middleware/auth");
 const { award } = require("../services/gems");
 
@@ -97,6 +98,95 @@ router.get("/", async (req, res) => {
   } catch (error) {
     req.log?.error?.(error);
     res.status(500).json({ error: "Could not load your friends right now." });
+  }
+});
+
+// GET /api/friends/:userId/profile -> a friend's real study numbers (only for accepted friends).
+//   { id, name, picture, joinedYear, gems, streak, hours, tasksDone, sessions, friendsCount,
+//     week: [{ date, label, minutes }] (last 7 days, oldest first), meWeek: same for the signed-in student }
+const DAY_MS = 24 * 60 * 60 * 1000;
+const dayKey = (d) => new Date(d).toISOString().slice(0, 10);
+const LETTERS = ["S", "M", "T", "W", "T", "F", "S"];
+
+async function studyNumbers(id) {
+  const [sessions, tasks] = await Promise.all([
+    FocusSession.find({ student: id }).select("durationMinutes completedAt").sort({ completedAt: -1 }).limit(3000).lean(),
+    Task.find({ student: id, completed: true, deletedAt: null }).select("completedAt").sort({ completedAt: -1 }).limit(3000).lean(),
+  ]);
+  const days = new Set();
+  const minutesByDay = new Map();
+  let totalMinutes = 0;
+  for (const s of sessions) {
+    if (!s.completedAt) continue;
+    const key = dayKey(s.completedAt);
+    days.add(key);
+    minutesByDay.set(key, (minutesByDay.get(key) || 0) + (s.durationMinutes || 0));
+    totalMinutes += s.durationMinutes || 0;
+  }
+  for (const t of tasks) if (t.completedAt) days.add(dayKey(t.completedAt));
+  return { days, minutesByDay, totalMinutes, sessions: sessions.length, tasksDone: tasks.length };
+}
+
+function streakOf(days, protectedDays) {
+  const all = new Set([...days, ...(protectedDays || [])]);
+  const today = dayKey(Date.now());
+  let cursor = all.has(today) ? Date.parse(today) : Date.parse(today) - DAY_MS;
+  let streak = 0;
+  while (all.has(dayKey(cursor))) {
+    streak += 1;
+    cursor -= DAY_MS;
+  }
+  return streak;
+}
+
+function weekOf(minutesByDay) {
+  const out = [];
+  for (let i = 6; i >= 0; i -= 1) {
+    const at = Date.now() - i * DAY_MS;
+    const key = dayKey(at);
+    out.push({ date: key, label: LETTERS[new Date(at).getUTCDay()], minutes: minutesByDay.get(key) || 0 });
+  }
+  return out;
+}
+
+router.get("/:userId/profile", async (req, res) => {
+  try {
+    const other = req.params.userId;
+    if (!mongoose.isValidObjectId(other)) return res.status(400).json({ message: "Invalid person." });
+    const me = req.student._id;
+
+    const link = await Friendship.findOne({
+      status: "accepted",
+      $or: [{ requester: me, recipient: other }, { requester: other, recipient: me }],
+    }).lean();
+    if (!link) return res.status(403).json({ message: "You can only open the profile of a friend." });
+
+    const friend = await Student.findById(other).select("name displayName picture gems createdAt protectedDays").lean();
+    if (!friend) return res.status(404).json({ message: "That friend could not be found." });
+
+    const [theirs, mine, friendsCount] = await Promise.all([
+      studyNumbers(other),
+      studyNumbers(me),
+      Friendship.countDocuments({ status: "accepted", $or: [{ requester: other }, { recipient: other }] }),
+    ]);
+
+    res.json({
+      id: String(friend._id),
+      name: friend.displayName || friend.name,
+      picture: friend.picture || "",
+      joinedYear: friend.createdAt ? new Date(friend.createdAt).getUTCFullYear() : null,
+      gems: friend.gems || 0,
+      streak: streakOf(theirs.days, friend.protectedDays),
+      hours: Math.round((theirs.totalMinutes / 60) * 10) / 10,
+      tasksDone: theirs.tasksDone,
+      sessions: theirs.sessions,
+      friendsCount,
+      week: weekOf(theirs.minutesByDay),
+      meWeek: weekOf(mine.minutesByDay),
+    });
+  } catch (error) {
+    req.log?.error?.(error);
+    res.status(500).json({ message: "Could not load that profile right now." });
   }
 });
 

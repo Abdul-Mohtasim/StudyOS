@@ -33,7 +33,7 @@ function Shell({ dark, title, sub, onBack, children, footer, loading }) {
   return (
     <div className={`np${dark ? " np-dark" : ""}`}>
       <div className="np-head">
-        <button type="button" className="np-back" onClick={() => { haptic.tap?.(); onBack(); }} aria-label="Back">‹</button>
+        <button type="button" className="np-back" onClick={() => { haptic.tap?.(); onBack(); }} aria-label="Back"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
       </div>
       <div className="np-scroll">
         <h1 className="np-title">{title}</h1>

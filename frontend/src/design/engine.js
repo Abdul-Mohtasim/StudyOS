@@ -69,7 +69,7 @@ const ic=(d,x='')=>`<svg class="ic" viewBox="0 0 24 24" ${x}>${d}</svg>`;
 const ICO={
  search:ic('<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/>','fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"'),
  bell:ic('<path d="M12 22a2.4 2.4 0 002.3-1.8H9.7A2.4 2.4 0 0012 22zM18 16V11c0-3.1-1.6-5.6-4.5-6.3V4a1.5 1.5 0 00-3 0v.7C7.6 5.4 6 7.9 6 11v5l-2 2v1h16v-1z"/>','fill="currentColor"'),
- back:ic('<path d="M15 5v14L5 12z"/>','fill="currentColor"'),
+ back:ic('<path d="M6 6l12 12M18 6L6 18"/>','fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"'),
  chev:ic('<path d="M9 5v14l9-7z"/>','fill="#4b5d6d"'),
  x:ic('<path d="M5 5l14 14M19 5L5 19"/>','fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"'),
  share:ic('<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.5 10.5l7-4M8.5 13.5l7 4" stroke="currentColor" stroke-width="2" fill="none"/>','fill="currentColor"'),
@@ -277,7 +277,7 @@ const sg=(a,on=0)=>`<div class="seg" data-seg>${a.map((x,i)=>`<span${i===on?' cl
 const lb=t=>`<div class="lbl">${t}</div>`;
 const inp=t=>`<div class="input" style="color:#1b1e25;font-weight:500">${t}</div>`;
 const row=(ic,t,s,r='')=>`<div class="qrow"><div class="qri">${QI[ic]}</div><div><b>${t}</b><small>${s}</small></div><span class="qrr">${r}</span></div>`;
-const BACK='<svg width="20" height="20" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const BACK='<svg width="20" height="20" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const qpage=(title,icon,sub,body,cta,kind,m)=>({t:title,d:sub,g:'Quick add pages',
  spec:{m:m||'Content rises in one block after another and the button slides up from the bottom.',h:'Light tap on arrival and on every choice. A medium tap and a success pattern when the item is saved.',s:'Soft pop on arrival, a tick on each choice, a check when saved. Saving opens Session complete, then Streak extended.'},
  html:()=>wrap(`<div class="pg"><div class="qh"><button class="qback" type="button" data-back aria-label="Back">${BACK}</button><div class="qhi">${QI[icon]}</div></div><div class="qpt">${title}</div><div class="qps">${sub}</div>${body}</div>${cta?`<button class="btn2 qcta" type="button" data-save="${kind}">${cta}</button>`:''}`),
@@ -391,7 +391,7 @@ document.addEventListener('click',e=>{const n=null;if(!n)return;const m={home:'H
 /* ---- settings pages ---- */
 (()=>{
 
-const BK='<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const BK='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const CHV='<svg viewBox="0 0 24 24" width="18" height="18" style="color:#8b98a2;flex:none"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const CK='<svg width="14" height="14" viewBox="0 0 24 24"><path d="M5 12.500l4.500 4.500L19 7.500" fill="none" stroke="#fff" stroke-width="3.400" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const tgx=(on=1)=>`<div class="ptg${on?'':' off'}" data-tg><i></i></div>`;
@@ -478,7 +478,7 @@ const IC={
  play:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.500" fill="none" stroke="currentColor" stroke-width="2.600"/><path d="M10 8l6 4-6 4z" fill="currentColor"/></svg>`,
  chv:`<svg viewBox="0 0 24 24" ${L} stroke-width="2.600"><path d="M9 5l7 7-7 7"/></svg>`,
  dn:`<svg viewBox="0 0 24 24" ${L} stroke-width="2.400"><path d="M6 9l6 6 6-6"/></svg>`,
- bk:`<svg width="24" height="24" viewBox="0 0 24 24" ${L} stroke-width="2.400"><path d="M20 12H5M11 5l-7 7 7 7"/></svg>`,
+ bk:`<svg width="24" height="24" viewBox="0 0 24 24" ${L} stroke-width="2.400"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
  kb:`<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>`,
  sr:`<svg width="26" height="26" viewBox="0 0 24 24" ${L} stroke-width="2.200"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>`,
  tr:`<svg viewBox="0 0 24 24" ${L}><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>`,
@@ -522,7 +522,7 @@ s.spec={m:'The storage card, search field and file groups rise in one after anot
 const PHN='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>';
 const MLN='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 8l8 5.500L20 8"/></svg>';
 const CHN='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#8f9ca8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
-const BKS='<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const BKS='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const NS={smart:1,cal:1,rt:17*60,st:20*60+30};
 const fm=m=>{const h=Math.floor(m/60),mm=m%60;return ((h+11)%12+1)+':'+String(mm).padStart(2,'0')+' '+(h<12?'AM':'PM')};
 const nic=(l,c)=>`<div class="nr"><b>${l}</b>${[...c].map(k=>{const id=l+k;if(NS[id]===undefined)NS[id]=1;return `<button class="nib${NS[id]?' on':''}" type="button" data-a="ic" data-k="${id}" aria-label="${k==='p'?'Push':'Email'} ${l}">${k==='p'?PHN:MLN}</button>`}).join('')}</div>`;
@@ -658,12 +658,12 @@ let FADD=false,FMSG='';
 const friendsHtml=()=>{
   const fr=(D.friends||[]).map(f=>({n:f.name,m:f.gems||0,id:f.id}));
   const rows=[...fr,{n:(D.first||'You')+' (You)',m:D.gems||0,me:1}].sort((a,b)=>b.m-a.m);
-  const req=(D.incoming||[]).map(u=>`<div class="rw" style="height:54px" data-req="${esc(u.id)}"><div style="display:flex;align-items:center;gap:12px;font:600 15px var(--body)"><span class="ava">${esc((u.name||'?').charAt(0).toUpperCase())}</span>${esc(u.name)}</div><span style="display:flex;gap:8px"><span class="chip" data-acc style="height:34px;padding:0 14px;font-size:14px;background:#2e8059;color:#fff">Accept</span><span class="chip" data-dec style="height:34px;padding:0 14px;font-size:14px">Decline</span></span></div>`).join('');
+  const req=(D.incoming||[]).map(u=>`<div class="rw rw-req" data-req="${esc(u.id)}"><div style="display:flex;align-items:center;gap:12px;font:600 15px var(--body)"><span class="ava">${esc((u.name||'?').charAt(0).toUpperCase())}</span>${esc(u.name)}</div><span style="display:flex;gap:8px"><span class="chip" data-acc style="height:34px;padding:0 14px;font-size:14px;background:#2e8059;color:#fff">Accept</span><span class="chip" data-dec style="height:34px;padding:0 14px;font-size:14px">Decline</span></span></div>`).join('');
   return wrapD(`<div class="pg" style="padding-top:38px">${head('Friends',ICO.back,ICO.plus)}
 ${FADD?`<div class="card" data-addbox style="margin-top:8px;border-radius:22px"><div class="lbl" style="margin:0 0 8px">Friend's email</div><input class="input dz-in" data-femail type="email" inputmode="email" autocomplete="off" placeholder="friend@email.com" style="width:100%;border:0;outline:0;margin:0"><div class="btn2" data-send style="margin-top:10px;border-radius:24px;height:46px">Send request</div>${FMSG?`<div class="mut" style="font:500 13px var(--body);margin-top:8px">${esc(FMSG)}</div>`:''}</div>`:''}
 ${req?`<b style="display:block;font:700 20px var(--display);margin-top:14px">Requests</b>${req}`:''}
 <div class="mut" style="font:600 13px var(--body);margin:10px 2px 4px">Leaderboard · gems</div>
-${rows.map((r,i)=>`<div class="lbrow${r.me?' me':''}"><span class="rk">${i+1}</span><span class="ava">${esc((r.n||'?').charAt(0).toUpperCase())}</span><span>${esc(r.n)}</span><span class="mn">${r.m.toLocaleString()}</span></div>`).join('')}
+${rows.map((r,i)=>`<div class="lbrow${r.me?' me':''}"${r.me?'':` data-fid="${esc(r.id)}" role="button" aria-label="Open ${esc(r.n)}'s profile"`}><span class="rk">${i+1}</span><span class="ava">${esc((r.n||'?').charAt(0).toUpperCase())}</span><span>${esc(r.n)}</span><span class="mn">${r.m.toLocaleString()}</span></div>`).join('')}
 ${fr.length?'':`<div class="mut" style="font:400 14px/1.5 var(--body);margin:12px 4px;text-align:center">No friends yet. Invite someone and you both earn 10 gems.</div>`}
 <div class="btn2" data-invite style="margin-top:14px;border-radius:24px">Invite a friend</div></div>`);
 };
@@ -672,6 +672,7 @@ const friendsPlay=()=>{
   R.onclick=async e=>{
     if(e.target.closest('.hd span:first-child'))return go('Profile');
     if(e.target.closest('.hd span:last-child')){FADD=!FADD;FMSG='';go('Friends');return}
+    const fpr=e.target.closest('[data-fid]');if(fpr&&!e.target.closest('[data-req]')){DZ.openFriend(fpr.dataset.fid,'Friends');return}
     if(e.target.closest('[data-invite]')){hap('light');if(CB.invite)CB.invite();return}
     const send=e.target.closest('[data-send]');
     if(send){const v=($('[data-femail]',R).value||'').trim();if(!v.includes('@')){FMSG='Enter your friend\'s email address.';go('Friends');return}send.textContent='Sending…';const r=CB.addFriend?await CB.addFriend(v):{message:''};FMSG=(r&&r.message)||'';go('Friends');return}
@@ -701,7 +702,7 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
     const a=h.indexOf('<div class="sec">Friend streaks</div>');
     const z=h.indexOf('</div></div><div class="pfbar"');
     if(a>0&&z>a){
-      const list=fr.slice(0,5).map(f=>`<div><svg class="fa" viewBox="0 0 52 52"><circle cx="26" cy="26" r="26" fill="${colOf(f.name)}"/><text x="26" y="36" text-anchor="middle" font-size="30" font-weight="700" fill="#2a1d1d" font-family="Space Grotesk,Inter,Arial,sans-serif">${esc((f.name||'?').charAt(0).toUpperCase())}</text></svg><div class="cnt"><span style="width:16px;height:16px;display:block">${CUBE}</span>${f.gems||0}</div></div>`).join('');
+      const list=fr.slice(0,5).map(f=>`<div data-fid="${esc(f.id)}" role="button" aria-label="Open ${esc(f.name)}'s profile" style="cursor:pointer"><svg class="fa" viewBox="0 0 52 52"><circle cx="26" cy="26" r="26" fill="${colOf(f.name)}"/><text x="26" y="36" text-anchor="middle" font-size="30" font-weight="700" fill="#2a1d1d" font-family="Space Grotesk,Inter,Arial,sans-serif">${esc((f.name||'?').charAt(0).toUpperCase())}</text></svg><div class="cnt"><span style="width:16px;height:16px;display:block">${CUBE}</span>${f.gems||0}</div></div>`).join('');
       h=h.slice(0,a)+'<div class="sec">Friends</div>'+((D.incoming||[]).length?`<div class="chip" data-reqs style="margin-bottom:12px;background:#c9b8c3;color:#1b1e25">${(D.incoming||[]).length} friend ${(D.incoming||[]).length===1?'request':'requests'} · View</div>`:'')+(fr.length?`<div class="fs" style="gap:14px;justify-content:flex-start">${list}</div>`:`<div style="font:600 14px var(--body);color:#8b98a2">Add friends to see them here.</div>`)+h.slice(z);
     }
     return h;
@@ -710,6 +711,7 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
     pp();const old=R.onclick;
     R.onclick=e=>{
       if(e.target.closest('[data-edit]')){hap('light');go('Edit profile');return}
+      const fpf=e.target.closest('[data-fid]');if(fpf){DZ.openFriend(fpf.dataset.fid,'Profile');return}
       if(e.target.closest('[data-reqs]')){hap('light');go('Friends');return}
       if(e.target.closest('[data-look]')){hap('light');return}
       old(e);
@@ -1212,7 +1214,7 @@ const SI={
  frames:LI('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.66"/>'),
  badges:LI('<circle cx="12" cy="8" r="6"/><path d="M15.48 12.89 17 22l-5-3-5 3 1.52-9.11"/>'),
  gift:LI('<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>'),
- back:LI('<path d="M15 5l-7 7 7 7"/>')
+ back:LI('<path d="M6 6l12 12M18 6L6 18"/>')
 };
 // What each row says. Prices come from the server; the words and colours live here.
 const SHOP_SECTIONS=[
@@ -1467,7 +1469,7 @@ host.addEventListener('click',e=>{
 }
 /* ---- v39: real Sync, Storage, Export, Privacy, Language, Themes, QR, skeleton ---- */
 {
-  const BKI='<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const BKI='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const LC='fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"';
   const I={
     cloud:`<svg viewBox="0 0 24 24" ${LC}><path d="M7 18a4.500 4.500 0 01-.5-9A6 6 0 0118 10a4 4 0 01-1 8z"/></svg>`,
@@ -1729,6 +1731,138 @@ host.addEventListener('click',e=>{
   const m={home:'Home',tasks:'Tasks',focus:'Focus',study:'Study'}[k];
   if(m&&SCREENS[CUR].t!==m)go(m);
 },true);
+/* ---- Friend profile: a friend's real study numbers, opened from Profile or Friends ---- */
+{
+  let FP={id:'',from:'Profile',loading:false,data:null,err:'',rm:false,gift:false,busy:false,msg:''};
+  const fpCol=s=>{const A=['#e85a5a','#c7b9c4','#9fb6c3','#c9c4a6','#b4c7b0','#d0b09f'];let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))>>>0;return A[h%A.length]};
+  const X='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const FLAME='<svg viewBox="0 0 24 24"><path d="M12 2c1 3.5 5 5.6 5 10.2A5 5 0 0 1 12 17.5a5 5 0 0 1-5-5.3c0-2 1-3.4 2.2-4.7.2 1.6 1 2.4 1.8 2.6C10.700 7.300 11 4.600 12 2z" fill="#ff7a45"/><path d="M12 22a4 4 0 0 1-4-4c0-1.800 1.600-3 4-5 2.400 2 4 3.200 4 5a4 4 0 0 1-4 4z" fill="#ffb347"/></svg>';
+  const PPL='<svg viewBox="0 0 24 24" fill="none" stroke="#4fc3f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20c.6-3.600 3.200-5.400 6.500-5.400s5.900 1.800 6.500 5.400M16 4.800a3.200 3.200 0 0 1 0 6.200M18.500 14.800c1.800.7 2.800 2.300 3 5.200"/></svg>';
+  const CLK='<svg viewBox="0 0 24 24" fill="none" stroke="#7dd3a8" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.500 1.500M9 3h6"/></svg>';
+  const TSK='<svg viewBox="0 0 24 24" fill="none" stroke="#b9a7ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.500 12.500l2.500 2.500 4.500-5"/></svg>';
+  const FCS='<svg viewBox="0 0 24 24" fill="none" stroke="#ffd166" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.500"/><path d="M12 7.500V12l3 2"/></svg>';
+  const num=n=>(Number(n)||0).toLocaleString();
+  const mins=m=>{m=Math.max(0,Math.round(Number(m)||0));if(m<60)return m+'m';const h=Math.floor(m/60),r=m%60;return r?h+'h '+r+'m':h+'h'};
+  const first=n=>String(n||'Friend').split(' ')[0];
+  const sum=a=>(a||[]).reduce((t,x)=>t+(x.minutes||0),0);
+
+  function chart(fr,me){
+    const W=320,H=150,L=34,R=8,T=10,B=24,iw=W-L-R,ih=H-T-B;
+    const top=Math.max(30,...fr.map(x=>x.minutes),...me.map(x=>x.minutes));
+    const step=Math.ceil(top/3/10)*10,max=step*3;
+    const X=i=>L+(iw*i)/Math.max(1,fr.length-1),Y=v=>T+ih-(ih*v)/max;
+    let g='';for(let k=0;k<=3;k++){const y=Y(step*k);g+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="#2a323a" stroke-width="2"/><text x="${L-6}" y="${y+4}" text-anchor="end" font-size="11" font-weight="600" fill="#76838d">${step*k}</text>`}
+    const line=(a,c,w)=>`<polyline fill="none" stroke="${c}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round" points="${a.map((p,i)=>X(i)+','+Y(p.minutes)).join(' ')}"/>`+a.map((p,i)=>`<circle cx="${X(i)}" cy="${Y(p.minutes)}" r="${w+1.5}" fill="${c}"/>`).join('');
+    const lab=fr.map((p,i)=>`<text x="${X(i)}" y="${H-6}" text-anchor="middle" font-size="12" font-weight="600" fill="#76838d">${p.label}</text>`).join('');
+    return `<svg class="fp-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Minutes studied in the last 7 days">${g}${line(me,'#8b98a2',2.5)}${line(fr,'#4fc3f7',3)}${lab}</svg>`;
+  }
+
+  const avatar=(name,pic)=>pic?`<img class="fp-img" src="${esc(pic)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${esc((name||'?').charAt(0).toUpperCase())}'}))">`:`<span>${esc((name||'?').charAt(0).toUpperCase())}</span>`;
+
+  const html=()=>{
+    const list=(D.friends||[]).find(f=>f.id===FP.id)||{};
+    const d=FP.data||{};
+    const name=d.name||list.name||'Friend',pic=d.picture||list.picture||'';
+    const col=fpCol(name),ready=!!FP.data;
+    const price=(D.shop&&D.shop.prices&&D.shop.prices.gift)||25;
+    const sk=t=>ready?t:'<i class="fp-sk"></i>';
+    const body=FP.err&&!ready
+      ?`<div class="fp-err"><p>${esc(FP.err)}</p><button type="button" class="fp-btn" data-fpretry>TRY AGAIN</button></div>`
+      :`<div class="fp-stats">
+  <div><span class="fp-ico">${FLAME}</span><b>${sk(num(d.streak))}</b><small>Day streak</small></div>
+  <div><span class="fp-ico">${CUBE}</span><b>${sk(num(d.gems!=null?d.gems:list.gems))}</b><small>Gems</small></div>
+  <div><span class="fp-ico">${PPL}</span><b>${sk(num(d.friendsCount))}</b><small>Friends</small></div></div>
+<div class="fp-acts"><button type="button" class="fp-btn fp-isfr" data-fpnone aria-label="You are friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.500l4.500 4.500L19 7.500"/></svg>FRIENDS</button><button type="button" class="fp-btn fp-gift${FP.gift?' armed':''}${FP.busy?' busy':''}" data-fpgift aria-label="Send ${price} gems to ${esc(name)}">${FP.busy?'SENDING…':(FP.gift?'CONFIRM '+price+' GEMS':'GIFT '+price+' GEMS')}</button></div>
+${FP.msg?`<div class="fp-msg${FP.msgOk?' ok':''}" role="status">${esc(FP.msg)}</div>`:''}
+<div class="fp-sec">WEEKLY PROGRESS</div>
+${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="height:150px"></div>'}
+<div class="fp-leg"><span class="fp-dot" style="background:#4fc3f7"></span><b>${esc(first(name))}</b><em>${ready?mins(sum(d.week)):'…'}</em></div>
+<div class="fp-leg"><span class="fp-dot" style="background:#8b98a2"></span><b>You</b><em>${ready?mins(sum(d.meWeek)):'…'}</em></div>
+<div class="fp-sec">OVERVIEW</div>
+<div class="fp-grid">
+  <div><span class="fp-ico">${FLAME}</span><b>${sk(num(d.streak)+(d.streak===1?' day':' days'))}</b></div>
+  <div><span class="fp-ico">${CLK}</span><b>${sk(num(d.hours)+' hours')}</b></div>
+  <div><span class="fp-ico">${TSK}</span><b>${sk(num(d.tasksDone)+(d.tasksDone===1?' task':' tasks'))}</b></div>
+  <div><span class="fp-ico">${FCS}</span><b>${sk(num(d.sessions)+(d.sessions===1?' session':' sessions'))}</b></div></div>
+<button type="button" class="fp-rm${FP.rm?' armed':''}" data-fprm>${FP.rm?'TAP AGAIN TO REMOVE '+esc(first(name)).toUpperCase():'REMOVE FRIEND'}</button>`;
+    return `<div class="scr n nd" style="--pg:#181b22"><div class="fp" data-fpscroll>
+<div class="fp-hero" style="--c:${col}"><button type="button" class="fp-x" data-fpback aria-label="Close">${X}</button><div class="fp-av">${avatar(name,pic)}</div></div>
+<div class="fp-body"><h1 class="fp-name">${esc(name)}</h1><div class="fp-sub">FRIEND${d.joinedYear?' · JOINED '+esc(d.joinedYear):''}</div>${body}</div></div></div>`;
+  };
+
+  const load=async()=>{
+    const id=FP.id;FP.loading=true;FP.err='';
+    let r=null;try{r=CB.friendProfile?await CB.friendProfile(id):null}catch(_){r=null}
+    if(FP.id!==id)return;
+    FP.loading=false;
+    if(r&&r.ok)FP.data=r.data;else FP.err=(r&&r.message)||'Could not load this profile. Try again.';
+    if(SCREENS[CUR]&&SCREENS[CUR].t==='Friend profile')go('Friend profile',true);
+  };
+
+  const play=()=>{
+    enter();
+    R.onclick=async e=>{
+      const t=e.target;
+      if(t.closest('[data-fpback]')){back();return}
+      if(t.closest('[data-fpretry]')){hap('light');FP.err='';FP.data=null;go('Friend profile',true);load();return}
+      if(t.closest('[data-fpgift]')){
+        if(FP.busy)return;
+        if(!FP.gift){hap('light');FP.gift=true;FP.msg='';go('Friend profile',true);return}
+        FP.gift=false;FP.busy=true;FP.msg='';go('Friend profile',true);
+        let r=null;try{r=CB.shopGift?await CB.shopGift(FP.id):null}catch(_){r=null}
+        FP.busy=false;FP.msg=(r&&r.message)||'Could not send the gift. Try again.';FP.msgOk=!!(r&&r.ok);
+        hap(FP.msgOk?'success':'light');
+        if(SCREENS[CUR]&&SCREENS[CUR].t==='Friend profile')go('Friend profile',true);return}
+      if(t.closest('[data-fprm]')){
+        if(!FP.rm){hap('light');FP.rm=true;go('Friend profile',true);return}
+        FP.rm=false;hap('press');
+        let r=null;try{r=CB.removeFriend?await CB.removeFriend(FP.id):null}catch(_){r=null}
+        if(r&&r.ok){toast(r.message||'Friend removed.');go(DZ.fpFrom&&DZ.fpFrom!=='Friend profile'?DZ.fpFrom:'Profile')}
+        else{FP.msg=(r&&r.message)||'Could not remove that friend.';FP.msgOk=false;go('Friend profile',true)}
+        return}
+      if(FP.rm||FP.gift){FP.rm=false;FP.gift=false;go('Friend profile',true)}
+    };
+  };
+  SCREENS.push({t:'Friend profile',d:'A friend\'s real study numbers',spec:{m:'Friend streak, gems, weekly minutes compared with yours, overview, gift and remove.',h:'Light tap on each press, success when a gift is sent.',s:'No sound on this page.'},html,play});
+  DZ.fpFrom='Profile';
+  DZ.openFriend=(id,from)=>{
+    if(!id)return;
+    FP={id:String(id),from:from||'Profile',loading:false,data:null,err:'',rm:false,gift:false,busy:false,msg:''};
+    DZ.fpFrom=from||'Profile';hap('light');go('Friend profile');load();
+  };
+}
+// Swipe left/right on Home, Tasks, Focus and Study to move to the next/previous tab.
+(function(){
+  const TABS=['home','tasks','focus','study'],TITLE={home:'Home',tasks:'Tasks',focus:'Focus',study:'Study'};
+  let sw=null;
+  const blocked=t=>{
+    if(!t||!t.closest)return true;
+    if(t.closest('input,textarea,select,[contenteditable],.swipe,[data-noswipe],.sh2-sheet,.qsheet,.pk-ov,.dz-layer,.more,[data-moresc]'))return true;
+    for(let el=t;el&&el!==host;el=el.parentElement){
+      if(el.scrollWidth>el.clientWidth+4){const o=getComputedStyle(el).overflowX;if(o==='auto'||o==='scroll')return true}
+    }
+    return false;
+  };
+  host.addEventListener('pointerdown',e=>{
+    const cur=SCREENS[CUR]&&SCREENS[CUR].t;
+    sw=(!MOREON&&cur&&TABS.some(k=>TITLE[k]===cur)&&e.isPrimary!==false&&!blocked(e.target))?{x:e.clientX,y:e.clientY,t:Date.now(),cur}:null;
+  },true);
+  host.addEventListener('pointercancel',()=>{sw=null},true);
+  host.addEventListener('pointerup',e=>{
+    const s=sw;sw=null;if(!s||(SCREENS[CUR]&&SCREENS[CUR].t)!==s.cur)return;
+    const dx=e.clientX-s.x,dy=e.clientY-s.y,ms=Date.now()-s.t;
+    if(Math.abs(dx)<70||Math.abs(dy)>Math.abs(dx)*0.6||ms>900)return;
+    const from=TABS.findIndex(k=>TITLE[k]===s.cur),to=from+(dx<0?1:-1);
+    if(to<0||to>=TABS.length)return;
+    const k=TABS[to];hap('tick');
+    if(opts.onTab)opts.onTab(k);
+    go(TITLE[k]);
+    try{if(R&&R.animate)R.animate([{transform:`translateX(${dx<0?36:-36}px)`,opacity:.55},{transform:'none',opacity:1}],{duration:200,easing:'ease-out'})}catch(_){}
+    // the tap that ends a swipe must not press a button
+    const stop=ev=>{ev.stopPropagation();ev.preventDefault()};
+    host.addEventListener('click',stop,{capture:true,once:true});setTimeout(()=>host.removeEventListener('click',stop,true),350);
+  },true);
+})();
 function navOnly(active){
   RUN++;timers.forEach(clearTimeout);timers.length=0;
   stage.innerHTML='<div class="scr n'+(D.dark?' nd':'')+' dz-navonly">'+nav(active)+'</div>';R=stage.firstElementChild;CUR=-1;
@@ -1780,6 +1914,7 @@ function back(){
   else if(t==='Delete account')to='Privacy settings';
   else if(['Weekly report','Badges','Exam mode'].includes(t))to='Study';
   else if(['Friends','Edit profile','Settings'].includes(t))to='Profile';
+  else if(t==='Friend profile')to=(DZ.fpFrom&&DZ.fpFrom!=='Friend profile')?DZ.fpFrom:'Profile';
   else if(t==='Search')to=DZ.searchFrom||'Home';
   else if(t==='Gem Shop'){if(DZ.closeSheet&&DZ.closeSheet())return true;to=DZ.shopFrom||'Home'}
   else if(t==='Gift gems')to='Gem Shop';

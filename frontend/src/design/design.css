@@ -910,261 +910,343 @@ html[data-palette="mono"] .dz .scr.n:not(.nd){--ink:#1e1e1e;--card:#f5f5f5;--mut
 .dz .sh2-pi:has(.sh2-tpv){width:54px;height:46px;overflow:hidden;box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 35%,transparent)}
 .dz .sh2-big.sh2-bigth{width:132px;height:100px;border-radius:22px;overflow:hidden;box-shadow:0 6px 22px rgba(0,0,0,.22)}
 
+
+/* Friends: Accept / Decline never break into two lines; the row wraps on narrow phones */
+.dz .rw.rw-req{height:auto;min-height:54px;flex-wrap:wrap;gap:8px 12px;padding-top:8px;padding-bottom:8px;box-sizing:border-box}
+.dz .rw.rw-req>div{flex:1 1 150px;min-width:0;overflow-wrap:anywhere}
+.dz .rw.rw-req>span{flex:0 0 auto;margin-left:auto}
+.dz .rw.rw-req .chip{white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;flex:none;min-width:76px}
+/* One back/close look everywhere */
+.dz .sbk svg,.dz .bk svg,.dz .sh2-back svg,.dz .au-back svg{stroke-linecap:round}
+/* Focus start / pause button always readable: dark screens keep their own colours */
+.dz .scr.n.nd .btn2.mv{background:var(--mv,#c9b8c3);color:#1b1e25}
+.dz .scr.n.nd .btn2.dk2{background:#1f252d;color:#ebe8ea}
+
+/* Swipe between Home / Tasks / Focus / Study: the page may scroll up and down, but sideways touches must reach the app (otherwise Android cancels them). */
+.dz,.dz-stage,.dz .scr{touch-action:pan-y}
+.dz .scr .np-scroll,.dz input,.dz textarea{touch-action:manipulation}
+
+/* Friends: Accept / Decline never break into two lines */
+.dz .rw-req{height:auto;min-height:64px;gap:10px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+.dz .rw-req>div:first-child{flex:1 1 130px;min-width:0;overflow-wrap:anywhere}
+.dz .rw-req>span{flex:none}
+.dz .rw-req .chip,.dz .rw-req .ava{flex:none;white-space:nowrap}
+/* One look for the back / close button on every page */
+.np-back{background:transparent}
+/* Focus screen is always dark: its text and Start / Pause button keep the same readable colours in every theme */
+.dz .scr.nd .btn2.mv{background:#c9b8c3;color:#1b1e25}
+.dz .scr.nd .btn2.dk2{background:#232b33;color:#ebe8ea}
+html[data-palette="ocean"] .dz .scr.nd .btn2.mv{background:#8fb9d3;color:#10202a}
+html[data-palette="forest"] .dz .scr.nd .btn2.mv{background:#93bda1;color:#0f2216}
+html[data-palette="sunset"] .dz .scr.nd .btn2.mv{background:#e0a78f;color:#2b140c}
+html[data-palette="mono"] .dz .scr.nd .btn2.mv{background:#d6d6d6;color:#141414}
+
+/* ---- Friend profile page ---- */
+.dz .fp{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;background:#181b22;color:#ebe8ea;font-family:var(--body);-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(36px + env(safe-area-inset-bottom,0px))}
+.dz .fp-hero{position:relative;height:190px;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 70%,#181b22),var(--c));display:flex;align-items:flex-end;justify-content:center}
+.dz .fp-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 70%,rgba(255,255,255,.28),transparent 62%)}
+.dz .fp-x{position:absolute;left:12px;top:calc(14px + env(safe-area-inset-top,0px));width:44px;height:44px;border:0;border-radius:22px;background:rgba(24,27,34,.35);color:#fff;display:grid;place-items:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;z-index:2}
+.dz .fp-x svg{width:22px;height:22px}
+.dz .fp-av{position:relative;width:150px;height:150px;margin-bottom:-44px;border-radius:50%;background:var(--c);border:6px solid #181b22;display:grid;place-items:center;overflow:hidden;font:700 64px var(--display);color:#2a1d1d;z-index:1}
+.dz .fp-av .fp-img{width:100%;height:100%;object-fit:cover;display:block}
+.dz .fp-body{padding:58px 20px 0}
+.dz .fp-name{margin:0;text-align:center;font:700 26px/1.15 var(--display);letter-spacing:-.01em;overflow-wrap:anywhere}
+.dz .fp-sub{margin-top:6px;text-align:center;font:700 12px var(--body);letter-spacing:.1em;color:#76838d}
+.dz .fp-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px}
+.dz .fp-stats>div{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 4px;border:2px solid #2a323a;border-radius:18px;min-width:0}
+.dz .fp-stats b{font:700 20px var(--display);font-variant-numeric:tabular-nums;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz .fp-stats small{font:600 12px var(--body);color:#8b98a2}
+.dz .fp-ico{display:block;width:26px;height:26px}
+.dz .fp-ico svg{width:100%;height:100%;display:block}
+.dz .fp-acts{display:flex;gap:10px;margin-top:14px}
+.dz .fp-btn{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 10px;border:2px solid #2a323a;border-radius:16px;background:transparent;color:#ebe8ea;font:800 13px var(--display);letter-spacing:.05em;cursor:pointer;box-shadow:0 3px 0 #2a323a;-webkit-tap-highlight-color:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:transform .08s,box-shadow .08s}
+.dz .fp-btn:active{transform:translateY(3px);box-shadow:none}
+.dz .fp-btn svg{width:18px;height:18px;flex:none}
+.dz .fp-isfr{color:#7dd3a8;cursor:default}
+.dz .fp-gift{background:#c9b8c3;border-color:#c9b8c3;color:#1b1e25;box-shadow:0 3px 0 #8d7e88}
+.dz .fp-gift.armed{background:#2e8059;border-color:#2e8059;color:#fff;box-shadow:0 3px 0 #1d5a3c}
+.dz .fp-gift.busy{opacity:.7}
+.dz .fp-msg{margin-top:12px;padding:11px 14px;border-radius:14px;background:#2a323a;color:#ffb4b4;font:600 14px/1.35 var(--body);text-align:center}
+.dz .fp-msg.ok{color:#7dd3a8}
+.dz .fp-sec{margin:26px 0 10px;font:700 13px var(--body);letter-spacing:.1em;color:#76838d}
+.dz .fp-chart{display:block;width:100%;height:auto}
+.dz .fp-leg{display:flex;align-items:center;gap:12px;margin-top:12px;font:600 16px var(--body)}
+.dz .fp-leg b{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz .fp-leg em{font-style:normal;color:#8b98a2;font-variant-numeric:tabular-nums}
+.dz .fp-dot{width:14px;height:14px;border-radius:50%;flex:none}
+.dz .fp-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 10px}
+.dz .fp-grid>div{display:flex;align-items:center;gap:10px;min-width:0}
+.dz .fp-grid b{font:600 16px var(--body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz .fp-rm{display:block;width:100%;margin-top:30px;height:48px;border:0;background:transparent;color:#8b98a2;font:800 13px var(--display);letter-spacing:.08em;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.dz .fp-rm.armed{color:#ff6b6b}
+.dz .fp-err{margin-top:26px;text-align:center}
+.dz .fp-err p{margin:0 0 14px;font:600 15px/1.4 var(--body);color:#cfd2d6}
+.dz .fp-err .fp-btn{width:100%;flex:none}
+.dz .fp-sk{display:inline-block;width:46px;height:18px;border-radius:9px;background:linear-gradient(90deg,#232b33,#2f3943,#232b33);background-size:200% 100%;animation:fp-sk 1.2s linear infinite}
+div.fp-sk,.dz .fp-chart.fp-sk{display:block;width:100%;border-radius:14px}
+@keyframes fp-sk{to{background-position:-200% 0}}
+@media(prefers-reduced-motion:reduce){.dz .fp-sk{animation:none}}
+.dz .pf .fs>div[data-fid],.dz .lbrow[data-fid]{cursor:pointer}
+
 /* ---- PALETTE-GEN START (generated: paid colour themes repaint the light app; rerun gen_pal.py after CSS edits) ---- */
-html[data-palette="ocean"] .dz .n .ringi{background:#14303f}
-html[data-palette="ocean"] .dz .n .chip.on{background:#14303f}
-html[data-palette="ocean"] .dz .n .tg{background:#14303f}
-html[data-palette="ocean"] .dz .n .btn2{background:#14303f}
-html[data-palette="ocean"] .dz .n .btn2.mv{color:#14303f}
-html[data-palette="ocean"] .dz .n .seg span.on{background:#14303f}
-html[data-palette="ocean"] .dz .n .tag{color:#14303f}
-html[data-palette="ocean"] .dz .n .cb.ck{background:#14303f}
-html[data-palette="ocean"] .dz .n .fab{color:#14303f}
-html[data-palette="ocean"] .dz .n .nv.on{color:#14303f}
-html[data-palette="ocean"] .dz .n .snack{background:#14303f}
-html[data-palette="ocean"] .dz .n .tile3 div{background:#d6e8f1}
-html[data-palette="ocean"] .dz .n .input{background:#d6e8f1}
-html[data-palette="ocean"] .dz .n .th.sel{border-color:#14303f}
-html[data-palette="ocean"] .dz .n .ava{color:#14303f}
-html[data-palette="ocean"] .dz .n .lbrow.me{color:#14303f}
-html[data-palette="ocean"] .dz .n .card .chip.on{background:#14303f}
-html[data-palette="ocean"] .dz .n .ib{color:#14303f}
-html[data-palette="ocean"] .dz .qsheet{color:#14303f}
-html[data-palette="ocean"] .dz .qx{color:#14303f}
-html[data-palette="ocean"] .dz .qt{color:#14303f}
-html[data-palette="ocean"] .dz .qcancel{background:#14303f}
-html[data-palette="ocean"] .dz .qback{color:#14303f}
-html[data-palette="ocean"] .dz .qwk div.on{background:#14303f;color:#8fb9d3}
-html[data-palette="ocean"] .dz .qbars i.hi{background:#14303f}
-html[data-palette="ocean"] .dz .qdots i.on{box-shadow:0 0 0 3px var(--pg),0 0 0 5px #14303f}
-html[data-palette="ocean"] .dz .qstep button{color:#14303f}
-html[data-palette="ocean"] .dz .pf .hero{background:linear-gradient(#b9aab4,#8fb9d3)}
-html[data-palette="ocean"] .dz .pf .edit{border:2px solid #8fb9d3;color:#8fb9d3}
-html[data-palette="ocean"] .dz .qsh{color:#14303f}
-html[data-palette="ocean"] .dz .qcard .qhh{color:#8fb9d3}
-html[data-palette="ocean"] .dz .qsh .qsb button{color:#14303f}
-html[data-palette="ocean"] .dz .qsh .qsb button.prm{background:#14303f}
-html[data-palette="ocean"] .dz .rtg i{background:#8fb9d3}
-html[data-palette="ocean"] .dz .nx .xp i{background:#8fb9d3}
-html[data-palette="ocean"] .dz .nx .xsub{color:#8fb9d3}
-html[data-palette="ocean"] .dz .nx .xo.on{border-color:#8fb9d3}
-html[data-palette="ocean"] .dz .nx .xo.on .xk{border-color:#8fb9d3;color:#8fb9d3}
-html[data-palette="ocean"] .dz .nx .xslot{color:#8fb9d3}
-html[data-palette="ocean"] .dz .nx .xbtn{background:#8fb9d3}
-html[data-palette="ocean"] .dz .nx .xbtn.sec{color:#8fb9d3}
-html[data-palette="ocean"] .dz .nx .xin:focus{border-color:#8fb9d3}
-html[data-palette="ocean"] .dz .nx .xgo em{background:#8fb9d3}
-html[data-palette="ocean"] .dz .nx .xo.on .xgn{background:#8fb9d3}
-html[data-palette="ocean"] .dz .nx .xck.on{background:#8fb9d3;border-color:#8fb9d3}
-html[data-palette="ocean"] .dz .nx .xgo.on{border-color:var(--gc,#8fb9d3)}
-html[data-palette="ocean"] .dz .nx .xo.on .xgn{background:var(--gc,#8fb9d3)}
-html[data-palette="ocean"] .dz .nx .xbtn.fc{background:var(--gc,#8fb9d3)}
-html[data-palette="ocean"] .dz .nt .nib.on{border-color:#8fb9d3;color:#8fb9d3}
-html[data-palette="ocean"] .dz .nt .ntm{color:#8fb9d3}
-html[data-palette="ocean"] .dz .n .badge .lkc{border:2px solid var(--pg,#d6e8f1)}
-html[data-palette="ocean"] .dz .sh2-pill{background:#14303f}
-html[data-palette="ocean"] .dz .sh2-retry{background:#14303f}
-html[data-palette="ocean"] .dz .sh-btn{background:#14303f}
-html[data-palette="ocean"] .dz .fx-btn{color:#8fb9d3}
-html[data-palette="ocean"] .dz .fx-btn.on{color:#14303f}
-html[data-palette="ocean"] .dz .fx-btn .fx-lk{color:#8fb9d3}
-html[data-palette="ocean"] .dz .fx-link{color:#8fb9d3}
-html[data-palette="ocean"] .dz .fx-done{color:#14303f}
-html[data-palette="ocean"] .dz .fx-vol{color:#8fb9d3}
-html[data-palette="ocean"] .dz .fx-vol input{accent-color:#8fb9d3}
-html[data-palette="ocean"] .dz .sh2-go{background:#14303f}
-html[data-palette="ocean"] .dz .pl-tag{color:#14303f}
-html[data-palette="ocean"] .dz .pl-lki{color:#14303f}
-html[data-palette="forest"] .dz .n .ringi{background:#16301f}
-html[data-palette="forest"] .dz .n .chip.on{background:#16301f}
-html[data-palette="forest"] .dz .n .tg{background:#16301f}
-html[data-palette="forest"] .dz .n .btn2{background:#16301f}
-html[data-palette="forest"] .dz .n .btn2.mv{color:#16301f}
-html[data-palette="forest"] .dz .n .seg span.on{background:#16301f}
-html[data-palette="forest"] .dz .n .tag{color:#16301f}
-html[data-palette="forest"] .dz .n .cb.ck{background:#16301f}
-html[data-palette="forest"] .dz .n .fab{color:#16301f}
-html[data-palette="forest"] .dz .n .nv.on{color:#16301f}
-html[data-palette="forest"] .dz .n .snack{background:#16301f}
-html[data-palette="forest"] .dz .n .tile3 div{background:#dde8df}
-html[data-palette="forest"] .dz .n .input{background:#dde8df}
-html[data-palette="forest"] .dz .n .th.sel{border-color:#16301f}
-html[data-palette="forest"] .dz .n .ava{color:#16301f}
-html[data-palette="forest"] .dz .n .lbrow.me{color:#16301f}
-html[data-palette="forest"] .dz .n .card .chip.on{background:#16301f}
-html[data-palette="forest"] .dz .n .ib{color:#16301f}
-html[data-palette="forest"] .dz .qsheet{color:#16301f}
-html[data-palette="forest"] .dz .qx{color:#16301f}
-html[data-palette="forest"] .dz .qt{color:#16301f}
-html[data-palette="forest"] .dz .qcancel{background:#16301f}
-html[data-palette="forest"] .dz .qback{color:#16301f}
-html[data-palette="forest"] .dz .qwk div.on{background:#16301f;color:#93bda1}
-html[data-palette="forest"] .dz .qbars i.hi{background:#16301f}
-html[data-palette="forest"] .dz .qdots i.on{box-shadow:0 0 0 3px var(--pg),0 0 0 5px #16301f}
-html[data-palette="forest"] .dz .qstep button{color:#16301f}
-html[data-palette="forest"] .dz .pf .hero{background:linear-gradient(#b9aab4,#93bda1)}
-html[data-palette="forest"] .dz .pf .edit{border:2px solid #93bda1;color:#93bda1}
-html[data-palette="forest"] .dz .qsh{color:#16301f}
-html[data-palette="forest"] .dz .qcard .qhh{color:#93bda1}
-html[data-palette="forest"] .dz .qsh .qsb button{color:#16301f}
-html[data-palette="forest"] .dz .qsh .qsb button.prm{background:#16301f}
-html[data-palette="forest"] .dz .rtg i{background:#93bda1}
-html[data-palette="forest"] .dz .nx .xp i{background:#93bda1}
-html[data-palette="forest"] .dz .nx .xsub{color:#93bda1}
-html[data-palette="forest"] .dz .nx .xo.on{border-color:#93bda1}
-html[data-palette="forest"] .dz .nx .xo.on .xk{border-color:#93bda1;color:#93bda1}
-html[data-palette="forest"] .dz .nx .xslot{color:#93bda1}
-html[data-palette="forest"] .dz .nx .xbtn{background:#93bda1}
-html[data-palette="forest"] .dz .nx .xbtn.sec{color:#93bda1}
-html[data-palette="forest"] .dz .nx .xin:focus{border-color:#93bda1}
-html[data-palette="forest"] .dz .nx .xgo em{background:#93bda1}
-html[data-palette="forest"] .dz .nx .xo.on .xgn{background:#93bda1}
-html[data-palette="forest"] .dz .nx .xck.on{background:#93bda1;border-color:#93bda1}
-html[data-palette="forest"] .dz .nx .xgo.on{border-color:var(--gc,#93bda1)}
-html[data-palette="forest"] .dz .nx .xo.on .xgn{background:var(--gc,#93bda1)}
-html[data-palette="forest"] .dz .nx .xbtn.fc{background:var(--gc,#93bda1)}
-html[data-palette="forest"] .dz .nt .nib.on{border-color:#93bda1;color:#93bda1}
-html[data-palette="forest"] .dz .nt .ntm{color:#93bda1}
-html[data-palette="forest"] .dz .n .badge .lkc{border:2px solid var(--pg,#dde8df)}
-html[data-palette="forest"] .dz .sh2-pill{background:#16301f}
-html[data-palette="forest"] .dz .sh2-retry{background:#16301f}
-html[data-palette="forest"] .dz .sh-btn{background:#16301f}
-html[data-palette="forest"] .dz .fx-btn{color:#93bda1}
-html[data-palette="forest"] .dz .fx-btn.on{color:#16301f}
-html[data-palette="forest"] .dz .fx-btn .fx-lk{color:#93bda1}
-html[data-palette="forest"] .dz .fx-link{color:#93bda1}
-html[data-palette="forest"] .dz .fx-done{color:#16301f}
-html[data-palette="forest"] .dz .fx-vol{color:#93bda1}
-html[data-palette="forest"] .dz .fx-vol input{accent-color:#93bda1}
-html[data-palette="forest"] .dz .sh2-go{background:#16301f}
-html[data-palette="forest"] .dz .pl-tag{color:#16301f}
-html[data-palette="forest"] .dz .pl-lki{color:#16301f}
-html[data-palette="sunset"] .dz .n .ringi{background:#3b1d12}
-html[data-palette="sunset"] .dz .n .chip.on{background:#3b1d12}
-html[data-palette="sunset"] .dz .n .tg{background:#3b1d12}
-html[data-palette="sunset"] .dz .n .btn2{background:#3b1d12}
-html[data-palette="sunset"] .dz .n .btn2.mv{color:#3b1d12}
-html[data-palette="sunset"] .dz .n .seg span.on{background:#3b1d12}
-html[data-palette="sunset"] .dz .n .tag{color:#3b1d12}
-html[data-palette="sunset"] .dz .n .cb.ck{background:#3b1d12}
-html[data-palette="sunset"] .dz .n .fab{color:#3b1d12}
-html[data-palette="sunset"] .dz .n .nv.on{color:#3b1d12}
-html[data-palette="sunset"] .dz .n .snack{background:#3b1d12}
-html[data-palette="sunset"] .dz .n .tile3 div{background:#f1ddd5}
-html[data-palette="sunset"] .dz .n .input{background:#f1ddd5}
-html[data-palette="sunset"] .dz .n .th.sel{border-color:#3b1d12}
-html[data-palette="sunset"] .dz .n .ava{color:#3b1d12}
-html[data-palette="sunset"] .dz .n .lbrow.me{color:#3b1d12}
-html[data-palette="sunset"] .dz .n .card .chip.on{background:#3b1d12}
-html[data-palette="sunset"] .dz .n .ib{color:#3b1d12}
-html[data-palette="sunset"] .dz .qsheet{color:#3b1d12}
-html[data-palette="sunset"] .dz .qx{color:#3b1d12}
-html[data-palette="sunset"] .dz .qt{color:#3b1d12}
-html[data-palette="sunset"] .dz .qcancel{background:#3b1d12}
-html[data-palette="sunset"] .dz .qback{color:#3b1d12}
-html[data-palette="sunset"] .dz .qwk div.on{background:#3b1d12;color:#e0a78f}
-html[data-palette="sunset"] .dz .qbars i.hi{background:#3b1d12}
-html[data-palette="sunset"] .dz .qdots i.on{box-shadow:0 0 0 3px var(--pg),0 0 0 5px #3b1d12}
-html[data-palette="sunset"] .dz .qstep button{color:#3b1d12}
-html[data-palette="sunset"] .dz .pf .hero{background:linear-gradient(#b9aab4,#e0a78f)}
-html[data-palette="sunset"] .dz .pf .edit{border:2px solid #e0a78f;color:#e0a78f}
-html[data-palette="sunset"] .dz .qsh{color:#3b1d12}
-html[data-palette="sunset"] .dz .qcard .qhh{color:#e0a78f}
-html[data-palette="sunset"] .dz .qsh .qsb button{color:#3b1d12}
-html[data-palette="sunset"] .dz .qsh .qsb button.prm{background:#3b1d12}
-html[data-palette="sunset"] .dz .rtg i{background:#e0a78f}
-html[data-palette="sunset"] .dz .nx .xp i{background:#e0a78f}
-html[data-palette="sunset"] .dz .nx .xsub{color:#e0a78f}
-html[data-palette="sunset"] .dz .nx .xo.on{border-color:#e0a78f}
-html[data-palette="sunset"] .dz .nx .xo.on .xk{border-color:#e0a78f;color:#e0a78f}
-html[data-palette="sunset"] .dz .nx .xslot{color:#e0a78f}
-html[data-palette="sunset"] .dz .nx .xbtn{background:#e0a78f}
-html[data-palette="sunset"] .dz .nx .xbtn.sec{color:#e0a78f}
-html[data-palette="sunset"] .dz .nx .xin:focus{border-color:#e0a78f}
-html[data-palette="sunset"] .dz .nx .xgo em{background:#e0a78f}
-html[data-palette="sunset"] .dz .nx .xo.on .xgn{background:#e0a78f}
-html[data-palette="sunset"] .dz .nx .xck.on{background:#e0a78f;border-color:#e0a78f}
-html[data-palette="sunset"] .dz .nx .xgo.on{border-color:var(--gc,#e0a78f)}
-html[data-palette="sunset"] .dz .nx .xo.on .xgn{background:var(--gc,#e0a78f)}
-html[data-palette="sunset"] .dz .nx .xbtn.fc{background:var(--gc,#e0a78f)}
-html[data-palette="sunset"] .dz .nt .nib.on{border-color:#e0a78f;color:#e0a78f}
-html[data-palette="sunset"] .dz .nt .ntm{color:#e0a78f}
-html[data-palette="sunset"] .dz .n .badge .lkc{border:2px solid var(--pg,#f1ddd5)}
-html[data-palette="sunset"] .dz .sh2-pill{background:#3b1d12}
-html[data-palette="sunset"] .dz .sh2-retry{background:#3b1d12}
-html[data-palette="sunset"] .dz .sh-btn{background:#3b1d12}
-html[data-palette="sunset"] .dz .fx-btn{color:#e0a78f}
-html[data-palette="sunset"] .dz .fx-btn.on{color:#3b1d12}
-html[data-palette="sunset"] .dz .fx-btn .fx-lk{color:#e0a78f}
-html[data-palette="sunset"] .dz .fx-link{color:#e0a78f}
-html[data-palette="sunset"] .dz .fx-done{color:#3b1d12}
-html[data-palette="sunset"] .dz .fx-vol{color:#e0a78f}
-html[data-palette="sunset"] .dz .fx-vol input{accent-color:#e0a78f}
-html[data-palette="sunset"] .dz .sh2-go{background:#3b1d12}
-html[data-palette="sunset"] .dz .pl-tag{color:#3b1d12}
-html[data-palette="sunset"] .dz .pl-lki{color:#3b1d12}
-html[data-palette="mono"] .dz .n .ringi{background:#1e1e1e}
-html[data-palette="mono"] .dz .n .chip.on{background:#1e1e1e}
-html[data-palette="mono"] .dz .n .tg{background:#1e1e1e}
-html[data-palette="mono"] .dz .n .btn2{background:#1e1e1e}
-html[data-palette="mono"] .dz .n .btn2.mv{color:#1e1e1e}
-html[data-palette="mono"] .dz .n .seg span.on{background:#1e1e1e}
-html[data-palette="mono"] .dz .n .tag{color:#1e1e1e}
-html[data-palette="mono"] .dz .n .cb.ck{background:#1e1e1e}
-html[data-palette="mono"] .dz .n .fab{color:#1e1e1e}
-html[data-palette="mono"] .dz .n .nv.on{color:#1e1e1e}
-html[data-palette="mono"] .dz .n .snack{background:#1e1e1e}
-html[data-palette="mono"] .dz .n .tile3 div{background:#e6e6e6}
-html[data-palette="mono"] .dz .n .input{background:#e6e6e6}
-html[data-palette="mono"] .dz .n .th.sel{border-color:#1e1e1e}
-html[data-palette="mono"] .dz .n .ava{color:#1e1e1e}
-html[data-palette="mono"] .dz .n .lbrow.me{color:#1e1e1e}
-html[data-palette="mono"] .dz .n .card .chip.on{background:#1e1e1e}
-html[data-palette="mono"] .dz .n .ib{color:#1e1e1e}
-html[data-palette="mono"] .dz .qsheet{color:#1e1e1e}
-html[data-palette="mono"] .dz .qx{color:#1e1e1e}
-html[data-palette="mono"] .dz .qt{color:#1e1e1e}
-html[data-palette="mono"] .dz .qcancel{background:#1e1e1e}
-html[data-palette="mono"] .dz .qback{color:#1e1e1e}
-html[data-palette="mono"] .dz .qwk div.on{background:#1e1e1e;color:#a8a8a8}
-html[data-palette="mono"] .dz .qbars i.hi{background:#1e1e1e}
-html[data-palette="mono"] .dz .qdots i.on{box-shadow:0 0 0 3px var(--pg),0 0 0 5px #1e1e1e}
-html[data-palette="mono"] .dz .qstep button{color:#1e1e1e}
-html[data-palette="mono"] .dz .pf .hero{background:linear-gradient(#b9aab4,#a8a8a8)}
-html[data-palette="mono"] .dz .pf .edit{border:2px solid #a8a8a8;color:#a8a8a8}
-html[data-palette="mono"] .dz .qsh{color:#1e1e1e}
-html[data-palette="mono"] .dz .qcard .qhh{color:#a8a8a8}
-html[data-palette="mono"] .dz .qsh .qsb button{color:#1e1e1e}
-html[data-palette="mono"] .dz .qsh .qsb button.prm{background:#1e1e1e}
-html[data-palette="mono"] .dz .rtg i{background:#a8a8a8}
-html[data-palette="mono"] .dz .nx .xp i{background:#a8a8a8}
-html[data-palette="mono"] .dz .nx .xsub{color:#a8a8a8}
-html[data-palette="mono"] .dz .nx .xo.on{border-color:#a8a8a8}
-html[data-palette="mono"] .dz .nx .xo.on .xk{border-color:#a8a8a8;color:#a8a8a8}
-html[data-palette="mono"] .dz .nx .xslot{color:#a8a8a8}
-html[data-palette="mono"] .dz .nx .xbtn{background:#a8a8a8}
-html[data-palette="mono"] .dz .nx .xbtn.sec{color:#a8a8a8}
-html[data-palette="mono"] .dz .nx .xin:focus{border-color:#a8a8a8}
-html[data-palette="mono"] .dz .nx .xgo em{background:#a8a8a8}
-html[data-palette="mono"] .dz .nx .xo.on .xgn{background:#a8a8a8}
-html[data-palette="mono"] .dz .nx .xck.on{background:#a8a8a8;border-color:#a8a8a8}
-html[data-palette="mono"] .dz .nx .xgo.on{border-color:var(--gc,#a8a8a8)}
-html[data-palette="mono"] .dz .nx .xo.on .xgn{background:var(--gc,#a8a8a8)}
-html[data-palette="mono"] .dz .nx .xbtn.fc{background:var(--gc,#a8a8a8)}
-html[data-palette="mono"] .dz .nt .nib.on{border-color:#a8a8a8;color:#a8a8a8}
-html[data-palette="mono"] .dz .nt .ntm{color:#a8a8a8}
-html[data-palette="mono"] .dz .n .badge .lkc{border:2px solid var(--pg,#e6e6e6)}
-html[data-palette="mono"] .dz .sh2-pill{background:#1e1e1e}
-html[data-palette="mono"] .dz .sh2-retry{background:#1e1e1e}
-html[data-palette="mono"] .dz .sh-btn{background:#1e1e1e}
-html[data-palette="mono"] .dz .fx-btn{color:#a8a8a8}
-html[data-palette="mono"] .dz .fx-btn.on{color:#1e1e1e}
-html[data-palette="mono"] .dz .fx-btn .fx-lk{color:#a8a8a8}
-html[data-palette="mono"] .dz .fx-link{color:#a8a8a8}
-html[data-palette="mono"] .dz .fx-done{color:#1e1e1e}
-html[data-palette="mono"] .dz .fx-vol{color:#a8a8a8}
-html[data-palette="mono"] .dz .fx-vol input{accent-color:#a8a8a8}
-html[data-palette="mono"] .dz .sh2-go{background:#1e1e1e}
-html[data-palette="mono"] .dz .pl-tag{color:#1e1e1e}
-html[data-palette="mono"] .dz .pl-lki{color:#1e1e1e}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .ringi{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .chip.on{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .tg{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .btn2{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .btn2.mv{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .seg span.on{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .tag{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .cb.ck{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .fab{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nv.on{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .snack{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .tile3 div{background:#d6e8f1}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .input{background:#d6e8f1}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .th.sel{border-color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .ava{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .lbrow.me{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .card .chip.on{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .ib{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsheet{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qx{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qt{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qcancel{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qback{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qwk div.on{background:#14303f;color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qbars i.hi{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qdots i.on{box-shadow:0 0 0 3px var(--pg),0 0 0 5px #14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qstep button{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .pf .hero{background:linear-gradient(#b9aab4,#8fb9d3)}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .pf .edit{border:2px solid #8fb9d3;color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsh{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qcard .qhh{color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsh .qsb button{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .rtg i{background:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xp i{background:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xsub{color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xo.on{border-color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xo.on .xk{border-color:#8fb9d3;color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xslot{color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xbtn{background:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xbtn.sec{color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xin:focus{border-color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xgo em{background:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xo.on .xgn{background:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xck.on{background:#8fb9d3;border-color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xgo.on{border-color:var(--gc,#8fb9d3)}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xo.on .xgn{background:var(--gc,#8fb9d3)}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nx .xbtn.fc{background:var(--gc,#8fb9d3)}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nt .nib.on{border-color:#8fb9d3;color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .nt .ntm{color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .badge .lkc{border:2px solid var(--pg,#d6e8f1)}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .sh2-pill{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .sh2-retry{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .sh-btn{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .fx-btn{color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .fx-btn.on{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .fx-btn .fx-lk{color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .fx-link{color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .fx-done{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .fx-vol{color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .fx-vol input{accent-color:#8fb9d3}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .sh2-go{background:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .pl-tag{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .pl-lki{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .fp-gift{background:#8fb9d3;border-color:#8fb9d3;color:#14303f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .ringi{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .chip.on{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .tg{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .btn2{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .btn2.mv{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .seg span.on{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .tag{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .cb.ck{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .fab{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nv.on{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .snack{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .tile3 div{background:#dde8df}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .input{background:#dde8df}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .th.sel{border-color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .ava{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .lbrow.me{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .card .chip.on{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .ib{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qsheet{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qx{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qt{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qcancel{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qback{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qwk div.on{background:#16301f;color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qbars i.hi{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qdots i.on{box-shadow:0 0 0 3px var(--pg),0 0 0 5px #16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qstep button{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .pf .hero{background:linear-gradient(#b9aab4,#93bda1)}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .pf .edit{border:2px solid #93bda1;color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qsh{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qcard .qhh{color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qsh .qsb button{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .rtg i{background:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xp i{background:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xsub{color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xo.on{border-color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xo.on .xk{border-color:#93bda1;color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xslot{color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xbtn{background:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xbtn.sec{color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xin:focus{border-color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xgo em{background:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xo.on .xgn{background:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xck.on{background:#93bda1;border-color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xgo.on{border-color:var(--gc,#93bda1)}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xo.on .xgn{background:var(--gc,#93bda1)}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nx .xbtn.fc{background:var(--gc,#93bda1)}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nt .nib.on{border-color:#93bda1;color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .nt .ntm{color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .badge .lkc{border:2px solid var(--pg,#dde8df)}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .sh2-pill{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .sh2-retry{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .sh-btn{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .fx-btn{color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .fx-btn.on{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .fx-btn .fx-lk{color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .fx-link{color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .fx-done{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .fx-vol{color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .fx-vol input{accent-color:#93bda1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .sh2-go{background:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .pl-tag{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .pl-lki{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .fp-gift{background:#93bda1;border-color:#93bda1;color:#16301f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .ringi{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .chip.on{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .tg{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .btn2{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .btn2.mv{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .seg span.on{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .tag{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .cb.ck{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .fab{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nv.on{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .snack{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .tile3 div{background:#f1ddd5}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .input{background:#f1ddd5}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .th.sel{border-color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .ava{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .lbrow.me{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .card .chip.on{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .ib{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsheet{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qx{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qt{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qcancel{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qback{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qwk div.on{background:#3b1d12;color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qbars i.hi{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qdots i.on{box-shadow:0 0 0 3px var(--pg),0 0 0 5px #3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qstep button{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .pf .hero{background:linear-gradient(#b9aab4,#e0a78f)}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .pf .edit{border:2px solid #e0a78f;color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsh{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qcard .qhh{color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsh .qsb button{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .rtg i{background:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xp i{background:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xsub{color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xo.on{border-color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xo.on .xk{border-color:#e0a78f;color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xslot{color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xbtn{background:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xbtn.sec{color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xin:focus{border-color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xgo em{background:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xo.on .xgn{background:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xck.on{background:#e0a78f;border-color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xgo.on{border-color:var(--gc,#e0a78f)}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xo.on .xgn{background:var(--gc,#e0a78f)}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nx .xbtn.fc{background:var(--gc,#e0a78f)}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nt .nib.on{border-color:#e0a78f;color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .nt .ntm{color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .badge .lkc{border:2px solid var(--pg,#f1ddd5)}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .sh2-pill{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .sh2-retry{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .sh-btn{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .fx-btn{color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .fx-btn.on{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .fx-btn .fx-lk{color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .fx-link{color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .fx-done{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .fx-vol{color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .fx-vol input{accent-color:#e0a78f}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .sh2-go{background:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .pl-tag{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .pl-lki{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .fp-gift{background:#e0a78f;border-color:#e0a78f;color:#3b1d12}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .ringi{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .chip.on{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .tg{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .btn2{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .btn2.mv{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .seg span.on{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .tag{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .cb.ck{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .fab{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nv.on{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .snack{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .tile3 div{background:#e6e6e6}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .input{background:#e6e6e6}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .th.sel{border-color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .ava{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .lbrow.me{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .card .chip.on{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .ib{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qsheet{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qx{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qt{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qcancel{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qback{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qwk div.on{background:#1e1e1e;color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qbars i.hi{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qdots i.on{box-shadow:0 0 0 3px var(--pg),0 0 0 5px #1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qstep button{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .pf .hero{background:linear-gradient(#b9aab4,#a8a8a8)}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .pf .edit{border:2px solid #a8a8a8;color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qcard .qhh{color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh .qsb button{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .rtg i{background:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xp i{background:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xsub{color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xo.on{border-color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xo.on .xk{border-color:#a8a8a8;color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xslot{color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xbtn{background:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xbtn.sec{color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xin:focus{border-color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xgo em{background:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xo.on .xgn{background:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xck.on{background:#a8a8a8;border-color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xgo.on{border-color:var(--gc,#a8a8a8)}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xo.on .xgn{background:var(--gc,#a8a8a8)}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nx .xbtn.fc{background:var(--gc,#a8a8a8)}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nt .nib.on{border-color:#a8a8a8;color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .nt .ntm{color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .badge .lkc{border:2px solid var(--pg,#e6e6e6)}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .sh2-pill{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .sh2-retry{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .sh-btn{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .fx-btn{color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .fx-btn.on{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .fx-btn .fx-lk{color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .fx-link{color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .fx-done{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .fx-vol{color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .fx-vol input{accent-color:#a8a8a8}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .sh2-go{background:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .pl-tag{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .pl-lki{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .fp-gift{background:#a8a8a8;border-color:#a8a8a8;color:#1e1e1e}
 /* ---- PALETTE-GEN END ---- */

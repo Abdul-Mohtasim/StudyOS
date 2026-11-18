@@ -27,7 +27,7 @@ const sg=(a,on=0)=>`<div class="seg" data-seg>${a.map((x,i)=>`<span${i===on?' cl
 const lb=t=>`<div class="lbl">${t}</div>`;
 const inp=t=>`<div class="input" style="color:#1b1e25;font-weight:500">${t}</div>`;
 const row=(ic,t,s,r='')=>`<div class="qrow"><div class="qri">${QI[ic]}</div><div><b>${t}</b><small>${s}</small></div><span class="qrr">${r}</span></div>`;
-const BACK='<svg width="20" height="20" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const BACK='<svg width="20" height="20" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const qpage=(title,icon,sub,body,cta,kind,m)=>({t:title,d:sub,g:'Quick add pages',
  spec:{m:m||'Content rises in one block after another and the button slides up from the bottom.',h:'Light tap on arrival and on every choice. A medium tap and a success pattern when the item is saved.',s:'Soft pop on arrival, a tick on each choice, a check when saved. Saving opens Session complete, then Streak extended.'},
  html:()=>wrap(`<div class="pg"><div class="qh"><button class="qback" type="button" data-back aria-label="Back">${BACK}</button><div class="qhi">${QI[icon]}</div></div><div class="qpt">${title}</div><div class="qps">${sub}</div>${body}</div>${cta?`<button class="btn2 qcta" type="button" data-save="${kind}">${cta}</button>`:''}`),
