@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp" android:height="56dp"
+    android:viewportWidth="64" android:viewportHeight="64">
+    <path android:fillColor="#FF8A3D" android:pathData="M32,3 C21,17 15,27 15,38 C15,52 22,61 32,61 C42,61 49,52 49,38 C49,29 45,22 38,14 C39,24 33,27 29,21 C26,16 27,9 32,3 Z" />
+    <path android:fillColor="#FFC56B" android:pathData="M32,22 C27,30 24,36 24,42 C24,49 27,54 32,54 C37,54 40,49 40,42 C40,38 38,34 34,30 C34,35 31,36 29,33 C27,30 28,26 32,22 Z" />
+    <!-- raised worried eyebrows -->
+    <path android:fillColor="#00000000" android:strokeColor="#2B1A12" android:strokeWidth="2" android:strokeLineCap="round" android:pathData="M24,33 L29,35" />
+    <path android:fillColor="#00000000" android:strokeColor="#2B1A12" android:strokeWidth="2" android:strokeLineCap="round" android:pathData="M40,33 L35,35" />
+    <!-- small eyes -->
+    <path android:fillColor="#2B1A12" android:pathData="M27,39 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    <path android:fillColor="#2B1A12" android:pathData="M37,39 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    <!-- flat concerned mouth -->
+    <path android:fillColor="#00000000" android:strokeColor="#2B1A12" android:strokeWidth="2" android:strokeLineCap="round" android:pathData="M28,46 L36,46" />
+    <!-- sweat drop -->
+    <path android:fillColor="#86C5EC" android:pathData="M45,24 C43,28 43,31 45,31 C47,31 47,28 45,24 Z" />
+</vector>

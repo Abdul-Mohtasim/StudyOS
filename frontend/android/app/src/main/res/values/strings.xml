@@ -4,4 +4,10 @@
     <string name="title_activity_main">StudyOS</string>
     <string name="package_name">com.studyos.app</string>
     <string name="custom_url_scheme">com.studyos.app</string>
+
+    <!-- Widget pack -->
+    <string name="widget_streak_description">Your streak mascot: mood changes with how your studying is going today.</string>
+    <string name="widget_tasks_description">A quick look at today\'s remaining tasks.</string>
+    <string name="widget_week_description">How many minutes you\'ve studied each day this week.</string>
+    <string name="widget_timer_description">One tap to jump straight into a focus session.</string>
 </resources>

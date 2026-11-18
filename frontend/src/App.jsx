@@ -122,6 +122,7 @@ import { Contacts } from "@capacitor-community/contacts";
 import "./skeleton.css";
 import { ForgotPasswordModal, EmailSettingsCard, EmailNoteButton, EmailFlashcardsButton } from "./EmailFeatures";
 import { loadReminderPrefs, saveReminderPrefs, syncReminders, reminderPermission, requestReminderPermission } from "./reminders";
+import { syncWidgets } from "./widgets";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { setLanguage, getLanguage } from "./i18n";
 import {
@@ -2797,6 +2798,38 @@ useEffect(() => {
     saveReminderPrefs(reminderPrefs);
     syncReminders(reminderPrefs, { streak: studyStreak, studiedToday });
   }, [authToken, reminderPrefs, studyStreak, studiedToday]);
+
+  // Home-screen widget pack: push the latest streak/tasks/progress/theme to the native
+  // widgets whenever any of them change, so a glance at the home screen is never stale.
+  // A rising completedCount also flags "a task just finished" so the mascot goes Excited
+  // right away instead of waiting for the next sync.
+  const previousCompletedCountRef = useRef(completedCount);
+  useEffect(() => {
+    if (!authToken) return;
+    const taskJustCompleted = completedCount > previousCompletedCountRef.current;
+    previousCompletedCountRef.current = completedCount;
+    syncWidgets(
+      {
+        streak: studyStreak,
+        bestStreak,
+        studiedToday,
+        dailyGoalMinutes,
+        todayFocusMinutes,
+        dailyGoalPercent,
+        tasks,
+        gems: gemsServer ?? 0,
+        settingsTheme,
+        activePalette,
+        isRunning,
+        focusSessions,
+      },
+      { taskJustCompleted }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    authToken, studyStreak, bestStreak, studiedToday, dailyGoalMinutes, todayFocusMinutes,
+    dailyGoalPercent, completedCount, tasks, gemsServer, settingsTheme, activePalette, isRunning,
+  ]);
 
   // The best streak ever reached on this phone, so streak badges stay earned after a streak ends.
   useEffect(() => {

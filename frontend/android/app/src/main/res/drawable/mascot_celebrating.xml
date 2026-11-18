@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp" android:height="56dp"
+    android:viewportWidth="64" android:viewportHeight="64">
+    <path android:fillColor="#FF8A3D" android:pathData="M32,3 C21,17 15,27 15,38 C15,52 22,61 32,61 C42,61 49,52 49,38 C49,29 45,22 38,14 C39,24 33,27 29,21 C26,16 27,9 32,3 Z" />
+    <path android:fillColor="#FFC56B" android:pathData="M32,22 C27,30 24,36 24,42 C24,49 27,54 32,54 C37,54 40,49 40,42 C40,38 38,34 34,30 C34,35 31,36 29,33 C27,30 28,26 32,22 Z" />
+    <!-- starburst eyes -->
+    <path android:fillColor="#2B1A12" android:pathData="M27,34 L28.4,37.6 L32,39 L28.4,40.4 L27,44 L25.6,40.4 L22,39 L25.6,37.6 Z" />
+    <path android:fillColor="#2B1A12" android:pathData="M37,34 L38.4,37.6 L42,39 L38.4,40.4 L37,44 L35.6,40.4 L32,39 L35.6,37.6 Z" />
+    <!-- big open smile -->
+    <path android:fillColor="#2B1A12" android:pathData="M25,44 C25,50 39,50 39,44 C39,48 25,48 25,44 Z" />
+    <!-- confetti -->
+    <path android:fillColor="#E4585F" android:pathData="M6,8 L9,8 L9,11 L6,11 Z" android:fillType="evenOdd"/>
+    <path android:fillColor="#5BA886" android:pathData="M56,6 L59,6 L59,9 L56,9 Z" />
+    <path android:fillColor="#86C5EC" android:pathData="M4,30 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    <path android:fillColor="#E1A63B" android:pathData="M60,34 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+    <path android:fillColor="#FFE9A8" android:pathData="M48,6 L49.3,9 L52.3,10.3 L49.3,11.6 L48,14.6 L46.7,11.6 L43.7,10.3 L46.7,9 Z" />
+    <path android:fillColor="#FFE9A8" android:pathData="M14,10 L15,12.3 L17.3,13.3 L15,14.3 L14,16.6 L13,14.3 L10.7,13.3 L13,12.3 Z" />
+</vector>

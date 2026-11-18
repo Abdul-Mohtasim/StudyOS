@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp" android:height="56dp"
+    android:viewportWidth="64" android:viewportHeight="64">
+    <path android:fillColor="#FF8A3D" android:pathData="M32,3 C21,17 15,27 15,38 C15,52 22,61 32,61 C42,61 49,52 49,38 C49,29 45,22 38,14 C39,24 33,27 29,21 C26,16 27,9 32,3 Z" />
+    <path android:fillColor="#FFC56B" android:pathData="M32,22 C27,30 24,36 24,42 C24,49 27,54 32,54 C37,54 40,49 40,42 C40,38 38,34 34,30 C34,35 31,36 29,33 C27,30 28,26 32,22 Z" />
+    <!-- alert, encouraging eyes -->
+    <path android:fillColor="#2B1A12" android:pathData="M27,38 m-2.6,0 a2.6,2.6 0 1,0 5.2,0 a2.6,2.6 0 1,0 -5.2,0" />
+    <path android:fillColor="#2B1A12" android:pathData="M37,38 m-2.6,0 a2.6,2.6 0 1,0 5.2,0 a2.6,2.6 0 1,0 -5.2,0" />
+    <!-- small open encouraging mouth -->
+    <path android:fillColor="#00000000" android:strokeColor="#2B1A12" android:strokeWidth="2" android:strokeLineCap="round" android:pathData="M28,45 Q32,48 36,45" />
+    <!-- waving hand -->
+    <path android:fillColor="#FFC56B" android:pathData="M48,32 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFC56B" android:strokeWidth="2" android:strokeLineCap="round" android:pathData="M54,22 Q57,26 54,30" />
+    <path android:fillColor="#00000000" android:strokeColor="#FFC56B" android:strokeWidth="2" android:strokeLineCap="round" android:pathData="M58,26 Q60,30 57,33" />
+</vector>
