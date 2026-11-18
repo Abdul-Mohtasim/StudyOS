@@ -555,6 +555,14 @@ const NSC=[
 /* ================= REAL DATA + ACTIONS (the design screens above are used as drawn) ================= */
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const wrapD=h=>wrap(h,!!D.dark);
+/* Always-dark pages (Focus, Profile, Settings, Friends...) follow the light theme: add .lt and swap hard-coded dark inline colours for theme variables. */
+const LT_MAP={'#ebe8ea':'--ink','#f4f2f3':'--ink','#f5f5f5':'--ink','#d4d4d4':'--ink','#cfd2d6':'--ink','#bfc4c9':'--ink','#c9c9cc':'--ink','#8b98a2':'--mut','#9aa6b0':'--mut','#9aa3ab':'--mut','#c9b8c3':'--mv','#181b22':'--pg','#0d1114':'--pg','#0b0e11':'--pg','#161b21':'--pg','#2d3740':'--chip','#2f3942':'--chip','#3a454e':'--chip','#1f252d':'--card','#262e36':'--card','#2a323a':'--card'};
+const ltFix=h=>{
+  if(D.dark||typeof h!=='string'||h.indexOf('class="scr n nd')<0||h.indexOf('class="scr n nd')>8)return h;
+  h=h.replace('class="scr n nd','class="scr n nd lt').replace(' style="--pg:#181b22"','');
+  return h.replace(/style="([^"]*)"/g,(m,v)=>'style="'+v.replace(/#[0-9a-fA-F]{6}\b/g,x=>LT_MAP[x.toLowerCase()]?'var('+LT_MAP[x.toLowerCase()]+')':x)+'"');
+};
+
 // Shop features this account owns (Weekly Report Plus = 'report', Exam Mode Pro = 'exam'). Also true with no connection, from the saved list.
 const hasPro=k=>!!(DZ.owns&&DZ.owns(k))&&!D.guest;
 const LOCKI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
@@ -904,7 +912,7 @@ const focusHtml=()=>{
   const run=F.running,idleFocus=isIdle()&&F.mode==='focus',pct=F.left/F.total;
   return wrap(`<div class="pg" style="padding-bottom:0"><div style="position:relative;height:40px">${run?`<span data-fstop style="position:absolute;left:8px;top:6px;color:#c9c9cc">${ICO.x}</span>`:fxBtn('plus',idleFocus)}${fxBtn('sound',true)}<span class="tag" data-fsubj style="position:absolute;left:50%;transform:translateX(-50%);top:2px;padding:9px 18px;border-radius:16px;font-size:14px;font-weight:700;white-space:nowrap;max-width:calc(100% - 128px);overflow:hidden;text-overflow:ellipsis">${esc(F.subj||'No subject')}</span></div>
 <div style="text-align:center;font:700 13px var(--body);letter-spacing:.1em;color:#bfc4c9;margin-top:22px">${MODES[F.mode].toUpperCase()}</div>
-<div class="ring2" style="margin:20px auto 0;width:250px;height:250px">${ring(250,24,pct,'#c9b8c3','#2d3740')}<div class="c" style="font-size:62px" id="fct">${fmtT(F.left)}</div></div>
+<div class="ring2" style="margin:20px auto 0;width:250px;height:250px">${ring(250,24,pct,D.dark?'#c9b8c3':'var(--mv)',D.dark?'#2d3740':'var(--chip)')}<div class="c" style="font-size:62px" id="fct">${fmtT(F.left)}</div></div>
 <div style="text-align:center;font:600 15px var(--body);color:#cfd2d6;margin-top:30px">Round ${F.round} of ${roundsN()} · ${nextText()}</div>
 ${idleFocus?(F.edit?`<div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:20px"><input data-fin type="number" inputmode="numeric" min="1" max="180" value="${F.len}" aria-label="Minutes" style="width:96px;height:44px;border-radius:18px;border:2px solid var(--mv);background:#161b21;color:#ebe8ea;font:700 20px var(--body);text-align:center;outline:0"><span style="font:600 15px var(--body);color:#cfd2d6">min</span><span class="chip" data-fset style="border-radius:18px;height:44px;padding:0 18px;font-size:15px;background:var(--mv);color:#1b1e25">Set</span></div><div style="text-align:center;font:400 12.5px var(--body);color:#9aa3ab;margin-top:8px">Choose 1 to 180 minutes</div>`:`<div style="display:flex;justify-content:center;gap:8px;margin-top:20px;flex-wrap:wrap">${[15,25,45,60].map(m=>`<span class="chip" data-flen="${m}" style="border-radius:18px;height:40px;gap:8px;padding:0 14px;font-size:14px;color:#ebe8ea${F.len===m?';background:var(--mv);color:#1b1e25':''}">${m} min</span>`).join('')}<span class="chip" data-fcustom style="border-radius:18px;height:40px;gap:8px;padding:0 14px;font-size:14px;color:#ebe8ea${[15,25,45,60].includes(F.len)?'':';background:var(--mv);color:#1b1e25'}">${[15,25,45,60].includes(F.len)?'Custom':F.len+' min'}</span></div>`):''}</div>
 <div class="fbtns" style="position:absolute;left:22px;right:22px;bottom:${run?22:104}px;display:flex;gap:10px">${isIdle()?'':`<div class="btn2 dk2" data-fstop style="flex:0 0 104px;height:54px;border-radius:26px">Stop</div>`}<div class="btn2 mv" data-fgo style="flex:1;height:54px;border-radius:26px">${run?'Pause':(isIdle()?'Start':'Resume')}</div></div>${run?'':nav('focus')}${fxSheet()}`,true);
@@ -1893,7 +1901,7 @@ function go(i,soft){
   if(i<0)return;
   RUN++;timers.forEach(clearTimeout);timers.length=0;
   const keepMore=!!soft&&MOREON;MOREON=false;MOREPREV=null;MOREADDED=false;
-  CUR=i;const H0=SCREENS[i].html();stage.innerHTML=H0;LASTH=H0;LASTI=i;R=stage.firstElementChild;
+  CUR=i;const H0=ltFix(SCREENS[i].html());stage.innerHTML=H0;LASTH=H0;LASTI=i;R=stage.firstElementChild;
   S.mute=false;SOFT=!!soft;
   SCREENS[i].play();SOFT=false;
   if(keepMore)openMore(true);
