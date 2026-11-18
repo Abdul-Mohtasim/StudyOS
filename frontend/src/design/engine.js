@@ -1583,13 +1583,31 @@ ${row(I.eye,'Contacts','If you choose Find friends from contacts, email addresse
 
   /* Themes */
   set('Themes',{d:'Light or dark',
-    html:()=>{const cur=D.dark?'dark':'light';return scr('Themes',`<div class="sh1" style="margin-top:6px">Choose your look</div><div class="sh2">Your choice is saved to your account.</div>
-<div class="sgrp" style="margin-top:14px">${[['light','Light','Bright and clean'],['dark','Dark','Easy on the eyes at night']].map(([k,n,s])=>`<div class="sit rd${k===cur?' on':''}" data-theme="${k}"><div><span>${n}</span><small>${s}</small></div><span class="rad"></span></div>`).join('')}</div>`)},
+    html:()=>{
+      const cur=D.palette?D.palette:(D.dark?'dark':'light');
+      const owned=(D.shop&&D.shop.owned)||[];
+      const price=k=>(D.shop&&D.shop.prices&&D.shop.prices[k])||250;
+      const PAID=[['theme_ocean','Ocean','#d6e8f1','#2b6082'],['theme_forest','Forest','#dde8df','#2f6b4a'],['theme_sunset','Sunset','#f1ddd5','#b4532f'],['theme_mono','Mono','#e6e6e6','#1e1e1e']];
+      const sw=(bg,ac)=>`<span class="thsw" style="background:${bg}"><i style="background:${ac}"></i></span>`;
+      const LOCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>';
+      const free=[['light','Light','Bright and clean','#e1e0e2','#1b1e25'],['dark','Dark','Easy on the eyes at night','#11161b','#c9b8c3']].map(([k,n,t,bg,ac])=>`<div class="sit rd${k===cur?' on':''}" data-theme="${k}" role="button">${sw(bg,ac)}<div><span class="thn">${n}</span><small>${t}</small></div><span class="rad"></span></div>`).join('');
+      const paid=PAID.map(([k,n,bg,ac])=>owned.includes(k)
+        ?`<div class="sit rd${k===cur?' on':''}" data-theme="${k}" role="button">${sw(bg,ac)}<div><span class="thn">${n}</span><small>Bought · tap to use</small></div><span class="rad"></span></div>`
+        :`<div class="sit rd lck" data-lock="${k}" role="button" aria-label="${n} theme is locked. Open the Gem Shop to buy it.">${sw(bg,ac)}<div><span class="thn">${n}</span><small>Locked · ${price(k)} gems</small></div><span class="lk">${LOCK}</span></div>`).join('');
+      return scr('Themes',`<div class="sh1" style="margin-top:6px">Choose your look</div><div class="sh2">Your choice is saved to your account.</div>
+<div class="sgrp" style="margin-top:14px">${free}</div>
+<div class="sh2" style="margin-top:18px;text-align:left;font-weight:700;letter-spacing:.08em;font-size:12.5px">COLOUR THEMES</div>
+<div class="sgrp" style="margin-top:8px">${paid}</div>
+<div class="sh2" style="margin-top:12px">Buy a colour theme in the Gem Shop and it appears here, ready to use.</div>`)},
     play(){S.mute=false;rise();
       R.onclick=e=>{
         if(e.target.closest('[data-back]')){hap('light');go(IDX('Settings'));return}
+        const lk=e.target.closest('[data-lock]');
+        if(lk&&R.contains(lk)){hap('light');if(DZ.openShop)DZ.openShop('Themes');return}
         const t=e.target.closest('[data-theme]');if(!t||t===R||!R.contains(t))return;
-        $$('[data-theme]',R).forEach(x=>x.classList.toggle('on',x===t));hap('medium');if(CB.setTheme)CB.setTheme(t.dataset.theme)}}});
+        const tk=t.dataset.theme;
+        $$('[data-theme]',R).forEach(x=>x.classList.toggle('on',x===t));hap('medium');
+        if(tk.indexOf('theme_')===0){if(CB.setPalette)CB.setPalette(tk,true)}else{if(CB.setTheme)CB.setTheme(tk)}}}});
 
   /* Delete account + in-app Terms and Privacy Policy */
   {
