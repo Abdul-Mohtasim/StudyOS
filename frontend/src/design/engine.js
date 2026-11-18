@@ -33,6 +33,7 @@ const D=opts.data||{};   // live data from the app (see App.jsx)
 const CB=opts.actions||{};
 
 /* ---------- icons ---------- */
+const FLAME_IC='<svg viewBox="0 0 24 24"><path d="M12 2c1 3.5 5 5.6 5 10.2A5 5 0 0 1 12 17.5a5 5 0 0 1-5-5.3c0-2 1-3.4 2.2-4.7.2 1.6 1 2.4 1.8 2.6C10.7 7.3 11 4.6 12 2z" fill="#ff7a45"/><path d="M12 22a4 4 0 0 1-4-4c0-1.8 1.6-3 4-5 2.4 2 4 3.2 4 5a4 4 0 0 1-4 4z" fill="#ffb347"/></svg>';
 const CUBE='<svg viewBox="40 0 385 466"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>';
 const BOLT='<svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="#e8a83a"/></svg>';
 const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
@@ -702,8 +703,8 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
     const a=h.indexOf('<div class="sec">Friend streaks</div>');
     const z=h.indexOf('</div></div><div class="pfbar"');
     if(a>0&&z>a){
-      const list=fr.slice(0,5).map(f=>`<div data-fid="${esc(f.id)}" role="button" aria-label="Open ${esc(f.name)}'s profile" style="cursor:pointer"><svg class="fa" viewBox="0 0 52 52"><circle cx="26" cy="26" r="26" fill="${colOf(f.name)}"/><text x="26" y="36" text-anchor="middle" font-size="30" font-weight="700" fill="#2a1d1d" font-family="Space Grotesk,Inter,Arial,sans-serif">${esc((f.name||'?').charAt(0).toUpperCase())}</text></svg><div class="cnt"><span style="width:16px;height:16px;display:block">${CUBE}</span>${f.gems||0}</div></div>`).join('');
-      h=h.slice(0,a)+'<div class="sec">Friends</div>'+((D.incoming||[]).length?`<div class="chip" data-reqs style="margin-bottom:12px;background:#c9b8c3;color:#1b1e25">${(D.incoming||[]).length} friend ${(D.incoming||[]).length===1?'request':'requests'} · View</div>`:'')+(fr.length?`<div class="fs" style="gap:14px;justify-content:flex-start">${list}</div>`:`<div style="font:600 14px var(--body);color:#8b98a2">Add friends to see them here.</div>`)+h.slice(z);
+      const list=fr.slice(0,5).map(f=>`<div data-fid="${esc(f.id)}" role="button" aria-label="Open ${esc(f.name)}'s profile" style="cursor:pointer"><svg class="fa" viewBox="0 0 52 52"><circle cx="26" cy="26" r="26" fill="${colOf(f.name)}"/><text x="26" y="36" text-anchor="middle" font-size="30" font-weight="700" fill="#2a1d1d" font-family="Space Grotesk,Inter,Arial,sans-serif">${esc((f.name||'?').charAt(0).toUpperCase())}</text></svg><div class="cnt"><span style="width:16px;height:16px;display:block" aria-hidden="true">${FLAME_IC}</span><span aria-label="${f.streak||0} day streak">${f.streak||0}</span></div></div>`).join('');
+      h=h.slice(0,a)+'<div class="sec">Friend streaks</div>'+((D.incoming||[]).length?`<div class="chip" data-reqs style="margin-bottom:12px;background:#c9b8c3;color:#1b1e25">${(D.incoming||[]).length} friend ${(D.incoming||[]).length===1?'request':'requests'} · View</div>`:'')+(fr.length?`<div class="fs" style="gap:14px;justify-content:flex-start">${list}</div>`:`<div style="font:600 14px var(--body);color:#8b98a2">Add friends to see them here.</div>`)+h.slice(z);
     }
     return h;
   };

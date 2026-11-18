@@ -988,6 +988,82 @@ div.fp-sk,.dz .fp-chart.fp-sk{display:block;width:100%;border-radius:14px}
 @media(prefers-reduced-motion:reduce){.dz .fp-sk{animation:none}}
 .dz .pf .fs>div[data-fid],.dz .lbrow[data-fid]{cursor:pointer}
 
+/* ---- Quick add sheets follow the theme (dark mode and the paid colour themes) ---- */
+.dz .scr.nd .qsheet,.dz .scr.nd .qsh{background:#1a2027;color:#ebe8ea}
+.dz .scr.nd .qsheet .qhd,.dz .scr.nd .qsh .qhd{background:#3a444d}
+.dz .scr.nd .qsheet .qh1,.dz .scr.nd .qsh h2{color:#ebe8ea}
+.dz .scr.nd .qsheet .qh2,.dz .scr.nd .qsh p,.dz .scr.nd .qsh .cl{color:#9aa6b0}
+.dz .scr.nd .qx{background:#262e36;color:#ebe8ea}
+.dz .scr.nd .qt{background:#262e36;color:#ebe8ea;box-shadow:0 6px 12px -8px rgba(0,0,0,.35)}
+.dz .scr.nd .qban{background:#2b2a38}
+.dz .scr.nd .qban b{color:#ebe8ea}
+.dz .scr.nd .qban span{color:#9aa6b0}
+.dz .scr.nd .qcancel{background:#ebe8ea;color:#0d1114}
+.dz .scr.nd .qsh .qsb button{background:#262e36;color:#ebe8ea}
+.dz .scr.nd .qsh .qsb button.prm{background:#ebe8ea;color:#0d1114}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsheet,html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsh{background:#eaf3fb;color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsheet .qhd,html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsh .qhd{background:#b7cfdd}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsheet .qh1,html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsh h2{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsheet .qh2,html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsh p,html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsh .cl{color:#44677c}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qx{background:#c4dbe8;color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qt{background:#c4dbe8;color:#14303f;box-shadow:0 6px 12px -8px rgba(0,0,0,.35)}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qban{background:color-mix(in srgb,#8fb9d3 45%,#eaf3fb)}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qban b{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qban span{color:#44677c}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qcancel{background:#14303f;color:#eaf3fb}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsh .qsb button{background:#c4dbe8;color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#14303f;color:#eaf3fb}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qsheet,html[data-palette="forest"] .dz .scr.n:not(.nd) .qsh{background:#eaf4ec;color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qsheet .qhd,html[data-palette="forest"] .dz .scr.n:not(.nd) .qsh .qhd{background:#bcd0c1}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qsheet .qh1,html[data-palette="forest"] .dz .scr.n:not(.nd) .qsh h2{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qsheet .qh2,html[data-palette="forest"] .dz .scr.n:not(.nd) .qsh p,html[data-palette="forest"] .dz .scr.n:not(.nd) .qsh .cl{color:#46654f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qx{background:#cbdccf;color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qt{background:#cbdccf;color:#16301f;box-shadow:0 6px 12px -8px rgba(0,0,0,.35)}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qban{background:color-mix(in srgb,#93bda1 45%,#eaf4ec)}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qban b{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qban span{color:#46654f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qcancel{background:#16301f;color:#eaf4ec}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qsh .qsb button{background:#cbdccf;color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#16301f;color:#eaf4ec}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsheet,html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsh{background:#f9ece6;color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsheet .qhd,html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsh .qhd{background:#dcbfb3}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsheet .qh1,html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsh h2{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsheet .qh2,html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsh p,html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsh .cl{color:#7a5446}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qx{background:#e6cbc0;color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qt{background:#e6cbc0;color:#3b1d12;box-shadow:0 6px 12px -8px rgba(0,0,0,.35)}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qban{background:color-mix(in srgb,#e0a78f 45%,#f9ece6)}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qban b{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qban span{color:#7a5446}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qcancel{background:#3b1d12;color:#f9ece6}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsh .qsb button{background:#e6cbc0;color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#3b1d12;color:#f9ece6}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qsheet,html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh{background:#f5f5f5;color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qsheet .qhd,html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh .qhd{background:#c4c4c4}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qsheet .qh1,html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh h2{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qsheet .qh2,html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh p,html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh .cl{color:#5c5c5c}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qx{background:#d4d4d4;color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qt{background:#d4d4d4;color:#1e1e1e;box-shadow:0 6px 12px -8px rgba(0,0,0,.35)}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qban{background:color-mix(in srgb,#a8a8a8 45%,#f5f5f5)}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qban b{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qban span{color:#5c5c5c}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qcancel{background:#1e1e1e;color:#f5f5f5}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh .qsb button{background:#d4d4d4;color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#1e1e1e;color:#f5f5f5}
+
+/* Friend profile: text colours are set here, so no theme can make them dark on dark */
+.dz .fp{--ink:#ebe8ea;--mut:#8b98a2;color:#ebe8ea}
+.dz .fp .fp-name,.dz .fp .fp-stats b,.dz .fp .fp-leg b,.dz .fp .fp-grid b{color:#ebe8ea}
+.dz .fp .fp-leg em,.dz .fp .fp-stats small{color:#9aa6b0}
+.dz .pf .fs .cnt .fl{display:block;width:18px;height:18px}
+
+/* Friend profile text: always light on this dark page, whatever theme or global heading colour is active */
+.dz .fp,.dz .fp h1,.dz .fp b,.dz .fp .fp-name,.dz .fp .fp-stats b,.dz .fp .fp-leg b,.dz .fp .fp-grid b{color:#ebe8ea}
+.dz .fp .fp-leg em,.dz .fp .fp-stats small{color:#9aa6b0}
+.dz .fp .fp-sub,.dz .fp .fp-sec{color:#8b98a2}
+.dz .fp .fp-isfr{color:#7dd3a8}
+.dz .fp .fp-gift{color:#1b1e25}.dz .fp .fp-gift.armed{color:#fff}
+.dz .fp .fp-rm{color:#9aa6b0}.dz .fp .fp-rm.armed{color:#ff6b6b}
+
 /* ---- PALETTE-GEN START (generated: paid colour themes repaint the light app; rerun gen_pal.py after CSS edits) ---- */
 html[data-palette="ocean"] .dz .scr.n:not(.nd) .ringi{background:#14303f}
 html[data-palette="ocean"] .dz .scr.n:not(.nd) .chip.on{background:#14303f}
@@ -1054,6 +1130,7 @@ html[data-palette="ocean"] .dz .scr.n:not(.nd) .sh2-go{background:#14303f}
 html[data-palette="ocean"] .dz .scr.n:not(.nd) .pl-tag{color:#14303f}
 html[data-palette="ocean"] .dz .scr.n:not(.nd) .pl-lki{color:#14303f}
 html[data-palette="ocean"] .dz .scr.n:not(.nd) .fp-gift{background:#8fb9d3;border-color:#8fb9d3;color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .fp .fp-gift{color:#14303f}
 html[data-palette="forest"] .dz .scr.n:not(.nd) .ringi{background:#16301f}
 html[data-palette="forest"] .dz .scr.n:not(.nd) .chip.on{background:#16301f}
 html[data-palette="forest"] .dz .scr.n:not(.nd) .tg{background:#16301f}
@@ -1119,6 +1196,7 @@ html[data-palette="forest"] .dz .scr.n:not(.nd) .sh2-go{background:#16301f}
 html[data-palette="forest"] .dz .scr.n:not(.nd) .pl-tag{color:#16301f}
 html[data-palette="forest"] .dz .scr.n:not(.nd) .pl-lki{color:#16301f}
 html[data-palette="forest"] .dz .scr.n:not(.nd) .fp-gift{background:#93bda1;border-color:#93bda1;color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .fp .fp-gift{color:#16301f}
 html[data-palette="sunset"] .dz .scr.n:not(.nd) .ringi{background:#3b1d12}
 html[data-palette="sunset"] .dz .scr.n:not(.nd) .chip.on{background:#3b1d12}
 html[data-palette="sunset"] .dz .scr.n:not(.nd) .tg{background:#3b1d12}
@@ -1184,6 +1262,7 @@ html[data-palette="sunset"] .dz .scr.n:not(.nd) .sh2-go{background:#3b1d12}
 html[data-palette="sunset"] .dz .scr.n:not(.nd) .pl-tag{color:#3b1d12}
 html[data-palette="sunset"] .dz .scr.n:not(.nd) .pl-lki{color:#3b1d12}
 html[data-palette="sunset"] .dz .scr.n:not(.nd) .fp-gift{background:#e0a78f;border-color:#e0a78f;color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .fp .fp-gift{color:#3b1d12}
 html[data-palette="mono"] .dz .scr.n:not(.nd) .ringi{background:#1e1e1e}
 html[data-palette="mono"] .dz .scr.n:not(.nd) .chip.on{background:#1e1e1e}
 html[data-palette="mono"] .dz .scr.n:not(.nd) .tg{background:#1e1e1e}
@@ -1249,4 +1328,5 @@ html[data-palette="mono"] .dz .scr.n:not(.nd) .sh2-go{background:#1e1e1e}
 html[data-palette="mono"] .dz .scr.n:not(.nd) .pl-tag{color:#1e1e1e}
 html[data-palette="mono"] .dz .scr.n:not(.nd) .pl-lki{color:#1e1e1e}
 html[data-palette="mono"] .dz .scr.n:not(.nd) .fp-gift{background:#a8a8a8;border-color:#a8a8a8;color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .fp .fp-gift{color:#1e1e1e}
 /* ---- PALETTE-GEN END ---- */

@@ -93,6 +93,36 @@ router.get("/", async (req, res) => {
       ...friends.map((u) => ({ id: u.id, name: u.name, minutes: minutesOf.get(u.id) || 0, me: false })),
     ].sort((x, y) => y.minutes - x.minutes);
 
+    // Day streak of every friend (shown under their picture on the Profile page).
+    try {
+      const friendIds = friends.map((u) => new mongoose.Types.ObjectId(u.id));
+      if (friendIds.length) {
+        const since90 = new Date(Date.now() - 90 * DAY_MS);
+        const [sessionDays, taskDays, covered] = await Promise.all([
+          FocusSession.aggregate([
+            { $match: { student: { $in: friendIds }, completedAt: { $gte: since90 } } },
+            { $group: { _id: { s: "$student", d: { $dateToString: { format: "%Y-%m-%d", date: "$completedAt" } } } } },
+          ]),
+          Task.aggregate([
+            { $match: { student: { $in: friendIds }, completed: true, deletedAt: null, completedAt: { $gte: since90 } } },
+            { $group: { _id: { s: "$student", d: { $dateToString: { format: "%Y-%m-%d", date: "$completedAt" } } } } },
+          ]),
+          Student.find({ _id: { $in: friendIds } }).select("protectedDays").lean(),
+        ]);
+        const dayMap = new Map();
+        const add = (id, day) => {
+          if (!dayMap.has(id)) dayMap.set(id, new Set());
+          dayMap.get(id).add(day);
+        };
+        for (const r of sessionDays) add(String(r._id.s), r._id.d);
+        for (const r of taskDays) add(String(r._id.s), r._id.d);
+        for (const c of covered) for (const day of c.protectedDays || []) add(String(c._id), day);
+        for (const u of friends) u.streak = streakOf(dayMap.get(u.id) || new Set(), []);
+      }
+    } catch (error) {
+      req.log?.error?.(error); // the list still works without streaks
+    }
+
     // `following` is kept so older app versions still show their friends.
     res.json({ friends, incoming, outgoing, following: friends, followers: [], leaderboard });
   } catch (error) {

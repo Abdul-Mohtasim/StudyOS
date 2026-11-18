@@ -4521,7 +4521,7 @@ async function undoDeleteTask() {
           when,
         };
       }),
-      friends: (social?.friends || []).map((u) => ({ id: u.id, name: u.name, gems: u.gems || 0, picture: u.picture || "" })),
+      friends: (social?.friends || []).map((u) => ({ id: u.id, name: u.name, gems: u.gems || 0, picture: u.picture || "", streak: u.streak || 0 })),
       incoming: (social?.incoming || []).map((u) => ({ id: u.id, name: u.name })),
       prefs: accountPrefs,
       plans: weeklyPlan.slice(0, 100).map((x) => ({ id: x.id, title: x.title, subject: x.subject, day: x.day, done: x.completed })),
