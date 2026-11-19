@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView android:id="@+id/bg" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:src="@drawable/widget_bg" android:scaleType="fitXY" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="horizontal" android:gravity="center_vertical" android:padding="14dp">
+        <ImageView android:id="@+id/ring" android:layout_width="86dp" android:layout_height="86dp" android:scaleType="fitCenter" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:orientation="vertical" android:layout_marginStart="14dp">
+            <TextView android:id="@+id/ttl" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:textSize="20sp" android:textStyle="bold" android:includeFontPadding="false" android:text="Focus" />
+            <TextView android:id="@+id/sub" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="2dp" android:textSize="13sp" android:maxLines="1" />
+            <FrameLayout android:layout_width="match_parent" android:layout_height="42dp" android:layout_marginTop="10dp">
+                <ImageView android:id="@+id/btnbg" android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:src="@drawable/widget_pill" android:scaleType="fitXY" />
+                <TextView android:id="@+id/btn" android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:gravity="center" android:textSize="14sp" android:textStyle="bold" android:letterSpacing="0.06" android:text="START FOCUS" />
+            </FrameLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

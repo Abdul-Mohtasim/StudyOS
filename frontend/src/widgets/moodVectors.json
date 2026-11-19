@@ -1,0 +1,342 @@
+[
+ {
+  "name": "morning, not started",
+  "state": {
+   "studiedToday": false,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 0,
+   "celebrationAt": 0,
+   "now": 1794974400000
+  },
+  "expect": {
+   "mood": "motivated",
+   "level": 0,
+   "nextAt": 1795017600000
+  }
+ },
+ {
+  "name": "afternoon, not started",
+  "state": {
+   "studiedToday": false,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 0,
+   "celebrationAt": 0,
+   "now": 1794996000000
+  },
+  "expect": {
+   "mood": "motivated",
+   "level": 0,
+   "nextAt": 1795017600000
+  }
+ },
+ {
+  "name": "21:30 no progress",
+  "state": {
+   "studiedToday": false,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 0,
+   "celebrationAt": 0,
+   "now": 1795019400000
+  },
+  "expect": {
+   "mood": "worried",
+   "level": 1,
+   "nextAt": 1795024800000
+  }
+ },
+ {
+  "name": "23:10 -> asleep wins over worried",
+  "state": {
+   "studiedToday": false,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 0,
+   "celebrationAt": 0,
+   "now": 1795025400000
+  },
+  "expect": {
+   "mood": "sleeping",
+   "level": 0,
+   "nextAt": 1795028400000
+  }
+ },
+ {
+  "name": "22:30 no progress",
+  "state": {
+   "studiedToday": false,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 0,
+   "celebrationAt": 0,
+   "now": 1795023000000
+  },
+  "expect": {
+   "mood": "worried",
+   "level": 1,
+   "nextAt": 1795024800000
+  }
+ },
+ {
+  "name": "22:05 no progress, last hour",
+  "state": {
+   "studiedToday": false,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": true,
+   "lastTaskAt": 0,
+   "celebrationAt": 0,
+   "now": 1795024860000
+  },
+  "expect": {
+   "mood": "worried",
+   "level": 2,
+   "nextAt": 1795028400000
+  }
+ },
+ {
+  "name": "23:10 studying keeps awake",
+  "state": {
+   "studiedToday": false,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": true,
+   "lastTaskAt": 0,
+   "celebrationAt": 0,
+   "now": 1795025400000
+  },
+  "expect": {
+   "mood": "worried",
+   "level": 2,
+   "nextAt": 1795028400000
+  }
+ },
+ {
+  "name": "03:00 asleep",
+  "state": {
+   "studiedToday": false,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 0,
+   "celebrationAt": 0,
+   "now": 1794952800000
+  },
+  "expect": {
+   "mood": "sleeping",
+   "level": 0,
+   "nextAt": 1794963600000
+  }
+ },
+ {
+  "name": "07:00 yesterday missed -> sad",
+  "state": {
+   "studiedToday": false,
+   "studiedYesterday": false,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 0,
+   "celebrationAt": 0,
+   "now": 1794967200000
+  },
+  "expect": {
+   "mood": "sad",
+   "level": 0,
+   "nextAt": 1795017600000
+  }
+ },
+ {
+  "name": "new user never studied -> motivated",
+  "state": {
+   "studiedToday": false,
+   "studiedYesterday": false,
+   "everStudied": false,
+   "sessionActive": false,
+   "lastTaskAt": 0,
+   "celebrationAt": 0,
+   "now": 1794978000000
+  },
+  "expect": {
+   "mood": "motivated",
+   "level": 0,
+   "nextAt": 1795017600000
+  }
+ },
+ {
+  "name": "studied today -> happy",
+  "state": {
+   "studiedToday": true,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 0,
+   "celebrationAt": 0,
+   "now": 1795019400000
+  },
+  "expect": {
+   "mood": "happy",
+   "level": 0,
+   "nextAt": 1795024800000
+  }
+ },
+ {
+  "name": "studied today never worried/sad",
+  "state": {
+   "studiedToday": true,
+   "studiedYesterday": false,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 0,
+   "celebrationAt": 0,
+   "now": 1795023000000
+  },
+  "expect": {
+   "mood": "happy",
+   "level": 0,
+   "nextAt": 1795024800000
+  }
+ },
+ {
+  "name": "task just done -> excited",
+  "state": {
+   "studiedToday": true,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 1794977999000,
+   "celebrationAt": 0,
+   "now": 1794978000000
+  },
+  "expect": {
+   "mood": "excited",
+   "level": 0,
+   "nextAt": 1794978002000
+  }
+ },
+ {
+  "name": "excited expires after 3s",
+  "state": {
+   "studiedToday": true,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 1794977996999,
+   "celebrationAt": 0,
+   "now": 1794978000000
+  },
+  "expect": {
+   "mood": "happy",
+   "level": 0,
+   "nextAt": 1795017600000
+  }
+ },
+ {
+  "name": "excited beats sleeping",
+  "state": {
+   "studiedToday": true,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 1794949199500,
+   "celebrationAt": 0,
+   "now": 1794949200000
+  },
+  "expect": {
+   "mood": "excited",
+   "level": 0,
+   "nextAt": 1794949202500
+  }
+ },
+ {
+  "name": "first task after sad -> excited",
+  "state": {
+   "studiedToday": true,
+   "studiedYesterday": false,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 1794970799990,
+   "celebrationAt": 0,
+   "now": 1794970800000
+  },
+  "expect": {
+   "mood": "excited",
+   "level": 0,
+   "nextAt": 1794970802990
+  }
+ },
+ {
+  "name": "first task after sad then 5s -> happy",
+  "state": {
+   "studiedToday": true,
+   "studiedYesterday": false,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 1794970795000,
+   "celebrationAt": 0,
+   "now": 1794970800000
+  },
+  "expect": {
+   "mood": "happy",
+   "level": 0,
+   "nextAt": 1795017600000
+  }
+ },
+ {
+  "name": "milestone beats excited",
+  "state": {
+   "studiedToday": true,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 1794977999900,
+   "celebrationAt": 1794977999900,
+   "now": 1794978000000
+  },
+  "expect": {
+   "mood": "celebrating",
+   "level": 0,
+   "nextAt": 1794978002900
+  }
+ },
+ {
+  "name": "milestone not interrupted by sleeping",
+  "state": {
+   "studiedToday": true,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 0,
+   "celebrationAt": 1794949193000,
+   "now": 1794949200000
+  },
+  "expect": {
+   "mood": "celebrating",
+   "level": 0,
+   "nextAt": 1794949201000
+  }
+ },
+ {
+  "name": "milestone over after 8s",
+  "state": {
+   "studiedToday": true,
+   "studiedYesterday": true,
+   "everStudied": true,
+   "sessionActive": false,
+   "lastTaskAt": 0,
+   "celebrationAt": 1794977991999,
+   "now": 1794978000000
+  },
+  "expect": {
+   "mood": "happy",
+   "level": 0,
+   "nextAt": 1795017600000
+  }
+ }
+]

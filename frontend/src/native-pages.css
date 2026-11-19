@@ -1,12 +1,13 @@
 /* App-only pages (Flashcards, Notes & subjects, Grades) in the StudyOS design palette. */
-.np{--ink:#1b1e25;--card:#edebec;--mut:#4b5d6d;--mv:#c9b8c3;--chip:#e1e0e2;--pg:#dfe0e3;--line:#c8c6c8;position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;background:var(--pg);color:var(--ink);font-family:'Inter',system-ui,sans-serif}
+.np{--ink:#1b1e25;--card:#edebec;--mut:#4b5d6d;--mv:#c9b8c3;--chip:#e1e0e2;--pg:#dfe0e3;--line:#c8c6c8;--onmv:#1b1e25;position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;background:var(--pg);color:var(--ink);font-family:'Inter',system-ui,sans-serif}
 .np.np-dark{--ink:#ebe8ea;--card:#1b2229;--mut:#9aa6b0;--chip:#232b33;--pg:#0f1317;--line:#2d3740}
 .np *{box-sizing:border-box}
-.np-head{padding:calc(14px + env(safe-area-inset-top,0px)) 18px 0}
+.np-head{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:8px;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 6px}
+.np-hspace{width:44px;height:44px}
 .np-back{width:44px;height:44px;border-radius:22px;border:0;background:var(--card);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
 .np-scroll{flex:1;overflow-y:auto;padding:8px 18px calc(28px + env(safe-area-inset-bottom,0px));-webkit-overflow-scrolling:touch}
-.np-title{font:700 32px/1.1 'Space Grotesk',system-ui,sans-serif;margin:10px 0 4px}
-.np-sub{margin:0 0 14px;color:var(--mut);font:400 15px/1.4 'Inter',system-ui,sans-serif}
+.np-title{font:700 clamp(20px,6.2vw,26px)/1.15 'Space Grotesk',system-ui,sans-serif;margin:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.np-sub{margin:4px 0 14px;text-align:center;color:var(--mut);font:400 15px/1.4 'Inter',system-ui,sans-serif}
 .np-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 14px}
 .np-stats>div{background:var(--card);border-radius:20px;padding:12px 10px;text-align:center}
 .np-stats b{display:block;font:700 22px 'Space Grotesk',system-ui,sans-serif}
@@ -16,16 +17,16 @@
 .np-tabs button.on{background:var(--ink);color:var(--pg)}
 .np-chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
 .np-chip{height:38px;padding:0 16px;border:0;border-radius:19px;background:var(--chip);color:var(--ink);font:600 14px 'Inter',system-ui,sans-serif}
-.np-chip.on{background:var(--mv);color:#1b1e25}
+.np-chip.on{background:var(--mv);color:var(--onmv)}
 .np-card{background:var(--card);border-radius:24px;padding:16px;margin-bottom:12px}
 .np-fc{text-align:center;padding:20px 16px}
-.np-tag{display:inline-block;background:var(--mv);color:#1b1e25;border-radius:12px;padding:5px 12px;font:700 12px 'Inter',system-ui,sans-serif}
+.np-tag{display:inline-block;background:var(--mv);color:var(--onmv);border-radius:12px;padding:5px 12px;font:700 12px 'Inter',system-ui,sans-serif}
 .np-q{font:700 22px/1.3 'Space Grotesk',system-ui,sans-serif;margin:16px 0}
 .np-a{font:400 17px/1.45 'Inter',system-ui,sans-serif;color:var(--mut);margin:0 0 16px;padding-top:14px;border-top:1px solid var(--line)}
 .np-grades{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .np-g{border:0;border-radius:16px;height:58px;background:var(--chip);color:var(--ink);font:700 14px 'Inter',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 .np-g small{font:500 11px 'Inter',system-ui,sans-serif;color:var(--mut)}
-.np-g2{background:var(--mv);color:#1b1e25}.np-g2 small{color:#4b5d6d}
+.np-g2{background:var(--mv);color:var(--onmv)}.np-g2 small{color:var(--onmv);opacity:.8}
 .np-label{display:block;margin:10px 0 6px;font:700 13px 'Inter',system-ui,sans-serif;color:var(--mut)}
 .np-input{width:100%;border:2px solid transparent;border-radius:18px;background:var(--chip);color:var(--ink);padding:12px 14px;font:500 16px 'Inter',system-ui,sans-serif;outline:0;resize:vertical}
 .np-input:focus{border-color:var(--mv)}
@@ -53,7 +54,18 @@
 
 .np-skel{display:grid;gap:10px;margin-top:8px}
 .np-skc{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:22px;padding:14px 16px}
-.np-sk{border-radius:12px;background:linear-gradient(100deg,var(--chip) 30%,rgba(201,184,195,.55) 50%,var(--chip) 70%);background-size:240% 100%;animation:npsk 1.5s ease-in-out infinite}
-.np-skel>.np-sk{background:linear-gradient(100deg,var(--card) 30%,rgba(201,184,195,.55) 50%,var(--card) 70%);background-size:240% 100%}
+.np-sk{border-radius:12px;background:linear-gradient(100deg,var(--chip) 30%,color-mix(in srgb,var(--mv) 55%,transparent) 50%,var(--chip) 70%);background-size:240% 100%;animation:npsk 1.5s ease-in-out infinite}
+.np-skel>.np-sk{background:linear-gradient(100deg,var(--card) 30%,color-mix(in srgb,var(--mv) 55%,transparent) 50%,var(--card) 70%);background-size:240% 100%}
 @keyframes npsk{0%{background-position:120% 0}100%{background-position:-120% 0}}
 @media (prefers-reduced-motion:reduce){.np-sk{animation:none}}
+
+/* Theme: Flashcards, Notes & subjects and Grades follow the selected light palette (Midnight keeps .np-dark). */
+html[data-palette="ocean"] .np:not(.np-dark){--ink:#14303f;--card:#eaf3fb;--mut:#44677c;--mv:#8fb9d3;--chip:#c4dbe8;--pg:#d6e8f1;--line:#b7cfdd;--onmv:#10202a}
+html[data-palette="forest"] .np:not(.np-dark){--ink:#16301f;--card:#eaf4ec;--mut:#46654f;--mv:#93bda1;--chip:#cbdccf;--pg:#dde8df;--line:#bcd0c1;--onmv:#0f2216}
+html[data-palette="sunset"] .np:not(.np-dark){--ink:#3b1d12;--card:#f9ece6;--mut:#7a5446;--mv:#e0a78f;--chip:#e6cbc0;--pg:#f1ddd5;--line:#dcbfb3;--onmv:#2b140c}
+html[data-palette="mono"] .np:not(.np-dark){--ink:#1e1e1e;--card:#f5f5f5;--mut:#5c5c5c;--mv:#a8a8a8;--chip:#d4d4d4;--pg:#e6e6e6;--line:#c4c4c4;--onmv:#141414}
+.np-input:focus{border-color:var(--mv)}
+.np-danger{color:#c0503e}
+.np .np-input{border:2px solid var(--line);background:var(--card);color:var(--ink)}
+.np .np-input:focus{border-color:var(--mv)}
+.np .np-primary,.np .np-mini{background:var(--ink);color:var(--pg)}

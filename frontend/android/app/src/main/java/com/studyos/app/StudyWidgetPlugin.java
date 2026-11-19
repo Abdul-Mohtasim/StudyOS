@@ -1,81 +1,73 @@
 package com.studyos.app;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 /**
- * The bridge between the web app's React state and the StudyOS home-screen widget pack.
- *
- * The web app calls pushState() (see frontend/src/widgets.js) whenever something that could
- * change what a widget shows happens: a task completes, the streak changes, the daily goal
- * progress moves, the theme changes, a streak milestone is hit, or the focus timer starts or
- * stops. This plugin just mirrors that into SharedPreferences (StudyWidgetState) and asks
- * every widget to redraw — all the actual mood/graphics logic lives in native widget code so
- * it keeps working even while the app (and its JS) isn't running.
+ * Bridge between the web app and the home-screen widgets. The web app reports real events
+ * (data changed, task done, streak milestone, focus running); the widgets and the mood engine do the rest.
  */
 @CapacitorPlugin(name = "StudyWidget")
 public class StudyWidgetPlugin extends Plugin {
+    private final Handler main = new Handler(Looper.getMainLooper());
+
+    private void refreshNow() {
+        WidgetUpdater.updateAll(getContext());
+    }
+
+    /** Re-draw once the temporary mood (3 s / 8 s) has run out, even if the alarm is delayed. */
+    private void refreshLater(long ms) {
+        main.postDelayed(this::refreshNow, ms);
+    }
 
     @PluginMethod
-    public void pushState(PluginCall call) {
-        JSObject data = call.getData();
-        JSONObject payload = new JSONObject();
+    public void sync(PluginCall call) {
         try {
-            copyIfPresent(data, payload, "streak");
-            copyIfPresent(data, payload, "bestStreak");
-            copyIfPresent(data, payload, "studiedToday");
-            copyIfPresent(data, payload, "dailyGoalMinutes");
-            copyIfPresent(data, payload, "todayFocusMinutes");
-            copyIfPresent(data, payload, "dailyGoalPercent");
-            copyIfPresent(data, payload, "tasksTotal");
-            copyIfPresent(data, payload, "tasksCompleted");
-            copyIfPresent(data, payload, "gems");
-            copyIfPresent(data, payload, "theme");
-            copyIfPresent(data, payload, "activeSessionRunning");
-            copyIfPresent(data, payload, "lastTaskCompletedAt");
-            copyIfPresent(data, payload, "milestoneCelebrateUntil");
-            copyIfPresent(data, payload, "lastCelebratedStreak");
-            copyIfPresent(data, payload, "worriedWindowMinutes");
-            copyIfPresent(data, payload, "dayDeadlineMinute");
-            copyIfPresent(data, payload, "nightStartMinute");
-            copyIfPresent(data, payload, "nightEndMinute");
-
-            JSONArray upcomingTasks = data.optJSONArray("upcomingTasks");
-            if (upcomingTasks != null) {
-                payload.put("upcomingTasks", upcomingTasks);
-            }
-            JSONArray weekMinutes = data.optJSONArray("weekMinutes");
-            if (weekMinutes != null) {
-                payload.put("weekMinutes", weekMinutes);
-            }
-        } catch (JSONException e) {
-            call.reject("Malformed widget state payload", e);
-            return;
+            WidgetStore.saveState(getContext(), call.getData().toString());
+            refreshNow();
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("sync failed");
         }
+    }
 
-        StudyWidgetState.save(getContext(), payload);
-        StudyWidgetUpdater.onStateChanged(getContext());
+    @PluginMethod
+    public void taskCompleted(PluginCall call) {
+        WidgetStore.setLong(getContext(), "lastTaskAt", System.currentTimeMillis());
+        refreshNow();
+        refreshLater(MoodEngine.EXCITED_MS + 150);
         call.resolve();
     }
 
     @PluginMethod
-    public void hasWidgets(PluginCall call) {
-        JSObject result = new JSObject();
-        result.put("active", StudyWidgetUpdater.anyWidgetsActive(getContext()));
-        call.resolve(result);
+    public void celebrate(PluginCall call) {
+        Integer m = call.getInt("milestone", 0);
+        WidgetStore.setLong(getContext(), "celebrationAt", System.currentTimeMillis());
+        WidgetStore.setInt(getContext(), "celebrationStreak", m == null ? 0 : m);
+        refreshNow();
+        refreshLater(MoodEngine.CELEBRATE_MS + 150);
+        call.resolve();
     }
 
-    private void copyIfPresent(JSObject source, JSONObject target, String key) throws JSONException {
-        if (!source.has(key)) return;
-        Object value = source.opt(key);
-        if (value == null) return;
-        target.put(key, value);
+    @PluginMethod
+    public void setSession(PluginCall call) {
+        Boolean on = call.getBoolean("active", false);
+        WidgetStore.setBool(getContext(), "sessionActive", Boolean.TRUE.equals(on));
+        refreshNow();
+        call.resolve();
+    }
+
+    /** Which widget opened the app (cold start). Returned once, then cleared. */
+    @PluginMethod
+    public void getLaunchTarget(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("target", MainActivity.takePendingTarget());
+        call.resolve(r);
     }
 }

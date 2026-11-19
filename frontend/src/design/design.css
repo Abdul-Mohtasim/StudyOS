@@ -1088,6 +1088,26 @@ html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#1
 .dz .ss .sill span>svg{width:100%;height:100%}
 .dz .ss .shd b{padding:0 96px;font-size:17px}
 
+/* Long report pages scroll (Weekly report, Badges) */
+.dz .n .pg.pgs{overflow-y:auto;overflow-x:hidden;padding-bottom:64px;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y}
+.dz .n .pg.pgs::-webkit-scrollbar{display:none}
+
+/* Badge Showcase */
+.dz .badge.pinnable{cursor:pointer;position:relative}
+.dz .badge.pinnable .bimg{border-radius:20px;outline:2px solid transparent;outline-offset:2px}
+.dz .badge.pinned .bimg{outline-color:#e3a53c}
+.dz .badge.pinned .bimg::after{content:"";position:absolute;right:6px;top:2px;width:22px;height:22px;border-radius:11px;background:#e3a53c url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231b1e25' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.500 4.500L19 7.500'/%3E%3C/svg%3E") center/14px no-repeat}
+.dz .badge .bimg{position:relative}
+.dz .pinhint{margin-top:14px;font:600 13px var(--body);color:var(--mut,#4b5d6d);text-align:center}.dz .pinhint b{color:var(--ink,#1b1e25)}
+.dz .pinlock{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-radius:22px;cursor:pointer}
+.dz .pinlock b{display:block;font:700 15px var(--body)}.dz .pinlock small{display:block;margin-top:2px;font:500 12.5px var(--body);color:var(--mut,#4b5d6d)}
+.dz .pinlock span{flex:none;border-radius:16px;padding:8px 14px;background:var(--ink,#1b1e25);color:var(--pg,#dfe0e3);font:700 12px var(--body)}
+.dz .pf .pshow{display:flex;gap:10px;margin-top:8px}
+.dz .pf .pbd{flex:1;min-width:0;background:#1f252d;border-radius:20px;padding:10px 4px 9px;text-align:center}
+.dz .pf .pbd .bimg{width:58px;height:62px;margin:0 auto}.dz .pf .pbd .bimg svg,.dz .pf .pbd .bimg img{width:100%;height:100%}
+.dz .pf .pbd span{display:block;margin-top:4px;padding:0 4px;font:700 11px var(--body);color:#ebe8ea;line-height:1.2}
+.dz .pf .pempty{flex:1;background:#1f252d;border-radius:20px;padding:16px;font:600 13px var(--body);color:#8b98a2;text-align:center}
+
 /* ---- PALETTE-GEN START (generated: paid colour themes repaint the light app; rerun gen_pal.py after CSS edits) ---- */
 html[data-palette="ocean"] .dz .scr.n:not(.nd) .ringi{background:#14303f}
 html[data-palette="ocean"] .dz .scr.n:not(.nd) .chip.on{background:#14303f}
@@ -1155,6 +1175,8 @@ html[data-palette="ocean"] .dz .scr.n:not(.nd) .pl-tag{color:#14303f}
 html[data-palette="ocean"] .dz .scr.n:not(.nd) .pl-lki{color:#14303f}
 html[data-palette="ocean"] .dz .scr.n:not(.nd) .fp-gift{background:#8fb9d3;border-color:#8fb9d3;color:#14303f}
 html[data-palette="ocean"] .dz .scr.n:not(.nd) .fp .fp-gift{color:#14303f}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .pinhint b{color:var(--ink,#14303f)}
+html[data-palette="ocean"] .dz .scr.n:not(.nd) .pinlock span{background:var(--ink,#14303f);color:var(--pg,#d6e8f1)}
 html[data-palette="forest"] .dz .scr.n:not(.nd) .ringi{background:#16301f}
 html[data-palette="forest"] .dz .scr.n:not(.nd) .chip.on{background:#16301f}
 html[data-palette="forest"] .dz .scr.n:not(.nd) .tg{background:#16301f}
@@ -1221,6 +1243,8 @@ html[data-palette="forest"] .dz .scr.n:not(.nd) .pl-tag{color:#16301f}
 html[data-palette="forest"] .dz .scr.n:not(.nd) .pl-lki{color:#16301f}
 html[data-palette="forest"] .dz .scr.n:not(.nd) .fp-gift{background:#93bda1;border-color:#93bda1;color:#16301f}
 html[data-palette="forest"] .dz .scr.n:not(.nd) .fp .fp-gift{color:#16301f}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .pinhint b{color:var(--ink,#16301f)}
+html[data-palette="forest"] .dz .scr.n:not(.nd) .pinlock span{background:var(--ink,#16301f);color:var(--pg,#dde8df)}
 html[data-palette="sunset"] .dz .scr.n:not(.nd) .ringi{background:#3b1d12}
 html[data-palette="sunset"] .dz .scr.n:not(.nd) .chip.on{background:#3b1d12}
 html[data-palette="sunset"] .dz .scr.n:not(.nd) .tg{background:#3b1d12}
@@ -1287,6 +1311,8 @@ html[data-palette="sunset"] .dz .scr.n:not(.nd) .pl-tag{color:#3b1d12}
 html[data-palette="sunset"] .dz .scr.n:not(.nd) .pl-lki{color:#3b1d12}
 html[data-palette="sunset"] .dz .scr.n:not(.nd) .fp-gift{background:#e0a78f;border-color:#e0a78f;color:#3b1d12}
 html[data-palette="sunset"] .dz .scr.n:not(.nd) .fp .fp-gift{color:#3b1d12}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .pinhint b{color:var(--ink,#3b1d12)}
+html[data-palette="sunset"] .dz .scr.n:not(.nd) .pinlock span{background:var(--ink,#3b1d12);color:var(--pg,#f1ddd5)}
 html[data-palette="mono"] .dz .scr.n:not(.nd) .ringi{background:#1e1e1e}
 html[data-palette="mono"] .dz .scr.n:not(.nd) .chip.on{background:#1e1e1e}
 html[data-palette="mono"] .dz .scr.n:not(.nd) .tg{background:#1e1e1e}
@@ -1353,6 +1379,8 @@ html[data-palette="mono"] .dz .scr.n:not(.nd) .pl-tag{color:#1e1e1e}
 html[data-palette="mono"] .dz .scr.n:not(.nd) .pl-lki{color:#1e1e1e}
 html[data-palette="mono"] .dz .scr.n:not(.nd) .fp-gift{background:#a8a8a8;border-color:#a8a8a8;color:#1e1e1e}
 html[data-palette="mono"] .dz .scr.n:not(.nd) .fp .fp-gift{color:#1e1e1e}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .pinhint b{color:var(--ink,#1e1e1e)}
+html[data-palette="mono"] .dz .scr.n:not(.nd) .pinlock span{background:var(--ink,#1e1e1e);color:var(--pg,#e6e6e6)}
 /* ---- PALETTE-GEN END ---- */
 
 /* ---- LT-GEN START (generated: Focus, Profile, Settings and friends pages follow the active light theme; rerun gen_pal.py then gen_lt.py after CSS edits) ---- */
@@ -1606,6 +1634,9 @@ html[data-palette="mono"] .dz .scr.n:not(.nd) .fp .fp-gift{color:#1e1e1e}
 .dz .scr.nd.lt .ss .sit,.dz .scr.nd.lt .ss .sit b,.dz .scr.nd.lt .ss .sit span,.dz .scr.nd.lt .ss .scd b,.dz .scr.nd.lt .ss .sh1,.dz .scr.nd.lt .ss .spill,.dz .scr.nd.lt .ss h5{color:var(--ink)}
 .dz .scr.nd.lt .ss .sit small,.dz .scr.nd.lt .ss .scd small,.dz .scr.nd.lt .ss .sh2{color:var(--mut)}
 .dz .scr.nd.lt .ss .sit.lck .lk{background:var(--chip);color:var(--mv)}
+.dz .scr.nd.lt .pf .pbd{background:var(--card)}
+.dz .scr.nd.lt .pf .pbd span{color:var(--ink)}
+.dz .scr.nd.lt .pf .pempty{background:var(--card);color:var(--mut)}
 .dz .scr.nd.lt .pf .hname,.dz .scr.nd.lt .pf .gear{color:var(--ink)}
 .dz .scr.nd.lt .pf .promo{background:var(--ink)}.dz .scr.nd.lt .pf .promo h3{color:var(--pg)}.dz .scr.nd.lt .pf .promo .go{background:var(--pg);color:var(--ink);border-bottom-color:var(--track)}
 .dz .scr.nd.lt .ss .shd button:not(.sbk){color:var(--ink)}

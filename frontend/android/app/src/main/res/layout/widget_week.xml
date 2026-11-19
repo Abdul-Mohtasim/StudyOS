@@ -1,59 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_root"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="14dp"
-    android:background="@drawable/widget_bg_mauve">
-
-    <TextView
-        android:id="@+id/widget_week_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:textColor="#1B1E25"
-        android:text="Study time this week" />
-
-    <!-- Each day is one of six pre-rendered bar-fill drawables (bar_level_0..5), so the
-         "chart" needs no dynamic layout math that RemoteViews can't do on old Android. -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal"
-        android:gravity="bottom|center_horizontal">
-
-        <ImageView android:id="@+id/widget_week_bar_0" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="5dp" android:scaleType="fitBottom" android:src="@drawable/bar_level_0" />
-        <ImageView android:id="@+id/widget_week_bar_1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="5dp" android:scaleType="fitBottom" android:src="@drawable/bar_level_0" />
-        <ImageView android:id="@+id/widget_week_bar_2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="5dp" android:scaleType="fitBottom" android:src="@drawable/bar_level_0" />
-        <ImageView android:id="@+id/widget_week_bar_3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="5dp" android:scaleType="fitBottom" android:src="@drawable/bar_level_0" />
-        <ImageView android:id="@+id/widget_week_bar_4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="5dp" android:scaleType="fitBottom" android:src="@drawable/bar_level_0" />
-        <ImageView android:id="@+id/widget_week_bar_5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginEnd="5dp" android:scaleType="fitBottom" android:src="@drawable/bar_level_0" />
-        <ImageView android:id="@+id/widget_week_bar_6" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:scaleType="fitBottom" android:src="@drawable/bar_level_0" />
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView android:id="@+id/bg" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:src="@drawable/widget_bg" android:scaleType="fitXY" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:padding="14dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/title" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:textSize="15sp" android:textStyle="bold" android:text="This week" />
+            <TextView android:id="@+id/total" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textSize="13sp" android:textStyle="bold" />
+        </LinearLayout>
+        <ImageView android:id="@+id/chart" android:layout_width="match_parent" android:layout_height="0dp"
+            android:layout_weight="1" android:layout_marginTop="6dp" android:scaleType="fitCenter" />
     </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-        <TextView android:id="@+id/widget_week_label_0" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:textSize="9sp" android:textColor="#6B6E76" android:text="M" />
-        <TextView android:id="@+id/widget_week_label_1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:textSize="9sp" android:textColor="#6B6E76" android:text="T" />
-        <TextView android:id="@+id/widget_week_label_2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:textSize="9sp" android:textColor="#6B6E76" android:text="W" />
-        <TextView android:id="@+id/widget_week_label_3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:textSize="9sp" android:textColor="#6B6E76" android:text="T" />
-        <TextView android:id="@+id/widget_week_label_4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:textSize="9sp" android:textColor="#6B6E76" android:text="F" />
-        <TextView android:id="@+id/widget_week_label_5" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:textSize="9sp" android:textColor="#6B6E76" android:text="S" />
-        <TextView android:id="@+id/widget_week_label_6" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:textSize="9sp" android:textColor="#6B6E76" android:text="S" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/widget_week_total"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:textSize="11sp"
-        android:textColor="#6B6E76"
-        android:text="0 min total" />
-</LinearLayout>
+</FrameLayout>

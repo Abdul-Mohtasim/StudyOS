@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { mountDesign } from "./engine";
+import { startWidgetBridge } from "../widgets/widgetSync";
 
 // Thin React wrapper around the imperative design screens (app only).
 // `data` and `actions` always point at the newest values; the engine re-renders softly on change.
@@ -29,6 +30,14 @@ export default function DesignShell({ data, actions, onTab, section }) {
     return () => { api.destroy(); apiRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Home-screen widget taps open the matching tab; the Focus widget also starts a session.
+  useEffect(() => startWidgetBridge((target) => {
+    const tab = { home: "home", tasks: "tasks", focus: "focus", focus_start: "focus", study: "study" }[target] || "home";
+    live.current.onTab?.(tab);
+    if (target === "shop") setTimeout(() => apiRef.current?.openShop?.(), 350);
+    if (target === "focus_start") setTimeout(() => apiRef.current?.startFocus?.(), 350);
+  }), []);
 
   // Soft refresh whenever the real data changes.
   const key = JSON.stringify(data);

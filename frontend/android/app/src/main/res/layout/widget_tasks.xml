@@ -1,61 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_root"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="14dp"
-    android:background="@drawable/widget_bg_mauve">
-
-    <TextView
-        android:id="@+id/widget_tasks_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:textColor="#1B1E25"
-        android:text="Today's tasks  0/0" />
-
-    <TextView
-        android:id="@+id/widget_task_1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:textSize="12sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:textColor="#6B6E76"
-        android:text="" />
-
-    <TextView
-        android:id="@+id/widget_task_2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:textSize="12sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:textColor="#6B6E76"
-        android:text="" />
-
-    <TextView
-        android:id="@+id/widget_task_3"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:textSize="12sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:textColor="#6B6E76"
-        android:text="" />
-
-    <TextView
-        android:id="@+id/widget_tasks_empty"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:textSize="12sp"
-        android:textColor="#6B6E76"
-        android:visibility="gone"
-        android:text="All done for today ✨" />
-</LinearLayout>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView android:id="@+id/bg" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:src="@drawable/widget_bg" android:scaleType="fitXY" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:padding="14dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/title" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:textSize="20sp" android:textStyle="bold" android:includeFontPadding="false" android:text="Today" />
+            <TextView android:id="@+id/count" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textSize="13sp" android:textStyle="bold" />
+        </LinearLayout>
+        <FrameLayout android:id="@+id/row0" android:layout_width="match_parent" android:layout_height="34dp" android:layout_marginTop="6dp">
+            <ImageView android:id="@+id/rb0" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:src="@drawable/widget_pill" android:scaleType="fitXY" />
+            <TextView android:id="@+id/r0" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:gravity="center_vertical" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:textSize="14sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end" />
+        </FrameLayout>
+        <FrameLayout android:id="@+id/row1" android:layout_width="match_parent" android:layout_height="34dp" android:layout_marginTop="6dp">
+            <ImageView android:id="@+id/rb1" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:src="@drawable/widget_pill" android:scaleType="fitXY" />
+            <TextView android:id="@+id/r1" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:gravity="center_vertical" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:textSize="14sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end" />
+        </FrameLayout>
+        <FrameLayout android:id="@+id/row2" android:layout_width="match_parent" android:layout_height="34dp" android:layout_marginTop="6dp">
+            <ImageView android:id="@+id/rb2" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:src="@drawable/widget_pill" android:scaleType="fitXY" />
+            <TextView android:id="@+id/r2" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:gravity="center_vertical" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:textSize="14sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end" />
+        </FrameLayout>
+        <FrameLayout android:id="@+id/row3" android:layout_width="match_parent" android:layout_height="34dp" android:layout_marginTop="6dp">
+            <ImageView android:id="@+id/rb3" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:src="@drawable/widget_pill" android:scaleType="fitXY" />
+            <TextView android:id="@+id/r3" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:gravity="center_vertical" android:paddingStart="14dp" android:paddingEnd="14dp"
+                android:textSize="14sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end" />
+        </FrameLayout>
+        <TextView android:id="@+id/empty" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="12dp" android:textSize="15sp" android:textStyle="bold" android:visibility="gone" />
+    </LinearLayout>
+</FrameLayout>

@@ -33,43 +33,34 @@
             </intent-filter>
         </receiver>
 
-        <!-- Widget pack: home-screen widgets, kept in sync by StudyWidgetPlugin -->
-        <receiver android:name=".StudyWidgetTickReceiver" android:exported="false" />
-
-        <receiver android:name=".StudyStreakWidgetProvider" android:exported="false">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_streak_info" />
+        <!-- Home-screen widgets (Streak + mascot, Tasks, Focus shortcut, Week) -->
+        <receiver android:name=".StreakWidgetProvider" android:exported="true" android:label="StudyOS Streak">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_streak_info" />
         </receiver>
-
-        <receiver android:name=".StudyTasksWidgetProvider" android:exported="false">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_tasks_info" />
+        <receiver android:name=".TasksWidgetProvider" android:exported="true" android:label="StudyOS Tasks">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_tasks_info" />
         </receiver>
-
-        <receiver android:name=".StudyWeekWidgetProvider" android:exported="false">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_week_info" />
+        <receiver android:name=".FocusWidgetProvider" android:exported="true" android:label="StudyOS Focus">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_focus_info" />
         </receiver>
-
-        <receiver android:name=".StudyTimerWidgetProvider" android:exported="false">
+        <receiver android:name=".WeekWidgetProvider" android:exported="true" android:label="StudyOS Week">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_week_info" />
+        </receiver>
+        <!-- Mood alarm, mascot tap, and every clock change that can move the local day or the night hours -->
+        <receiver android:name=".WidgetRefreshReceiver" android:exported="true">
             <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.studyos.app.WIDGET_REFRESH" />
+                <action android:name="com.studyos.app.WIDGET_TIP" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_timer_info" />
         </receiver>
 
         <provider

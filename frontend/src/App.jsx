@@ -114,6 +114,7 @@ import AppSkeleton from "./Skeleton";
 import Onboarding from "./Onboarding";
 import NewUserFlow from "./newflow/NewUserFlow";
 import DesignShell from "./design/DesignShell";
+import { useWidgetSync, widgetTaskDone, widgetTheme } from "./widgets/widgetSync";
 import { NativeFlashcards, NativeGrades, NativeNotes } from "./NativePages";
 import qrcode from "qrcode-generator";
 import { Share } from "@capacitor/share";
@@ -122,7 +123,6 @@ import { Contacts } from "@capacitor-community/contacts";
 import "./skeleton.css";
 import { ForgotPasswordModal, EmailSettingsCard, EmailNoteButton, EmailFlashcardsButton } from "./EmailFeatures";
 import { loadReminderPrefs, saveReminderPrefs, syncReminders, reminderPermission, requestReminderPermission } from "./reminders";
-import { syncWidgets } from "./widgets";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { setLanguage, getLanguage } from "./i18n";
 import {
@@ -2799,38 +2799,6 @@ useEffect(() => {
     syncReminders(reminderPrefs, { streak: studyStreak, studiedToday });
   }, [authToken, reminderPrefs, studyStreak, studiedToday]);
 
-  // Home-screen widget pack: push the latest streak/tasks/progress/theme to the native
-  // widgets whenever any of them change, so a glance at the home screen is never stale.
-  // A rising completedCount also flags "a task just finished" so the mascot goes Excited
-  // right away instead of waiting for the next sync.
-  const previousCompletedCountRef = useRef(completedCount);
-  useEffect(() => {
-    if (!authToken) return;
-    const taskJustCompleted = completedCount > previousCompletedCountRef.current;
-    previousCompletedCountRef.current = completedCount;
-    syncWidgets(
-      {
-        streak: studyStreak,
-        bestStreak,
-        studiedToday,
-        dailyGoalMinutes,
-        todayFocusMinutes,
-        dailyGoalPercent,
-        tasks,
-        gems: gemsServer ?? 0,
-        settingsTheme,
-        activePalette,
-        isRunning,
-        focusSessions,
-      },
-      { taskJustCompleted }
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    authToken, studyStreak, bestStreak, studiedToday, dailyGoalMinutes, todayFocusMinutes,
-    dailyGoalPercent, completedCount, tasks, gemsServer, settingsTheme, activePalette, isRunning,
-  ]);
-
   // The best streak ever reached on this phone, so streak badges stay earned after a streak ends.
   useEffect(() => {
     const uid = student?.id || student?._id;
@@ -2916,6 +2884,36 @@ useEffect(() => {
   const hasWeeklyActivity = weeklyFocusMinutes > 0;
 
   const maxDailyMinutes = Math.max(1, ...weeklyActivity.map((day) => day.minutes));
+
+  // Home-screen widgets (Android): report real data; the native widgets and the mood engine do the rest.
+  const widgetDayKey = (back) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - back); return getLocalDateKey(d); };
+  const widgetDoneOn = (key) => tasks.filter((t) => t.completed && t.completedAt && getLocalDateKey(new Date(t.completedAt)) === key).length;
+  const widgetDoneToday = widgetDoneOn(todayKey);
+  const widgetPending = tasks.filter((t) => !t.completed && (!t.dueDate || daysUntil(t.dueDate) <= 0));
+  useWidgetSync({
+    signedIn: Boolean(authToken) && !student?.guest,
+    ready: Boolean(authToken) && firstLoadDoneRef.current,
+    uid: student?.id || student?._id || "",
+    snapshot: {
+      dayKey: todayKey,
+      name: (student?.displayName || student?.name || "").trim(),
+      unlocked: Array.isArray(shopServer?.owned) ? shopServer.owned.includes("widgets") : undefined,
+      streak: studyStreak,
+      gems: gemsServer ?? 0,
+      goalMin: dailyGoalMinutes,
+      todayMin: Math.round(todayFocusMinutes),
+      studiedToday: sessionDateKeys.has(todayKey) || widgetDoneToday > 0,
+      studiedYesterday: sessionDateKeys.has(widgetDayKey(1)) || widgetDoneOn(widgetDayKey(1)) > 0,
+      everStudied: sessionDateKeys.size > 0 || tasks.some((t) => t.completed),
+      doneToday: widgetDoneToday,
+      totalToday: widgetDoneToday + widgetPending.length,
+      tasks: widgetPending.slice(0, 4).map((t) => String(t.title || "").slice(0, 40)),
+      weekLabels: weeklyActivity.map((d) => d.label),
+      weekMinutes: weeklyActivity.map((d) => Math.round(d.minutes)),
+      todayIndex: weeklyActivity.findIndex((d) => d.isToday),
+      theme: widgetTheme(settingsTheme, activePalette),
+    },
+  });
 
   // Streak calendar (Sunday-first month grid). A day is "studied" when at least
   // one focus session was completed on it.
@@ -3404,7 +3402,7 @@ const visibleTasks = sortTasks(
         )
       );
 
-      if (!task.completed) haptic.success();
+      if (!task.completed) { haptic.success(); widgetTaskDone(); }
       setNotice("");
     } catch (error) {
       console.error("Updating StudyOS task:", error);
@@ -4489,6 +4487,7 @@ async function undoDeleteTask() {
       loading: Boolean(authToken) && !firstLoadDoneRef.current,
       theme: settingsTheme,
       palette: activePalette,
+      showcase: typeof accountPrefs.showcase === "string" ? accountPrefs.showcase : "",
       inviteUrl: INVITE_URL,
       supportEmail: (import.meta.env.VITE_SUPPORT_EMAIL || "").trim(),
       guest: Boolean(student?.guest),
@@ -4776,6 +4775,7 @@ async function undoDeleteTask() {
         if (Number.isFinite(data.gems)) setGemsServer(data.gems);
         const saved = normalizeFocusSession(data.session);
         setFocusSessions((current) => [saved, ...current.filter((x) => x.id !== saved.id)]);
+        widgetTaskDone();
         setTotalFocusMinutes((current) => current + saved.durationMinutes);
         setTotalFocusSessionCount((current) => current + 1);
         haptic.success();
