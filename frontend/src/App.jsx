@@ -4562,7 +4562,10 @@ async function undoDeleteTask() {
       subjectProgress: subjects
         .map((x) => {
           const same = tasks.filter((t) => (t.subject || "").trim().toLowerCase() === x.name.trim().toLowerCase());
-          return { name: x.name, pct: same.length ? Math.round((same.filter((t) => t.completed).length / same.length) * 100) : 0 };
+          const key = x.name.trim().toLowerCase();
+          const min = focusSessions.reduce((n, f) => ((f.subject || "").trim().toLowerCase() === key ? n + (Number(f.durationMinutes) || 0) : n), 0);
+          const done = same.filter((t) => t.completed).length;
+          return { name: x.name, pct: same.length ? Math.round((done / same.length) * 100) : 0, done, total: same.length, min: Math.round(min) };
         })
         .sort((a, b) => b.pct - a.pct),
       week: (() => {
