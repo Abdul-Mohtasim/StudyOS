@@ -13,6 +13,18 @@ const cap = (s) => String(s || "").charAt(0).toUpperCase() + String(s || "").sli
 const PAGE = Object.fromEntries(PAGES.map((p) => [p.t, p]));
 const DS_KEY = "studyos_ds_prefs";
 
+// Support lives in standalone browser pages. Carry the exact active StudyOS
+// appearance with the link so those pages match the app, including paid palettes.
+function openSupportPage(page) {
+  const params = new URLSearchParams();
+  const theme = document.documentElement.dataset.theme;
+  const palette = document.documentElement.dataset.palette;
+  if (theme === "light" || theme === "dark") params.set("theme", theme);
+  if (["ocean", "forest", "sunset", "mono"].includes(palette)) params.set("palette", palette);
+  const query = params.toString();
+  window.open(`/${page}${query ? `?${query}` : ""}`, "_blank", "noopener");
+}
+
 function loadPrefs() {
   try { return JSON.parse(localStorage.getItem(DS_KEY) || "{}") || {}; } catch { return {}; }
 }
@@ -641,8 +653,8 @@ input.sin,input.dsin{font:inherit}
     if (it && !it.classList.contains("rd") && lyr?.dataset.key === "settings") {
       const k = SETTINGS_MAP[it.dataset.it];
       if (k) show(k, null, "push");
-      else if (it.dataset.it === "Help Center") window.open("/help.html", "_blank", "noopener");
-      else if (it.dataset.it === "Feedback") window.open("/feedback.html", "_blank", "noopener");
+      else if (it.dataset.it === "Help Center") openSupportPage("help.html");
+      else if (it.dataset.it === "Feedback") openSupportPage("feedback.html");
       return;
     }
     if (c("[data-out]")) { api.logout?.(); return; }
