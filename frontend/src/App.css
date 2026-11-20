@@ -1495,23 +1495,6 @@ button:disabled {
 
 }
 
-.data-load-error {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 11px 12px;
-  border: 1px solid var(--danger, #f08080);
-  border-radius: 10px;
-  color: var(--danger, #f08080);
-  background: color-mix(in srgb, var(--danger, #f08080) 8%, var(--surface, #171f1b));
-  font-size: 13px;
-}
-
-.data-load-error button {
-  flex: 0 0 auto;
-}
 
 
 .task-list {

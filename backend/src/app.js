@@ -23,6 +23,8 @@ const friendRoutes = require("./routes/friends");
 const gemRoutes = require("./routes/gems");
 const shopRoutes = require("./routes/shop");
 const notificationRoutes = require("./routes/notifications");
+const supportRoutes = require("./routes/support");
+const { helpPage, feedbackPage } = require("./pages/helpPages");
 const {
   connectDatabase,
   isDatabaseConnected,
@@ -56,6 +58,9 @@ app.use(cors(corsOptions));
 app.use(compress());
 app.use("/api", guard());
 app.use("/api", apiHeaders);
+
+// Feedback form: allows attachments (up to 3 MB of files, sent as base64), so it parses its own larger body first.
+app.use("/api/support", express.json({ limit: "5mb" }), supportRoutes);
 
 app.use(express.json({ limit: "100kb" }));
 
@@ -141,6 +146,22 @@ app.use("/api/friends", friendRoutes);
 app.use("/api/gems", gemRoutes);
 app.use("/api/shop", shopRoutes);
 app.use("/api/notifications", notificationRoutes);
+
+// Public Help Center and Feedback pages (the app opens these in the phone's browser).
+// They use a few inline styles and scripts and Google Fonts, so they get their own content security policy.
+const PAGE_CSP =
+  "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+  "font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'";
+const sendPage = (build) => (req, res) => {
+  res.set({
+    "Content-Security-Policy": PAGE_CSP,
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "public, max-age=300",
+  });
+  res.send(build(req.query || {}));
+};
+app.get(["/help", "/help/"], sendPage(helpPage));
+app.get(["/help/feedback", "/help/feedback/"], sendPage(feedbackPage));
 
 app.get("/", (req, res) => {
   res.json({

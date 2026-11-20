@@ -4786,10 +4786,18 @@ async function undoDeleteTask() {
         setNotice(error.message || "Could not save the session.");
       }
     },
-    help: () => {
-      const mail = (import.meta.env.VITE_SUPPORT_EMAIL || "").trim();
-      if (mail) { window.location.href = `mailto:${mail}?subject=StudyOS%20help`; return; }
-      setNotice("Need help? Email us from the StudyOS website.");
+    // Help Center and Feedback are web pages served by the StudyOS backend; they open in the phone's browser,
+    // in the same light/dark mode and colour theme as the app, with the email filled in.
+    help: (which) => {
+      const base = API_BASE_URL || (window.location.protocol.startsWith("http") && !import.meta.env.DEV ? window.location.origin : "http://localhost:5000");
+      const q = new URLSearchParams();
+      q.set("theme", settingsTheme === "dark" ? "dark" : "light");
+      const pal = String(activePalette || "").replace(/^theme_/, "");
+      if (pal) q.set("pal", pal);
+      const mail = student && !student.guest ? String(student.email || "") : "";
+      if (mail) q.set("email", mail);
+      const url = `${base}${which === "Feedback" ? "/help/feedback" : "/help"}?${q.toString()}`;
+      if (!window.open(url, "_blank", "noopener")) window.location.href = url;
     },
     deleteAccount: async (password) => {
       if (!authToken) return { ok: false, message: "Sign in first." };

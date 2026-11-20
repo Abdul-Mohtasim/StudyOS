@@ -56,7 +56,8 @@ async function postJson(url, headers, body) {
 }
 
 // { ok: true, id } when sent, { ok: false, skipped: true } when email is not configured.
-async function sendMail({ to, subject, html, text }) {
+// attachments: [{ filename, content }] with content as base64. replyTo: an email address.
+async function sendMail({ to, subject, html, text, attachments, replyTo }) {
   if (!to || !subject) throw new Error("sendMail needs a recipient and a subject.");
 
   const active = provider();
@@ -73,7 +74,11 @@ async function sendMail({ to, subject, html, text }) {
     const data = await postJson(
       "https://api.resend.com/emails",
       { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-      { from: process.env.MAIL_FROM, to: [to], subject, html, text }
+      {
+        from: process.env.MAIL_FROM, to: [to], subject, html, text,
+        ...(replyTo ? { reply_to: replyTo } : {}),
+        ...(attachments && attachments.length ? { attachments: attachments.map((a) => ({ filename: a.filename, content: a.content })) } : {}),
+      }
     );
     return { ok: true, id: data.id || "" };
   }
@@ -82,7 +87,11 @@ async function sendMail({ to, subject, html, text }) {
   const data = await postJson(
     "https://api.brevo.com/v3/smtp/email",
     { "api-key": process.env.BREVO_API_KEY, accept: "application/json" },
-    { sender, to: [{ email: to }], subject, htmlContent: html, textContent: text }
+    {
+      sender, to: [{ email: to }], subject, htmlContent: html, textContent: text,
+      ...(replyTo ? { replyTo: { email: replyTo } } : {}),
+      ...(attachments && attachments.length ? { attachment: attachments.map((a) => ({ name: a.filename, content: a.content })) } : {}),
+    }
   );
   return { ok: true, id: data.messageId || "" };
 }

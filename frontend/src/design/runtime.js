@@ -640,9 +640,7 @@ input.sin,input.dsin{font:inherit}
     const it = c(".sit[data-it]");
     if (it && !it.classList.contains("rd") && lyr?.dataset.key === "settings") {
       const k = SETTINGS_MAP[it.dataset.it];
-      if (k) show(k, null, "push");
-      else if (it.dataset.it === "Help Center") window.open("/help.html", "_blank", "noopener");
-      else if (it.dataset.it === "Feedback") window.open("/feedback.html", "_blank", "noopener");
+      if (k) show(k, null, "push"); else toast(it.dataset.it === "Help Center" ? "Help Center opens on the StudyOS website" : "Thanks! Feedback goes to the StudyOS team");
       return;
     }
     if (c("[data-out]")) { api.logout?.(); return; }
