@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same flame in grey: the streak is alive but today is not done yet (like Duolingo). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+    <path android:fillColor="#B8BEC4"
+        android:pathData="M24,3C25.4,9.6 31.6,13 35.2,19.4C37.6,23.6 38.4,28.6 36.4,33.2C34,38.8 29,43 24,43C16,43 9.6,36.6 9.6,28.6C9.6,24.4 11.4,21 14,18.2C14.6,21 16.2,22.8 18.4,23.6C17.4,15.4 19.6,8.6 24,3Z" />
+    <path android:fillColor="#D9DDE0"
+        android:pathData="M24,23.4C20.6,26.8 18.8,29.4 18.8,32C18.8,35.2 21,37.4 24,37.4C27,37.4 29.2,35.2 29.2,32C29.2,29.4 27.4,26.8 24,23.4Z" />
+</vector>

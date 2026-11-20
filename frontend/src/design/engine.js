@@ -338,7 +338,7 @@ const profHtml=()=>`<div class="scr n nd" style="--pg:#181b22"><div class="pf"><
 const qrSvg=()=>{const n=QM.length,q=1,s=n+q*2;let d='';const fin=(r,c)=>(r<7&&c<7)||(r<7&&c>=n-7)||(r>=n-7&&c<7);
  const mid=(r,c)=>Math.abs(r-n/2+.5)<4.6&&Math.abs(c-n/2+.5)<4.6;
  for(let r=0;r<n;r++)for(let c=0;c<n;c++){if(!QM[r][c]||fin(r,c)||mid(r,c))continue;d+=`<rect x="${c+q+.08}" y="${r+q+.08}" width=".84" height=".84" rx=".42"/>`}
- let f='';[[0,0],[0,n-7],[n-7,0]].forEach(([r,c])=>{const x=c+q,y=r+q;f+=`<rect x="${x+.5}" y="${y+.5}" width="6" height="6" rx="1.9" fill="none" stroke="#181b22" stroke-width="1"/><rect x="${x+2}" y="${y+2}" width="3" height="3" rx="1" fill="#181b22"/>`});
+ let f='';[[0,0],[0,n-7],[n-7,0]].forEach(([r,c])=>{const x=c+q,y=r+q;f+=`<rect x="${x+.5}" y="${y+.5}" width="6" height="6" rx="1.9" fill="none" style="stroke:var(--qm,#181b22)" stroke-width="1"/><rect x="${x+2}" y="${y+2}" width="3" height="3" rx="1" style="fill:var(--qm,#181b22)"/>`});
  return `<svg viewBox="0 0 ${s} ${s}"><g fill="#181b22">${d}</g>${f}</svg>`};
 const LOGO='<svg width="28" height="28" viewBox="0 0 48 48"><path d="M24 8L4 18l20 10 20-10z" fill="#c9b8c3"/><path d="M12 24v9c0 4 6 8 12 8s12-4 12-8v-9l-12 6z" fill="#9d8c98"/><path d="M42 20v14" stroke="#c9b8c3" stroke-width="3" stroke-linecap="round"/></svg>';
 const SHARE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>';
@@ -978,7 +978,7 @@ const badgeList=()=>{
   ];
 };
 DZ.badgeList=badgeList;
-DZ.bdg2=bdg2;
+DZ.bdg2=bdg2;DZ.badgeArt=badgeArt;DZ.LOCKI=LOCKI;DZ.pinList=pinList;
 const badgesHtml=()=>{
   const xp=Math.round((D.hours||0)*60+(D.tasksDone||0)*10),lv=1+Math.floor(xp/1000),cur=xp%1000;
   const list=badgeList(),on=list.filter(b=>b[1]),off=list.filter(b=>!b[1]);
@@ -1283,6 +1283,60 @@ function sheetPick(){
 }
 // Items that are bought once and kept (everything except Streak Freeze, Streak Repair and Double Gems).
 const ITEMS_ONCE=['sound','focusplus','report','exam','widgets','frames','badges','theme_ocean','theme_forest','theme_sunset','theme_mono'];
+/* ---- Widget Pack and Badge Showcase: tapping the price shows how they will look once they are yours (no pack picker) ---- */
+const PV_KEYS=['widgets','badges'];
+const isPv=k=>PV_KEYS.indexOf(k)>=0;
+const pvMix=(a,b,t)=>{const h=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16));const A=h(a),B=h(b);return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')};
+// The same colours the real Android widgets get from the active theme (see widgets/widgetSync.js).
+const pvTheme=()=>{
+  const de=document.documentElement,dark=de.dataset.theme==='dark',pal=String(de.dataset.palette||'').replace(/^theme_/,'');
+  const MV={ocean:'#8fb9d3',forest:'#93bda1',sunset:'#e0a78f',mono:'#a8a8a8'},ON={ocean:'#10202a',forest:'#0f2216',sunset:'#2b140c',mono:'#141414'};
+  const mv=dark?'#c9b8c3':(MV[pal]||'#c9b8c3'),on=dark?'#1b1e25':(ON[pal]||'#1b1e25');
+  return `--wm:${mv};--wo:${on};--ws:${pvMix(mv,'#ffffff',.42)}`;
+};
+const PV_FLAME='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FF9600" d="M24,3C25.4,9.6 31.6,13 35.2,19.4C37.6,23.6 38.4,28.6 36.4,33.2C34,38.8 29,43 24,43C16,43 9.6,36.6 9.6,28.6C9.6,24.4 11.4,21 14,18.2C14.6,21 16.2,22.8 18.4,23.6C17.4,15.4 19.6,8.6 24,3Z"/><path fill="#FFC800" d="M24,23.4C20.6,26.8 18.8,29.4 18.8,32C18.8,35.2 21,37.4 24,37.4C27,37.4 29.2,35.2 29.2,32C29.2,29.4 27.4,26.8 24,23.4Z"/><path fill="#FFE680" d="M23.6,30.2C22.4,31.6 21.8,32.6 21.8,33.6C21.8,35 22.7,35.8 23.8,35.8C24.9,35.8 25.6,35 25.6,34C25.6,32.8 24.8,31.6 23.6,30.2Z"/></svg>';
+const PV_CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 12.5l4.5 4.5L18.5 7.5"/></svg>';
+const pvSparks=()=>[[8,'4.6s','0s'],[22,'5.4s','1.1s'],[41,'4.2s','2.3s'],[63,'5.8s','.6s'],[80,'4.8s','1.8s'],[92,'5.2s','2.9s']].map(a=>`<i class="pv-sp" style="left:${a[0]}%;animation-duration:${a[1]};animation-delay:${a[2]}"></i>`).join('');
+const pvMin=m=>{m=Math.round(m||0);return m>=60?Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m':m+'m'};
+const pvWidgets=()=>{
+  const st=D.streak||0,dow=new Date().getDay(),todayDone=(D.todayMin||0)>0,L='SMTWTFS';
+  const days=L.split('').map((ch,i)=>{
+    const off=i-dow,done=off<=0&&(off===0?todayDone:(-off<=st-(todayDone?1:0)&&st>0));
+    return `<div><div class="pv-d${off===0?' t':''}">${ch}</div><div class="pv-c${done?' on':''}${off===0?' tdy':''}${off>0?' fut':''}" style="--k:${i}">${done?PV_CHECK:''}</div></div>`;
+  }).join('');
+  const g=Math.max(1,D.goalMin||60),tm=Math.max(0,Math.round(D.todayMin||0)),len=Math.round(113*Math.min(1,tm/g)*100)/100;
+  const all=D.tasks||[],open=all.filter(t=>!t.done),sample=['Read chapter 4','Practice quiz'];
+  const tt=(open.length?open.slice(0,2).map(t=>String(t.title||'')):sample).map((x,i)=>`<div class="pv-t" style="--k:${i}">&#9675;&nbsp; ${esc(x)}</div>`).join('');
+  const w=D.week||{},bars=Array.isArray(w.bars)&&w.bars.length===7?w.bars:[0,0,0,0,0,0,0],lab=Array.isArray(w.labels)&&w.labels.length===7?w.labels:['M','T','W','T','F','S','S'];
+  const mx=Math.max(...bars),h=mx>0?bars.map(v=>Math.max(16,Math.round(v/mx*100))):[35,60,45,80,55,25,12],td=(dow+6)%7;
+  const wk=h.map((v,i)=>`<div class="pv-bw"><i class="${i===td?'t':''}" style="--h:${v};--k:${i}"></i><span>${esc(String(lab[i]).slice(0,1))}</span></div>`).join('');
+  return `<div class="pv-w pv-streak" style="--d:.2s"><div class="pv-sh"><div class="pv-fl">${PV_FLAME}</div><div><div class="pv-n">${st}</div><span class="pv-u">day streak</span></div><div class="pv-mas"><i></i><i></i><b></b></div></div><div class="pv-days">${days}</div></div>
+<div class="pv-row"><div class="pv-w pv-focus" style="--d:.42s"><div class="pv-ring"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" class="tr"/><circle cx="22" cy="22" r="18" class="ar" style="--len:${len}"/></svg><b>${tm}</b></div><div class="pv-btn">START FOCUS</div></div>
+<div class="pv-w pv-tasks" style="--d:.64s"><div class="pv-th"><b>Today</b><span>${all.filter(t=>t.done).length}/${all.length||open.length||2}</span></div>${tt}</div></div>
+<div class="pv-w pv-week" style="--d:.86s"><div class="pv-th"><b>This week</b><span>${pvMin(w.minutes||0)}</span></div><div class="pv-bars">${wk}</div></div>`;
+};
+const pvBadgePick=()=>{
+  const L=(DZ.badgeList?DZ.badgeList():[]),pins=(DZ.pinList?DZ.pinList():[]).map(k=>L.find(b=>b[2]===k)).filter(b=>b&&b[1]);
+  const rest=L.filter(b=>b[1]&&pins.indexOf(b)<0),lock=L.filter(b=>!b[1]);
+  return pins.concat(rest).concat(lock).slice(0,3);
+};
+const pvBadges=()=>{
+  const pick=pvBadgePick(),nm=esc(D.first||D.name||'You'),ini=esc(String(D.first||D.name||'S').trim().charAt(0).toUpperCase()||'S');
+  const fx=['-70px','0px','70px'],fr=['-28deg','14deg','26deg'];
+  const slots=[0,1,2].map(i=>{const b=pick[i];
+    return `<div class="pv-slot" style="--k:${i}"><div class="pv-ph"></div>${b?`<div class="pv-bd${b[1]?'':' lk'}" style="--fx:${fx[i]};--fr:${fr[i]}">${DZ.badgeArt?DZ.badgeArt(b[2]):''}${b[1]?'':`<i class="pv-lk">${DZ.LOCKI||''}</i>`}</div><span class="pv-bl">${esc(b[0])}</span>`:'<span class="pv-bl">&nbsp;</span>'}</div>`}).join('');
+  const have=pick.filter(b=>b&&b[1]).length;
+  const note=have>=3?'Your pinned badges sit right on your profile.':have>0?'Earn more badges to fill every slot.':'Earn badges, then pin your favourites here.';
+  return `<div class="pv-card" style="--d:.2s"><div class="pv-hero"><span class="pv-av">${ini}</span><div><b>${nm}</b><small>${D.handle?'@'+esc(D.handle):'Your profile'}</small></div></div><div class="pv-sech">Showcase</div><div class="pv-slots">${slots}</div></div><p class="pv-note">${note}</p>`;
+};
+function previewHtml(fx){
+  const k=SHEET.k,def=shopDef(k),sel=sheetPick(),need=sel.price-(D.gems||0),left=(D.gems||0)-sel.price;
+  const isW=k==='widgets';
+  const head=isW?'Your home screen':'Your profile',sub=isW?'This is how your 4 widgets will sit on your phone once you get the Widget Pack.':'This is how your 3 favourite badges will sit on your profile once you get Badge Showcase.';
+  const btn=SHEET.buying?`<button type="button" class="sh2-go busy" data-sheetbuy>...</button>`:need>0?`<button type="button" class="sh2-go off" data-sheetwhy>NEED ${ntxt(need)} MORE GEMS</button>`:`<button type="button" class="sh2-go" data-sheetbuy>GET ${esc(def.t.toUpperCase())}</button>`;
+  const cost=need>0?`${gmI}<b>${ntxt(sel.price)}</b><span>&middot; you have ${ntxt(D.gems||0)}</span>`:`${gmI}<b>${ntxt(sel.price)}</b><span>&middot; ${ntxt(left)} left after</span>`;
+  return `<div class="sh2-sheet${fx==='in'?' in':''}" data-sheetbg role="dialog" aria-label="${esc(head)}"><div class="sh2-sp pv${isW?' pvw':' pvb'}"><div class="sh2-grab"></div><h2 class="pvh">${head}</h2><p class="pvs">${sub}</p><div class="pv-stage" style="${pvTheme()}">${pvSparks()}${isW?'<div class="pv-phone"><div class="pv-bar"><span>9:41</span><span class="pv-bat"></span></div>'+pvWidgets()+'</div>':pvBadges()}</div><div class="pv-cost">${cost}</div>${btn}<button type="button" class="sh2-no" data-sheetclose>NO THANKS</button></div></div>`;
+}
 function sheetHtml(){
   if(!SHEET)return '';
   const fx=SHEET.fx||'';SHEET.fx='';   // entrance effects play once, never again on a redraw
@@ -1291,8 +1345,9 @@ function sheetHtml(){
     return `<div class="sh2-sheet" data-sheetbg role="dialog" aria-label="Theme unlocked"><div class="sh2-sp done${fx==='done'?' pop':''}"><div class="sh2-big sh2-bigth" style="--c:${def.c}">${ic}</div><b class="sh2-bt">${esc(def.t)}</b><span class="sh2-bx">Unlocked</span><button type="button" class="sh2-go" data-sheetapply>APPLY THEME</button><button type="button" class="sh2-no" data-sheetclose>NOT NOW</button></div></div>`;
   }
   if(SHEET.done){
-    return `<div class="sh2-sheet" data-sheetbg role="dialog" aria-label="Purchase complete"><div class="sh2-sp done${fx==='done'?' pop':''}"><div class="sh2-big" style="--c:${def.c}">${ic}</div><b class="sh2-bt">${esc(def.t)}</b><span class="sh2-bx">x${SHEET.done}</span><button type="button" class="sh2-go" data-sheetclose>BACK TO SHOP</button></div></div>`;
+    return `<div class="sh2-sheet" data-sheetbg role="dialog" aria-label="Purchase complete"><div class="sh2-sp done${fx==='done'?' pop':''}"><div class="sh2-big" style="--c:${def.c}">${ic}</div><b class="sh2-bt">${esc(def.t)}</b><span class="sh2-bx">${isPv(k)?'Unlocked':'x'+SHEET.done}</span>${isPv(k)?`<p class="sh2-sn" style="margin:-10px 10px 16px">${k==='widgets'?'Touch and hold an empty spot on your home screen, tap Widgets, then pick StudyOS.':'Open Badges and tap up to 3 unlocked badges to pin them.'}</p>`:''}<button type="button" class="sh2-go" data-sheetclose>BACK TO SHOP</button></div></div>`;
   }
+  if(isPv(k)){SHEET.n=1;return previewHtml(fx)}
   const pk=packsOf(k),sel=sheetPick(),need=sel.price-(D.gems||0);
   const cards=pk.map(p=>{
     const on=p.n===sel.n,off=packOff(k,p.n);
@@ -1696,8 +1751,8 @@ ${row(I.eye,'Contacts','If you choose Find friends from contacts, email addresse
     const realQr=()=>{try{const q=qrcode(0,'H');q.addData(D.inviteUrl||'https://studyos.app');q.make();const n=q.getModuleCount(),m=1,s=n+m*2;let d='';
       const fin=(r,c)=>(r<7&&c<7)||(r<7&&c>=n-7)||(r>=n-7&&c<7),mid=(r,c)=>Math.abs(r-n/2+.5)<n*.12&&Math.abs(c-n/2+.5)<n*.12;
       for(let r=0;r<n;r++)for(let c=0;c<n;c++){if(!q.isDark(r,c)||fin(r,c)||mid(r,c))continue;d+=`<rect x="${c+m+.06}" y="${r+m+.06}" width=".88" height=".88" rx=".4"/>`}
-      let f='';[[0,0],[0,n-7],[n-7,0]].forEach(([r,c])=>{const x=c+m,y=r+m;f+=`<rect x="${x+.5}" y="${y+.5}" width="6" height="6" rx="1.9" fill="none" stroke="#181b22" stroke-width="1"/><rect x="${x+2}" y="${y+2}" width="3" height="3" rx="1" fill="#181b22"/>`});
-      return `<svg viewBox="0 0 ${s} ${s}"><g fill="#181b22">${d}</g>${f}</svg>`}catch(_){return ''}};
+      let f='';[[0,0],[0,n-7],[n-7,0]].forEach(([r,c])=>{const x=c+m,y=r+m;f+=`<rect x="${x+.5}" y="${y+.5}" width="6" height="6" rx="1.9" fill="none" style="stroke:var(--qm,#181b22)" stroke-width="1"/><rect x="${x+2}" y="${y+2}" width="3" height="3" rx="1" style="fill:var(--qm,#181b22)"/>`});
+      return `<svg viewBox="0 0 ${s} ${s}"><g style="fill:var(--qm,#181b22)">${d}</g>${f}</svg>`}catch(_){return ''}};
     const overlay=()=>{const h=qh();const i=h.indexOf('<div class="ov"');return h.slice(i)};
     SCREENS[k].html=()=>(SCREENS[IDX('Profile')].html().replace(/<\/div><\/div>$/,'')+overlay()).replace(/(<div class="qimg">)[\s\S]*?<\/svg>/,'$1'+realQr()).replace('Friends scan this to add you on StudyOS.','Friends scan this to get StudyOS.').replace(/<button type="button" data-sh><svg(?:(?!<\/button>)[\s\S])*?Save<\/button>/,'');
     SCREENS[k].play=()=>{qp();const old=R.onclick;R.onclick=e=>{

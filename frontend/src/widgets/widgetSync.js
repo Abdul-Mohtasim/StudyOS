@@ -20,7 +20,9 @@ const MIDNIGHT = { pg: "#0d1114", card: "#1f252d", chip: "#2a323a", ink: "#ebe8e
 
 export function widgetTheme(theme, palette) {
   if (theme === "dark") return { dark: true, ...MIDNIGHT };
-  return { dark: false, ...(PALETTES[palette] || PALETTES[""]) };
+  // The app stores paid themes as "theme_ocean"; the colour table is keyed "ocean".
+  const key = String(palette || "").replace(/^theme_/, "");
+  return { dark: false, ...(PALETTES[key] || PALETTES[""]) };
 }
 
 let lastCompletionAt = 0;

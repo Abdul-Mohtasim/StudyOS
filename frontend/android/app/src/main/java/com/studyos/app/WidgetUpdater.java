@@ -12,6 +12,10 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.Bundle;
+import android.util.TypedValue;
+import android.view.View;
+import java.util.Calendar;
 import android.widget.RemoteViews;
 
 import java.util.Locale;
@@ -74,16 +78,34 @@ final class WidgetUpdater {
 
         MoodEngine.Result mood = resolve(s, now);
 
+        // Each widget is built for the size it has right now, so resizing it on the home screen re-lays it out.
         int[] ids = mgr.getAppWidgetIds(new ComponentName(app, StreakWidgetProvider.class));
-        for (int id : ids) { mgr.updateAppWidget(id, buildStreak(app, s, mood, now)); any = true; }
+        for (int id : ids) { int[] d = dims(mgr, id); mgr.updateAppWidget(id, buildStreak(app, s, mood, now, d[0], d[1])); any = true; }
         ids = mgr.getAppWidgetIds(new ComponentName(app, TasksWidgetProvider.class));
-        for (int id : ids) { mgr.updateAppWidget(id, buildTasks(app, s)); any = true; }
+        for (int id : ids) { int[] d = dims(mgr, id); mgr.updateAppWidget(id, buildTasks(app, s, d[0], d[1])); any = true; }
         ids = mgr.getAppWidgetIds(new ComponentName(app, FocusWidgetProvider.class));
-        for (int id : ids) { mgr.updateAppWidget(id, buildFocus(app, s)); any = true; }
+        for (int id : ids) { int[] d = dims(mgr, id); mgr.updateAppWidget(id, buildFocus(app, s, d[0], d[1])); any = true; }
         ids = mgr.getAppWidgetIds(new ComponentName(app, WeekWidgetProvider.class));
-        for (int id : ids) { mgr.updateAppWidget(id, buildWeek(app, s)); any = true; }
+        for (int id : ids) { int[] d = dims(mgr, id); mgr.updateAppWidget(id, buildWeek(app, s, d[0], d[1])); any = true; }
 
         schedule(app, any ? mood.nextAt : 0);
+    }
+
+    /** Width and height of one widget in dp (the launcher reports the smallest size it can be shown at). */
+    private static int[] dims(AppWidgetManager mgr, int id) {
+        int w = 0, h = 0;
+        try {
+            Bundle o = mgr.getAppWidgetOptions(id);
+            if (o != null) {
+                w = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0);
+                h = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0);
+            }
+        } catch (RuntimeException ignored) { }
+        return new int[]{w > 0 ? w : 250, h > 0 ? h : 110};
+    }
+
+    private static void show(RemoteViews rv, int id, boolean on) {
+        rv.setViewVisibility(id, on ? View.VISIBLE : View.GONE);
     }
 
     static MoodEngine.Result resolve(WidgetStore.Snap s, long now) {
@@ -142,16 +164,24 @@ final class WidgetUpdater {
 
     // ---- streak + mascot -------------------------------------------------------------------
 
-    private static RemoteViews buildStreak(Context c, WidgetStore.Snap s, MoodEngine.Result mood, long now) {
+    private static RemoteViews buildStreak(Context c, WidgetStore.Snap s, MoodEngine.Result mood, long now, int w, int h) {
         RemoteViews rv = new RemoteViews(c.getPackageName(), R.layout.widget_streak);
         paintBg(rv, s);
         int cyc = MascotRenderer.cycles(c, mood.mood, FRAMES, FLIP_MS);
         for (int i = 0; i < FRAMES; i++) {
             rv.setImageViewBitmap(FRAME_IDS[i], MascotRenderer.frame(c, mood.mood, mood.level, i, FRAMES, FRAME_PX, cyc));
         }
-        rv.setInt(R.id.flame, "setColorFilter", s.onMv);
-        rv.setTextViewText(R.id.num, s.streak + (s.streak == 1 ? " day" : " days"));
+        // Duolingo-style flame: orange when today is done, grey while it is still waiting.
+        rv.setImageViewResource(R.id.flame, s.studiedToday && s.streak > 0 ? R.drawable.ic_flame_duo : R.drawable.ic_flame_off);
+        rv.setTextViewText(R.id.num, String.valueOf(s.streak));
         rv.setTextColor(R.id.num, s.onMv);
+        rv.setTextViewText(R.id.unit, "day streak");
+        rv.setTextColor(R.id.unit, faint(s.onMv, 220));
+        rv.setTextViewTextSize(R.id.num, TypedValue.COMPLEX_UNIT_SP, h >= 150 ? 40 : 34);
+        // Size classes: the mascot needs width; the message and the gems line need height.
+        show(rv, R.id.mascot, w >= 225);
+        show(rv, R.id.msg, h >= 125);
+        show(rv, R.id.prog, h >= 165);
         rv.setTextViewText(R.id.msg, message(mood.mood, s, now));
         rv.setTextColor(R.id.msg, s.onMv);
         rv.setTextViewText(R.id.prog, s.signedIn
@@ -169,56 +199,50 @@ final class WidgetUpdater {
         return rv;
     }
 
-    /** Seven day circles with letters; studied days become joined check pills, like a streak calendar. */
+    /** The current week, Sunday to Saturday, like the Duolingo widget: a check circle for each studied day. */
     private static Bitmap dayRow(WidgetStore.Snap s) {
         int w = 560, h = 124, n = 7;
         Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Canvas cv = new Canvas(b);
         Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        float slot = (float) w / n, r = 32, cy = 86;
+        float slot = (float) w / n, r = 31, cy = 88;
         int m = s.weekMinutes.length;
         int soft = soft(s);
+        int dow = Calendar.getInstance().get(Calendar.DAY_OF_WEEK) - 1; // 0 = Sunday .. 6 = Saturday
+        String letters = "SMTWTFS";
+        int todayK = s.todayIndex >= 0 && s.todayIndex < m ? s.todayIndex : m - 1;
         p.setTextAlign(Paint.Align.CENTER);
         p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         p.setTextSize(30);
         for (int i = 0; i < n; i++) {
-            int k = m - n + i; // the last 7 entries end with today
-            boolean has = k >= 0 && k < m;
-            boolean today = has && k == s.todayIndex;
-            boolean done = has && s.weekMinutes[k] > 0;
+            int off = i - dow;              // < 0 earlier this week, 0 today, > 0 still to come
+            int k = todayK + off;
+            boolean future = off > 0;
+            boolean today = off == 0;
+            boolean done = !future && k >= 0 && k < m && s.weekMinutes[k] > 0;
             float cx = slot * i + slot / 2;
-            p.setColor(today ? s.onMv : faint(s.onMv, 190));
-            String lt = has && s.weekLabels[k].length() > 0 ? s.weekLabels[k].substring(0, 1) : "";
-            cv.drawText(lt, cx, 30, p);
             p.setStyle(Paint.Style.FILL);
-            if (!done) {
-                p.setColor(today ? soft : faint(soft, 120));
+            p.setColor(today ? s.onMv : faint(s.onMv, future ? 130 : 200));
+            cv.drawText(String.valueOf(letters.charAt(i)), cx, 30, p);
+            if (done) {
+                p.setColor(s.onMv);
                 cv.drawCircle(cx, cy, r, p);
-            }
-        }
-        // joined pills for runs of studied days
-        int i = 0;
-        while (i < n) {
-            int k = m - n + i;
-            if (k >= 0 && k < m && s.weekMinutes[k] > 0) {
-                int j = i;
-                while (j + 1 < n && m - n + j + 1 < m && s.weekMinutes[m - n + j + 1] > 0) j++;
-                p.setStyle(Paint.Style.FILL);
-                p.setColor(soft);
-                cv.drawRoundRect(new RectF(slot * i + slot / 2 - r, cy - r, slot * j + slot / 2 + r, cy + r), r, r, p);
                 p.setStyle(Paint.Style.STROKE);
-                p.setStrokeWidth(7);
+                p.setStrokeWidth(8);
                 p.setStrokeCap(Paint.Cap.ROUND);
                 p.setStrokeJoin(Paint.Join.ROUND);
                 p.setColor(s.mv);
-                for (int q = i; q <= j; q++) {
-                    float cx = slot * q + slot / 2;
-                    cv.drawLine(cx - 12, cy + 1, cx - 3, cy + 10, p);
-                    cv.drawLine(cx - 3, cy + 10, cx + 13, cy - 8, p);
-                }
-                i = j + 1;
+                cv.drawLine(cx - 12, cy + 1, cx - 3, cy + 11, p);
+                cv.drawLine(cx - 3, cy + 11, cx + 14, cy - 9, p);
             } else {
-                i++;
+                p.setColor(future ? faint(soft, 90) : (today ? soft : faint(soft, 150)));
+                cv.drawCircle(cx, cy, r, p);
+                if (today) {
+                    p.setStyle(Paint.Style.STROKE);
+                    p.setStrokeWidth(6);
+                    p.setColor(s.onMv);
+                    cv.drawCircle(cx, cy, r - 3, p);
+                }
             }
         }
         return b;
@@ -226,13 +250,15 @@ final class WidgetUpdater {
 
     // ---- tasks -----------------------------------------------------------------------------
 
-    private static RemoteViews buildTasks(Context c, WidgetStore.Snap s) {
+    private static RemoteViews buildTasks(Context c, WidgetStore.Snap s, int w, int h) {
         RemoteViews rv = new RemoteViews(c.getPackageName(), R.layout.widget_tasks);
         paintBg(rv, s);
         rv.setTextColor(R.id.title, s.onMv);
         rv.setTextViewText(R.id.count, s.signedIn ? s.doneToday + "/" + s.totalToday + " done" : "");
         rv.setTextColor(R.id.count, faint(s.onMv, 200));
-        int n = Math.min(4, s.tasks.length);
+        // As many rows as the widget is tall: header ~26dp, each row 40dp, 14dp padding top and bottom.
+        int rows = Math.max(1, Math.min(4, (h - 28 - 26) / 40));
+        int n = Math.min(rows, s.tasks.length);
         for (int i = 0; i < 4; i++) {
             if (i < n) {
                 rv.setViewVisibility(ROW_BOX[i], android.view.View.VISIBLE);
@@ -243,7 +269,7 @@ final class WidgetUpdater {
                 rv.setViewVisibility(ROW_BOX[i], android.view.View.GONE);
             }
         }
-        boolean empty = n == 0;
+        boolean empty = s.tasks.length == 0;
         rv.setViewVisibility(R.id.empty, empty ? android.view.View.VISIBLE : android.view.View.GONE);
         rv.setTextViewText(R.id.empty, !s.signedIn ? "Open StudyOS to sign in"
                 : s.totalToday > 0 ? "All done for today. Well played!" : "Nothing planned yet. Add a task!");
@@ -261,7 +287,7 @@ final class WidgetUpdater {
 
     // ---- focus shortcut --------------------------------------------------------------------
 
-    private static RemoteViews buildFocus(Context c, WidgetStore.Snap s) {
+    private static RemoteViews buildFocus(Context c, WidgetStore.Snap s, int w, int h) {
         RemoteViews rv = new RemoteViews(c.getPackageName(), R.layout.widget_focus);
         paintBg(rv, s);
         rv.setInt(R.id.btnbg, "setColorFilter", s.onMv);
@@ -269,12 +295,17 @@ final class WidgetUpdater {
         rv.setTextColor(R.id.sub, faint(s.onMv, 210));
         rv.setTextColor(R.id.btn, soft(s));
         rv.setTextViewText(R.id.sub, s.todayMin + " / " + s.goalMin + " min today");
-        rv.setTextViewText(R.id.btn, s.sessionActive ? "OPEN TIMER" : "START FOCUS");
+        // Narrow widget: drop the ring so the button text always fits on one line.
+        boolean ringOn = w >= 235;
+        show(rv, R.id.ring, ringOn);
+        show(rv, R.id.sub, h >= 95);
+        rv.setTextViewTextSize(R.id.btn, TypedValue.COMPLEX_UNIT_SP, w >= 235 ? 13 : 12);
+        rv.setTextViewText(R.id.btn, s.sessionActive ? (ringOn ? "OPEN TIMER" : "TIMER") : (ringOn ? "START FOCUS" : "START"));
         int pct = Math.min(100, Math.round(100f * s.todayMin / Math.max(1, s.goalMin)));
         rv.setImageViewBitmap(R.id.ring, ring(pct, s.todayMin, s));
         if (s.signedIn && !s.unlocked) {
             rv.setTextViewText(R.id.sub, "Widget Pack is locked");
-            rv.setTextViewText(R.id.btn, "OPEN SHOP");
+            rv.setTextViewText(R.id.btn, ringOn ? "OPEN SHOP" : "SHOP");
             rv.setOnClickPendingIntent(R.id.root, open(c, "shop"));
             return rv;
         }
@@ -312,7 +343,7 @@ final class WidgetUpdater {
 
     // ---- week chart ------------------------------------------------------------------------
 
-    private static RemoteViews buildWeek(Context c, WidgetStore.Snap s) {
+    private static RemoteViews buildWeek(Context c, WidgetStore.Snap s, int w, int h) {
         RemoteViews rv = new RemoteViews(c.getPackageName(), R.layout.widget_week);
         paintBg(rv, s);
         int total = 0;
