@@ -5,9 +5,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0',
-    allowedHosts: [
-      'https://study-os-66bo.vercel.app/'
-    ],
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
