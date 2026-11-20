@@ -1218,14 +1218,14 @@ const subMin=m=>{m=Math.round(m||0);return m>=60?Math.floor(m/60)+'h '+(m%60)+'m
 const subTitle=()=>D.fullName?D.fullName+'’s Subjects':'My Subjects';
 const subRows=()=>{
   const L=subList();
-  if(!L.length)return `<div class="sje"><div class="sjei">${BK.replace('M19 12H5M11 6l-6 6 6 6','M4 5.500A2 2 0 016 4h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2zM8 9h8M8 13h5')}</div><b>No subjects yet</b><span>Add a subject and your progress shows up here.</span><button type="button" class="sjadd" data-sadd>ADD A SUBJECT</button></div>`;
+  if(!L.length)return `<div class="smy-e"><div class="smy-ei">${BK.replace('M19 12H5M11 6l-6 6 6 6','M4 5.500A2 2 0 016 4h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2zM8 9h8M8 13h5')}</div><b>No subjects yet</b><span>Add a subject and your progress shows up here.</span><button type="button" class="smy-add" data-sadd>ADD A SUBJECT</button></div>`;
   return L.map((x,i)=>{
     const nm=String(x.name||'?'),pc=Math.max(0,Math.min(100,x.pct|0)),sub=(x.total?x.done+'/'+x.total+' tasks':'No tasks yet')+(x.min?' · '+subMin(x.min):'');
-    return `<div class="sjr" style="--i:${i}"><span class="sji">${subIcon(nm)}</span><div class="sjt"><b>${esc(nm)}</b><div class="sjb"><i style="width:${pc}%"></i></div><small>${esc(sub)}</small></div><span class="sjp">${pc}%</span></div>`;
+    return `<div class="smy-r" style="--i:${i}"><span class="smy-i">${subIcon(nm)}</span><div class="smy-t"><b>${esc(nm)}</b><div class="smy-b"><i style="width:${pc}%"></i></div><small>${esc(sub)}</small></div><span class="smy-p">${pc}%</span></div>`;
   }).join('');
 };
 replace('My subjects',{
-  html:()=>`<div class="scr n nd" style="--pg:#181b22"><div class="sjpg"><div class="sjh"><button type="button" class="sjx" data-sback aria-label="Back">${BK}</button><h1>${esc(subTitle())}</h1><button type="button" class="sjx" data-sshare aria-label="Share">${UP}</button></div><div class="sjl" data-sc>${subRows()}</div></div></div>`,
+  html:()=>`<div class="scr n nd" style="--pg:#181b22"><div class="smy-pg"><div class="smy-h"><button type="button" class="smy-x" data-sback aria-label="Back">${BK}</button><h1>${esc(subTitle())}</h1><button type="button" class="smy-x" data-sshare aria-label="Share">${UP}</button></div><div class="smy-l" data-sc>${subRows()}</div></div></div>`,
   play(){S.mute=false;enter();
     R.onclick=e=>{
       if(e.target.closest('[data-sback]')){hap('light');go('Profile');return}

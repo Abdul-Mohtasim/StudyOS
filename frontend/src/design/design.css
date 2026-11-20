@@ -1206,33 +1206,33 @@ html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#1
 .dz .pf .pfbar.on .pfx{color:#f4f2f3}
 .dz .scr.nd.lt .pf .pfbar .pfx,.dz .scr.nd.lt .pf .pfbar.on .pfx{color:var(--ink)}
 /* My subjects page */
-.dz .sjpg{position:absolute;inset:0;display:flex;flex-direction:column;padding-top:36px;background:var(--pg);color:var(--ink)}
-.dz .sjh{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 10px;flex:none}
-.dz .sjh h1{flex:1;min-width:0;margin:0 4px;text-align:center;font:700 18px/1.2 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
-.dz .sjx{flex:none;width:48px;height:48px;display:grid;place-items:center;border:0;background:none;padding:0;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent}
-.dz .sjx:active{opacity:.6}
-.dz .sjl{flex:1;overflow-y:auto;padding:14px 20px 40px}
-.dz .sjr{display:flex;align-items:center;gap:16px;padding:13px 0;animation:sb-in .5s cubic-bezier(.2,1,.3,1) calc(var(--i)*.06s + .05s) both}
-.dz .scr .sji{flex:none;width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:#f6f4f2!important;box-shadow:inset 0 -3px 0 rgba(0,0,0,.08)}
-.dz .sji svg{width:40px;height:40px;display:block}
-.dz .sjt{flex:1;min-width:0}
-.dz .sjt b{display:block;font:700 17px/1.25 var(--body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dz .sjb{height:7px;border-radius:4px;background:var(--track);margin:6px 0 4px;overflow:hidden}
-.dz .sjb i{display:block;height:100%;border-radius:4px;background:var(--mv);transform-origin:left;animation:sb-fill .8s cubic-bezier(.2,1,.3,1) calc(var(--i)*.06s + .25s) both}
-.dz .sjt small{display:block;font:700 12.5px var(--body);color:var(--mut)}
-.dz .sjp{flex:none;min-width:48px;text-align:right;font:700 17px var(--body);color:var(--mut)}
-.dz .sje{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:70px 20px 0}
-.dz .sjei{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;background:var(--card);color:var(--mut)}
-.dz .sjei svg{width:30px;height:30px}
-.dz .sje b{font:700 18px var(--display);color:var(--ink)}
-.dz .sje span{font:700 14px/1.4 var(--body);color:var(--mut)}
-.dz .sjadd{margin-top:10px;height:50px;padding:0 26px;border-radius:16px;border:0;background:var(--ink);color:var(--pg);font:700 15px var(--body);letter-spacing:.04em;cursor:pointer}
+.dz .smy-pg{position:absolute;inset:0;display:flex;flex-direction:column;padding-top:36px;background:var(--pg);color:var(--ink)}
+.dz .smy-h{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 10px;flex:none}
+.dz .smy-h h1{flex:1;min-width:0;margin:0 4px;text-align:center;font:700 18px/1.2 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.dz .smy-x{flex:none;width:48px;height:48px;display:grid;place-items:center;border:0;background:none;padding:0;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.dz .smy-x:active{opacity:.6}
+.dz .smy-l{flex:1;overflow-y:auto;padding:14px 20px 40px}
+.dz .smy-r{display:flex;align-items:center;gap:16px;padding:13px 0;animation:sb-in .5s cubic-bezier(.2,1,.3,1) calc(var(--i)*.06s + .05s) both}
+.dz .scr .smy-i{flex:none;width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:#f6f4f2!important;box-shadow:inset 0 -3px 0 rgba(0,0,0,.08)}
+.dz .smy-i svg{width:40px;height:40px;display:block}
+.dz .smy-t{flex:1;min-width:0}
+.dz .smy-t b{display:block;font:700 17px/1.25 var(--body);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dz .smy-b{height:7px;border-radius:4px;background:var(--track);margin:6px 0 4px;overflow:hidden}
+.dz .smy-b i{display:block;height:100%;border-radius:4px;background:var(--mv);transform-origin:left;animation:sb-fill .8s cubic-bezier(.2,1,.3,1) calc(var(--i)*.06s + .25s) both}
+.dz .smy-t small{display:block;font:700 12.5px var(--body);color:var(--mut)}
+.dz .smy-p{flex:none;min-width:48px;text-align:right;font:700 17px var(--body);color:var(--mut)}
+.dz .smy-e{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:70px 20px 0}
+.dz .smy-ei{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;background:var(--card);color:var(--mut)}
+.dz .smy-ei svg{width:30px;height:30px}
+.dz .smy-e b{font:700 18px var(--display);color:var(--ink)}
+.dz .smy-e span{font:700 14px/1.4 var(--body);color:var(--mut)}
+.dz .smy-add{margin-top:10px;height:50px;padding:0 26px;border-radius:16px;border:0;background:var(--ink);color:var(--pg);font:700 15px var(--body);letter-spacing:.04em;cursor:pointer}
 @keyframes sb-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @keyframes sb-fill{from{transform:scaleX(0)}to{transform:none}}
-@media (prefers-reduced-motion:reduce){.dz .sjr,.dz .sjb i{animation:none}}
+@media (prefers-reduced-motion:reduce){.dz .smy-r,.dz .smy-b i{animation:none}}
 
 /* Subjects page in dark mode: progress bars take the chosen colour theme */
-html[data-theme="dark"] .dz .sjb i{background:var(--in-focus,var(--mv))}
+html[data-theme="dark"] .dz .smy-b i{background:var(--in-focus,var(--mv))}
 
 /* ---- PALETTE-GEN START (generated: paid colour themes repaint the light app; rerun gen_pal.py after CSS edits) ---- */
 html[data-palette="ocean"] .dz .scr.n:not(.nd) .ringi{background:#14303f}
@@ -1767,7 +1767,7 @@ html[data-palette="mono"] .dz .scr.n:not(.nd) .pinlock span{background:var(--ink
 .dz .scr.nd.lt .pf .pfbar{color:var(--pg)}
 .dz .scr.nd.lt .pf .pfbar .pfx{color:var(--pg)}
 .dz .scr.nd.lt .pf .pfbar.on .pfx{color:var(--ink)}
-.dz .scr.nd.lt .scr .sji{background:var(--ink)!important}
+.dz .scr.nd.lt .scr .smy-i{background:var(--ink)!important}
 .dz .scr.nd.lt .pf .hname,.dz .scr.nd.lt .pf .gear{color:var(--ink)}
 .dz .scr.nd.lt .pf .promo{background:var(--ink)}.dz .scr.nd.lt .pf .promo h3{color:var(--pg)}.dz .scr.nd.lt .pf .promo .go{background:var(--pg);color:var(--ink);border-bottom-color:var(--track)}
 .dz .scr.nd.lt .ss .shd button:not(.sbk){color:var(--ink)}
