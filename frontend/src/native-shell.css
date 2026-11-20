@@ -1,0 +1,45 @@
+/* App-only (Android) look for sign in / sign up and the cover under the design screens.
+   Same colours as the design pages: Midnight in dark, the chosen palette in light. */
+
+/* ---- the design shell always has its own solid page colour (no old page can show through) ---- */
+.dz-shell{background:#dfe0e3}
+html[data-palette="ocean"] .dz-shell{background:#d6e8f1}
+html[data-palette="forest"] .dz-shell{background:#dde8df}
+html[data-palette="sunset"] .dz-shell{background:#f1ddd5}
+html[data-palette="mono"] .dz-shell{background:#e6e6e6}
+html[data-theme="dark"] .dz-shell{background:#0f1317}
+
+/* ---- old web pages are not drawn while a design screen covers the app ---- */
+.study-app.design-cover > aside,
+.study-app.design-cover > main.main-content,
+.study-app.design-cover > .guest-banner{display:none !important}
+.study-app.native-tabs{background:transparent}
+
+/* ---- sign in / create account ---- */
+.au-page.au-native{
+  --au-bg:#dfe0e3;--au-card:#edebec;--au-field:#e1e0e2;--au-line:#c8c6c8;--au-ink:#1b1e25;--au-muted:#4b5d6d;
+  --au-accent:#1b1e25;--au-mv:#c9b8c3;--au-btn:#c9b8c3;--au-btn-ink:#1b1e25;--au-danger:#a8372f;--au-danger-bg:#f1dcda;
+  font-family:'Nunito',system-ui,sans-serif;
+}
+html[data-palette="ocean"] .au-page.au-native[data-as-theme="light"]{--au-bg:#d6e8f1;--au-card:#eaf3fb;--au-field:#c4dbe8;--au-line:#b7cfdd;--au-ink:#14303f;--au-muted:#44677c;--au-accent:#14303f;--au-btn:#8fb9d3;--au-btn-ink:#10202a}
+html[data-palette="forest"] .au-page.au-native[data-as-theme="light"]{--au-bg:#dde8df;--au-card:#eaf4ec;--au-field:#cbdccf;--au-line:#bcd0c1;--au-ink:#16301f;--au-muted:#46654f;--au-accent:#16301f;--au-btn:#93bda1;--au-btn-ink:#0f2216}
+html[data-palette="sunset"] .au-page.au-native[data-as-theme="light"]{--au-bg:#f1ddd5;--au-card:#f9ece6;--au-field:#e6cbc0;--au-line:#dcbfb3;--au-ink:#3b1d12;--au-muted:#7a5446;--au-accent:#3b1d12;--au-btn:#e0a78f;--au-btn-ink:#2b140c}
+html[data-palette="mono"] .au-page.au-native[data-as-theme="light"]{--au-bg:#e6e6e6;--au-card:#f5f5f5;--au-field:#d4d4d4;--au-line:#c4c4c4;--au-ink:#1e1e1e;--au-muted:#5c5c5c;--au-accent:#1e1e1e;--au-btn:#a8a8a8;--au-btn-ink:#141414}
+.au-page.au-native[data-as-theme="dark"]{--au-bg:#0f1317;--au-card:#1b2229;--au-field:#232b33;--au-line:#2d3740;--au-ink:#ebe8ea;--au-muted:#9aa6b0;--au-accent:#c9b8c3;--au-btn:#c9b8c3;--au-btn-ink:#1b1e25;--au-danger:#f0a39c;--au-danger-bg:#3a2528}
+html[data-palette="ocean"] .au-page.au-native[data-as-theme="dark"]{--au-accent:#8fb9d3;--au-btn:#8fb9d3;--au-btn-ink:#10202a}
+html[data-palette="forest"] .au-page.au-native[data-as-theme="dark"]{--au-accent:#93bda1;--au-btn:#93bda1;--au-btn-ink:#0f2216}
+html[data-palette="sunset"] .au-page.au-native[data-as-theme="dark"]{--au-accent:#e0a78f;--au-btn:#e0a78f;--au-btn-ink:#2b140c}
+html[data-palette="mono"] .au-page.au-native[data-as-theme="dark"]{--au-accent:#a8a8a8;--au-btn:#a8a8a8;--au-btn-ink:#141414}
+html:has(.au-page.au-native){background:var(--au-bg)}
+
+.au-native .au-card{border:0;border-radius:28px;padding:30px 22px 24px;max-width:420px}
+.au-native .au-title{font-family:'Fredoka',system-ui,sans-serif;font-weight:700;font-size:1.9rem;color:var(--au-ink)}
+.au-native .au-sub,.au-native .au-label{color:var(--au-muted);font-weight:700}
+.au-native .au-input input{height:52px;border:2px solid var(--au-line);border-radius:18px;background:var(--au-field);color:var(--au-ink);font:700 16px 'Nunito',system-ui,sans-serif}
+.au-native .au-input input:focus{border-color:var(--au-btn);outline:0}
+.au-native .au-submit{height:54px;border-radius:27px;border:0;background:var(--au-btn);color:var(--au-btn-ink);font:700 17px 'Fredoka',system-ui,sans-serif}
+.au-native .au-google-btn{height:50px;border-radius:25px;border:2px solid var(--au-line);background:transparent;color:var(--au-ink);font:700 15px 'Nunito',system-ui,sans-serif}
+.au-native .au-forgot,.au-native .au-switch button{color:var(--au-accent);font-weight:800}
+.au-native .au-status{color:var(--au-muted);font-weight:700}
+.au-native .au-error{border-radius:16px;font-weight:700}
+.au-native .au-divider{color:var(--au-muted)}

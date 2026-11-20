@@ -2011,7 +2011,7 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
     const k=TABS[to];hap('tick');
     if(opts.onTab)opts.onTab(k);
     go(TITLE[k]);
-    try{if(R&&R.animate)R.animate([{transform:`translateX(${dx<0?36:-36}px)`,opacity:.55},{transform:'none',opacity:1}],{duration:200,easing:'ease-out'})}catch(_){}
+    try{if(R&&R.animate)R.animate([{transform:`translateX(${dx<0?28:-28}px)`},{transform:'none'}],{duration:180,easing:'cubic-bezier(.2,.8,.3,1)'})}catch(_){}
     // the tap that ends a swipe must not press a button
     const stop=ev=>{ev.stopPropagation();ev.preventDefault()};
     host.addEventListener('click',stop,{capture:true,once:true});setTimeout(()=>host.removeEventListener('click',stop,true),350);

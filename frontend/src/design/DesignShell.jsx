@@ -68,7 +68,7 @@ export default function DesignShell({ data, actions, onTab, section }) {
     <div
       ref={hostRef}
       className="dz-shell"
-      style={{ position: "fixed", inset: 0, zIndex: 60, display: covering ? "block" : "none" }}
+      style={{ position: "fixed", inset: 0, zIndex: 60, display: covering ? "block" : "none", contain: "strict" }}
     />
   );
 }
