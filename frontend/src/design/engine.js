@@ -351,7 +351,10 @@ const setHtml=()=>`<div class="scr n nd" style="--pg:#181b22"><div class="ss"><d
 
 const IDX=t=>SCREENS.findIndex(s=>s.t===t);
 const SPEC=(m,h,s)=>({m,h,s});
-const profPlay=()=>{S.mute=false;const sc=$('[data-sc]',R),br=$('[data-bar]',R);sc.addEventListener('scroll',()=>br.classList.toggle('on',sc.scrollTop>4));
+const profPlay=()=>{S.mute=false;const sc=$('[data-sc]',R),br=$('[data-bar]',R);const hero=$('.hero',sc);
+  // While the profile picture block is still under the header the bar is solid in the hero colour with a thin border (pin); once that block has scrolled away it becomes the themed bar (on).
+  const sw=()=>{const on=sc.scrollTop>=(hero?hero.offsetHeight:292)-br.offsetHeight;br.classList.toggle('on',on);br.classList.toggle('pin',!on&&sc.scrollTop>4)};
+  sc.addEventListener('scroll',sw,{passive:true});sw();
  $('.hero',R).animate([{opacity:0},{opacity:1}],{duration:300,fill:'backwards'});
  $('.pfava',R).animate([{transform:'translateX(-50%) translateY(50px) scale(.9)',opacity:0},{transform:'translateX(-50%) translateY(-6px) scale(1.02)',opacity:1,offset:.7},{transform:'translateX(-50%)',opacity:1}],{duration:560,delay:120,easing:'cubic-bezier(.2,.9,.3,1)',fill:'backwards'});
  $$('.body>*',R).forEach((e,i)=>e.animate([{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'none'}],{duration:380,delay:260+i*70,easing:'cubic-bezier(.2,.9,.3,1)',fill:'backwards'}));

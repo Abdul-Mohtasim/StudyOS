@@ -1199,12 +1199,13 @@ html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#1
 /* Profile header: close button left, name centred, settings right, all on one centre line; border appears as soon as the page scrolls */
 .dz .pf .pfbar{display:flex;align-items:center;justify-content:space-between;height:92px;padding:44px 12px 0;box-sizing:border-box;border-bottom:2px solid transparent;color:#2a2530}
 .dz .pf .pfbar.on{border-bottom-width:2px}
+.dz .pf .pfbar{transition:background .18s,border-color .18s}
 .dz .pf .pfbar>*{height:48px}
 .dz .pf .pfbar .hname{position:static;flex:1;min-width:0;margin:0 4px;text-align:center;line-height:48px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dz .pf .pfbar .gear,.dz .pf .pfbar .pfx{position:static;flex:none;width:48px;height:48px;display:grid;place-items:center;border:0;background:none;padding:0;cursor:pointer;pointer-events:auto;-webkit-tap-highlight-color:transparent}
 .dz .pf .pfbar .pfx{color:#2a2530}.dz .pf .pfbar .pfx svg{width:26px;height:26px;display:block}
 .dz .pf .pfbar.on .pfx{color:#f4f2f3}
-.dz .scr.nd.lt .pf .pfbar .pfx,.dz .scr.nd.lt .pf .pfbar.on .pfx{color:var(--ink)}
+.dz .scr.nd.lt .pf .pfbar .pfx,.dz .scr.nd.lt .pf .pfbar.on .pfx{color:var(--ink)!important}
 /* My subjects page */
 .dz .smy-pg{position:absolute;inset:0;display:flex;flex-direction:column;padding-top:36px;background:var(--pg);color:var(--ink)}
 .dz .smy-h{display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 10px;flex:none}
@@ -1233,6 +1234,12 @@ html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#1
 
 /* Subjects page in dark mode: progress bars take the chosen colour theme */
 html[data-theme="dark"] .dz .smy-b i{background:var(--in-focus,var(--mv))}
+
+/* Profile header: same colour as the hero block while it is under the bar, themed bar after it has scrolled away */
+.dz .pf .hero{background:#bcadb7!important}
+.dz .scr.nd.lt .pf .hero{background:color-mix(in srgb,#b9aab4 45%,var(--mv))!important}
+.dz .pf .pfbar.pin{background:#bcadb7;border-bottom-color:rgba(0,0,0,.2)}
+.dz .scr.nd.lt .pf .pfbar.pin{background:color-mix(in srgb,#b9aab4 45%,var(--mv));border-bottom-color:rgba(0,0,0,.2)}
 
 /* ---- PALETTE-GEN START (generated: paid colour themes repaint the light app; rerun gen_pal.py after CSS edits) ---- */
 html[data-palette="ocean"] .dz .scr.n:not(.nd) .ringi{background:#14303f}
