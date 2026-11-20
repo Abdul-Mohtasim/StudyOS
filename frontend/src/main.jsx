@@ -5,6 +5,7 @@ import { Capacitor } from "@capacitor/core";
 import App from "./App.jsx";
 import { EmailLinkScreen } from "./EmailFeatures";
 import { installGlobalHaptics } from "./haptics";
+import "./fonts.css";
 import "./perf.css";
 import { installOfflineLayer } from "./offline";
 import { initLanguage } from "./i18n";

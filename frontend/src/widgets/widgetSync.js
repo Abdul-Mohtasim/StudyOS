@@ -19,9 +19,10 @@ const PALETTES = {
 const MIDNIGHT = { pg: "#0d1114", card: "#1f252d", chip: "#2a323a", ink: "#ebe8ea", mut: "#9aa6b0", mv: "#c9b8c3", track: "#2d353d", onMv: "#1b1e25" };
 
 export function widgetTheme(theme, palette) {
-  if (theme === "dark") return { dark: true, ...MIDNIGHT };
-  // The app stores paid themes as "theme_ocean"; the colour table is keyed "ocean".
   const key = String(palette || "").replace(/^theme_/, "");
+  // Dark mode keeps dark surfaces, but a chosen colour theme (Ocean...) still sets the widget colour.
+  if (theme === "dark") return { dark: true, ...MIDNIGHT, ...(PALETTES[key] ? { mv: PALETTES[key].mv, onMv: PALETTES[key].onMv } : {}) };
+  // The app stores paid themes as "theme_ocean"; the colour table is keyed "ocean".
   return { dark: false, ...(PALETTES[key] || PALETTES[""]) };
 }
 

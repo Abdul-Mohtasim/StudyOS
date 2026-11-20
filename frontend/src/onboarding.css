@@ -1,9 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap');
 /* Onboarding: six read-only intro screens. Everything is scoped with the ob- prefix. */
 .ob{
   --ob-ink:#181b22;--ob-slate:#5a707a;--ob-lslate:#7f949e;--ob-mauve:#c7b9c4;--ob-iconbox:#c5b9c3;--ob-face:#ecebeb;
   --ob-bg:#dedcdd;--ob-card:#e7e6e7;--ob-line:#cfcdce;--ob-track:#c8c6c7;
-  --ob-head:'Space Grotesk','Inter',system-ui,sans-serif;--ob-body:'Inter',system-ui,sans-serif;
+  --ob-head:'Fredoka','Nunito',system-ui,sans-serif;--ob-body:'Nunito',system-ui,sans-serif;
   color-scheme:light;
 }
 /* ---------- screen ---------- */

@@ -49,7 +49,7 @@
   overflow-x: clip;
   color: var(--pl-ink);
   background: var(--pl-bg);
-  font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
   line-height: 1.55;
 }
 
@@ -107,7 +107,7 @@
 .pl-page h3 {
   margin: 0;
   color: var(--pl-ink);
-  font-family: "Manrope", "DM Sans", sans-serif;
+  font-family: "Nunito", "Nunito", sans-serif;
   letter-spacing: -0.03em;
 }
 
@@ -219,7 +219,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 1.4rem;
   font-weight: 800;
   letter-spacing: -0.045em;
@@ -537,7 +537,7 @@
 }
 
 .pl-mock-top strong {
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 1rem;
 }
 
@@ -588,7 +588,7 @@
 
 .pl-mock-progress strong {
   display: block;
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 1.02rem;
 }
 
@@ -631,7 +631,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 0.95rem;
   font-weight: 800;
 }
@@ -746,7 +746,7 @@
 
 .pl-float strong {
   display: block;
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 0.92rem;
   line-height: 1.2;
 }
@@ -1077,7 +1077,7 @@
   top: 14px;
   right: 18px;
   color: var(--pl-step-num);
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 2.2rem;
   font-weight: 800;
   line-height: 1;

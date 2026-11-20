@@ -1,5 +1,5 @@
 
-.nuf{position:fixed;inset:0;background:#0f1317;overflow:hidden;z-index:99999;--display:"Space Grotesk","Inter",system-ui,sans-serif;--body:"Inter",system-ui,-apple-system,sans-serif;--mauve:#c9b8c3;--card:#20262d;--fg:#ebe8ea;color:#ebe8ea;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.nuf{position:fixed;inset:0;background:#0f1317;overflow:hidden;z-index:99999;--display:"Fredoka","Nunito",system-ui,sans-serif;--body:"Nunito",system-ui,-apple-system,sans-serif;--mauve:#c9b8c3;--card:#20262d;--fg:#ebe8ea;color:#ebe8ea;touch-action:manipulation;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 .nuf *{box-sizing:border-box}
 .nuf .nuf-stage{position:absolute;left:50%;top:0;width:380px;height:780px;margin-left:-190px;transform-origin:50% 0}
 .nuf .scr{position:absolute;inset:0;overflow:hidden;font-family:var(--body)}

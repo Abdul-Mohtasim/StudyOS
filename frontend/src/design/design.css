@@ -5,7 +5,7 @@
 .dz .ob{
   --ob-ink:#181b22;--ob-slate:#5a707a;--ob-lslate:#7f949e;--ob-mauve:#c7b9c4;--ob-iconbox:#c5b9c3;--ob-face:#ecebeb;
   --ob-bg:#dedcdd;--ob-card:#e7e6e7;--ob-line:#cfcdce;--ob-track:#c8c6c7;
-  --ob-head:'Space Grotesk','Inter',system-ui,sans-serif;--ob-body:'Inter',system-ui,sans-serif;
+  --ob-head:'Fredoka','Nunito',system-ui,sans-serif;--ob-body:'Nunito',system-ui,sans-serif;
   color-scheme:light;
 }
 /* ---------- screen ---------- */
@@ -120,7 +120,7 @@
   --bg:#0a0d10; --surface:#0f1317; --card:#1b2229; --card2:#232b33; --line:#2a323a;
   --fg:#ebe8ea; --muted:#8f9ca8; --mauve:#c9b8c3; --gold:#e8a83a; --green:#2f8f6a; --blue:#4a6fd0;
   --flame1:#e92f3a; --flame2:#ff5a36; --flame3:#ffb02e;
-  --display:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif;
+  --display:'Fredoka',system-ui,sans-serif; --body:'Nunito',system-ui,sans-serif;
   color-scheme:dark;
 }
 .dz *{box-sizing:border-box}
@@ -660,7 +660,7 @@
 /* The website navigation never shows inside the app */
 .study-app.native-tabs > .sidebar,.study-app.native-tabs > .mobile-overlay,.study-app.native-tabs .mobile-top-nav,.study-app.native-tabs .topbar,.study-app.native-tabs .app-footer{display:none!important}
 .study-app.native-tabs .main-content{margin-left:0!important;padding-top:64px!important;padding-bottom:24px!important}
-.native-back-pill{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:14px;z-index:90;height:38px;padding:0 16px;border:0;border-radius:19px;background:#1b1e25;color:#ebe8ea;font:700 15px 'Inter',system-ui,sans-serif;box-shadow:0 6px 18px -8px rgba(0,0,0,.5)}
+.native-back-pill{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:14px;z-index:90;height:38px;padding:0 16px;border:0;border-radius:19px;background:#1b1e25;color:#ebe8ea;font:700 15px 'Nunito',system-ui,sans-serif;box-shadow:0 6px 18px -8px rgba(0,0,0,.5)}
 
 .dz.dz-kb .qcta,.dz.dz-kb .nav,.dz.dz-kb .fbtns{display:none!important}
 .dz [data-fin]::-webkit-outer-spin-button,.dz [data-fin]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}

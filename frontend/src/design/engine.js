@@ -1291,7 +1291,7 @@ const pvMix=(a,b,t)=>{const h=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16));con
 const pvTheme=()=>{
   const de=document.documentElement,dark=de.dataset.theme==='dark',pal=String(de.dataset.palette||'').replace(/^theme_/,'');
   const MV={ocean:'#8fb9d3',forest:'#93bda1',sunset:'#e0a78f',mono:'#a8a8a8'},ON={ocean:'#10202a',forest:'#0f2216',sunset:'#2b140c',mono:'#141414'};
-  const mv=dark?'#c9b8c3':(MV[pal]||'#c9b8c3'),on=dark?'#1b1e25':(ON[pal]||'#1b1e25');
+  const mv=MV[pal]||'#c9b8c3',on=ON[pal]||'#1b1e25';
   return `--wm:${mv};--wo:${on};--ws:${pvMix(mv,'#ffffff',.42)}`;
 };
 const PV_FLAME='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FF9600" d="M24,3C25.4,9.6 31.6,13 35.2,19.4C37.6,23.6 38.4,28.6 36.4,33.2C34,38.8 29,43 24,43C16,43 9.6,36.6 9.6,28.6C9.6,24.4 11.4,21 14,18.2C14.6,21 16.2,22.8 18.4,23.6C17.4,15.4 19.6,8.6 24,3Z"/><path fill="#FFC800" d="M24,23.4C20.6,26.8 18.8,29.4 18.8,32C18.8,35.2 21,37.4 24,37.4C27,37.4 29.2,35.2 29.2,32C29.2,29.4 27.4,26.8 24,23.4Z"/><path fill="#FFE680" d="M23.6,30.2C22.4,31.6 21.8,32.6 21.8,33.6C21.8,35 22.7,35.8 23.8,35.8C24.9,35.8 25.6,35 25.6,34C25.6,32.8 24.8,31.6 23.6,30.2Z"/></svg>';

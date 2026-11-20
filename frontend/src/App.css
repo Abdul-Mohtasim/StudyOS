@@ -1,10 +1,9 @@
-@import url("https\://fonts.googleapis.com/css2?family=DM+Sans:wght\@400;500;600;700&family=Manrope:wght\@400;500;600;700;800&display=swap");
 
 
 
 :root {
 
-  font-family: "DM Sans", sans-serif;
+  font-family: "Nunito", sans-serif;
 
   color: #f0edf9;
 
@@ -182,7 +181,7 @@ button:disabled {
 
   padding: 0 9px;
 
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
 
   font-size: 22px;
 
@@ -531,7 +530,7 @@ button:disabled {
 
   margin: 0;
 
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
 
   font-size: clamp(22px, 2vw, 29px);
 
@@ -781,7 +780,7 @@ button:disabled {
 
   margin: 13px 0 8px;
 
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
 
   font-size: clamp(24px, 2.8vw, 34px);
 
@@ -1095,7 +1094,7 @@ button:disabled {
 
   margin-top: 18px;
 
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
 
   font-size: clamp(24px, 2.4vw, 31px);
 
@@ -1285,7 +1284,7 @@ button:disabled {
 
   margin: 0;
 
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
 
   font-size: 16px;
 
@@ -1938,7 +1937,7 @@ button:disabled {
 
 .focus-inner strong {
 
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
 
   font-size: 34px;
 
@@ -2320,7 +2319,7 @@ button:disabled {
 
   color: #efebfb;
 
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
 
   font-size: 15px;
 
@@ -2992,7 +2991,7 @@ button:disabled {
 
 .focus-inner strong {
 
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
 
   font-size: 34px;
 
@@ -3273,7 +3272,7 @@ button:disabled {
 
 .focus-inner strong {
 
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
 
   font-size: 34px;
 
@@ -4010,7 +4009,7 @@ button:disabled {
 
 .goal-ring-inner strong {
   color: #f4efff;
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 22px;
   line-height: 1.25;
   font-weight: 800;
@@ -4030,7 +4029,7 @@ button:disabled {
 .goal-copy>strong {
   display: block;
   color: #f4efff;
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: clamp(18px, 2vw, 23px);
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -4038,7 +4037,7 @@ button:disabled {
 
 .goal-copy>strong span {
   color: var(--muted, #a29bb5);
-  font-family: "DM Sans", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 12px;
   font-weight: 500;
 }
@@ -4170,7 +4169,7 @@ button:disabled {
 
 .planner-total-row strong {
   color: #f4efff;
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 34px;
   line-height: 1.25;
 }
@@ -4342,7 +4341,7 @@ button:disabled {
   background: #1c1212;
   color: #f0edf9;
   color-scheme: dark;
-  font-family: "DM Sans", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 12px;
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
@@ -4527,7 +4526,7 @@ button:disabled {
 
 .analytics-metric strong {
   color: #f4efff;
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 17px;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -11382,7 +11381,7 @@ html[data-theme="light"] .study-app select {
     max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
-    font-family: "Manrope", sans-serif !important;
+    font-family: "Nunito", sans-serif !important;
     font-size: clamp(21px, 5vw, 25px) !important;
     line-height: 1.15 !important;
     font-weight: 800 !important;
@@ -12757,7 +12756,7 @@ html[data-theme="light"] .study-app .main-content>.mobile-top-nav {
   display: inline-block;
   margin: 0;
   color: inherit;
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: clamp(38px, 5vw, 46px);
   font-weight: 800;
   line-height: 1.05;
@@ -12817,7 +12816,7 @@ html[data-theme="light"] .study-app .main-content>.mobile-top-nav {
   background: linear-gradient(135deg, var(--as-bg1), var(--as-bg2), var(--as-bg1));
   background-size: 220% 220%;
   animation: as-bg-shift 16s ease-in-out infinite;
-  font-family: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
   line-height: 1.5;
 }
 
@@ -13052,7 +13051,7 @@ html:has(.as-page[data-as-theme="dark"]) {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: "Manrope", "DM Sans", sans-serif;
+  font-family: "Nunito", "Nunito", sans-serif;
   font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -13089,7 +13088,7 @@ html:has(.as-page[data-as-theme="dark"]) {
 .as-title {
   margin: 18px 0 4px;
   color: var(--as-ink);
-  font-family: "Manrope", "DM Sans", sans-serif;
+  font-family: "Nunito", "Nunito", sans-serif;
   font-size: clamp(1.7rem, 3.4vw, 2.1rem);
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -15858,7 +15857,7 @@ html.sm-js-reveal .study-app .stat-card.sm-in {
 
 .study-app .streak-modal-head h3 {
   margin: 0;
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
@@ -15906,7 +15905,7 @@ html.sm-js-reveal .study-app .stat-card.sm-in {
 }
 
 .study-app .streak-modal-summary strong {
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 18px;
   font-weight: 800;
   color: #f01e3c;
@@ -15932,7 +15931,7 @@ html.sm-js-reveal .study-app .stat-card.sm-in {
 }
 
 .study-app .streak-cal-nav strong {
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 16px;
   font-weight: 800;
   text-align: center;
@@ -16668,7 +16667,7 @@ html.sm-js-reveal .study-app .stat-card.sm-in {
 
 .study-app .settings-reminder-quote {
   position: relative;
-  font-family: "Manrope", system-ui, sans-serif;
+  font-family: "Nunito", system-ui, sans-serif;
   font-weight: 700;
   line-height: 1.55;
   animation: st-rise 0.6s cubic-bezier(.2, .9, .3, 1) both;
@@ -18136,7 +18135,7 @@ html[data-theme="light"] .study-app .note-card::after {
 
 .study-app .bs-card strong {
   color: #fff;
-  font-family: "Manrope", sans-serif;
+  font-family: "Nunito", sans-serif;
   font-size: 15px;
   font-weight: 800;
   line-height: 1.15;
@@ -18875,8 +18874,8 @@ html:not([data-theme="light"]) .study-app .subject-icon.sb-badge.sb-amber  { --s
   animation: guest-float 3.4s ease-in-out infinite, guest-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
 .guest-banner-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.guest-banner-text strong { font: 700 15px/1.2 "Space Grotesk", "Inter", system-ui, sans-serif; }
-.guest-banner-text span { font: 500 12.5px/1.3 "Inter", system-ui, sans-serif; opacity: 0.8; }
+.guest-banner-text strong { font: 700 15px/1.2 "Fredoka", "Nunito", system-ui, sans-serif; }
+.guest-banner-text span { font: 500 12.5px/1.3 "Nunito", system-ui, sans-serif; opacity: 0.8; }
 .guest-banner-btn {
   flex: none;
   border: 0;
@@ -18884,7 +18883,7 @@ html:not([data-theme="light"]) .study-app .subject-icon.sb-badge.sb-amber  { --s
   padding: 10px 14px;
   background: #181b22;
   color: #fff;
-  font: 700 13px "Inter", system-ui, sans-serif;
+  font: 700 13px "Nunito", system-ui, sans-serif;
   cursor: pointer;
 }
 @keyframes guest-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
