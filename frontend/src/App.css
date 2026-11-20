@@ -257,7 +257,7 @@ button:disabled {
   border-radius: 10px;
   color: #a7a0b7;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   transition: background 180ms ease, color 180ms ease;
 }
 
@@ -1112,7 +1112,7 @@ button:disabled {
 
   font-size: 13px;
 
-  font-weight: 500;
+  font-weight: 600;
 
   letter-spacing: 0;
 
@@ -3063,7 +3063,7 @@ button:disabled {
 
   font-size: 11px;
 
-  font-weight: 600;
+  font-weight: 700;
 
   cursor: pointer;
 
@@ -3346,7 +3346,7 @@ button:disabled {
 
   font-size: 11px;
 
-  font-weight: 600;
+  font-weight: 700;
 
   cursor: pointer;
 
@@ -3851,7 +3851,7 @@ button:disabled {
 .session-history-details strong {
   color: #f0edf9;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
@@ -4039,7 +4039,7 @@ button:disabled {
   color: var(--muted, #a29bb5);
   font-family: "Nunito", sans-serif;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .goal-copy p,
@@ -4081,7 +4081,7 @@ button:disabled {
   grid-column: 1 / -1;
   color: #c2bbd2;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .goal-setting-form input {
@@ -4177,7 +4177,7 @@ button:disabled {
 .planner-total-row strong span {
   color: var(--muted, #a29bb5);
   font-size: 20px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .planner-total-row>span {
@@ -4323,7 +4323,7 @@ button:disabled {
 .planner-field>span {
   color: #e1e1e1;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   padding-left: 10px;
   padding-top: 5px;
 }
@@ -4406,7 +4406,7 @@ button:disabled {
 .planner-task-main>strong {
   color: #eee9f8;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -5104,7 +5104,7 @@ button:disabled {
 .notes-field>span {
   color: #c8c1d8;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .notes-field input,
@@ -5260,7 +5260,7 @@ button:disabled {
   background: rgba(184, 160, 255, 0.1);
   border-radius: 7px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
@@ -9235,7 +9235,7 @@ a {
 .auth-mode-switch button.auth-mode-active {
   background: var(--card, #ffffff);
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .email-auth-form {
@@ -9248,7 +9248,7 @@ a {
   display: grid;
   gap: 7px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .email-auth-form input {
@@ -9284,7 +9284,7 @@ a {
   background: var(--primary, #7161ef);
   color: #ffffff;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -9533,7 +9533,7 @@ html[data-theme="light"] .study-app select {
   background: transparent;
   color: #f4eaeb;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
 }
@@ -9599,7 +9599,7 @@ html[data-theme="light"] .study-app select {
   max-width: 160px;
   color: #e8e2f4;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .topbar-profile>span {
@@ -13020,7 +13020,7 @@ html:has(.as-page[data-as-theme="dark"]) {
   color: var(--as-muted);
   font: inherit;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: color 0.2s, background 0.2s, transform 0.25s;
 }
@@ -13386,7 +13386,7 @@ html:has(.as-page[data-as-theme="dark"]) {
   margin: 18px 0 14px;
   color: var(--as-muted);
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .as-divider::before,
@@ -13428,7 +13428,7 @@ html:has(.as-page[data-as-theme="dark"]) {
   background: rgba(228, 72, 79, 0.1);
   color: #c7343b;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 700;
   animation: as-shake 0.5s both;
 }
 

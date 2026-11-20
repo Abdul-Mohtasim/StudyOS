@@ -9,6 +9,7 @@ import "./fonts.css";
 import "./perf.css";
 import { installOfflineLayer } from "./offline";
 import { initLanguage } from "./i18n";
+import "./inputs-theme.css";
 
 // Offline mode: cache API reads and queue edits made without a connection.
 installOfflineLayer(import.meta.env.DEV ? "" : (import.meta.env.VITE_API_URL || "").replace(/\/+$/, ""));

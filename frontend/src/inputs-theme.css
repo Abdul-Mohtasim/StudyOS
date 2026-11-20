@@ -1,0 +1,27 @@
+/* One look for every text field, dropdown and text area on every page, following the active theme.
+   Surfaces come from light/dark; the focus colour comes from the chosen colour theme. */
+html{--in-bg:#ffffff;--in-bd:#c8c6c8;--in-ink:#1b1e25;--in-ph:#8a8f98;--in-focus:#9a86b0;--in-ring:rgba(154,134,176,.28)}
+html[data-theme="dark"]{--in-bg:#1f252d;--in-bd:#2d353d;--in-ink:#ebe8ea;--in-ph:#8b98a2;--in-focus:#c9b8c3;--in-ring:rgba(201,184,195,.25)}
+html[data-palette="ocean"]{--in-focus:#4f93b5;--in-ring:rgba(79,147,181,.28)}
+html[data-palette="forest"]{--in-focus:#4a9d68;--in-ring:rgba(74,157,104,.28)}
+html[data-palette="sunset"]{--in-focus:#d9743f;--in-ring:rgba(217,116,63,.28)}
+html[data-palette="mono"]{--in-focus:#666666;--in-ring:rgba(102,102,102,.28)}
+html[data-theme="dark"][data-palette="ocean"]{--in-focus:#8fb9d3;--in-ring:rgba(143,185,211,.28)}
+html[data-theme="dark"][data-palette="forest"]{--in-focus:#93bda1;--in-ring:rgba(147,189,161,.28)}
+html[data-theme="dark"][data-palette="sunset"]{--in-focus:#e0a78f;--in-ring:rgba(224,167,143,.28)}
+html[data-theme="dark"][data-palette="mono"]{--in-focus:#a8a8a8;--in-ring:rgba(168,168,168,.28)}
+/* light + colour theme: tinted surfaces */
+html[data-theme="light"][data-palette="ocean"],html:not([data-theme="dark"])[data-palette="ocean"]{--in-bg:#f6fafd;--in-bd:#b7cfdd;--in-ink:#14303f;--in-ph:#6d8a9b}
+html[data-theme="light"][data-palette="forest"],html:not([data-theme="dark"])[data-palette="forest"]{--in-bg:#f6fbf7;--in-bd:#bcd0c1;--in-ink:#16301f;--in-ph:#6f8d77}
+html[data-theme="light"][data-palette="sunset"],html:not([data-theme="dark"])[data-palette="sunset"]{--in-bg:#fdf6f2;--in-bd:#dcbfb3;--in-ink:#3b1d12;--in-ph:#9a7466}
+html[data-theme="light"][data-palette="mono"],html:not([data-theme="dark"])[data-palette="mono"]{--in-bg:#fafafa;--in-bd:#c4c4c4;--in-ink:#1e1e1e;--in-ph:#808080}
+
+input:not([type="checkbox"],[type="radio"],[type="range"],[type="button"],[type="submit"],[type="file"],[type="color"],[type="hidden"]),select,textarea{
+  color:var(--in-ink)!important;caret-color:var(--in-focus);font-family:"Nunito",system-ui,sans-serif;font-weight:700}
+input:not([type="checkbox"],[type="radio"],[type="range"],[type="button"],[type="submit"],[type="file"],[type="color"],[type="hidden"]):not(.srch input):not(.search-box input):not(.notes-search input):not(.timer-duration-input input),select,textarea{
+  background-color:var(--in-bg)!important;border-color:var(--in-bd)!important}
+input::placeholder,textarea::placeholder{color:var(--in-ph)!important;opacity:1;font-weight:600}
+input:not([type="checkbox"],[type="radio"],[type="range"],[type="button"],[type="submit"],[type="file"],[type="color"]):focus,select:focus,textarea:focus{
+  border-color:var(--in-focus)!important;box-shadow:0 0 0 3px var(--in-ring);outline:none}
+select option{background:var(--in-bg);color:var(--in-ink)}
+input[type="range"],input[type="checkbox"],input[type="radio"]{accent-color:var(--in-focus)}

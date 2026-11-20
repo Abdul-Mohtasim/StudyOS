@@ -78,7 +78,7 @@ html:has(.au-page[data-as-theme="dark"]) { background: #191d23; }
   color: var(--au-muted);
   font: inherit;
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 .au-back:hover { color: var(--au-ink); }
@@ -204,7 +204,7 @@ html:has(.au-page[data-as-theme="dark"]) { background: #191d23; }
   margin: 16px 0 12px;
   color: var(--au-muted);
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 .au-divider::before,
 .au-divider::after { content: ""; flex: 1; height: 1px; background: var(--au-line); }
@@ -239,7 +239,7 @@ html:has(.au-page[data-as-theme="dark"]) { background: #191d23; }
   background: var(--au-field);
   color: var(--au-ink);
   font-size: 0.86rem;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.45;
   text-align: center;
   overflow-wrap: anywhere;

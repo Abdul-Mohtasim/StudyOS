@@ -270,7 +270,7 @@ function exIntro(){
  $('#xtop').innerHTML=`<div class="xt">${BKB()}</div>`;$('#xbar').style.visibility='visible';
  $('#xb').innerHTML=`<div class="xz" style="margin-top:34px">${MZ()}<div class="xbub">Let's see where you stand! One quick question from each subject.</div></div>
  <div class="xl" style="margin-top:34px">${Q.map(q=>`<div class="xo" style="border-bottom-width:2px;cursor:default"><span style="width:26px;height:26px;display:grid;place-items:center">${IC.sub[q.s]}</span><span style="flex:1">${q.s}</span><small style="color:#8f9ca8;font-weight:600;font-size:12.5px">${q.topic} · Medium</small></div>`).join('')}</div>`;
- $('#xbar').innerHTML=btn('Start exam','start')+'<div style="text-align:center;font:500 12.5px var(--body);color:#6f7b86;margin-top:10px">Takes about 2 minutes. No pressure.</div>';
+ $('#xbar').innerHTML=btn('Start exam','start')+'<div style="text-align:center;font:600 12.5px var(--body);color:#6f7b86;margin-top:10px">Takes about 2 minutes. No pressure.</div>';
  rise('#xb .xz,#xb .xo',60,70);fx($('#xbar'),[{transform:'translateY(40px)',opacity:0},{transform:'none',opacity:1}],{delay:380});
  hap('tick');
 }
@@ -343,12 +343,12 @@ function lcStats(){
  return {acc,sec,tm,first,miss,lab,lvl,head,xp:X.xp,ok:X.ok}}
 function lcHtml(){
  const R0=lcStats(),tm=R0.tm,acc=R0.acc,xp=R0.xp;
- return nx(`<div class="xt">${BKB()}</div><div style="position:absolute;top:40px;left:0;right:0;text-align:center">${znHtml(148,'lcz')}<div id="lct" style="font:700 28px var(--display);color:#c9b8c3;margin-top:4px">${R0.head}</div><div style="font:500 14px var(--body);color:#8f9ca8;margin-top:4px">You're ${R0.lvl}, ${nm()}</div></div>
+ return nx(`<div class="xt">${BKB()}</div><div style="position:absolute;top:40px;left:0;right:0;text-align:center">${znHtml(148,'lcz')}<div id="lct" style="font:700 28px var(--display);color:#c9b8c3;margin-top:4px">${R0.head}</div><div style="font:600 14px var(--body);color:#8f9ca8;margin-top:4px">You're ${R0.lvl}, ${nm()}</div></div>
  <div class="xb" style="top:250px;bottom:110px"><div class="xstat">
  <div style="border-color:#e8a83a"><small style="background:#e8a83a">TOTAL XP</small><b id="lxp" style="color:#e8a83a">0</b></div>
  <div style="border-color:#6fcf97"><small style="background:#6fcf97">${R0.lab}</small><b id="lac" style="color:#6fcf97">0%</b></div>
  <div style="border-color:#7fa8ff"><small style="background:#7fa8ff">COMMITTED</small><b style="color:#7fa8ff">${tm}</b></div></div>
- <div style="display:flex;gap:10px;margin:18px 0 0"><div style="flex:1;border:2px solid #2f3a44;border-radius:14px;padding:9px 12px"><b style="font:700 20px var(--display);color:#8fe3b2">${R0.ok}</b><div style="font:500 12px var(--body);color:#8f9ca8">Correct</div></div><div style="flex:1;border:2px solid #2f3a44;border-radius:14px;padding:9px 12px"><b style="font:700 20px var(--display);color:#ff9aa2">${R0.miss}</b><div style="font:500 12px var(--body);color:#8f9ca8">Mistakes</div></div></div><div style="font:700 15px var(--display);margin:18px 0 2px">Your starting point</div>
+ <div style="display:flex;gap:10px;margin:18px 0 0"><div style="flex:1;border:2px solid #2f3a44;border-radius:14px;padding:9px 12px"><b style="font:700 20px var(--display);color:#8fe3b2">${R0.ok}</b><div style="font:600 12px var(--body);color:#8f9ca8">Correct</div></div><div style="flex:1;border:2px solid #2f3a44;border-radius:14px;padding:9px 12px"><b style="font:700 20px var(--display);color:#ff9aa2">${R0.miss}</b><div style="font:600 12px var(--body);color:#8f9ca8">Mistakes</div></div></div><div style="font:700 15px var(--display);margin:18px 0 2px">Your starting point</div>
  ${Q.map(q=>{const r=X.res[q.s];const v=r===1;return `<div class="xsl"><span>${q.s}</span><div class="t"><i style="width:0;background:${SC[q.s]}" data-w="${v?100:45}"></i></div><em style="color:${v?'#8fe3b2':'#ff9aa2'}">${v?'Solid':'Learn'}</em></div>`}).join('')}</div>
  <div class="xbar">${btn('Claim XP','claim')}</div>`).replace('data-xp','');
 }

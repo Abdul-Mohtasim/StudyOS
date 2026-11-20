@@ -67,17 +67,17 @@ function homeHTML(d, withSheet) {
   const list = (due.length ? due : open).slice(0, 3);
   const exam = d.exam;
   const examCard = exam
-    ? `<div class="card" data-go="exam"><div style="font:600 11px var(--body);letter-spacing:.1em;color:var(--mut)">EXAM MODE</div><div class="rw"><b style="font:700 21px var(--display)">${esc(exam.subject)} · ${exam.days === 0 ? "today" : exam.days === 1 ? "1 day" : `${exam.days} days`}</b><b style="font:700 13px var(--body)">${esc(exam.dateLabel)}</b></div><div class="bar2" style="margin-top:10px"><i style="width:${exam.progress}%"></i></div></div>`
-    : `<div class="card" data-go="addSubject"><div style="font:600 11px var(--body);letter-spacing:.1em;color:var(--mut)">EXAM MODE</div><div class="rw"><b style="font:700 21px var(--display)">No exam set</b><b style="font:700 13px var(--body)">Add one</b></div><div class="bar2" style="margin-top:10px"><i style="width:0%"></i></div></div>`;
+    ? `<div class="card" data-go="exam"><div style="font:700 11px var(--body);letter-spacing:.1em;color:var(--mut)">EXAM MODE</div><div class="rw"><b style="font:700 21px var(--display)">${esc(exam.subject)} · ${exam.days === 0 ? "today" : exam.days === 1 ? "1 day" : `${exam.days} days`}</b><b style="font:700 13px var(--body)">${esc(exam.dateLabel)}</b></div><div class="bar2" style="margin-top:10px"><i style="width:${exam.progress}%"></i></div></div>`
+    : `<div class="card" data-go="addSubject"><div style="font:700 11px var(--body);letter-spacing:.1em;color:var(--mut)">EXAM MODE</div><div class="rw"><b style="font:700 21px var(--display)">No exam set</b><b style="font:700 13px var(--body)">Add one</b></div><div class="bar2" style="margin-top:10px"><i style="width:0%"></i></div></div>`;
   const rows = list.length
     ? list.map((t) => taskRow(t)).join("")
-    : `<div class="mut" style="font:400 14px var(--body);margin-top:12px">${d.tasks.length ? "All done for today. Nice work." : "No tasks yet. Tap + to add your first one."}</div>`;
+    : `<div class="mut" style="font:600 14px var(--body);margin-top:12px">${d.tasks.length ? "All done for today. Nice work." : "No tasks yet. Tap + to add your first one."}</div>`;
   const inner = `<div class="pg">${K.tb(d.score ?? "–", d.streak, fmt(d.gems))}
 <div class="sync"><i${d.online ? "" : ' style="background:#d49a3a"'}></i>${d.online ? "Synced just now · works offline" : "Offline · saved on this phone"}</div>
 <div class="ttl">Hi, ${esc(d.first)}</div><div class="sub2">${d.streak > 0 ? "Make today count." : "Start your streak today."}</div>
-<div class="card dkc rw" data-go="focus" style="gap:16px;height:130px;border-radius:26px;justify-content:flex-start;margin-top:14px"><div class="ring2">${K.ring(94, 9, pct, "#c9b8c3", "#3c4450")}<div class="c">${d.todayMin || 0}m</div></div><div><div style="font:700 17px var(--display);color:#ebe8ea">Daily goal</div><div style="font:400 13px var(--body);color:#cfd2d6;margin:4px 0 9px">${d.todayMin || 0} of ${goal} min studied</div><span class="tag" style="display:inline-flex;align-items:center;gap:6px;border-radius:16px;padding:6px 12px;font-size:13px">${K.FLM("#1b1e25", "#c9b8c3", 11, 14)} ${d.streak} day streak</span></div></div>
+<div class="card dkc rw" data-go="focus" style="gap:16px;height:130px;border-radius:26px;justify-content:flex-start;margin-top:14px"><div class="ring2">${K.ring(94, 9, pct, "#c9b8c3", "#3c4450")}<div class="c">${d.todayMin || 0}m</div></div><div><div style="font:700 17px var(--display);color:#ebe8ea">Daily goal</div><div style="font:600 13px var(--body);color:#cfd2d6;margin:4px 0 9px">${d.todayMin || 0} of ${goal} min studied</div><span class="tag" style="display:inline-flex;align-items:center;gap:6px;border-radius:16px;padding:6px 12px;font-size:13px">${K.FLM("#1b1e25", "#c9b8c3", 11, 14)} ${d.streak} day streak</span></div></div>
 ${examCard}
-<div class="rw" style="margin-top:16px"><b style="font:700 20px var(--display)">Today</b><span class="mut" data-go="tasks" style="font:600 13px var(--body)">See all</span></div>
+<div class="rw" style="margin-top:16px"><b style="font:700 20px var(--display)">Today</b><span class="mut" data-go="tasks" style="font:700 13px var(--body)">See all</span></div>
 ${rows}
 </div><div class="fab" data-fab>${K.ICO.plus}</div>${K.nav("home")}`;
   let html = `<div class="scr n${d.dark ? " nd" : ""}">${inner}</div>`;
@@ -101,13 +101,13 @@ function tasksHTML(d, filter) {
   if (!d.tasks.length) {
     return `<div class="scr n${nd}"><div class="pg">${K.tb(d.score ?? "–", d.streak, fmt(d.gems))}<div class="ttl" style="margin-top:12px">Tasks</div>
 <div style="display:flex;justify-content:center;margin-top:78px">${TPL.tasksEmpty.match(/<div style="display:flex;justify-content:center;margin-top:78px">(.*?)<\/div>\s*<div style="text-align:center;font:700 26px/s)?.[1] || ""}</div>
-<div style="text-align:center;font:700 26px var(--display);margin-top:22px">Nothing to do yet</div><div style="text-align:center;font:400 14px/1.5 var(--body);color:var(--mut);margin-top:10px">Add your first task and plan your day.<br>Everything works offline.</div>
+<div style="text-align:center;font:700 26px var(--display);margin-top:22px">Nothing to do yet</div><div style="text-align:center;font:600 14px/1.5 var(--body);color:var(--mut);margin-top:10px">Add your first task and plan your day.<br>Everything works offline.</div>
 <div class="btn2" data-add-task style="margin-top:22px;border-radius:24px">Add your first task</div></div>${K.nav("tasks")}</div>`;
   }
   const seg = ["Today", "Week", "All"].map((s) => `<span${s === filter ? ' class="on"' : ""} data-filter="${s}">${s}</span>`).join("");
   const rows = list.length
     ? list.map((t) => `<div class="swipe" data-swipe="${esc(t.id)}"><div class="bk dn"><span style="width:20px;height:20px;display:block">${K.CHECK}</span>${t.completed ? "Undo" : "Done"}</div><div class="bk dl" style="left:auto;right:0;justify-content:flex-end"><svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M6 7h12l-1 14H7zM4 5h16v2H4zM9 2h6v2H9z"/></svg>Delete</div>${taskRow(t)}</div>`).join("")
-    : `<div class="mut" style="font:400 14px var(--body);margin-top:18px;text-align:center">Nothing here. Try another tab or tap +.</div>`;
+    : `<div class="mut" style="font:600 14px var(--body);margin-top:18px;text-align:center">Nothing here. Try another tab or tap +.</div>`;
   return `<div class="scr n${nd}"><div class="pg">${K.tb(d.score ?? "–", d.streak, fmt(d.gems))}<div class="ttl" style="margin-top:12px">Tasks</div><div class="sub2">Swipe right to finish, left to delete.</div>
 <div class="seg" data-segf>${seg}</div>
 <div class="tlist" style="overflow:auto;max-height:calc(100% - 210px);padding-bottom:90px">${rows}</div>
@@ -139,14 +139,14 @@ function examHTML(d) {
   const head = `<div class="hd"><span style="width:24px">${K.ICO.back}</span><b>Exam mode</b><span style="width:24px"></span></div>`;
   if (!ex) {
     return `<div class="scr n${nd}"><div class="pg" style="padding-top:38px">${head}
-<div style="text-align:center;font:700 26px var(--display);margin-top:70px">No exam set</div><div style="text-align:center;font:400 14px/1.5 var(--body);color:var(--mut);margin-top:10px">Add a subject with its exam date and your countdown shows up here.</div>
+<div style="text-align:center;font:700 26px var(--display);margin-top:70px">No exam set</div><div style="text-align:center;font:600 14px/1.5 var(--body);color:var(--mut);margin-top:10px">Add a subject with its exam date and your countdown shows up here.</div>
 <div class="btn2" data-go="addSubject" style="margin-top:22px;border-radius:24px">Add a subject</div></div></div>`;
   }
   const plan = d.tasks.filter((t) => !t.completed).slice(0, 4);
-  const rows = plan.length ? plan.map((t) => taskRow(t)).join("") : `<div class="mut" style="font:400 14px var(--body);margin-top:10px">No open tasks. Add one to build today's plan.</div>`;
+  const rows = plan.length ? plan.map((t) => taskRow(t)).join("") : `<div class="mut" style="font:600 14px var(--body);margin-top:10px">No open tasks. Add one to build today's plan.</div>`;
   return `<div class="scr n${nd}"><div class="pg" style="padding-top:38px">${head}
-<div class="card dkc rw" style="justify-content:flex-start;gap:14px;border-radius:26px;height:114px"><div class="ring2">${K.ring(74, 8, ex.progress / 100, "#c9b8c3", "#3c4450")}<div class="c" style="font-size:17px">${ex.progress}%</div></div><div><div style="font:700 34px/1 var(--display);color:#c9b8c3">${ex.days === 0 ? "Today" : ex.days === 1 ? "1 day" : `${ex.days} days`}</div><div style="font:700 15px var(--body);color:#ebe8ea;margin-top:6px">${esc(ex.subject)} · ${esc(ex.dateLabel)}</div><div style="font:400 13px var(--body);color:#cfd2d6">Countdown progress</div></div></div>
-<div class="rw" style="margin-top:16px"><b style="font:700 20px var(--display)">Today's plan</b><span class="mut" style="font:600 13px var(--body)">${plan.length} task${plan.length === 1 ? "" : "s"}</span></div>
+<div class="card dkc rw" style="justify-content:flex-start;gap:14px;border-radius:26px;height:114px"><div class="ring2">${K.ring(74, 8, ex.progress / 100, "#c9b8c3", "#3c4450")}<div class="c" style="font-size:17px">${ex.progress}%</div></div><div><div style="font:700 34px/1 var(--display);color:#c9b8c3">${ex.days === 0 ? "Today" : ex.days === 1 ? "1 day" : `${ex.days} days`}</div><div style="font:700 15px var(--body);color:#ebe8ea;margin-top:6px">${esc(ex.subject)} · ${esc(ex.dateLabel)}</div><div style="font:600 13px var(--body);color:#cfd2d6">Countdown progress</div></div></div>
+<div class="rw" style="margin-top:16px"><b style="font:700 20px var(--display)">Today's plan</b><span class="mut" style="font:700 13px var(--body)">${plan.length} task${plan.length === 1 ? "" : "s"}</span></div>
 ${rows}
 <div class="btn2" data-go="focus" style="margin-top:16px;border-radius:24px">Start a focus session</div></div></div>`;
 }
@@ -156,9 +156,9 @@ function searchHTML(d, q = "") {
   const term = q.trim().toLowerCase();
   const hits = term ? d.tasks.filter((t) => `${t.title} ${t.subject}`.toLowerCase().includes(term)) : [];
   const body = term
-    ? (hits.length ? hits.map((t) => taskRow(t)).join("") : `<div class="mut" style="font:400 14px var(--body);margin-top:18px">No tasks match "${esc(q)}".</div>`)
-    : `<div class="mut" style="font:400 14px var(--body);margin-top:18px">Type to search your tasks.</div>`;
-  return `<div class="scr n${nd}"><div class="pg" style="padding-top:40px"><div style="display:flex;align-items:center;gap:14px"><span style="color:var(--ink)">${K.ICO.back}</span><div class="card rw" style="flex:1;margin:0;height:46px;border-radius:23px;padding:0 14px;justify-content:flex-start;gap:10px"><span style="color:var(--ink);display:flex">${K.ICO.search}</span><input class="dsq" data-q value="${esc(q)}" placeholder="Search your tasks" autocomplete="off" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:400 15px var(--body);color:var(--ink)"></div></div>
+    ? (hits.length ? hits.map((t) => taskRow(t)).join("") : `<div class="mut" style="font:600 14px var(--body);margin-top:18px">No tasks match "${esc(q)}".</div>`)
+    : `<div class="mut" style="font:600 14px var(--body);margin-top:18px">Type to search your tasks.</div>`;
+  return `<div class="scr n${nd}"><div class="pg" style="padding-top:40px"><div style="display:flex;align-items:center;gap:14px"><span style="color:var(--ink)">${K.ICO.back}</span><div class="card rw" style="flex:1;margin:0;height:46px;border-radius:23px;padding:0 14px;justify-content:flex-start;gap:10px"><span style="color:var(--ink);display:flex">${K.ICO.search}</span><input class="dsq" data-q value="${esc(q)}" placeholder="Search your tasks" autocomplete="off" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:600 15px var(--body);color:var(--ink)"></div></div>
 <div class="sres" style="margin-top:8px">${body}</div></div></div>`;
 }
 
@@ -186,14 +186,14 @@ export function mountDesign(host, api) {
 .lyr{position:absolute;inset:0}
 .lyr>.scr{position:absolute;inset:0}
 input.sin,input.dsin{font:inherit}
-.dsin{width:100%;height:46px;border-radius:14px;background:#dfe0e3;border:0;outline:0;padding:0 14px;font:500 16px var(--body);color:#1b1e25;margin:12px 0;box-sizing:border-box}
-.dsta{width:100%;min-height:110px;border:0;outline:0;resize:none;background:transparent;font:400 15px/1.5 var(--body);color:inherit}
+.dsin{width:100%;height:46px;border-radius:14px;background:#dfe0e3;border:0;outline:0;padding:0 14px;font:600 16px var(--body);color:#1b1e25;margin:12px 0;box-sizing:border-box}
+.dsta{width:100%;min-height:110px;border:0;outline:0;resize:none;background:transparent;font:600 15px/1.5 var(--body);color:inherit}
 .swipe{position:relative;overflow:hidden;border-radius:20px;margin-top:8px}
 .swipe .trow{position:relative;margin-top:0;touch-action:pan-y}
 .swipe .bk.dl{position:absolute;top:0;bottom:0;right:0;left:auto;width:50%;display:flex;align-items:center;justify-content:flex-end;padding-right:18px}
 .swipe .bk.dn{position:absolute;top:0;bottom:0;left:0;width:50%;display:flex;align-items:center;padding-left:18px}
 .snack{z-index:4}
-.dstoast{position:absolute;left:18px;right:18px;bottom:96px;z-index:30;background:#1b1e25;color:#fff;border-radius:16px;padding:13px 16px;font:600 14px var(--body);display:flex;justify-content:space-between;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.dstoast{position:absolute;left:18px;right:18px;bottom:96px;z-index:30;background:#1b1e25;color:#fff;border-radius:16px;padding:13px 16px;font:700 14px var(--body);display:flex;justify-content:space-between;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .dstoast b{color:#c9b8c3;font-weight:700;cursor:pointer}
 </style><div class="dsw"><div class="st"></div></div>`;
   const wrap = root.querySelector(".dsw");

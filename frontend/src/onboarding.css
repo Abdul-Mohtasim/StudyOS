@@ -53,7 +53,7 @@
 .ob-h1{font:700 7.6cqw/1.12 var(--ob-head);margin:0 0 3cqw;letter-spacing:-.015em;text-wrap:balance}
 .ob-lead{margin:0 0 6cqw;font-size:4cqw;line-height:1.5;color:var(--ob-slate)}
 .ob-signin{margin:4cqw 0 0;text-align:center;font-size:3.7cqw;color:var(--ob-slate)}
-.ob-signin u{color:var(--ob-ink);font-weight:600}
+.ob-signin u{color:var(--ob-ink);font-weight:700}
 
 /* ---------- characters ---------- */
 .ob-char{position:absolute;display:block;height:auto;overflow:visible}
@@ -72,7 +72,7 @@
 .ob-card,.ob-cell,.ob-q,.ob-head,.ob-char,.ob-ring{pointer-events:none;user-select:none;-webkit-user-select:none}
 .ob-navbtn{display:grid;place-items:center;width:8cqw;height:8cqw;margin-left:-1cqw}
 .ob-navbtn svg{width:6cqw;height:6cqw}
-.ob-linkbtn{font-weight:600;color:var(--ob-ink);text-decoration:underline}
+.ob-linkbtn{font-weight:700;color:var(--ob-ink);text-decoration:underline}
 .ob-btn{width:100%;text-align:center}
 .ob-btn.ob-alt{display:flex}
 @keyframes obIn{from{opacity:0;transform:translateY(1.2cqw)}to{opacity:1;transform:none}}
