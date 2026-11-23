@@ -221,6 +221,43 @@ async function scheduleTimerAlert({ at, title, body }) {
     /* the timer still works inside the app */
   }
 }
+// A friend request that arrives while the app is open or just came back to the front shows a phone
+// notification with the sender's name. (A request sent while the app is fully closed needs push
+// from Firebase, which this project does not use yet.)
+let friendChannelReady = false;
+async function notifyFriendRequest(name, key) {
+  if (!IS_NATIVE) return;
+  try {
+    if ((await reminderPermission()) !== "granted") return;
+    if (!friendChannelReady) {
+      await LocalNotifications.createChannel({
+        id: "studyos-friends",
+        name: "Friend requests",
+        description: "Tells you when someone wants to study with you",
+        importance: 4,
+        sound: "studyos_notify.mp3",
+        vibration: true,
+        visibility: 1,
+      });
+      friendChannelReady = true;
+    }
+    let id = 0;
+    for (const ch of String(key)) id = (id * 31 + ch.charCodeAt(0)) % 800000;
+    await LocalNotifications.schedule({
+      notifications: [{
+        id: 100000 + id,
+        title: `${name} wants to study with you`,
+        body: "Open StudyOS to accept the friend request.",
+        channelId: "studyos-friends",
+        smallIcon: "ic_stat_studyos",
+        schedule: { at: new Date(Date.now() + 400), allowWhileIdle: true },
+      }],
+    });
+  } catch {
+    /* the request still shows inside the app */
+  }
+}
+
 async function cancelTimerAlert() {
   if (!IS_NATIVE) return;
   try {
@@ -2138,6 +2175,11 @@ useEffect(() => {
       return { ok: false, error: `Could not open sharing. Send this link: ${INVITE_URL}` };
     }
   }
+  // The token of whoever is signed in right now (a brand-new account, a guest turning into a
+  // profile, or an existing session). This was the cause of the empty "none of your contacts" screen.
+  function flowToken() {
+    return pendingAuthRef.current?.token || authToken || localStorage.getItem("studyos_auth_token") || "";
+  }
   // Find phone contacts (by email) who already use StudyOS.
   async function findContactsForFlow() {
     try {
@@ -2147,21 +2189,28 @@ useEffect(() => {
       const res = await Contacts.getContacts({ projection: { name: true, emails: true } });
       const emails = [];
       for (const c of res.contacts || []) for (const e of c.emails || []) if (e?.address) emails.push(e.address);
-      const token = pendingAuthRef.current?.token;
-      if (!token || !emails.length) return { ok: true, matches: [] };
-      const response = await fetchAuth(`${API_BASE_URL}/api/friends/match`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ emails: emails.slice(0, 500) }),
-      });
-      if (!response.ok) return { ok: true, matches: [] };
-      const data = await response.json();
-      return { ok: true, matches: data.matches || [] };
+      if (!emails.length) return { ok: true, matches: [] };
+      const token = flowToken();
+      if (!token) return { ok: false, error: "Please sign in first, then try again." };
+      const { ok, data, status } = await nativeApi("/api/friends/match", "POST", { emails: emails.slice(0, 500) }, token);
+      if (!ok) {
+        return { ok: false, error: status === 0 ? "No connection. Check your internet and try again." : "Could not check your contacts right now. Please try again." };
+      }
+      return { ok: true, matches: Array.isArray(data.matches) ? data.matches : [] };
     } catch (error) {
       const reason = String(error?.message || "").toLowerCase();
       if (reason.includes("denied") || reason.includes("permission")) return { ok: false, denied: true };
       return { ok: false, error: "Could not read your contacts. You can still invite friends with a link." };
     }
+  }
+  // "+ Send Request" next to a contact. The other person gets a notification with your name.
+  async function sendRequestForFlow(userId) {
+    const token = flowToken();
+    if (!token) return { ok: false, error: "Please sign in first." };
+    const { ok, data, status } = await nativeApi("/api/friends/request", "POST", { userId }, token);
+    if (!ok) return { ok: false, error: status === 0 ? "No connection. Try again." : (data?.message || "Could not send the request.") };
+    if (tokenIsCurrent(token)) loadSocial(token);
+    return { ok: true, status: data?.status || "sent" };
   }
   function finishNewUserFlow(info) {
     const d = pendingAuthRef.current;
@@ -2458,6 +2507,36 @@ useEffect(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken, student?.guest]);
 
+  // Check for new friend requests every 30 seconds while the app is open, and when it comes back to the front.
+  const announcedRequestsRef = useRef(null);
+  useEffect(() => {
+    if (!IS_NATIVE || !authToken || student?.guest) return undefined;
+    let alive = true;
+    const check = async () => {
+      if (!alive || document.visibilityState === "hidden") return;
+      const { ok, data } = await nativeApi("/api/friends", "GET", null, authToken);
+      if (!alive || !ok || !Array.isArray(data.incoming) || !tokenIsCurrent(authToken)) return;
+      const seen = announcedRequestsRef.current;
+      announcedRequestsRef.current = new Set(data.incoming.map((u) => u.id));
+      if (seen) {
+        for (const u of data.incoming) if (!seen.has(u.id)) notifyFriendRequest(u.name || "Someone", u.id);
+      }
+      setSocial((prev) => ({
+        ...(prev || {}),
+        friends: Array.isArray(data.friends) ? data.friends : prev?.friends || [],
+        incoming: data.incoming,
+        outgoing: Array.isArray(data.outgoing) ? data.outgoing : prev?.outgoing || [],
+        leaderboard: Array.isArray(data.leaderboard) ? data.leaderboard : prev?.leaderboard || [],
+      }));
+    };
+    check();
+    const timer = setInterval(check, 30000);
+    const onVisible = () => { if (document.visibilityState === "visible") check(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { alive = false; clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authToken, student?.guest]);
+
   // The phone got its connection back: load the shop if it has no data yet.
   useEffect(() => {
     if (!IS_NATIVE || !authToken || student?.guest || !netOnline || shopStatus.state === "ok") return;
@@ -2735,6 +2814,12 @@ useEffect(() => {
   );
   // Days a Streak Freeze covered count as studied for the streak.
   (shopServer?.protectedDays || []).forEach((key) => sessionDateKeys.add(key));
+  // Finishing a task counts for the day too, so one task or one focus session keeps the streak going.
+  tasks.forEach((task) => {
+    if (!task.completed || !task.completedAt) return;
+    const done = new Date(task.completedAt);
+    if (!Number.isNaN(done.getTime())) sessionDateKeys.add(getLocalDateKey(done));
+  });
 
   const todayFocusMinutes = focusSessions.reduce((total, session) => {
     const completedAt = new Date(session.completedAt);
@@ -2771,6 +2856,18 @@ useEffect(() => {
 
   // Keep study reminders in step with the streak and today's progress.
   const studiedToday = sessionDateKeys.has(todayKey);
+
+  // First finished task or focus session of the day: ask the design to show the streak celebration, once per day.
+  const [streakPop, setStreakPop] = useState(0);
+  useEffect(() => {
+    if (!IS_NATIVE || !studiedToday || !authToken || student?.guest || newUserFlowOpen) return;
+    const key = `studyos-streak-pop:${student?.id || student?._id || "me"}`;
+    let last = "";
+    try { last = localStorage.getItem(key) || ""; } catch { /* storage blocked */ }
+    if (last === todayKey) return;
+    try { localStorage.setItem(key, todayKey); } catch { /* storage blocked */ }
+    setStreakPop((n) => n + 1);
+  }, [studiedToday, todayKey, authToken, student?.guest, newUserFlowOpen, tasks.length, focusSessions.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // A Streak Freeze covers one missed day: yesterday was missed but the day before was studied.
   const freezeBusy = useRef(false);
@@ -3375,6 +3472,11 @@ const visibleTasks = sortTasks(
 
     if (!task || !authToken) return;
 
+    // Optimistic update: show the new state at once, undo it below if the server says no.
+    setTasks((current) =>
+      current.map((item) => (item.id === id ? { ...item, completed: !task.completed } : item))
+    );
+
     try {
       const response = await fetch(
         `${API_BASE_URL}/api/tasks/${encodeURIComponent(id)}`,
@@ -3406,6 +3508,9 @@ const visibleTasks = sortTasks(
       setNotice("");
     } catch (error) {
       console.error("Updating StudyOS task:", error);
+      setTasks((current) =>
+        current.map((item) => (item.id === id ? { ...item, completed: task.completed } : item))
+      );
       setNotice(error.message || "Could not update the task.");
     }
   }
@@ -4432,6 +4537,7 @@ async function undoDeleteTask() {
             google={googleForFlow}
             invite={inviteForFlow}
             contacts={findContactsForFlow}
+            sendRequest={sendRequestForFlow}
             onFinish={finishNewUserFlow}
             guest={startGuest}
           />
@@ -4488,6 +4594,7 @@ async function undoDeleteTask() {
       theme: settingsTheme,
       palette: activePalette,
       showcase: typeof accountPrefs.showcase === "string" ? accountPrefs.showcase : "",
+      avatar: typeof accountPrefs.avatar === "string" ? accountPrefs.avatar : "",
       inviteUrl: INVITE_URL,
       supportEmail: (import.meta.env.VITE_SUPPORT_EMAIL || "").trim(),
       guest: Boolean(student?.guest),
@@ -4499,6 +4606,8 @@ async function undoDeleteTask() {
       joinedYear: Number.isFinite(joined) ? joined : new Date().getFullYear(),
       score: Math.round(todayFocusMinutes),
       streak: studyStreak,
+      streakPop,
+      streakDays: Array.from(sessionDateKeys).sort().slice(-800),
       bestStreak,
       gems: gemsServer ?? 0,
       shop: shopServer,
@@ -4948,6 +5057,7 @@ async function undoDeleteTask() {
           google={googleForFlow}
           invite={inviteForFlow}
           contacts={findContactsForFlow}
+          sendRequest={sendRequestForFlow}
           onFinish={finishNewUserFlow}
         />
       )}

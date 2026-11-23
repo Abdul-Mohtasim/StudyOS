@@ -1,0 +1,31 @@
+/* ---- Spotlight tab bar: a real lamp hangs from the top of the bar and lights the active tab ---- */
+.dz .n .nav{overflow:hidden;--lamp:#e9f6ff;--lampglow:150,205,255}
+.dz .n .nav .nv:not(#x){position:relative;z-index:1;background:transparent;color:rgba(235,232,234,.5);--cut:var(--navbg);
+  transition:color .35s ease .12s,text-shadow .35s ease .12s,filter .35s ease .12s}
+.dz .n .nav .nv svg{transition:filter .35s ease .12s}
+/* the tab under the lamp: icon and label are lit */
+.dz .n .nav .nv.on:not(#x){background:transparent;color:#fff;--cut:var(--navbg);
+  text-shadow:0 0 8px rgba(var(--lampglow),.95),0 0 16px rgba(var(--lampglow),.55)}
+.dz .n .nav .nv.on svg{filter:drop-shadow(0 0 5px rgba(var(--lampglow),.9)) drop-shadow(0 0 12px rgba(var(--lampglow),.5))}
+/* the lamp itself (64px wide, as tall as the bar, hinged at the top centre) */
+.dz .n .nlamp{position:absolute;left:0;top:0;width:64px;height:100%;pointer-events:none;z-index:0;transform-origin:50% 0;will-change:transform}
+/* the lamp head */
+.dz .n .nlamp::before{content:"";position:absolute;left:50%;top:0;width:26px;height:4px;margin-left:-13px;border-radius:0 0 5px 5px;background:var(--lamp);
+  box-shadow:0 0 6px 1px rgba(var(--lampglow),.95),0 2px 16px 3px rgba(var(--lampglow),.6)}
+/* the cone of light: bright at the lamp, fading as it falls toward the label */
+.dz .n .nlamp::after{content:"";position:absolute;left:0;right:0;top:3px;bottom:0;
+  clip-path:polygon(34% 0,66% 0,100% 100%,0 100%);
+  background:linear-gradient(to bottom,rgba(var(--lampglow),.62) 0%,rgba(var(--lampglow),.34) 45%,rgba(var(--lampglow),.14) 80%,rgba(var(--lampglow),.06) 100%)}
+/* a soft pool of light on the bar floor, under the label */
+.dz .n .nlamp i{position:absolute;left:50%;bottom:3px;width:40px;height:10px;margin-left:-20px;border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(var(--lampglow),.38),rgba(var(--lampglow),0) 70%)}
+/* only while moving: the tab that lost the light fades out, the new one warms up */
+@keyframes dz-lampOn{0%{opacity:0}18%{opacity:.9}26%{opacity:.35}42%{opacity:1}56%{opacity:.8}100%{opacity:1}}
+@keyframes dz-nvIn{from{color:rgba(235,232,234,.5);text-shadow:0 0 0 rgba(var(--lampglow),0)}}
+@keyframes dz-nvOut{from{color:#fff;text-shadow:0 0 8px rgba(var(--lampglow),.95)}}
+.dz .n .nav .nv.lit-in{animation:dz-nvIn .45s ease .16s backwards}
+.dz .n .nav .nv.lit-out{animation:dz-nvOut .3s ease both}
+.dz .n .nlamp.warm{animation:dz-lampOn .6s ease both}
+@media (prefers-reduced-motion:reduce){
+  .dz .n .nav .nv.lit-in,.dz .n .nav .nv.lit-out,.dz .n .nlamp.warm{animation:none}
+}

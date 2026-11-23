@@ -172,6 +172,43 @@ const PATTERNS = {
     ms: 1500,
     strong: true,
   },
+  // streak celebration, played in four beats that follow the animation
+  // 1. the flame gathers: a fast rise
+  streakBuild: {
+    prims: [[5, 0.6, 0], [5, 0.85, 40], [4, 1.0, 40], [4, 1.0, 30]],
+    wave: [[40, 70], [20, 0], [50, 120], [20, 0], [60, 190], [20, 0], [90, 255]],
+    web: [40, 20, 50, 20, 60, 20, 90],
+    fallback: "heavy",
+    ms: 380,
+    strong: true,
+  },
+  // 2. ignition: a hard slam, a snap and a long punch
+  streakIgnite: {
+    prims: [[2, 1.0, 0], [1, 1.0, 25], [2, 1.0, 35], [1, 1.0, 25], [3, 1.0, 40], [2, 1.0, 50]],
+    wave: [[70, 255], [25, 0], [30, 255], [25, 0], [80, 255], [30, 0], [140, 255]],
+    web: [70, 25, 30, 25, 80, 30, 140],
+    fallback: "heavy",
+    ms: 560,
+    strong: true,
+  },
+  // 3. the number rolls: a quick run of ticks ending in a click
+  streakRoll: {
+    prims: [[7, 0.7, 0], [7, 0.8, 45], [7, 0.9, 45], [7, 1.0, 45], [1, 1.0, 45], [1, 1.0, 40]],
+    wave: [[14, 150], [30, 0], [14, 180], [30, 0], [16, 210], [30, 0], [18, 255], [30, 0], [24, 255], [30, 0], [30, 255]],
+    web: [14, 30, 14, 30, 16, 30, 18, 30, 24, 30, 30],
+    fallback: "medium",
+    ms: 340,
+    strong: true,
+  },
+  // 4. the flame lands: two heavy thuds and a long finish
+  streakLand: {
+    prims: [[2, 1.0, 0], [2, 1.0, 70], [3, 1.0, 60], [1, 1.0, 60], [2, 1.0, 90]],
+    wave: [[90, 255], [40, 0], [90, 255], [40, 0], [220, 255]],
+    web: [90, 40, 90, 40, 220],
+    fallback: "heavy",
+    ms: 600,
+    strong: true,
+  },
 };
 
 let busyUntil = 0;

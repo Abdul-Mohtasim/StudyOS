@@ -44,12 +44,31 @@ router.post("/match", async (req, res) => {
       .limit(50)
       .lean();
 
+    // Tell the app who is already a friend or already has a pending request.
+    const me = req.student._id;
+    const ids = found.map((s) => s._id);
+    const links = ids.length
+      ? await Friendship.find({
+          $or: [
+            { requester: me, recipient: { $in: ids } },
+            { recipient: me, requester: { $in: ids } },
+          ],
+        }).lean()
+      : [];
+    const relationOf = new Map();
+    for (const row of links) {
+      const mine = String(row.requester) === String(me);
+      const other = String(mine ? row.recipient : row.requester);
+      relationOf.set(other, row.status === "accepted" ? "friends" : mine ? "sent" : "incoming");
+    }
+
     res.json({
       matches: found.map((s) => ({
         id: String(s._id),
         name: s.displayName || s.name,
         picture: s.picture || "",
         email: s.email,
+        relation: relationOf.get(String(s._id)) || "none",
       })),
     });
   } catch (error) {

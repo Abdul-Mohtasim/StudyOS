@@ -49,8 +49,8 @@ export const ROWS5 = [
   ["20 gems", "20 जेम्स", "20 جیمز", "20 جوهرة", "20 gemas", "20 gemmes"],
   ["30 gems", "30 जेम्स", "30 جیمز", "30 جوهرة", "30 gemas", "30 gemmes"],
   ["Medium", "मध्यम", "درمیانہ", "متوسط", "Medio", "Moyen"],
-  // ---- Zuno intro ----
-  ["Hi there! I'm Zuno!", "नमस्ते! मैं ज़ुनो हूँ!", "ہیلو! میں زونو ہوں!", "مرحبًا! أنا زونو!", "¡Hola! ¡Soy Zuno!", "Salut ! Je suis Zuno !"],
+  // ---- Zip intro ----
+  ["Hi there! I'm Zip!", "नमस्ते! मैं ज़िप हूँ!", "ہیلو! میں زپ ہوں!", "مرحبًا! أنا زيب!", "¡Hola! ¡Soy Zip!", "Salut ! Je suis Zip !"],
   ["Just 7 quick questions before we plan your first day!", "आपका पहला दिन प्लान करने से पहले बस 7 छोटे सवाल!", "آپ کا پہلا دن بنانے سے پہلے بس 7 مختصر سوال!", "7 أسئلة سريعة فقط قبل أن نخطط يومك الأول!", "¡Solo 7 preguntas rápidas antes de planear tu primer día!", "Juste 7 petites questions avant de planifier votre premier jour !"],
   ["First, what should I call you?", "पहले, मैं आपको क्या कहकर बुलाऊँ?", "پہلے، میں آپ کو کیا کہوں؟", "أولًا، بماذا أناديك؟", "Primero, ¿cómo te llamo?", "D’abord, comment dois-je vous appeler ?"],
   ["What are you studying for?", "आप किसके लिए पढ़ रहे हैं?", "آپ کس لیے پڑھ رہے ہیں؟", "لماذا تدرس؟", "¿Para qué estudias?", "Pour quoi étudiez-vous ?"],

@@ -1,9 +1,9 @@
 /* eslint-disable */
-// StudyOS new-user flow (app only). Intro with Zuno, placement exam, streak, gems, profile.
+// StudyOS new-user flow (app only). Intro with Zip, placement exam, streak, gems, profile.
 // Ported from the approved design file StudyOS_Final_Design_v14.html.
 import { haptic } from "../haptics";
 import { translate as tr } from "../i18n";
-import zunoUrl from "./assets/zuno0.png";
+import zunoUrl from "./assets/alien/p0.webp";
 import introUrl from "./assets/intro.mp3";
 import clip0Url from "./assets/clip0.mp3";
 import lessonUrl from "./assets/lesson.mp3";
@@ -110,7 +110,7 @@ const EXOPTS=EXD.map(MON).concat(['Not sure yet']);
 const isoOf=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const CALIC='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;flex:none"><rect x="3.500" y="5" width="17" height="15.500" rx="3"/><path d="M3.500 10h17M8 3v4M16 3v4"/></svg>';
 const IPG=[
-{k:'say',m:0,at:0,say:"Hi there! I'm Zuno!"},
+{k:'say',m:0,at:0,say:"Hi there! I'm Zip!"},
 {k:'say',m:1,at:4,say:'Just 7 quick questions before we plan your first day!'},
 {k:'name',m:3,at:8.5,say:'First, what should I call you?',id:'name'},
 {k:'list',m:4,at:12.5,say:'What are you studying for?',id:'why',opts:[['School exams','Class 9 to 12'],['College','Degree courses'],['Entrance exams','Competitive tests'],['Self learning','At my own pace']]},
@@ -195,7 +195,7 @@ function iGoTo(n){
 function iNext(){iGoTo(U.i+1)}
 function iDlg(){U.dlg=1;const d=document.createElement('div');d.className='ipdlg';d.innerHTML=`<div><b>Add to Home screen</b><p>StudyOS streak widget</p><div class="ipw2">${FLM('#c9b8c3','#1b1e25',34,40)}<b>${U.streak}</b></div><div class="ipdb"><button data-a="dno" type="button">CANCEL</button><button data-a="dyes" type="button">ADD</button></div></div>`;R.appendChild(d);d.animate([{opacity:0},{opacity:1}],{duration:200});sfx.pop();hap('light')}
 SCREENS.push({t:'Intro flow',d:'After sign in: questions, then Home',next:'Placement exam',
- spec:{m:'After onboarding and sign in, the new user meets Zuno, the study guide. Each page slides in with Zuno bouncing and a speech bubble popping, options stagger in, the progress bar grows and a building screen fills before the questions continue. The page after the plan summary is a score page: Zuno says where the user starts while a gauge fills to 80 and the number counts up, then Continue opens Home. On the first page the top left shows a Back arrow with the word Back, so a user who tapped Get started by mistake can return to the last onboarding page.',h:'A light tick on every page and every option, a light tap on Continue, a success pattern when the building screen finishes and on the final page.',s:'Your intro track plays from the first tap and keeps going until the user reaches Home. On every page it jumps to that page\'s moment in the track (the same order as your video) and crossfades. Small tones play on top: a pop for the speech bubble, a tick for every option, a check on Continue, a whoosh and sparkle for the building screen and a chime on the last page. The music fades out as Home opens.'},
+ spec:{m:'After onboarding and sign in, the new user meets Zip, the study guide. Each page slides in with Zip bouncing and a speech bubble popping, options stagger in, the progress bar grows and a building screen fills before the questions continue. The page after the plan summary is a score page: Zip says where the user starts while a gauge fills to 80 and the number counts up, then Continue opens Home. On the first page the top left shows a Back arrow with the word Back, so a user who tapped Get started by mistake can return to the last onboarding page.',h:'A light tick on every page and every option, a light tap on Continue, a success pattern when the building screen finishes and on the final page.',s:'Your intro track plays from the first tap and keeps going until the user reaches Home. On every page it jumps to that page\'s moment in the track (the same order as your video) and crossfades. Small tones play on top: a pop for the speech bubble, a tick for every option, a check on Continue, a whoosh and sparkle for the building screen and a chime on the last page. The music fades out as Home opens.'},
  html:()=>'<div class="scr ip"><div class="ipt"><button class="ipb" type="button" data-a="back" aria-label="Back"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="ipbt">Back</span></button><div class="ipp"><i></i></div></div><div class="ipm"><div class="ipz">'+znHtml(92)+'</div><div class="ibub"></div></div><div class="ipbody"></div><div class="bar"><button class="btn" type="button" data-a="cta">CONTINUE</button></div></div>',
  play(){
   S.mute=false;U.i=0;U.sel={};U.name='';U.tok=0;U.busy=0;U.shown=0;iRender();
@@ -453,7 +453,7 @@ function gmPlay(){
 }
 /* ----- save progress ----- */
 function spHtml(){
- return nx(`<div class="xt">${BKB()}</div><div style="position:absolute;left:0;right:0;top:225px;text-align:center"><div class="xbub nob xtl" id="spb" style="display:inline-block;margin:0 34px;font-size:19px;line-height:1.5;text-align:left">Don't lose your progress! Let's create a profile.</div><div style="height:28px"></div><img id="spz" src="${MASC[0]}" style="width:160px;height:160px;object-fit:contain" alt="Zuno"></div><div class="xbar">${btn('Continue','go')}</div>`);
+ return nx(`<div class="xt">${BKB()}</div><div style="position:absolute;left:0;right:0;top:225px;text-align:center"><div class="xbub nob xtl" id="spb" style="display:inline-block;margin:0 34px;font-size:19px;line-height:1.5;text-align:left">Don't lose your progress! Let's create a profile.</div><div style="height:28px"></div><img id="spz" src="${MASC[0]}" style="width:160px;height:160px;object-fit:contain" alt="Zip"></div><div class="xbar">${btn('Continue','go')}</div>`);
 }
 function spPlay(){
  S.mute=false;
@@ -531,7 +531,7 @@ function ffRender(){
  if(F.st==='home')el.innerHTML=bubble('Study is better with friends! See who you know is already here, or invite someone.')+err+`<div class="xbar"><button class="xbtn" type="button" data-a="contacts">Find friends from contacts</button><button class="xbtn sec" type="button" data-a="invite">Invite friends</button><button class="xbtn sec" type="button" data-a="later">${F.shared?'Continue':'Maybe later'}</button></div>`;
  else if(F.st==='load')el.innerHTML=bubble('Looking through your contacts...')+`<div style="position:absolute;left:0;right:0;top:300px;text-align:center">${dots}</div>`;
  else if(F.st==='none')el.innerHTML=bubble(F.denied?'Contacts access is off. You can turn it on in your phone settings, or invite friends with a link.':'None of your contacts are on StudyOS yet. Invite them and study together!')+err+`<div class="xbar"><button class="xbtn" type="button" data-a="invite">Invite friends</button><button class="xbtn sec" type="button" data-a="later">${F.shared?'Continue':'Maybe later'}</button></div>`;
- else if(F.st==='list'){const n=F.sel.size;el.innerHTML=`<div class="xb"><h2 class="xh" style="margin-top:56px">These friends are already on StudyOS</h2>${F.list.map((f,i)=>`<div class="xfr" data-a="tog" data-i="${i}"><span class="av" style="background:${FCOL[i%5]}">${esc((f.name||'?')[0].toUpperCase())}</span><span><b>${esc(f.name)}</b><small>${esc(f.email)}</small></span><span class="xck${F.sel.has(i)?' on':''}">${F.sel.has(i)?IC.tk:''}</span></div>`).join('')}</div><div class="xbar"><button class="xbtn" type="button" data-a="add">${n?tr(n>1?'Add '+n+' friends':'Add 1 friend'):tr('Next')}</button><button class="xbtn sec" type="button" data-a="invite">Invite more friends</button></div>`}
+ else if(F.st==='list'){const sent=F.list.filter(f=>f.relation==='sent'||f.relation==='friends').length;el.innerHTML=`<div class="xb xlist"><h2 class="xh" style="margin-top:56px">These friends are already on StudyOS</h2>${F.list.map((f,i)=>{const rel=F.busyIds&&F.busyIds.has(f.id)?'busy':(f.relation||'none');const lbl=rel==='friends'?'Friends':rel==='sent'?'Requested':rel==='incoming'?'Accept':'+ Send Request';return `<div class="xfr"><span class="av" style="background:${FCOL[i%5]}">${f.picture?`<img src="${esc(f.picture)}" alt="" referrerpolicy="no-referrer">`:esc((f.name||'?')[0].toUpperCase())}</span><span class="xfn"><b>${esc(f.name)}</b><small>${esc(f.email)}</small></span><button type="button" class="xrq${rel==='sent'||rel==='friends'?' done':''}" data-a="req" data-i="${i}" ${rel==='busy'||rel==='sent'||rel==='friends'?'disabled':''}>${rel==='busy'?'<span class="xdots" style="height:14px;gap:5px"><i style="background:currentColor"></i><i style="background:currentColor"></i><i style="background:currentColor"></i></span>':lbl}</button></div>`}).join('')}</div>${err}<div class="xbar"><button class="xbtn" type="button" data-a="add">${sent?'Done':'Skip for now'}</button><button class="xbtn sec" type="button" data-a="invite">Invite more friends</button></div>`}
 }
 function ffPlay(){
  S.mute=false;X.ff={st:'home',list:[],sel:new Set(),shared:false,err:'',denied:false};ffRender();rise('.xz',100);rise('.xbar',300);
@@ -539,8 +539,13 @@ function ffPlay(){
  const my=RUN,F=X.ff;
  R.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
   if(a==='later'){hap('light');go(IDX('Profile created'))}
-  else if(a==='tog'){const i=+b.dataset.i;F.sel.has(i)?F.sel.delete(i):F.sel.add(i);hap('medium');ffRender()}
-  else if(a==='add'){hap('heavy');X.addedFriends=[...F.sel].map(i=>F.list[i]);go(IDX('Profile created'))}
+  else if(a==='req'){const i=+b.dataset.i,f=F.list[i];if(!f||b.disabled)return;hap('medium');
+   F.busyIds=F.busyIds||new Set();F.busyIds.add(f.id);F.err='';ffRender();
+   let r;try{r=await (opts.sendRequest&&opts.sendRequest(f.id))}catch(err){r={ok:false,error:'Could not send the request.'}}
+   F.busyIds.delete(f.id);if(my!==RUN)return;
+   if(r&&r.ok){f.relation=r.status==='friends'?'friends':'sent';hap('success')}else{F.err=(r&&r.error)||'Could not send the request.';hap('buzz')}
+   ffRender()}
+  else if(a==='add'){hap('heavy');X.addedFriends=[];go(IDX('Profile created'))}
   else if(a==='invite'){hap('medium');if(F.busy)return;F.busy=1;F.err='';
    let r;try{r=await (opts.invite&&opts.invite())}catch(err){r={ok:false,error:'Could not open sharing.'}}
    F.busy=0;if(my!==RUN)return;
@@ -549,7 +554,7 @@ function ffPlay(){
   else if(a==='contacts'){hap('medium');if(F.busy)return;F.busy=1;F.err='';F.st='load';ffRender();
    let r;try{r=await (opts.contacts&&opts.contacts())}catch(err){r={ok:false,error:'Could not read your contacts.'}}
    F.busy=0;if(my!==RUN)return;
-   if(r&&r.ok&&r.matches&&r.matches.length){F.list=r.matches;F.sel=new Set(r.matches.map((_,i)=>i));F.st='list';hap('success');ffRender();rise('.xfr',0,90)}
+   if(r&&r.ok&&r.matches&&r.matches.length){F.list=r.matches;F.sel=new Set();F.st='list';hap('success');ffRender();rise('.xfr',0,90)}
    else if(r&&r.ok){F.st='none';ffRender();rise('.xz',0)}
    else{F.denied=!!(r&&r.denied);F.err=(r&&r.error)||'';F.st=(F.denied||!F.err)?'none':'home';ffRender();rise('.xz',0)}}
  };
@@ -568,15 +573,15 @@ function wcPlay(){
 }
 
 const S1=[
- {t:'Placement exam',d:'One medium question each: English, Physics, Chemistry, Maths, Biology',next:'Lesson complete',spec:{m:'Zuno introduces five quick questions. A progress bar fills as you go, answers lift on tap, the Check button wakes up, and a feedback sheet springs up in green or red. Wrong answers come back at the end for a second try. Matching pairs fade out one by one as they are matched.',h:'Light tick on every tap, medium on Check, success on correct (hard slam from 3 in a row), error buzz on wrong.',s:'Rising two-note ding for correct, low buzz for wrong, chime on a streak of three.'},html:exHtml,play:exPlay},
- {t:'Lesson complete',d:'XP, accuracy and time, subject strengths',next:'Streak: day 1',spec:{m:'Zuno hops in, confetti bursts, XP and accuracy count up, three stat cards rise and subject bars fill to show your starting point.',h:'Hard hit on arrival, light ticks while counting, heavy thud when the numbers land.',s:'Your combined audio file plays once.'},html:lcHtml,play:lcPlay},
+ {t:'Placement exam',d:'One medium question each: English, Physics, Chemistry, Maths, Biology',next:'Lesson complete',spec:{m:'Zip introduces five quick questions. A progress bar fills as you go, answers lift on tap, the Check button wakes up, and a feedback sheet springs up in green or red. Wrong answers come back at the end for a second try. Matching pairs fade out one by one as they are matched.',h:'Light tick on every tap, medium on Check, success on correct (hard slam from 3 in a row), error buzz on wrong.',s:'Rising two-note ding for correct, low buzz for wrong, chime on a streak of three.'},html:exHtml,play:exPlay},
+ {t:'Lesson complete',d:'XP, accuracy and time, subject strengths',next:'Streak: day 1',spec:{m:'Zip hops in, confetti bursts, XP and accuracy count up, three stat cards rise and subject bars fill to show your starting point.',h:'Hard hit on arrival, light ticks while counting, heavy thud when the numbers land.',s:'Your combined audio file plays once.'},html:lcHtml,play:lcPlay},
  {t:'Streak: day 1',d:'Grey flame lights up, 0 to 1 day',next:'Streak goal',spec:{m:'The grey flame squashes, turns red and leaps with embers. The number 1 pops in, the flame slams back down with a shockwave, the week strip rises and Monday gets its first tick.',h:'Medium on squash, hard on ignite, success on the number, heavy thud on the slam, heavy on the tick.',s:'One streak sound only (the supplied ignite clip).'},html:sdHtml,play:sdPlay},
  {t:'Streak goal',d:'Pick 3, 7, 14 or 30 days',next:'Gems reward',spec:{m:'The streak flame changes colour with the goal you tap: yellow for 3 days, pink with a touch of red for 7, pink for 14 and orange for 30. It squashes, stretches and bounces on every change with embers in the new colour.',h:'Heavy thump on every goal change, hard on commit.',s:'No tap sounds.'},html:sgHtml,play:sgPlay},
- {t:'Gems reward',d:'20 gems fly into the counter, then disappear',next:'Save progress',spec:{m:'Zuno and the flame in your goal colour pop up, the bubble says Here are 20 gems to start you off, and eight gems burst out and fly into the counter in the top right, which counts to 20 and then fades away.',h:'Light tap for every gem that lands, success when the count finishes, heavy as the counter leaves.',s:'A soft gem ping for each gem.'},html:gmHtml,play:gmPlay},
- {t:'Save progress',d:"Don't lose your progress, create a profile",next:'Create profile',spec:{m:'Zuno bounces up with a pencil, the bubble pops and the Continue button slides in.',h:'Medium on arrival, heavy on Continue.',s:'No tap sounds.'},html:spHtml,play:spPlay},
+ {t:'Gems reward',d:'20 gems fly into the counter, then disappear',next:'Save progress',spec:{m:'Zip and the flame in your goal colour pop up, the bubble says Here are 20 gems to start you off, and eight gems burst out and fly into the counter in the top right, which counts to 20 and then fades away.',h:'Light tap for every gem that lands, success when the count finishes, heavy as the counter leaves.',s:'A soft gem ping for each gem.'},html:gmHtml,play:gmPlay},
+ {t:'Save progress',d:"Don't lose your progress, create a profile",next:'Create profile',spec:{m:'Zip bounces up with a pencil, the bubble pops and the Continue button slides in.',h:'Medium on arrival, heavy on Continue.',s:'No tap sounds.'},html:spHtml,play:spPlay},
  {t:'Create profile',d:'Age, sign-up option, email, password, name',next:'Find friends',spec:{m:'Five single-question steps slide in from the right with a progress bar. Google opens an account chooser, email goes through email and password with live rules, and Create profile shows loading dots.',h:'Light tick while typing, medium on Continue, heavy on account pick, success when the profile is created.',s:'Check chime per step, whoosh while creating, sparkle when done.'},html:cpHtml,play:cpPlay},
- {t:'Find friends',d:'Contacts permission, add friends',next:'Profile created',spec:{m:'Zuno asks to sync contacts. An iOS-style permission dialog scales in, loading dots follow and a contact list appears with checkboxes and an Add button that counts.',h:'Medium on sync, heavy on Allow, medium on each checkbox.',s:'Ticks, check chime and sparkle when contacts load.'},html:ffHtml,play:ffPlay},
- {t:'Profile created',d:'Profile created, confetti',next:'Finish',spec:{m:'Zuno bounces up, the speech bubble pops with the welcome line and confetti bursts from three points.',h:'Hard on arrival, success with the confetti, heavy on the side bursts.',s:'Fanfare with the supplied sound clip.'},html:wcHtml,play:wcPlay},
+ {t:'Find friends',d:'Contacts permission, add friends',next:'Profile created',spec:{m:'Zip asks to sync contacts. An iOS-style permission dialog scales in, loading dots follow and a contact list appears with checkboxes and an Add button that counts.',h:'Medium on sync, heavy on Allow, medium on each checkbox.',s:'Ticks, check chime and sparkle when contacts load.'},html:ffHtml,play:ffPlay},
+ {t:'Profile created',d:'Profile created, confetti',next:'Finish',spec:{m:'Zip bounces up, the speech bubble pops with the welcome line and confetti bursts from three points.',h:'Hard on arrival, success with the confetti, heavy on the side bursts.',s:'Fanfare with the supplied sound clip.'},html:wcHtml,play:wcPlay},
 ];
 S1.forEach(s=>s.g='New user flow');
 SCREENS.push(...S1);

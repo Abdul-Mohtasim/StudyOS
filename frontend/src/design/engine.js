@@ -4,16 +4,32 @@ import { haptic } from "../haptics";
 import "./design.css";
 import qrcode from "qrcode-generator";
 import { SCENES, createSoundscape } from "./soundscapes";
+import { createPolish } from './polish.js';
+import { createFlame } from './flame.js';
+import { playStreakClip } from './streaksound.js';
+import { avatarSvg, avDecode, avEncode, avBg, CH_BG, AVD, AVK, ZIP_CHR, TABS as AVTABS } from './avatar.js';
 import { LANGS, setLanguage, getLanguage, translate as tr, englishText as en0 } from "../i18n";
 
 export function mountDesign(host, opts = {}) {
 host.classList.add('dz');host.setAttribute('data-own-haptics','');
 const stage=document.createElement('div');stage.className='dz-stage';host.appendChild(stage);
 let R=null,RUN=0,CUR=0;
+const P=createPolish(host,stage);
 const SCREENS=[];
 const IDX=t=>SCREENS.findIndex(s=>s.t===t);
-const HMAP={tick:'tap',light:'tap',medium:'press',heavy:'confirm',success:'success',hard:'welcome',thud:'press',buzz:'error',tap:'tap'};
+const HMAP={tick:'tap',light:'tap',medium:'press',heavy:'confirm',success:'success',hard:'welcome',thud:'press',buzz:'error',tap:'tap',celebrate:'celebrate',streakBuild:'streakBuild',streakIgnite:'streakIgnite',streakRoll:'streakRoll',streakLand:'streakLand'};
 const S={sound:false,haptics:true,unlocked:true,mute:false};
+// Optimistic update: change the list first, tell the server after, and undo with a message if it fails.
+function optRemoveFriend(id,repaint){
+  const old=D.friends||[];
+  D.friends=old.filter(f=>String(f.id)!==String(id));
+  Promise.resolve().then(()=>CB.removeFriend?CB.removeFriend(id):null).catch(()=>null).then(r=>{
+    if(r&&r.ok){hap('success');return}
+    D.friends=old;hap('buzz');
+    try{repaint&&repaint()}catch(_){}
+    toast((r&&r.message)||'Could not remove that friend. They are back on your list.');
+  });
+}
 function hap(k){if(!S.haptics)return;const n=HMAP[k];if(n&&haptic[n])haptic[n]()}
 const timers=[];
 const at=(ms,fn)=>{const my=RUN;timers.push(setTimeout(()=>{if(my===RUN)fn()},ms))};
@@ -31,6 +47,12 @@ const U={i:0,sel:{},name:'',streak:6,done:false,tok:0,dlg:0};
 const HOMEI=()=>IDX('Home');
 const D=opts.data||{};   // live data from the app (see App.jsx)
 const CB=opts.actions||{};
+/* the avatar the student made (empty until they save one) */
+const hasAv=()=>typeof D.avatar==='string'&&D.avatar!=='';
+const chOn=()=>hasAv()&&avDecode(D.avatar).chr>0;
+const avPb=v=>v.chr>0?CH_BG:avBg(v);
+const myAva=()=>hasAv()?avatarSvg(avDecode(D.avatar),{view:'full',cls:'pfava'}):window.AVA;
+const AVU=()=>hasAv()?avatarSvg(avDecode(D.avatar),{view:'full',bg:true,style:'width:100%;height:100%;display:block'}):avatarSvg(Object.assign(avDecode(''),{chr:ZIP_CHR}),{view:'full',bg:true,style:'width:100%;height:100%;display:block'});
 
 /* ---------- icons ---------- */
 const FLAME_IC='<svg viewBox="0 0 24 24"><path d="M12 2c1 3.5 5 5.6 5 10.2A5 5 0 0 1 12 17.5a5 5 0 0 1-5-5.3c0-2 1-3.4 2.2-4.7.2 1.6 1 2.4 1.8 2.6C10.7 7.3 11 4.6 12 2z" fill="#ff7a45"/><path d="M12 22a4 4 0 0 1-4-4c0-1.8 1.6-3 4-5 2.4 2 4 3.2 4 5a4 4 0 0 1-4 4z" fill="#ffb347"/></svg>';
@@ -98,7 +120,8 @@ const NAVI={
 };
 // The last tab is "More". It opens a small menu with Shop and Profile, so the Profile page lights up "More" too.
 const nav=a=>`<div class="nav">${[['home','Home'],['tasks','Tasks'],['focus','Focus'],['study','Study'],['more','More']].map(([k,l])=>`<div class="nv${k===a||(k==='more'&&a==='profile')?' on':''}" data-k="${k}"${k==='more'?' role="button" aria-haspopup="menu" aria-label="More: Shop and Profile"':''}>${NAVI[k]}${l}</div>`).join('')}</div>`;
-const tb=()=>`<div class="tb"><div style="width:24px;height:24px;display:block"><svg viewBox="0 0 24 24"><path d="M12 1L19.5 4.5L23 12L19.5 19.5L12 23L4.5 19.5L1 12L4.5 4.5Z" fill="#3aa0ff"/><path d="M12 1L19.5 4.5L23 12L12 12Z" fill="#6cbcff"/><path d="M12 12L23 12L19.5 19.5L12 23Z" fill="#2b86e6"/><path d="M12 12L12 23L4.5 19.5L1 12Z" fill="#1f6fcc"/><path d="M12 6.2L17.8 12L12 17.8L6.2 12Z" fill="#eaf5ff"/><path d="M12 9.2L14.8 12L12 14.8L9.2 12Z" fill="#2b86e6"/></svg></div><span>${D.score!=null?D.score:"–"}</span>${FLM('currentColor','var(--pg)',20,24)}<span>${D.streak||0}</span><div data-shopgo role="button" aria-label="Open the Gem Shop" style="display:flex;align-items:center;gap:7px;cursor:pointer"><div style="width:22px;height:22px">${CUBE}</div><span>${(D.gems||0).toLocaleString()}</span></div><div class="sp"></div>${ICO.search}</div>`;
+const AVH=()=>avatarSvg(hasAv()?avDecode(D.avatar):Object.assign(avDecode(''),{chr:ZIP_CHR}),{view:'head',bg:true,style:'width:100%;height:100%;display:block'});
+const tb=()=>`<div class="tb"><div class="tbp" data-pfgo role="button" aria-label="Open my profile">${AVH()}</div><div data-stkopen role="button" aria-label="Open my streak" style="display:flex;align-items:center;gap:7px;cursor:pointer">${FLM('currentColor','var(--pg)',20,24)}<span>${D.streak||0}</span></div><div data-shopgo role="button" aria-label="Open the Gem Shop" style="display:flex;align-items:center;gap:7px;cursor:pointer"><div style="width:22px;height:22px">${CUBE}</div><span>${(D.gems||0).toLocaleString()}</span></div><div class="sp"></div>${ICO.search}</div>`;
 const ring=(sz,sw,pct,col,tr)=>{const r=(sz-sw)/2,c=2*Math.PI*r;return `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${tr}" stroke-width="${sw}"/><circle class="rp" data-c="${c}" data-p="${pct}" cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${c} ${c}" stroke-dashoffset="${c*(1-pct)}"/></svg>`};
 const hdr=(l,r)=>`<div class="hd"><span style="width:24px">${l||''}</span><b>%T%</b><span style="width:24px">${r||''}</span></div>`;
 const head=(t,l,r)=>hdr(l,r).replace('%T%',t);
@@ -268,7 +291,7 @@ const qaPlay=()=>{
  };
 };
 const qs=SCREENS.find(s=>s.t==='Quick add');
-qs.d='Bottom sheet with 8 options and Zuno';qs.html=qaHtml;qs.play=qaPlay;
+qs.d='Bottom sheet with 8 options and Zip';qs.html=qaHtml;qs.play=qaPlay;
 qs.spec={m:'The home screen dims and the sheet slides up. The 8 option tiles pop in one after another, then the Stay on track banner rises and the character bounces in. Tapping a tile opens its page. Close or Cancel returns to Home.',h:'Light tap when the sheet lands, a medium tap when an option is chosen.',s:'Soft whoosh as the sheet rises, a pop when it lands, a check when an option is chosen.'};
 window.QAI=()=>SCREENS.findIndex(s=>s.t==='Quick add');
 
@@ -327,12 +350,12 @@ const GEAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wi
 const CHV='<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const UADD='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="8" r="4"/><path d="M1.5 20c0-4 3.400-6.200 7.500-6.200s7.500 2.200 7.500 6.200z"/><path d="M19 7v6M16 10h6" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" fill="none"/></svg>';
 const QRI='<svg viewBox="0 0 24 24" fill="none" stroke="#4aa8e8" stroke-width="2.400" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.800"/><rect x="14" y="3" width="7" height="7" rx="1.800"/><rect x="3" y="14" width="7" height="7" rx="1.800"/><path d="M14 14h3v3h-3zM19 14h2M14 19h2M19 19h2v2h-2z" stroke-linecap="round"/></svg>';
-/* user avatar (big, same family as Zuno) */
-const AVA=`<svg class="pfava" viewBox="0 0 300 300"><circle cx="150" cy="165" r="118" fill="#d9ccd4" opacity=".55"/><g stroke-linejoin="round" stroke-linecap="round"><path d="M34 300c0-62 50-86 116-86s116 24 116 86z" fill="#a99be2" stroke="#1b1e25" stroke-width="8"/><path d="M104 216c10 22 82 22 92 0" fill="none" stroke="#1b1e25" stroke-width="7"/><path d="M122 218l-6 38M178 218l6 38" stroke="#1b1e25" stroke-width="6"/><path d="M72 150c-4-70 44-96 82-92 44 4 76 38 74 92z" fill="#1b1e25"/><ellipse cx="150" cy="150" rx="68" ry="72" fill="#fffaf5" stroke="#1b1e25" stroke-width="8"/><path d="M82 132c4-36 28-60 68-62 36 0 62 22 70 58-26-12-52-34-70-44-24 20-44 40-68 48z" fill="#1b1e25" stroke="#1b1e25" stroke-width="6"/><path d="M82 150c-22 0-22 36 0 36" fill="#fffaf5" stroke="#1b1e25" stroke-width="7"/><path d="M218 150c22 0 22 36 0 36" fill="#fffaf5" stroke="#1b1e25" stroke-width="7"/><path d="M70 134c-10-62 30-98 80-98s90 36 80 98" fill="none" stroke="#5a707a" stroke-width="12"/><rect x="52" y="124" width="26" height="58" rx="13" fill="#5a707a" stroke="#1b1e25" stroke-width="7"/><rect x="222" y="124" width="26" height="58" rx="13" fill="#5a707a" stroke="#1b1e25" stroke-width="7"/></g><circle cx="122" cy="156" r="8" fill="#1b1e25"/><circle cx="178" cy="156" r="8" fill="#1b1e25"/><circle cx="125" cy="153" r="2.600" fill="#fff"/><circle cx="181" cy="153" r="2.600" fill="#fff"/><path d="M130 184q20 20 40 0" fill="none" stroke="#1b1e25" stroke-width="7" stroke-linecap="round"/><circle cx="104" cy="180" r="10" fill="#f6b8c4" opacity=".75"/><circle cx="196" cy="180" r="10" fill="#f6b8c4" opacity=".75"/></svg>`;
+/* user avatar (big, same family as Zip) */
+const AVA=avatarSvg(Object.assign(avDecode(''),{chr:ZIP_CHR}),{view:'full',cls:'pfava'});
 const SB='<svg class="sb" viewBox="0 0 48 48"><path d="M24 14c-5-4-12-4-18-2v24c6-2 13-2 18 2 5-4 12-4 18-2V12c-6-2-13-2-18 2z" fill="#cfc4f5" stroke="#6a58d0" stroke-width="3" stroke-linejoin="round"/><path d="M24 14v24" stroke="#6a58d0" stroke-width="3"/></svg>';
 const PC=`<svg class="pc" viewBox="0 0 132 100"><circle cx="86" cy="44" r="34" fill="#4b6672"/><path d="M62 100c0-22 10-34 26-34s26 12 26 34z" fill="#a99be2" stroke="#1b1e25" stroke-width="3" stroke-linejoin="round"/><circle cx="88" cy="42" r="19" fill="#fffaf5" stroke="#1b1e25" stroke-width="3"/><path d="M69 40c-2-17 12-24 22-23 11 1 19 9 17 23-9-3-18-9-23-14-5 6-10 11-16 14z" fill="#1b1e25"/><circle cx="82" cy="44" r="2.200" fill="#1b1e25"/><circle cx="96" cy="44" r="2.200" fill="#1b1e25"/><path d="M85 51q4 4 8 0" fill="none" stroke="#1b1e25" stroke-width="2" stroke-linecap="round"/><path d="M63 16l7 14 14-4-5 14" fill="none" stroke="#f2a62c" stroke-width="0"/><path d="M70 18L88 4l20 14z" fill="#f2a62c" stroke="#1b1e25" stroke-width="3" stroke-linejoin="round"/><circle cx="88" cy="4" r="4" fill="#f2a62c" stroke="#1b1e25" stroke-width="2.500"/></svg>`;
 
-const profHtml=()=>`<div class="scr n nd" style="--pg:#181b22"><div class="pf"><div class="pfs" data-sc><div class="hero">${AVA}<div class="edit" data-edit><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-5L16 4l4 4L9 19z"/></svg></div></div><div class="body"><div class="hdl">@aisha_rahman · Joined 2026</div><div class="pfst"><div data-subj role="button" aria-label="My subjects" style="cursor:pointer"><b>${SB}<span class="plus2">+2</span></b><span>Subjects</span></div><div><b>12</b><span>Following</span></div><div><b>8</b><span>Followers</span></div></div><div class="acts"><button class="btnl" type="button" data-friends>${UADD}ADD FRIENDS</button><button class="btnl sq" type="button" data-qr aria-label="Share QR code">${QRI}</button></div>${DZ.showcaseHtml?DZ.showcaseHtml():''}<div class="sec">Overview</div><div class="pfov"><div><svg viewBox="0 0 32 32"><path d="M16 2c1 6 8 9 8 18a8 8 0 01-16 0c0-4 2-6 3-8 1 2 2 3 3 3 0-5-1-9 2-13z" fill="#ff4b3a"/><path d="M16 14c1 4 5 5 5 9a5 5 0 01-10 0c0-2 1-4 2-5 1 1 2 1 2 1 0-2 0-3 1-5z" fill="#ff9a1f"/><path d="M16 21c1 2 3 2 3 4a3 3 0 01-6 0c0-1 1-2 1-3z" fill="#ffd84a"/></svg>${U.streak} days</div><div><svg viewBox="0 0 32 32"><rect x="3" y="3" width="26" height="26" rx="8" fill="#6a58d0"/><path d="M10 16.500l4 4 8-9" fill="none" stroke="#fff" stroke-width="3.400" stroke-linecap="round" stroke-linejoin="round"/></svg>${18+(U.done?1:0)} tasks</div><div><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#35a2f0"/><circle cx="16" cy="16" r="9.500" fill="#fff"/><path d="M16 9.500V16l4.500 3" fill="none" stroke="#1f6fc2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>42 hours</div><div><svg viewBox="0 0 32 32"><path d="M19 2L6 18h8l-3 12 15-17h-9z" fill="#ffc800" stroke="#e8a900" stroke-width="1.500" stroke-linejoin="round"/></svg>1,240 XP</div></div><div class="sec">Friend streaks</div><div class="fs"><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc1"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc1)"><rect width="52" height="52" fill="#fff0f6"/><circle cx="9" cy="14" r="9" fill="#ff8ab8"/><circle cx="22" cy="6" r="8" fill="#ffc83d"/><circle cx="38" cy="8" r="9" fill="#7ad04a"/><rect x="36" y="4" width="14" height="10" rx="2" fill="#7a4a2e"/><circle cx="8" cy="30" r="8" fill="#6bd16a"/><circle cx="26" cy="32" r="14" fill="#f7b79b"/><rect x="11" y="26" width="30" height="10" rx="5" fill="#26303a"/><circle cx="43" cy="38" r="6" fill="#ff8ab8"/><path d="M18 44q8 6 16 0" fill="none" stroke="#c0392b" stroke-width="2.500"/></g></svg><div class="cnt"><svg viewBox="0 0 24 20"><path d="M9 2c3 3 6 5 6 9a6 6 0 01-12 0c0-3 2-4 3-6 1 1 2 2 3 2z" fill="#5d6a74"/><path d="M17 5c2 2 4 4 4 7a4.500 4.500 0 01-8.500 2c2-1 3-3 3-5z" fill="#4a5560"/></svg>132</div></div><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc2"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc2)"><rect width="52" height="52" fill="#2f6fd6"/><path d="M4 18l8-6 4 8zM48 18l-8-6-4 8z" fill="#1b4fae"/><ellipse cx="26" cy="32" rx="16" ry="14" fill="#f2a24a"/><circle cx="17" cy="14" r="7" fill="#7ad04a" stroke="#26303a" stroke-width="2"/><circle cx="35" cy="14" r="7" fill="#7ad04a" stroke="#26303a" stroke-width="2"/><circle cx="17" cy="14" r="2.500" fill="#26303a"/><circle cx="35" cy="14" r="2.500" fill="#26303a"/><path d="M14 34h24l-3 8h-18z" fill="#fff"/><path d="M18 24q8 4 16 0" fill="none" stroke="#26303a" stroke-width="2.500" stroke-linecap="round"/></g></svg><div class="cnt"><svg viewBox="0 0 24 20"><path d="M9 2c3 3 6 5 6 9a6 6 0 01-12 0c0-3 2-4 3-6 1 1 2 2 3 2z" fill="#5d6a74"/><path d="M17 5c2 2 4 4 4 7a4.500 4.500 0 01-8.500 2c2-1 3-3 3-5z" fill="#4a5560"/></svg>47</div></div><div><svg class="fa" viewBox="0 0 52 52"><circle cx="26" cy="26" r="26" fill="#e85a5a"/><text x="26" y="36" text-anchor="middle" font-size="30" font-weight="700" fill="#2a1d1d" font-family="Space Grotesk,Inter,Arial,sans-serif">A</text></svg><svg class="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a3139" stroke="#181b22" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8b98a2" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="#8b98a2" stroke-width="2" stroke-linecap="round"/></svg></div><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc4"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc4)"><rect width="52" height="52" fill="#b43f86"/><circle cx="26" cy="28" r="20" fill="#7a3a22"/><circle cx="26" cy="30" r="14" fill="#f8d2c0"/><path d="M12 24c4-10 24-10 28 0-6-3-9-5-14-5s-9 2-14 5z" fill="#7a3a22"/><circle cx="20" cy="30" r="2" fill="#26303a"/><circle cx="32" cy="30" r="2" fill="#26303a"/><circle cx="17" cy="35" r="3" fill="#f08a8a"/><circle cx="35" cy="35" r="3" fill="#f08a8a"/><path d="M22 38q4 3 8 0" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/></g></svg><svg class="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a3139" stroke="#181b22" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8b98a2" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="#8b98a2" stroke-width="2" stroke-linecap="round"/></svg></div><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc5"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc5)"><rect width="52" height="52" fill="#efe0fb"/><path d="M8 52c0-14 8-20 18-20s18 6 18 20z" fill="#b3345a"/><circle cx="26" cy="26" r="13" fill="#f9d6c4"/><path d="M12 28c-2-16 10-20 16-18 8 2 14 8 12 20-2-6-4-10-6-12-8 4-16 6-22 10z" fill="#1d1a22"/><circle cx="21" cy="28" r="2" fill="#26303a"/><circle cx="31" cy="28" r="2" fill="#26303a"/><path d="M23 34q3 3 6 0" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/></g></svg><svg class="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a3139" stroke="#181b22" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8b98a2" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="#8b98a2" stroke-width="2" stroke-linecap="round"/></svg></div></div><div class="sec">Monthly badges<span style="display:flex"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="bd"><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#8b5ae0"/><circle cx="50" cy="50" r="40" fill="#6a3fc4"/><path d="M50 40C40 34 28 34 20 38v30c8-4 20-4 30 2z" fill="#fff"/><path d="M50 40c10-6 22-6 30-2v30c-8-4-20-4-30 2z" fill="#e6dcff"/><path d="M50 40v30" stroke="#9b7fe6" stroke-width="2.500"/><path d="M26 46h18M26 53h18M26 60h14M56 46h18M56 53h18M56 60h14" stroke="#b8a3f0" stroke-width="2.500" stroke-linecap="round"/><path d="M50 10l3.500 7.500 8 1-6 5.500 1.800 8L50 28l-7.300 4 1.800-8-6-5.500 8-1z" fill="#ffd23f" stroke="#e0a41a" stroke-width="1.500" stroke-linejoin="round" transform="translate(0 6) scale(1)"/></svg><span class="lb">August</span></div><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#28b0ae"/><circle cx="50" cy="50" r="40" fill="#1f8f8d"/><g transform="rotate(40 50 50)"><rect x="41" y="18" width="18" height="46" fill="#ffd23f"/><rect x="41" y="18" width="6" height="46" fill="#ffe680"/><rect x="41" y="26" width="18" height="6" fill="#c9d1d8"/><rect x="41" y="14" width="18" height="12" rx="4" fill="#ff8fab"/><path d="M41 64h18l-9 17z" fill="#f3d2a8"/><path d="M46.500 74h7l-3.500 7z" fill="#2d2d2d"/></g><path d="M22 70l12 0M26 78h12" stroke="#7fe0dd" stroke-width="3" stroke-linecap="round"/><path d="M70 24l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff"/></svg><span class="lb">September</span></div><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#f6c431"/><circle cx="50" cy="50" r="40" fill="#fff3c4"/><path d="M50 22L14 40l36 17 36-17z" fill="#2d3340"/><path d="M30 52v13c0 7 9 11 20 11s20-4 20-11V52l-20 9z" fill="#434c5e"/><path d="M82 42v22" stroke="#e0a41a" stroke-width="3" stroke-linecap="round"/><circle cx="82" cy="68" r="4.500" fill="#ffb020"/><circle cx="50" cy="40" r="3" fill="#ffd23f"/></svg><span class="lb">October</span></div><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#353b42"/><circle cx="50" cy="50" r="40" fill="#2a2f35"/><circle cx="50" cy="50" r="43.500" fill="none" stroke="#c9b8c3" stroke-width="5" stroke-linecap="round" stroke-dasharray="197 274" transform="rotate(-90 50 50)"/><rect x="29" y="24" width="42" height="52" rx="8" fill="#454b53"/><path d="M36 38l4 4 7-8M36 52l4 4 7-8M54 40h10M54 54h10M36 66h8M54 66h10" fill="none" stroke="#6b737c" stroke-width="3.200" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="lb">18 of 25</span></div></div><div class="sec">Achievements<span style="display:flex"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="bd"><div><span class=nw>NEW</span><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 14v34c0 20-16 34-38 42C28 86 12 72 12 52V18z" fill="#3fa56a" stroke="#2c8050" stroke-width="3" stroke-linejoin="round"/><path d="M50 16L22 29l28 13 28-13z" fill="#fff"/><path d="M32 38v10c0 5 8 8 18 8s18-3 18-8V38l-18 8z" fill="#d8f0e0"/><path d="M76 31v14" stroke="#ffd23f" stroke-width="3" stroke-linecap="round"/><circle cx="76" cy="48" r="3.500" fill="#ffd23f"/><text x="50" y="93" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" stroke="#2c8050" stroke-width="5" paint-order="stroke" stroke-linejoin="round" font-family="Space Grotesk,Inter,Arial,sans-serif">300</text></svg><span class="lb">Graduate</span></div><div><span class=nw>NEW</span><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 22v44L50 96 12 70V26z" fill="#7a4fd0" stroke="#5b3fb5" stroke-width="3" stroke-linejoin="round"/><path d="M50 14l28 16v36L50 86 22 66V30z" fill="#9468e8"/><path d="M34 26h32v16a16 16 0 01-32 0z" fill="#ffd23f" stroke="#e0a41a" stroke-width="2"/><path d="M34 30h-8c0 10 4 15 10 16M66 30h8c0 10-4 15-10 16" fill="none" stroke="#e0a41a" stroke-width="3.200" stroke-linecap="round"/><rect x="45" y="56" width="10" height="9" fill="#e0a41a"/><rect x="36" y="65" width="28" height="7" rx="3" fill="#ffd23f" stroke="#e0a41a" stroke-width="2"/><path d="M50 31l2.500 5 5.500.8-4 3.800 1 5.400-5-2.700-5 2.700 1-5.400-4-3.800 5.500-.8z" fill="#fff"/></svg><span class="lb">Class Topper</span></div><div><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 14v34c0 20-16 34-38 42C28 86 12 72 12 52V18z" fill="#a8dcf0" stroke="#6bb6d6" stroke-width="3" stroke-linejoin="round"/><circle cx="50" cy="38" r="17" fill="#ffe27a" stroke="#f0b429" stroke-width="3"/><path d="M42 50h16v8a4 4 0 01-4 4h-8a4 4 0 01-4-4z" fill="#b8c2cc" stroke="#8d99a6" stroke-width="2"/><path d="M44 34q6-5 12 0M50 30v14" fill="none" stroke="#f0b429" stroke-width="2.500" stroke-linecap="round"/><path d="M50 12v-5M28 22l-4-4M72 22l4-4M22 40h-5M78 40h5" stroke="#fff" stroke-width="3.500" stroke-linecap="round"/><text x="50" y="93" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" stroke="#4aa3c9" stroke-width="5" paint-order="stroke" stroke-linejoin="round" font-family="Space Grotesk,Inter,Arial,sans-serif">100</text></svg><span class="lb">Brainiac</span></div><div><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 14v34c0 20-16 34-38 42C28 86 12 72 12 52V18z" fill="#ffb020" stroke="#e08a00" stroke-width="3" stroke-linejoin="round"/><rect x="44" y="12" width="12" height="7" rx="2" fill="#7a3a00"/><circle cx="50" cy="40" r="18" fill="#fff" stroke="#c0392b" stroke-width="3.500"/><path d="M50 40V28M50 40l9 6" fill="none" stroke="#c0392b" stroke-width="3.500" stroke-linecap="round"/><circle cx="50" cy="40" r="2.500" fill="#c0392b"/><path d="M50 24v3M66 40h-3M34 40h3" stroke="#e8a090" stroke-width="2.500" stroke-linecap="round"/><path d="M66 24l5-5" stroke="#7a3a00" stroke-width="4" stroke-linecap="round"/><text x="50" y="93" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" stroke="#d97a00" stroke-width="5" paint-order="stroke" stroke-linejoin="round" font-family="Space Grotesk,Inter,Arial,sans-serif">25</text></svg><span class="lb">Deep Focus</span></div></div></div></div><div class="pfbar" data-bar><button class="pfx" type="button" data-pfx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button><div class="hname">Aisha Rahman</div><button class="gear" type="button" data-gear aria-label="Settings">${GEAR}</button></div><div class="navh">${nav('profile')}</div></div></div>`;
+const profHtml=()=>`<div class="scr n nd" style="--pg:#181b22"><div class="pf${chOn()?' pfc':''}"><div class="pfs" data-sc><div class="hero">${myAva()}<div class="edit" data-edit><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-5L16 4l4 4L9 19z"/></svg></div></div><div class="body"><div class="hdl">@aisha_rahman · Joined 2026</div><div class="pfst"><div data-subj role="button" aria-label="My subjects" style="cursor:pointer"><b>${SB}<span class="plus2">+2</span></b><span>Subjects</span></div><div><b>12</b><span>Following</span></div><div><b>8</b><span>Followers</span></div></div><div class="acts"><button class="btnl" type="button" data-friends>${UADD}ADD FRIENDS</button><button class="btnl sq" type="button" data-qr aria-label="Share QR code">${QRI}</button></div>${DZ.showcaseHtml?DZ.showcaseHtml():''}<div class="sec">Overview</div><div class="pfov"><div><svg viewBox="0 0 32 32"><path d="M16 2c1 6 8 9 8 18a8 8 0 01-16 0c0-4 2-6 3-8 1 2 2 3 3 3 0-5-1-9 2-13z" fill="#ff4b3a"/><path d="M16 14c1 4 5 5 5 9a5 5 0 01-10 0c0-2 1-4 2-5 1 1 2 1 2 1 0-2 0-3 1-5z" fill="#ff9a1f"/><path d="M16 21c1 2 3 2 3 4a3 3 0 01-6 0c0-1 1-2 1-3z" fill="#ffd84a"/></svg>${U.streak} days</div><div><svg viewBox="0 0 32 32"><rect x="3" y="3" width="26" height="26" rx="8" fill="#6a58d0"/><path d="M10 16.500l4 4 8-9" fill="none" stroke="#fff" stroke-width="3.400" stroke-linecap="round" stroke-linejoin="round"/></svg>${18+(U.done?1:0)} tasks</div><div><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#35a2f0"/><circle cx="16" cy="16" r="9.500" fill="#fff"/><path d="M16 9.500V16l4.500 3" fill="none" stroke="#1f6fc2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>42 hours</div><div><svg viewBox="0 0 32 32"><path d="M19 2L6 18h8l-3 12 15-17h-9z" fill="#ffc800" stroke="#e8a900" stroke-width="1.500" stroke-linejoin="round"/></svg>1,240 XP</div></div><div class="sec">Friend streaks</div><div class="fs"><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc1"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc1)"><rect width="52" height="52" fill="#fff0f6"/><circle cx="9" cy="14" r="9" fill="#ff8ab8"/><circle cx="22" cy="6" r="8" fill="#ffc83d"/><circle cx="38" cy="8" r="9" fill="#7ad04a"/><rect x="36" y="4" width="14" height="10" rx="2" fill="#7a4a2e"/><circle cx="8" cy="30" r="8" fill="#6bd16a"/><circle cx="26" cy="32" r="14" fill="#f7b79b"/><rect x="11" y="26" width="30" height="10" rx="5" fill="#26303a"/><circle cx="43" cy="38" r="6" fill="#ff8ab8"/><path d="M18 44q8 6 16 0" fill="none" stroke="#c0392b" stroke-width="2.500"/></g></svg><div class="cnt"><svg viewBox="0 0 24 20"><path d="M9 2c3 3 6 5 6 9a6 6 0 01-12 0c0-3 2-4 3-6 1 1 2 2 3 2z" fill="#5d6a74"/><path d="M17 5c2 2 4 4 4 7a4.500 4.500 0 01-8.500 2c2-1 3-3 3-5z" fill="#4a5560"/></svg>132</div></div><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc2"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc2)"><rect width="52" height="52" fill="#2f6fd6"/><path d="M4 18l8-6 4 8zM48 18l-8-6-4 8z" fill="#1b4fae"/><ellipse cx="26" cy="32" rx="16" ry="14" fill="#f2a24a"/><circle cx="17" cy="14" r="7" fill="#7ad04a" stroke="#26303a" stroke-width="2"/><circle cx="35" cy="14" r="7" fill="#7ad04a" stroke="#26303a" stroke-width="2"/><circle cx="17" cy="14" r="2.500" fill="#26303a"/><circle cx="35" cy="14" r="2.500" fill="#26303a"/><path d="M14 34h24l-3 8h-18z" fill="#fff"/><path d="M18 24q8 4 16 0" fill="none" stroke="#26303a" stroke-width="2.500" stroke-linecap="round"/></g></svg><div class="cnt"><svg viewBox="0 0 24 20"><path d="M9 2c3 3 6 5 6 9a6 6 0 01-12 0c0-3 2-4 3-6 1 1 2 2 3 2z" fill="#5d6a74"/><path d="M17 5c2 2 4 4 4 7a4.500 4.500 0 01-8.500 2c2-1 3-3 3-5z" fill="#4a5560"/></svg>47</div></div><div><svg class="fa" viewBox="0 0 52 52"><circle cx="26" cy="26" r="26" fill="#e85a5a"/><text x="26" y="36" text-anchor="middle" font-size="30" font-weight="700" fill="#2a1d1d" font-family="Space Grotesk,Inter,Arial,sans-serif">A</text></svg><svg class="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a3139" stroke="#181b22" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8b98a2" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="#8b98a2" stroke-width="2" stroke-linecap="round"/></svg></div><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc4"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc4)"><rect width="52" height="52" fill="#b43f86"/><circle cx="26" cy="28" r="20" fill="#7a3a22"/><circle cx="26" cy="30" r="14" fill="#f8d2c0"/><path d="M12 24c4-10 24-10 28 0-6-3-9-5-14-5s-9 2-14 5z" fill="#7a3a22"/><circle cx="20" cy="30" r="2" fill="#26303a"/><circle cx="32" cy="30" r="2" fill="#26303a"/><circle cx="17" cy="35" r="3" fill="#f08a8a"/><circle cx="35" cy="35" r="3" fill="#f08a8a"/><path d="M22 38q4 3 8 0" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/></g></svg><svg class="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a3139" stroke="#181b22" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8b98a2" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="#8b98a2" stroke-width="2" stroke-linecap="round"/></svg></div><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc5"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc5)"><rect width="52" height="52" fill="#efe0fb"/><path d="M8 52c0-14 8-20 18-20s18 6 18 20z" fill="#b3345a"/><circle cx="26" cy="26" r="13" fill="#f9d6c4"/><path d="M12 28c-2-16 10-20 16-18 8 2 14 8 12 20-2-6-4-10-6-12-8 4-16 6-22 10z" fill="#1d1a22"/><circle cx="21" cy="28" r="2" fill="#26303a"/><circle cx="31" cy="28" r="2" fill="#26303a"/><path d="M23 34q3 3 6 0" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/></g></svg><svg class="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a3139" stroke="#181b22" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8b98a2" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="#8b98a2" stroke-width="2" stroke-linecap="round"/></svg></div></div><div class="sec">Monthly badges<span style="display:flex"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="bd"><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#8b5ae0"/><circle cx="50" cy="50" r="40" fill="#6a3fc4"/><path d="M50 40C40 34 28 34 20 38v30c8-4 20-4 30 2z" fill="#fff"/><path d="M50 40c10-6 22-6 30-2v30c-8-4-20-4-30 2z" fill="#e6dcff"/><path d="M50 40v30" stroke="#9b7fe6" stroke-width="2.500"/><path d="M26 46h18M26 53h18M26 60h14M56 46h18M56 53h18M56 60h14" stroke="#b8a3f0" stroke-width="2.500" stroke-linecap="round"/><path d="M50 10l3.500 7.500 8 1-6 5.500 1.800 8L50 28l-7.300 4 1.800-8-6-5.500 8-1z" fill="#ffd23f" stroke="#e0a41a" stroke-width="1.500" stroke-linejoin="round" transform="translate(0 6) scale(1)"/></svg><span class="lb">August</span></div><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#28b0ae"/><circle cx="50" cy="50" r="40" fill="#1f8f8d"/><g transform="rotate(40 50 50)"><rect x="41" y="18" width="18" height="46" fill="#ffd23f"/><rect x="41" y="18" width="6" height="46" fill="#ffe680"/><rect x="41" y="26" width="18" height="6" fill="#c9d1d8"/><rect x="41" y="14" width="18" height="12" rx="4" fill="#ff8fab"/><path d="M41 64h18l-9 17z" fill="#f3d2a8"/><path d="M46.500 74h7l-3.500 7z" fill="#2d2d2d"/></g><path d="M22 70l12 0M26 78h12" stroke="#7fe0dd" stroke-width="3" stroke-linecap="round"/><path d="M70 24l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff"/></svg><span class="lb">September</span></div><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#f6c431"/><circle cx="50" cy="50" r="40" fill="#fff3c4"/><path d="M50 22L14 40l36 17 36-17z" fill="#2d3340"/><path d="M30 52v13c0 7 9 11 20 11s20-4 20-11V52l-20 9z" fill="#434c5e"/><path d="M82 42v22" stroke="#e0a41a" stroke-width="3" stroke-linecap="round"/><circle cx="82" cy="68" r="4.500" fill="#ffb020"/><circle cx="50" cy="40" r="3" fill="#ffd23f"/></svg><span class="lb">October</span></div><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#353b42"/><circle cx="50" cy="50" r="40" fill="#2a2f35"/><circle cx="50" cy="50" r="43.500" fill="none" stroke="#c9b8c3" stroke-width="5" stroke-linecap="round" stroke-dasharray="197 274" transform="rotate(-90 50 50)"/><rect x="29" y="24" width="42" height="52" rx="8" fill="#454b53"/><path d="M36 38l4 4 7-8M36 52l4 4 7-8M54 40h10M54 54h10M36 66h8M54 66h10" fill="none" stroke="#6b737c" stroke-width="3.200" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="lb">18 of 25</span></div></div><div class="sec">Achievements<span style="display:flex"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="bd"><div><span class=nw>NEW</span><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 14v34c0 20-16 34-38 42C28 86 12 72 12 52V18z" fill="#3fa56a" stroke="#2c8050" stroke-width="3" stroke-linejoin="round"/><path d="M50 16L22 29l28 13 28-13z" fill="#fff"/><path d="M32 38v10c0 5 8 8 18 8s18-3 18-8V38l-18 8z" fill="#d8f0e0"/><path d="M76 31v14" stroke="#ffd23f" stroke-width="3" stroke-linecap="round"/><circle cx="76" cy="48" r="3.500" fill="#ffd23f"/><text x="50" y="93" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" stroke="#2c8050" stroke-width="5" paint-order="stroke" stroke-linejoin="round" font-family="Space Grotesk,Inter,Arial,sans-serif">300</text></svg><span class="lb">Graduate</span></div><div><span class=nw>NEW</span><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 22v44L50 96 12 70V26z" fill="#7a4fd0" stroke="#5b3fb5" stroke-width="3" stroke-linejoin="round"/><path d="M50 14l28 16v36L50 86 22 66V30z" fill="#9468e8"/><path d="M34 26h32v16a16 16 0 01-32 0z" fill="#ffd23f" stroke="#e0a41a" stroke-width="2"/><path d="M34 30h-8c0 10 4 15 10 16M66 30h8c0 10-4 15-10 16" fill="none" stroke="#e0a41a" stroke-width="3.200" stroke-linecap="round"/><rect x="45" y="56" width="10" height="9" fill="#e0a41a"/><rect x="36" y="65" width="28" height="7" rx="3" fill="#ffd23f" stroke="#e0a41a" stroke-width="2"/><path d="M50 31l2.500 5 5.500.8-4 3.800 1 5.400-5-2.700-5 2.700 1-5.400-4-3.800 5.500-.8z" fill="#fff"/></svg><span class="lb">Class Topper</span></div><div><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 14v34c0 20-16 34-38 42C28 86 12 72 12 52V18z" fill="#a8dcf0" stroke="#6bb6d6" stroke-width="3" stroke-linejoin="round"/><circle cx="50" cy="38" r="17" fill="#ffe27a" stroke="#f0b429" stroke-width="3"/><path d="M42 50h16v8a4 4 0 01-4 4h-8a4 4 0 01-4-4z" fill="#b8c2cc" stroke="#8d99a6" stroke-width="2"/><path d="M44 34q6-5 12 0M50 30v14" fill="none" stroke="#f0b429" stroke-width="2.500" stroke-linecap="round"/><path d="M50 12v-5M28 22l-4-4M72 22l4-4M22 40h-5M78 40h5" stroke="#fff" stroke-width="3.500" stroke-linecap="round"/><text x="50" y="93" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" stroke="#4aa3c9" stroke-width="5" paint-order="stroke" stroke-linejoin="round" font-family="Space Grotesk,Inter,Arial,sans-serif">100</text></svg><span class="lb">Brainiac</span></div><div><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 14v34c0 20-16 34-38 42C28 86 12 72 12 52V18z" fill="#ffb020" stroke="#e08a00" stroke-width="3" stroke-linejoin="round"/><rect x="44" y="12" width="12" height="7" rx="2" fill="#7a3a00"/><circle cx="50" cy="40" r="18" fill="#fff" stroke="#c0392b" stroke-width="3.500"/><path d="M50 40V28M50 40l9 6" fill="none" stroke="#c0392b" stroke-width="3.500" stroke-linecap="round"/><circle cx="50" cy="40" r="2.500" fill="#c0392b"/><path d="M50 24v3M66 40h-3M34 40h3" stroke="#e8a090" stroke-width="2.500" stroke-linecap="round"/><path d="M66 24l5-5" stroke="#7a3a00" stroke-width="4" stroke-linecap="round"/><text x="50" y="93" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" stroke="#d97a00" stroke-width="5" paint-order="stroke" stroke-linejoin="round" font-family="Space Grotesk,Inter,Arial,sans-serif">25</text></svg><span class="lb">Deep Focus</span></div></div></div></div><div class="pfbar" data-bar><button class="pfx" type="button" data-pfx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button><div class="hname">Aisha Rahman</div><button class="gear" type="button" data-gear aria-label="Settings">${GEAR}</button></div><div class="navh">${nav('profile')}</div></div></div>`;
 
 /* QR drawn with rounded modules */
 const qrSvg=()=>{const n=QM.length,q=1,s=n+q*2;let d='';const fin=(r,c)=>(r<7&&c<7)||(r<7&&c>=n-7)||(r>=n-7&&c<7);
@@ -396,6 +419,7 @@ document.addEventListener('click',e=>{const n=null;if(!n)return;const m={home:'H
 (()=>{
 
 const BK='<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.200" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+DZ.BKX=BK;
 const CHV='<svg viewBox="0 0 24 24" width="18" height="18" style="color:#8b98a2;flex:none"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const CK='<svg width="14" height="14" viewBox="0 0 24 24"><path d="M5 12.500l4.500 4.500L19 7.500" fill="none" stroke="#fff" stroke-width="3.400" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const tgx=(on=1)=>`<div class="ptg${on?'':' off'}" data-tg><i></i></div>`;
@@ -422,20 +446,20 @@ stor:`<svg viewBox="0 0 120 120"><path d="M22 28v62c0 9 17 16 38 16s38-7 38-16V2
 priv:`<svg viewBox="0 0 220 140"><path d="M110 12l44 16v36c0 30-20 52-44 62-24-10-44-32-44-62V28z" fill="${V2}"/><path d="M110 12l44 16v36c0 30-20 52-44 62z" fill="${V3}" opacity=".7"/><rect x="92" y="62" width="36" height="30" rx="7" fill="#fff"/><path d="M99 62v-8a11 11 0 0122 0v8" fill="none" stroke="#fff" stroke-width="6"/><circle cx="110" cy="76" r="4.500" fill="${V3}"/><rect x="108" y="78" width="4" height="8" rx="2" fill="${V3}"/><circle cx="150" cy="104" r="19" fill="#2fb5a6" stroke="#181b22" stroke-width="4"/><circle cx="144" cy="104" r="5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="156" cy="104" r="5" fill="none" stroke="#fff" stroke-width="3"/><path d="M60 40l3-8 3 8 8 3-8 3-3 8-3-8-8-3z" fill="${V2}" opacity=".6"/><path d="M164 22l4-7M174 32l8-4" stroke="${V2}" stroke-width="3.400" stroke-linecap="round"/></svg>`
 };
 const head=(t)=>`<div class="shd"><button class="sbk" type="button" data-back aria-label="Back">${BK}</button><b>${t}</b></div>`;
-const AV=()=>window.AVA.replace('class="pfava"','style="width:100%;height:100%;display:block;transform:translateY(16%) scale(1.3)"');
+const AV=()=>window.AVA.replace('class="pfava"','style="width:100%;height:100%;display:block"');
 const page=(t,d,body,spec)=>({t,d,g:'Settings pages',spec,html:()=>`<div class="scr n nd" style="--pg:#181b22"><div class="ss">${head(t)}<div class="ssc">${body()}</div></div></div>`});
 const row=(t,sub,on)=>`<div class="sit tgl${sub?' rd':''}"><div>${t}${sub?`<small>${sub}</small>`:''}</div>${tgx(on)}</div>`;
 const IDX=t=>SCREENS.findIndex(s=>s.t===t);
 
-const LANGS=[['English','English','Hi! I am Zuno. Let us study!','ltr'],['Español','Spanish','¡Hola! Soy Zuno. ¡A estudiar!','ltr'],['Français','French','Salut ! Je suis Zuno. On révise ?','ltr'],['Deutsch','German','Hallo! Ich bin Zuno. Lass uns lernen!','ltr'],['العربية','Arabic','مرحبًا! أنا زونو. هيا نذاكر!','rtl']];
+const LANGS=[['English','English','Hi! I am Zip. Let us study!','ltr'],['Español','Spanish','¡Hola! Soy Zip. ¡A estudiar!','ltr'],['Français','French','Salut ! Je suis Zip. On révise ?','ltr'],['Deutsch','German','Hallo! Ich bin Zip. Lass uns lernen!','ltr'],['العربية','Arabic','مرحبًا! أنا زيب. هيا نذاكر!','rtl']];
 const SP=[
-page('Edit profile','Avatar, name, username, password, email',()=>`<div class="pav">${AV()}</div><span class="pcl" data-av>CHANGE AVATAR</span><div class="sfl">First name</div><input class="sin" value="Aisha"><div class="sfl">Last name</div><input class="sin" value="Rahman"><div class="sfl">Username</div><input class="sin" value="aisha_rahman"><div class="sfl">Password</div><input class="sin" type="password" value="studyos8"><div class="sfl">Email</div><input class="sin" value="aisha.rahman@gmail.com"><button class="sbtn" type="button" data-go="Export my data">EXPORT MY DATA</button><button class="sbtn red" type="button" data-del>DELETE ACCOUNT</button>`,'The fields rise in one after another. Change avatar and the export and delete buttons are tappable. Export my data opens the export page.'),
+page('Edit profile','Avatar, name, username, password, email',()=>`<div class="pav${hasAv()?' pav2':''}">${AVU()}</div><span class="pcl" data-av>CHANGE AVATAR</span><div class="sfl">First name</div><input class="sin" value="Aisha"><div class="sfl">Last name</div><input class="sin" value="Rahman"><div class="sfl">Username</div><input class="sin" value="aisha_rahman"><div class="sfl">Password</div><input class="sin" type="password" value="studyos8"><div class="sfl">Email</div><input class="sin" value="aisha.rahman@gmail.com"><button class="sbtn" type="button" data-go="Export my data">EXPORT MY DATA</button><button class="sbtn red" type="button" data-del>DELETE ACCOUNT</button>`,'The fields rise in one after another. Change avatar and the export and delete buttons are tappable. Export my data opens the export page.'),
 page('Preferences','Study experience toggles',()=>`<h4 style="margin-top:14px">Study experience</h4><div class="sgrp">${[['Sound effects',1],['Haptic feedback',1],['Animations',1],['Motivational messages',1],['Streak celebrations',1],['Friend streaks',1],['Weekly report',0]].map(([t,o])=>row(t,'',o)).join('')}</div>`,'The list rises in. Every row toggles on tap, with a tick sound and a light haptic.'),
-page('Language','Five languages, device language, time and week',()=>`<div class="sill" style="margin-top:2px">${'<svg viewBox="0 0 220 120"><circle cx="110" cy="62" r="46" fill="#e3dbfa" stroke="#a99be2" stroke-width="5"/><path d="M64 62h92M110 16c-24 26-24 70 0 92M110 16c24 26 24 70 0 92M72 40c26 10 50 10 76 0M72 84c26-10 50-10 76 0" fill="none" stroke="#a99be2" stroke-width="3.600" stroke-linecap="round"/><rect x="146" y="20" width="44" height="28" rx="10" fill="#6a58d0"/><path d="M158 48l-2 10 10-10" fill="#6a58d0"/><text x="168" y="40" font-size="15" font-weight="800" text-anchor="middle" fill="#fff" font-family="Inter,Arial">Hi!</text><rect x="30" y="58" width="40" height="26" rx="9" fill="#c9b8c3"/><path d="M42 84l2 9 8-9" fill="#c9b8c3"/><text x="50" y="76" font-size="14" font-weight="800" text-anchor="middle" fill="#181b22" font-family="Inter,Arial">أ</text></svg>'}</div><div class="sh1">Choose your language</div><div class="sh2">Everything in StudyOS, including Zuno, will speak it.</div>
+page('Language','Five languages, device language, time and week',()=>`<div class="sill" style="margin-top:2px">${'<svg viewBox="0 0 220 120"><circle cx="110" cy="62" r="46" fill="#e3dbfa" stroke="#a99be2" stroke-width="5"/><path d="M64 62h92M110 16c-24 26-24 70 0 92M110 16c24 26 24 70 0 92M72 40c26 10 50 10 76 0M72 84c26-10 50-10 76 0" fill="none" stroke="#a99be2" stroke-width="3.600" stroke-linecap="round"/><rect x="146" y="20" width="44" height="28" rx="10" fill="#6a58d0"/><path d="M158 48l-2 10 10-10" fill="#6a58d0"/><text x="168" y="40" font-size="15" font-weight="800" text-anchor="middle" fill="#fff" font-family="Inter,Arial">Hi!</text><rect x="30" y="58" width="40" height="26" rx="9" fill="#c9b8c3"/><path d="M42 84l2 9 8-9" fill="#c9b8c3"/><text x="50" y="76" font-size="14" font-weight="800" text-anchor="middle" fill="#181b22" font-family="Inter,Arial">أ</text></svg>'}</div><div class="sh1">Choose your language</div><div class="sh2">Everything in StudyOS, including Zip, will speak it.</div>
 <div class="scd" style="margin-top:14px"><div class="tx"><b>Use device language</b><small>Follow your phone's language setting</small></div>${tgx(0)}</div>
 <div class="sgt">Languages</div><div class="sgrp" data-langs>${LANGS.map(([n,e,,d],i)=>`<div class="sit rd${i===0?' on':''}" data-lang="${i}"><div><span>${n}${d==='rtl'?'<span class="rtl">RTL</span>':''}</span><small>${e}</small></div><span class="rad"></span></div>`).join('')}</div>
 <div class="zv"><div class="zc">${AV()}</div><div class="zb" data-zb>${LANGS[0][2]}</div></div><div class="snote" data-dirn>Text reads left to right.</div>
-<div class="sgt">Format</div><div class="sgrp">${row('24-hour time','Show 18:30 instead of 6:30 PM',0)}${row('Week starts on Monday','Used by the planner and reports',1)}${row('Right-to-left layout','Switches on automatically for Arabic',0)}</div>`,'The globe and header rise in. Tapping a language selects it, Zuno greets you in it, and Arabic flips the preview to right-to-left.'),
+<div class="sgt">Format</div><div class="sgrp">${row('24-hour time','Show 18:30 instead of 6:30 PM',0)}${row('Week starts on Monday','Used by the planner and reports',1)}${row('Right-to-left layout','Switches on automatically for Arabic',0)}</div>`,'The globe and header rise in. Tapping a language selects it, Zip greets you in it, and Arabic flips the preview to right-to-left.'),
 page('Sync and offline','Auto sync, offline mode, sync status',()=>`<div class="sill">${ILL.sync}</div><div class="sh1">Keep your data in sync</div><div class="sh2">Your study data is safely synced across all your devices.</div>
 <div class="scd"><div class="ci">${IC.cloud}</div><div class="tx"><b>Auto sync</b><small>Sync tasks, notes, progress and more</small></div>${tgx(1)}</div>
 <div class="scd"><div class="ci">${IC.wifi}</div><div class="tx"><b>Offline mode</b><small>Continue studying without internet</small></div>${tgx(0)}</div>
@@ -755,6 +779,7 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
   };
   SCREENS[k].play=()=>{ep();const old=R.onclick;R.onclick=async e=>{
     if(e.target.closest('[data-savep]')){const f=$('[data-f=first]',R).value.trim(),l=$('[data-f=last]',R).value.trim();const name=(f+' '+l).trim();if(name.length<2){toast('Enter your name (2 to 40 letters)');return}hap('press');const ok=CB.saveProfile?await CB.saveProfile(name):false;toast(ok?'Profile saved':'Could not save. Try again.');if(ok)hap('success');return}
+    if(e.target.closest('[data-av]')){hap('light');DZ.openAvatar();return}
     if(e.target.closest('[data-del]')){hap('light');toast('To delete your account, contact support.');return}
     old(e)}};
 }
@@ -768,12 +793,14 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
     const p=mk('Add task','task','Write it down so you can tick it off.','','Add task','task');
     const oh=p.html;
     p.html=()=>{
-      const body=`${DZ.lb('Task')}<input class="input dz-in" data-f="title" maxlength="120" placeholder="What do you need to do?" style="width:100%;border:0;outline:0;color:#1b1e25;font-weight:500">${DZ.lb('Subject')}<div class="chips" data-subj>${DZ.ch(SUBJR())}</div>${DZ.lb('Priority')}<div data-prio>${DZ.sg(['Low','Medium','High'],1)}</div>${DZ.lb('Due')}<div class="chips" data-due>${DZ.ch(['Today','Tomorrow','Pick date'])}</div><input type="date" data-date style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px">`;
+      const body=`${DZ.lb('Task')}<input class="input dz-in" data-f="title" maxlength="120" placeholder="What do you need to do?" style="width:100%;border:0;outline:0;color:#1b1e25;font-weight:500">${DZ.lb('Subject')}<input class="dz-combo" data-combo role="combobox" aria-expanded="false" aria-label="Search or type a subject" autocomplete="off" maxlength="40" placeholder="Search or type a subject"><div class="chips" data-subj role="listbox">${DZ.ch(SUBJR())}</div><button type="button" class="dz-disc" data-disc aria-expanded="false"><span>More options</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><div class="dz-fold" data-fold><div>${DZ.lb('Priority')}<div data-prio>${DZ.sg(['Low','Medium','High'],1)}</div>${DZ.lb('Due')}<div class="chips" data-due>${DZ.ch(['Today','Tomorrow','Pick date'])}</div></div></div><input type="date" data-date style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px">`;
       return wrapD(`<div class="pg"><div class="qh"><button class="qback" type="button" data-back aria-label="Back">${DZ.BACK}</button><div class="qhi">${DZ.QI.task}</div></div><div class="qpt">Add task</div><div class="qps">Write it down so you can tick it off.</div>${body}</div><button class="btn2 qcta" type="button" data-save="task">Add task</button>`);
     };
     const op=p.play;
     p.play=function(){op.call(this);const old=R.onclick;let picked='';
+      P.combo($('[data-combo]',R),$('[data-subj]',R));
       R.onclick=async e=>{
+        const dc=e.target.closest('[data-disc]');if(dc){const f=$('[data-fold]',R),o=!f.classList.contains('open');f.classList.toggle('open',o);dc.setAttribute('aria-expanded',o);dc.classList.toggle('open',o);hap('light');return}
         if(e.target.closest('[data-back]')){hap('light');go(D.tasks&&D.tasks.length?'Tasks':'Tasks');return}
         const due=e.target.closest('[data-due] .chip');
         if(due&&due.textContent.trim()==='Pick date'){const di=$('[data-date]',R);try{di.showPicker()}catch(_){di.click()}di.onchange=()=>{picked=di.value;due.textContent=picked;$$('[data-chip]',due.parentNode).forEach(x=>x.classList.remove('on'));due.classList.add('on')};return}
@@ -1241,6 +1268,60 @@ replace('My subjects',{
     }}
 });
 }
+/* ---- Edit avatar: pick face, hair, glasses, facial hair, clothes, caps and background ---- */
+{
+const BK=DZ.BKX;
+const AVI=t=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${t.d}"/></svg>`;
+let AVC=avDecode(''),AVT='face',AV0='';
+const avSw=(k,i,on,kind)=>`<button type="button" class="avs${on?' on':''}" data-avk="${k}" data-avi="${i}" aria-label="${AVD[k].t} ${i+1}" aria-pressed="${on}" style="--c:${AVD[k].c[i]}"><i></i></button>`;
+const avBody=()=>{
+  const tab=AVTABS.find(x=>x.k===AVT)||AVTABS[0];
+  return tab.secs.map(([k,kind])=>{
+    const d=AVD[k];let h=`<div class="avh">${d.t}</div>`;
+    if(kind==='s')h+=`<div class="avr">${d.c.map((_,i)=>avSw(k,i,AVC[k]===i)).join('')}</div>`;
+    else if(kind==='c')h+=`<div class="avg chr">${d.o.map((_,i)=>{const v=Object.assign({},AVC,{chr:i});
+        return `<button type="button" class="avc${AVC.chr===i?' on':''}" data-avk="chr" data-avi="${i}" aria-label="${i?AVD.chr.o[i]:'My own avatar'}" aria-pressed="${AVC.chr===i}">${avatarSvg(v,{view:i?'full':'face'})}</button>`}).join('')}</div>`;
+    else if(kind==='k')h+=`<div class="avr skg">${(d.ord||d.c.map((_,i)=>i)).map(i=>avSw(k,i,AVC[k]===i)).join('')}</div>`;
+    else if(kind==='b')h+=`<div class="avr bgr">${d.c.map((_,i)=>avSw(k,i,AVC[k]===i)).join('')}</div>`;
+    else{
+      const n=d.o.length,view=k==='top'?'bust':k==='body'?'both':'face';
+      h+=`<div class="avg${k==='top'||k==='body'?' w2':''}">${d.o.map((_,i)=>{const v=Object.assign({},AVC,{[k]:i,chr:0});if(k!=='hat'&&k!=='body')v.hat=0;
+        return `<button type="button" class="avc${AVC[k]===i?' on':''}" data-avk="${k}" data-avi="${i}" aria-label="${d.t} ${i+1} of ${n}" aria-pressed="${AVC[k]===i}">${avatarSvg(v,{view,blank:k==='body'})}</button>`}).join('')}</div>`;
+    }
+    return h}).join('');
+};
+const avTabs=()=>AVTABS.map(t=>`<button type="button" class="${t.k===AVT?'on':''}" data-avtab="${t.k}" aria-label="${t.t}" aria-selected="${t.k===AVT}" role="tab">${AVI(t)}</button>`).join('');
+const avPrev=()=>avatarSvg(AVC,{view:'full'});
+replace('Edit avatar',{
+  g:'Settings pages',d:'Make your avatar: face, hair, glasses, clothes, caps',
+  html:()=>`<div class="scr n nd" style="--pg:#181b22"><div class="ss"><div class="shd"><button class="sbk" type="button" data-avback aria-label="Close">${BK}</button><b>Edit avatar</b><button type="button" data-avdone>DONE</button></div><div class="avx"><div class="avp" style="background:${avPb(AVC)}">${avPrev()}</div><div class="avt" role="tablist">${avTabs()}</div><div class="avb" data-avb>${avBody()}</div></div></div></div>`,
+  play(){
+    // start from the saved avatar each time the screen opens (not on a soft refresh)
+    S.mute=false;
+    const paint=(bounce)=>{
+      const pv=$('.avp',R);pv.style.background=avPb(AVC);pv.innerHTML=avPrev();
+      if(bounce)pv.firstElementChild.animate([{transform:'scale(.94)'},{transform:'scale(1.03)',offset:.55},{transform:'scale(1)'}],{duration:260,easing:'cubic-bezier(.2,.9,.3,1)'});
+    };
+    const body=(st)=>{const b=$('[data-avb]',R);const y=st?b.scrollTop:0;b.innerHTML=avBody();b.scrollTop=y};
+    $('.avp svg',R).animate([{transform:'translateY(36px) scale(.9)',opacity:0},{transform:'none',opacity:1}],{duration:480,easing:'cubic-bezier(.2,.9,.3,1)',fill:'backwards'});
+    R.onclick=e=>{
+      if(e.target.closest('[data-avback]')){hap('light');go('Edit profile');return}
+      if(e.target.closest('[data-avdone]')){
+        const enc=avEncode(AVC);hap('success');
+        if(enc!==AV0){D.avatar=enc;if(CB.savePref)CB.savePref('avatar',enc);toast('Avatar saved')}
+        go('Edit profile');return}
+      const tb=e.target.closest('[data-avtab]');
+      if(tb){if(tb.dataset.avtab===AVT)return;hap('light');AVT=tb.dataset.avtab;
+        $$('[data-avtab]',R).forEach(x=>{const on=x.dataset.avtab===AVT;x.classList.toggle('on',on);x.setAttribute('aria-selected',on)});body(false);
+        rise('.avb .avh,.avb .avs,.avb .avc',0,14);return}
+      const pk=e.target.closest('[data-avk]');
+      if(pk){const k=pk.dataset.avk,i=+pk.dataset.avi;if(AVC[k]===i)return;hap('light');if(k!=='chr')AVC.chr=0;AVC[k]=i;paint(true);body(true)}
+    };
+  }
+});
+// every time the editor is opened from Edit profile it starts from the saved avatar
+DZ.openAvatar=()=>{AVC=avDecode(D.avatar);AV0=avEncode(AVC);AVT='face';go('Edit avatar')};
+}
 /* ---- Gem Shop (purchases are checked and stored on the server) ---- */
 {
 const SHI={
@@ -1569,6 +1650,8 @@ host.addEventListener('click',e=>{
 },true);
 }
 host.addEventListener('click',e=>{
+  const pg2=e.target.closest('[data-pfgo]');
+  if(pg2&&SCREENS[CUR]&&['Home','Tasks','Study'].includes(SCREENS[CUR].t)){e.stopPropagation();hap('light');P.share(pg2,'dz-ava','.pf .hero');go('Profile');return}
   const ic=e.target.closest('.tb > svg');
   if(ic&&SCREENS[CUR]&&['Home','Tasks','Study'].includes(SCREENS[CUR].t)){SFROM=SCREENS[CUR].t;DZ.searchFrom=SFROM;SQ='';hap('light');go('Search')}
 },true);
@@ -1845,7 +1928,9 @@ const MORE_ICONS={
 };
 function openMore(still){
   const nv=R&&R.querySelector?R.querySelector('.nv[data-k="more"]'):null;
-  if(!nv||R.querySelector('.more-menu'))return false;
+  if(!nv)return false;
+  R.querySelectorAll('.more-menu.out,.more-sc.out').forEach(x=>x.remove());
+  if(R.querySelector('.more-menu'))return false;
   R.insertAdjacentHTML('beforeend',`<div class="more-sc${still?' still':''}" data-moresc></div><div class="more-menu${still?' still':''}" role="menu" aria-label="More"><button type="button" class="more-row" role="menuitem" data-more="shop"><span class="mi">${MORE_ICONS.shop}</span>Shop</button><button type="button" class="more-row" role="menuitem" data-more="profile"><span class="mi">${MORE_ICONS.profile}</span>Profile</button></div>`);
   if(!MOREON){const cur=R.querySelector('.nv.on');MOREADDED=!nv.classList.contains('on');MOREPREV=cur&&cur!==nv?cur:null}
   MOREON=true;
@@ -1970,9 +2055,8 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
       if(t.closest('[data-fprm]')){
         if(!FP.rm){hap('light');FP.rm=true;go('Friend profile',true);return}
         FP.rm=false;hap('press');
-        let r=null;try{r=CB.removeFriend?await CB.removeFriend(FP.id):null}catch(_){r=null}
-        if(r&&r.ok){toast(r.message||'Friend removed.');go(DZ.fpFrom&&DZ.fpFrom!=='Friend profile'?DZ.fpFrom:'Profile')}
-        else{FP.msg=(r&&r.message)||'Could not remove that friend.';FP.msgOk=false;go('Friend profile',true)}
+        optRemoveFriend(FP.id,()=>{if(SCREENS[CUR]&&/^(Profile|Friends|Streak friends)$/.test(SCREENS[CUR].t))go(SCREENS[CUR].t,true)});
+        go(DZ.fpFrom&&DZ.fpFrom!=='Friend profile'?DZ.fpFrom:'Profile');toast('Friend removed.')
         return}
       if(FP.rm||FP.gift){FP.rm=false;FP.gift=false;go('Friend profile',true)}
     };
@@ -1989,6 +2073,7 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
 (function(){
   const TABS=['home','tasks','focus','study'],TITLE={home:'Home',tasks:'Tasks',focus:'Focus',study:'Study'};
   let sw=null;
+  const SVPAIR={'Streak':{l:'Streak friends'},'Streak friends':{r:'Streak'}};
   const blocked=t=>{
     if(!t||!t.closest)return true;
     if(t.closest('input,textarea,select,[contenteditable],.swipe,[data-noswipe],.sh2-sheet,.qsheet,.pk-ov,.dz-layer,.more,[data-moresc]'))return true;
@@ -1999,13 +2084,14 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
   };
   host.addEventListener('pointerdown',e=>{
     const cur=SCREENS[CUR]&&SCREENS[CUR].t;
-    sw=(!MOREON&&cur&&TABS.some(k=>TITLE[k]===cur)&&e.isPrimary!==false&&!blocked(e.target))?{x:e.clientX,y:e.clientY,t:Date.now(),cur}:null;
+    sw=(!MOREON&&cur&&(TABS.some(k=>TITLE[k]===cur)||SVPAIR[cur])&&e.isPrimary!==false&&!blocked(e.target))?{x:e.clientX,y:e.clientY,t:Date.now(),cur}:null;
   },true);
   host.addEventListener('pointercancel',()=>{sw=null},true);
   host.addEventListener('pointerup',e=>{
     const s=sw;sw=null;if(!s||(SCREENS[CUR]&&SCREENS[CUR].t)!==s.cur)return;
     const dx=e.clientX-s.x,dy=e.clientY-s.y,ms=Date.now()-s.t;
     if(Math.abs(dx)<70||Math.abs(dy)>Math.abs(dx)*0.6||ms>900)return;
+    if(SVPAIR[s.cur]){const nt=dx<0?SVPAIR[s.cur].l:SVPAIR[s.cur].r;if(!nt)return;hap('tick');go(nt);DZ.slide(dx<0?1:-1);const st=ev=>{ev.stopPropagation();ev.preventDefault()};host.addEventListener('click',st,{capture:true,once:true});setTimeout(()=>host.removeEventListener('click',st,true),350);return}
     const from=TABS.findIndex(k=>TITLE[k]===s.cur),to=from+(dx<0?1:-1);
     if(to<0||to>=TABS.length)return;
     const k=TABS[to];hap('tick');
@@ -2023,14 +2109,19 @@ function navOnly(active){
 }
 
 
+const HINTS={'Home':'Tap your picture to open your profile.','Tasks':'Swipe a task right to finish it, left to delete it.','Streak':'Swipe left to see your friends.'};
 function go(i,soft){
   if(typeof i==='string')i=IDX(i);
   if(i<0)return;
+  P.run(()=>go0(i,soft),()=>R);
+}
+function go0(i,soft){
   RUN++;timers.forEach(clearTimeout);timers.length=0;
   const keepMore=!!soft&&MOREON;MOREON=false;MOREPREV=null;MOREADDED=false;
   CUR=i;const H0=ltFix(SCREENS[i].html());stage.innerHTML=H0;LASTH=H0;LASTI=i;R=stage.firstElementChild;
   S.mute=false;SOFT=!!soft;
   SCREENS[i].play();SOFT=false;
+  if(!soft){P.stagger(R);const h=HINTS[SCREENS[i].t];if(h){const run=RUN;setTimeout(()=>{if(run===RUN&&R&&R.isConnected)P.hint(SCREENS[i].t,h,toast)},1100)}}
   if(keepMore)openMore(true);
   restoreToggles();
   if(opts.onScreen)opts.onScreen(SCREENS[i].t);
@@ -2055,6 +2146,201 @@ const sKey=k=>k.replace(/[^A-Za-z0-9_-]/g,'').slice(0,64);
 function restoreToggles(){try{$$('.ptg,.rtg',R).forEach((el,i)=>{const k=togKey(el,i),sk=sKey(k);let v=D.prefs&&D.prefs[sk];if(typeof v!=='boolean'){const l=localStorage.getItem(k);v=l===null?undefined:l==='1'}
   if(v===false)el.classList.add('off');else if(v===true)el.classList.remove('off');TSEEN[sk]=!el.classList.contains('off')})}catch(_){}}
 host.addEventListener('click',()=>{setTimeout(()=>{try{if(!R)return;$$('.ptg,.rtg',R).forEach((el,i)=>{const k=togKey(el,i),sk=sKey(k),on=!el.classList.contains('off');localStorage.setItem(k,on?'1':'0');if(TSEEN[sk]!==on){TSEEN[sk]=on;if(CB.savePref)CB.savePref(sk,on)}})}catch(_){}},60)},true);
+
+/* ---- Streak page: flame ignites, the number rolls up, this week fills in ---- */
+{
+const STK_CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5.500 12.500l4.500 4.500L18.500 7.500"/></svg>';
+const STK_SH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7.500 7.500L12 3l4.500 4.500M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>';
+const stkInfo=()=>{
+  const n=Math.max(0,D.streak||0),dow=(new Date().getDay()+6)%7,today=(D.todayMin||0)>0;
+  const days=[];let lo=-1,hi=-1;
+  for(let i=0;i<7;i++){const off=i-dow;const done=n>0&&(off===0?today:off<0&&(-off<=n-(today?1:0)));days.push(done);if(done){if(lo<0)lo=i;hi=i}}
+  return {n,dow,today,days,lo,hi};
+};
+const stkRoll=(txt)=>[...txt].map(c=>`<span class="stkd"><span class="stkc">${'0123456789'.split('').map(x=>`<b>${x}</b>`).join('')}</span></span>`).join('');
+const stkEmb=()=>{let h='',r=7;const rnd=()=>{r=(r*9301+49297)%233280;return r/233280};
+  for(let i=0;i<18;i++){const sz=3+rnd()*5;h+=`<i style="left:${34+rnd()*32}%;width:${sz}px;height:${sz}px;animation-delay:${(rnd()*3.2).toFixed(2)}s;animation-duration:${(2.4+rnd()*2.2).toFixed(2)}s;--dx:${Math.round((rnd()-.5)*90)}px;background:${['#ffb02e','#ff6a3d','#ffe680','#ff8f5a'][i%4]}"></i>`}
+  return h};
+const stkHtml=()=>{
+  const I=stkInfo(),L='MTWTFSS';
+  const msg=I.n===0?'Study today to light your first flame.':I.today?`Come back tomorrow to make it ${I.n+1}.`:`Study today to keep your ${I.n} day streak alive.`;
+  const bar=I.lo>=0&&I.hi>I.lo?`<i class="stkbar" style="left:calc(${I.lo}/7*100% + 100%/14);width:calc(${I.hi-I.lo}/7*100%)"></i>`:'';
+  return wrapD(`<div class="stkp"><button class="stkx" type="button" data-stkback aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+<div class="stkhero"><div class="stkrays"></div><div class="flh stkfh"></div></div>
+<div class="stknum" aria-label="${I.n} day streak">${stkRoll(String(I.n))}</div><div class="stklb">day streak</div>
+<div class="stkwk"><div class="stktr">${bar}</div>${L.split('').map((ch,i)=>`<div class="stkdy${i===I.dow?' t':''}"><span>${ch}</span><div class="stkdot${I.days[i]?' on':''}${i>I.dow?' fut':''}" style="--k:${i}">${I.days[i]?STK_CHK:''}</div></div>`).join('')}</div>
+<div class="stkmsg">${msg}</div>
+<div class="stkbt"><button class="stksh2" type="button" data-stkshare aria-label="Share my streak">${STK_SH}</button><button class="stkgo" type="button" data-stkgo>${I.today?'Keep it going':'Start studying'}</button></div></div>`);
+};
+const stkPlay=()=>{
+  const I=stkInfo(),reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const from=I.today&&I.n>0?String(I.n-1).padStart(String(I.n).length,'0'):String(I.n),to=String(I.n);
+  if(DZ.flame){DZ.flame.destroy();DZ.flame=null}
+  const MS=[7,10,25,50,100,200,300,365,500,1000],mile=I.today&&I.n>0&&(MS.includes(I.n)||I.n%100===0||I.n%7===0);
+  const flame=DZ.flame=createFlame($('.stkfh',R),{state:I.n===0?'inactive':'idle'});
+  const fh=$('.stkfh',R);if(fh)fh.onclick=()=>{hap('streakIgnite');flame.increase();playStreakClip(.8)};
+  const cols=$$('.stkc',R);
+  const setCol=(c,d)=>{c.style.transform=`translateY(${-d*10}%)`};
+  cols.forEach((c,i)=>setCol(c,+to[i]));
+  R.onclick=e=>{
+    if(e.target.closest('[data-stkback]')){back();return}
+    if(e.target.closest('[data-stkshare]')){hap('light');if(CB.share)CB.share(I.n+' day study streak on StudyOS! Join me.');return}
+    if(e.target.closest('[data-stkgo]')){hap('light');if(I.today)back();else go('Focus');return}
+  };
+  if(SOFT||reduce)return;
+  const E='cubic-bezier(.2,.9,.3,1)',A=(el,k,o)=>el&&el.animate(k,Object.assign({fill:'backwards',easing:E},o));
+  const fl=$('.stkfh',R),hero=$('.stkhero',R);
+  if(I.today&&I.n>0)at(700,()=>{if(DZ.flame===flame){mile?flame.milestone():flame.increase()}});
+  at(0,()=>hap('streakBuild'));at(420,()=>hap('streakIgnite'));at(mile?950:930,()=>hap(mile?'celebrate':'streakRoll'));
+  if(I.today&&I.n>0)playStreakClip();
+  A(fl,[{transform:'translateY(40px) scale(.15)',opacity:0},{transform:'translateY(-14px) scale(1.12)',opacity:1,offset:.7},{transform:'none',opacity:1}],{duration:820});
+  A($('.stkrays',R),[{opacity:0,transform:'scale(.4) rotate(0)'},{opacity:1,transform:'scale(1) rotate(30deg)'}],{duration:1100});
+  A($('.stksh',R),[{opacity:0},{opacity:.22}],{duration:700,delay:300});
+  // ignition: a ring and spark lines burst out from the flame
+  const ring=document.createElement('div');ring.className='stkring';hero.appendChild(ring);
+  ring.animate([{transform:'translate(-50%,-50%) scale(.3)',opacity:.7},{transform:'translate(-50%,-50%) scale(2.6)',opacity:0}],{duration:900,delay:420,easing:'ease-out',fill:'both'}).onfinish=()=>ring.remove();
+  for(let i=0;i<14;i++){const a=i/14*Math.PI*2,sp=document.createElement('i');sp.className='stkspk';sp.style.background=['#ffb02e','#ff6a3d','#ffe680'][i%3];hero.appendChild(sp);
+    const d=96+(i%3)*22;sp.animate([{transform:'translate(-50%,-50%) scale(1)',opacity:1},{transform:`translate(calc(-50% + ${Math.cos(a)*d}px),calc(-50% + ${Math.sin(a)*d}px)) scale(.2)`,opacity:0}],{duration:760+(i%4)*70,delay:460,easing:'cubic-bezier(.1,.8,.3,1)',fill:'both'}).onfinish=()=>sp.remove()}
+  // number rolls from yesterday to today, digit by digit
+  A($('.stknum',R),[{opacity:0,transform:'translateY(26px) scale(.8)'},{opacity:1,transform:'none'}],{duration:520,delay:500});
+  if(from!==to)cols.forEach((c,i)=>{if(from[i]===to[i])return;
+    c.animate([{transform:`translateY(${-from[i]*10}%)`},{transform:`translateY(${-to[i]*10}%)`}],{duration:900,delay:900+i*120,easing:'cubic-bezier(.3,1.3,.4,1)',fill:'backwards'})});
+  A($('.stklb',R),[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:420,delay:760});
+  A($('.stkwk',R),[{opacity:0,transform:'translateY(22px)'},{opacity:1,transform:'none'}],{duration:420,delay:1000});
+  A($('.stkbar',R),[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],{duration:760,delay:1250,easing:'cubic-bezier(.5,0,.2,1)'});
+  $$('.stkdot.on',R).forEach((d,i)=>{const k=+d.style.getPropertyValue('--k');A(d,[{transform:'scale(.4)',opacity:0},{transform:'scale(1.25)',opacity:1,offset:.6},{transform:'scale(1)',opacity:1}],{duration:380,delay:1250+k*90});at(1250+k*90,()=>hap('tick'))});
+  const td=$('.stkdy.t .stkdot',R);if(td&&I.today){A(td,[{transform:'scale(1)'},{transform:'scale(1.5)',offset:.4},{transform:'scale(1)'}],{duration:560,delay:1900,easing:'ease-out'});at(1900,()=>hap('streakLand'))}
+  A($('.stkmsg',R),[{opacity:0},{opacity:1}],{duration:420,delay:1500});
+  A($('.stkbt',R),[{opacity:0,transform:'translateY(40px)'},{opacity:1,transform:'none'}],{duration:480,delay:1500});
+  A($('.stkx',R),[{opacity:0},{opacity:1}],{duration:300,delay:300});
+};
+SCREENS.push({t:'Streak celebration',d:'Shown once a day when your streak goes up',spec:{m:'The flame ignites with a burst, the day count rolls up, and this week fills in one day at a time.',h:'Success when the flame lights, light tap when today is marked.',s:NS},html:stkHtml,play:stkPlay});
+DZ.openStreak=from=>{DZ.streakFrom=from;hap('light');go('Streak')};
+DZ.celebrate=()=>{const t=SCREENS[CUR]&&SCREENS[CUR].t;if(!t||t==='Streak celebration'||D.guest||!(D.streak>0))return;DZ.celFrom=t;go('Streak celebration')};
+host.addEventListener('click',e=>{
+  const g=e.target.closest('[data-stkopen]');if(!g||!SCREENS[CUR]||!['Home','Tasks','Study'].includes(SCREENS[CUR].t))return;
+  e.stopPropagation();DZ.openStreak(SCREENS[CUR].t);
+},true);
+}
+/* ---- Streak hub: Personal tab (count, calendar, goal, perks) and Friends tab (friend streaks) ---- */
+{
+const SV_X='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const SV_SH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7.500 7.500L12 3l4.500 4.500M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>';
+const SV_CH=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="${d?'M9 5l7 7-7 7':'M15 5l-7 7 7 7'}"/></svg>`;
+const SV_FL=(c,w)=>`<svg viewBox="0 0 24 28" width="${w}" height="${w*28/24}" aria-hidden="true"><path d="M12 1.500c1 5 8 8 8 15 0 5.500-3.800 9.500-8 9.500s-8-4-8-9.500c0-3.200 1.800-5.200 3.200-7 .3 2 1.200 3 2.200 3.200C8.600 8 9.800 4.400 12 1.500z" fill="${c}"/></svg>`;
+const GOALS=[3,7,14,30,50,100,150,200,250,365,500,730,1000];
+const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const svKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+let SVM=0;
+DZ.slide=dir=>{try{if(R&&R.animate){const s=R.querySelector('.svs');R.animate([{opacity:.0,transform:`translateX(${dir*56}px)`},{opacity:1,transform:'none'}],{duration:260,easing:'cubic-bezier(.2,.85,.25,1)'})}}catch(_){}};
+const svTier=n=>n>=100?'Legend':n>=30?'Blazing':n>=7?'On fire':n>0?'Warming up':'Not started';
+const svHead=(tab)=>`<div class="svh"><button class="svx" type="button" data-svx aria-label="Close">${SV_X}</button><b>Streak</b><button class="svx" type="button" data-svsh aria-label="Share my streak">${SV_SH}</button></div>
+<div class="svtabs" role="tablist"><button type="button" role="tab" aria-selected="${tab==='p'}" class="${tab==='p'?'on':''}" data-svtab="p">Personal</button><button type="button" role="tab" aria-selected="${tab==='f'}" class="${tab==='f'?'on':''}" data-svtab="f">Friends</button></div>`;
+const svCal=()=>{
+  const keys=new Set(D.streakDays||[]),ice=new Set((D.shop&&D.shop.protectedDays)||[]);
+  const now=new Date(),base=new Date(now.getFullYear(),now.getMonth()+SVM,1),y=base.getFullYear(),m=base.getMonth();
+  const lead=(base.getDay()+6)%7,dim=new Date(y,m+1,0).getDate(),today=svKey(now);
+  const cells=[];for(let i=0;i<lead;i++)cells.push(null);for(let d=1;d<=dim;d++)cells.push(d);while(cells.length%7)cells.push(null);
+  let rows='';
+  for(let r=0;r<cells.length/7;r++){
+    const row=cells.slice(r*7,r*7+7);let caps='',run=null;const flush=()=>{if(run){caps+=`<i class="svcap${run.ice?' ice':''}" style="left:calc(${run.s}*100%/7 + 2px);width:calc(${run.e-run.s+1}*100%/7 - 4px)"></i>`;run=null}};
+    const nums=row.map((d,c)=>{
+      if(!d){flush();return '<span></span>'}
+      const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),st=keys.has(k),ic=ice.has(k)&&!st,on=st||ic;
+      if(on){if(run&&run.ice!==ic)flush();if(run)run.e=c;else run={s:c,e:c,ice:ic}}else flush();
+      const cls=(on?'on':'')+(k===today?' td':'')+(!on&&k>today?' fu':'');
+      return `<span class="${cls.trim()}">${d}</span>`;
+    }).join('');flush();
+    rows+=`<div class="svrow">${caps}${nums}</div>`;
+  }
+  return `<div class="svcm"><button type="button" data-svmo="-1" aria-label="Previous month">${SV_CH(0)}</button><b>${MN[m]} ${y}</b><button type="button" data-svmo="1" aria-label="Next month"${SVM>=0?' disabled':''}>${SV_CH(1)}</button></div>
+<div class="svwd">${['Mo','Tu','We','Th','Fr','Sa','Su'].map(x=>`<span>${x}</span>`).join('')}</div>${rows}`;
+};
+const svPersonal=()=>{
+  const n=Math.max(0,D.streak||0),nx=GOALS.find(g=>g>n)||(Math.ceil((n+1)/100)*100),pct=Math.min(100,n/nx*100);
+  const fz=(D.shop&&D.shop.freezes)||0,lock=nx;
+  return wrapD(`<div class="svp">${svHead('p')}<div class="svs">
+<div class="svhero"><div class="svhl"><span class="svchip">${svTier(n)}</span><div class="svbig${n?'':' z'}">${n}</div><div class="svdl">day streak${n?'!':''}</div></div><div class="svfl" data-svfl></div></div>
+<h3 class="svt">Streak Calendar</h3><div class="svcard svcal">${svCal()}</div>
+<h3 class="svt">Streak Goal</h3><div class="svcard svgoal"><div class="svgb"><span class="svgi">${SV_FL('#fff',17)}</span><div class="svtr"><i style="width:${pct.toFixed(1)}%"></i></div><span class="svgn"><b>${nx}</b><small>days</small></span></div><div class="svgt">${n} / ${nx} days</div></div>
+<h3 class="svt">Streak Perks</h3>
+<div class="svcard svperk"><svg viewBox="0 0 64 72" width="72" height="80" aria-hidden="true"><defs><linearGradient id="svice" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bfe9ff"/><stop offset="1" stop-color="#4fb3e8"/></linearGradient></defs><path d="M32 4l24 10v20c0 16-10 28-24 34C18 62 8 50 8 34V14z" fill="url(#svice)"/><path d="M32 12l16 7v15c0 11-7 19-16 24-9-5-16-13-16-24V19z" fill="#fff" opacity=".35"/><path d="M32 22c4 6 8 9 8 14a8 8 0 01-16 0c0-5 4-8 8-14z" fill="#2f8fd0"/></svg>
+<div><b>${fz} Streak Freeze${fz===1?'':'s'}</b><p>Protects your streak on a day you miss. You can hold up to 2.</p><button type="button" class="svlink" data-svshop>${fz>=2?'FULL':'GET MORE'}</button></div></div>
+<div class="svcard svperk lock"><svg viewBox="0 0 64 72" width="72" height="80" aria-hidden="true"><path d="M20 30v-8a12 12 0 0124 0v8" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/><rect x="10" y="30" width="44" height="34" rx="9" fill="currentColor"/><circle cx="32" cy="45" r="5" fill="var(--card)"/><rect x="29.500" y="46" width="5" height="10" rx="2.500" fill="var(--card)"/></svg>
+<div><b>${lock} days</b><p>Reach a streak of ${lock} days to earn this reward.</p><span class="svlk">${Math.max(0,lock-n)} day${lock-n===1?'':'s'} to go</span></div></div>
+<div class="svpad"></div></div></div>`);
+};
+const svFriends=()=>{
+  const fr=(D.friends||[]).map(f=>({id:f.id,n:f.name||'Friend',s:f.streak||0,p:f.picture||''})).sort((a,b)=>b.s-a.s);
+  const me={n:(D.first||'You')+' (You)',s:Math.max(0,D.streak||0),me:1};
+  const rows=[...fr,me].sort((a,b)=>b.s-a.s);
+  const ava=r=>r.me?`<span class="svav">${AVU?AVU():''}</span>`:(r.p?`<span class="svav"><img src="${esc(r.p)}" alt="" loading="lazy"></span>`:`<span class="svav" style="background:${colOf(r.n)}">${esc((r.n||'?').charAt(0).toUpperCase())}</span>`);
+  return wrapD(`<div class="svp svf">${svHead('f')}<div class="svs">
+<div class="svban"><div class="svsp"><i></i><i></i><i></i><i></i></div><div class="svsc"><span class="svch a">${AVSC(1)}</span><span class="svfl2" data-svfl2></span><span class="svch b">${AVSC(10)}</span></div></div>
+<div class="svfh"><h3 class="svt" style="margin:0">Friend Streaks</h3><button type="button" class="svlink" data-svedit aria-pressed="false">EDIT</button></div>
+<div class="svcard svlist" data-svlist>${rows.map(r=>`<div class="svfr${r.me?' me':''}"${r.me?'':` data-fid="${esc(r.id)}" role="button" aria-label="Open ${esc(r.n)}'s profile"`}>${r.me?'':`<button type="button" class="svmi" data-svrm="${esc(r.id)}" aria-label="Remove ${esc(r.n)}"><i></i></button>`}${ava(r)}<div class="svfn"><b>${esc(r.n)}</b><span class="svfs${r.s?'':' off'}">${SV_FL(r.s?'#ff8a2a':'currentColor',16)}<em>${r.s}</em></span></div></div>`).join('')}</div>
+${fr.length?'':`<p class="svem">No friends yet. Add a friend and you can keep each other's streaks going.</p>`}<button type="button" class="svgo" data-svadd>Add a friend</button>
+<div class="svpad"></div></div></div>`);
+};
+const AVSC=i=>avatarSvg(Object.assign(avDecode(''),{chr:i}),{view:'full',style:'width:100%;height:100%;display:block'});
+const svSheet=(row,id)=>{
+  if($('.svsheet',R))return;
+  const f=(D.friends||[]).find(x=>String(x.id)===String(id));if(!f)return;
+  const nm=f.name||'your friend',st=f.streak||0,av=row.querySelector('.svav').outerHTML.replace('class="svav"','class="svav big"');
+  const sh=document.createElement('div');sh.className='svsheet';sh.setAttribute('role','dialog');sh.setAttribute('aria-label','Remove friend');
+  sh.innerHTML=`<div class="svbk"></div><div class="svsh"><i class="svgrab"></i>${av}<b class="svsn">${esc(nm)}</b><span class="svfs${st?'':' off'}">${SV_FL(st?'#ff8a2a':'currentColor',18)}<em>${st}</em></span>
+<h4>Remove ${esc(nm)}?</h4><p>If you remove ${esc(nm)} as a friend, your friend streak with them will be lost and cannot be brought back.</p><div class="svmsg" role="status"></div>
+<button type="button" class="svdan" data-svyes>Remove friend</button><button type="button" class="svgo" data-svno>Keep friend</button></div>`;
+  R.appendChild(sh);
+  const close=()=>{const b=$('.svbk',sh),c=$('.svsh',sh);b.animate([{opacity:1},{opacity:0}],{duration:180,fill:'forwards'});c.animate([{transform:'none'},{transform:'translateY(100%)'}],{duration:220,easing:'ease-in',fill:'forwards'}).onfinish=()=>sh.remove()};
+  sh.querySelector('.svbk').animate([{opacity:0},{opacity:1}],{duration:200,fill:'backwards'});
+  sh.querySelector('.svsh').animate([{transform:'translateY(100%)'},{transform:'none'}],{duration:320,easing:'cubic-bezier(.2,.9,.3,1)',fill:'backwards'});
+  let busy=false;
+  sh.onclick=async e=>{
+    e.stopPropagation();
+    if(e.target.closest('.svbk')||e.target.closest('[data-svno]')){if(!busy){hap('light');close()}return}
+    if(e.target.closest('[data-svyes]')){
+      if(busy)return;busy=true;hap('press');
+      // Optimistic: the friend leaves the list at once. If the server refuses, the friend comes back with a message.
+      optRemoveFriend(id,()=>{if(SCREENS[CUR]&&SCREENS[CUR].t==='Streak friends')go('Streak friends',true)});
+      close();go('Streak friends',true);toast('Friend removed.')
+    }
+  };
+};
+const svPlay=tab=>()=>{
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(DZ.flame){DZ.flame.destroy();DZ.flame=null}
+  const n=Math.max(0,D.streak||0);
+  const hostEl=$(tab==='p'?'[data-svfl]':'[data-svfl2]',R);
+  if(hostEl){DZ.flame=createFlame(hostEl,{state:n===0?'inactive':'idle'});hostEl.onclick=()=>{hap('streakIgnite');DZ.flame&&DZ.flame.increase();playStreakClip(.8)}}
+  const swapCal=()=>{const c=$('.svcal',R);if(c){c.innerHTML=svCal();c.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:220,easing:'ease-out'})}};
+  R.onclick=e=>{
+    if(e.target.closest('[data-svx]')){back();return}
+    if(e.target.closest('[data-svsh]')){hap('light');if(CB.share)CB.share(n+' day study streak on StudyOS! Join me.');return}
+    const tb=e.target.closest('[data-svtab]');if(tb){const to=tb.dataset.svtab==='p'?'Streak':'Streak friends';if(SCREENS[CUR].t!==to){hap('light');go(to);DZ.slide(to==='Streak'?-1:1)}return}
+    const mo=e.target.closest('[data-svmo]');if(mo&&!mo.disabled){hap('light');SVM=Math.min(0,SVM+(+mo.dataset.svmo));swapCal();return}
+    if(e.target.closest('[data-svshop]')){if(D.guest){toast('Create your profile to use the shop.');return}DZ.openShop('Streak');return}
+    const ed=e.target.closest('[data-svedit]');
+    if(ed){const l=$('[data-svlist]',R),on=!l.classList.contains('ed');l.classList.toggle('ed',on);ed.textContent=on?'DONE':'EDIT';ed.setAttribute('aria-pressed',String(on));hap(on?'medium':'light');return}
+    const rm=e.target.closest('[data-svrm]');if(rm){e.stopPropagation();hap('medium');svSheet(rm.closest('.svfr'),rm.dataset.svrm);return}
+    if(e.target.closest('[data-svadd]')){FADD=true;FMSG='';hap('light');DZ.fpFrom='Streak friends';go('Friends');return}
+    const fp=e.target.closest('[data-fid]');if(fp){hap('light');DZ.openFriend(fp.dataset.fid,'Streak friends');return}
+  };
+  if(SOFT||reduce)return;
+  const A=(sel,k,o)=>$$(sel,R).forEach((el,i)=>el.animate(k,Object.assign({fill:'backwards',easing:'cubic-bezier(.2,.9,.3,1)'},typeof o==='function'?o(i):o)));
+  A('.svhl',[{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'none'}],{duration:480});
+  A('.svbig',[{transform:'scale(.6)'},{transform:'scale(1.08)',offset:.65},{transform:'scale(1)'}],{duration:620,delay:120});
+  A('.svfl,.svban',[{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'none'}],{duration:560,delay:80});
+  A('.svt,.svcard,.svfh',[{opacity:0,transform:'translateY(22px)'},{opacity:1,transform:'none'}],i=>({duration:420,delay:260+i*70}));
+  A('.svcap',[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],i=>({duration:420,delay:500+i*80,easing:'ease-out'}));
+  A('.svtr i',[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],{duration:900,delay:700,easing:'cubic-bezier(.3,1,.4,1)'});
+  A('.svfr',[{opacity:0,transform:'translateX(-18px)'},{opacity:1,transform:'none'}],i=>({duration:360,delay:420+i*60}));
+  hap('light');
+};
+SCREENS.push({t:'Streak',d:'Your streak count, calendar, goal and perks',spec:{m:'The count pops in beside a live flame, then the calendar, goal bar and perks rise one after another. The bar and day capsules fill in.',h:'Light tap on arrival and on every control.',s:NS},html:svPersonal,play:svPlay('p')});
+SCREENS.push({t:'Streak friends',d:'Your friends and their streaks',spec:{m:'An orange banner with Zip, a friend and a flame, then your friends slide in, longest streak first.',h:'Light tap on arrival and on every row.',s:NS},html:svFriends,play:svPlay('f')});
+}
+const RUN_DEAD=()=>!host.isConnected;
 function back(){
   const t=SCREENS[CUR]&&SCREENS[CUR].t;if(!t)return false;
   if(closeMore())return true;
@@ -2066,16 +2352,19 @@ function back(){
   else if(t==='Add task')to='Tasks';
   else if(Q.includes(t))to='Quick add';
   else if(t==='Delete account')to='Privacy settings';
+  else if(t==='Edit avatar')to='Edit profile';
   else if(['Weekly report','Badges','Exam mode'].includes(t))to='Study';
   else if(['Friends','Edit profile','Settings'].includes(t))to='Profile';
   else if(t==='Friend profile')to=(DZ.fpFrom&&DZ.fpFrom!=='Friend profile')?DZ.fpFrom:'Profile';
   else if(t==='Search')to=DZ.searchFrom||'Home';
   else if(t==='Gem Shop'){if(DZ.closeSheet&&DZ.closeSheet())return true;to=DZ.shopFrom||'Home'}
   else if(t==='Gift gems')to='Gem Shop';
+  else if(t==='Streak'||t==='Streak friends')to=DZ.streakFrom||'Home';
+  else if(t==='Streak celebration')to=DZ.celFrom||'Home';
   hap('light');go(to);return true;
 }
 const api={openShop(){DZ.openShop('Study')},startFocus(){go('Focus');if(!F.running&&F.mode==='focus'&&F.left>0){start();go('Focus',true)}},navOnly,refresh,go,back,screen:()=>SCREENS[CUR]&&SCREENS[CUR].t,names:()=>SCREENS.map(s=>s.t),
-  update(d){Object.assign(D,d);refresh()},
+  update(d){const was=D.streakPop||0;Object.assign(D,d);refresh();if((D.streakPop||0)>was&&DZ.celebrate)setTimeout(()=>{if(!RUN_DEAD())DZ.celebrate()},650)},
   destroy(){if(DZ.stopSound)DZ.stopSound();RUN++;timers.forEach(clearTimeout);ro.disconnect();host.innerHTML='';host.classList.remove('dz')}};
 go(opts.start||'Home');
 return api;
