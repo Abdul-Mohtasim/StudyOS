@@ -60,7 +60,7 @@ app.use("/api", guard());
 app.use("/api", apiHeaders);
 
 // Feedback form: allows attachments (up to 3 MB of files, sent as base64), so it parses its own larger body first.
-app.use("/api/support", express.json({ limit: "5mb" }), supportRoutes);
+app.use("/api/support", express.json({ limit: "6mb" }), supportRoutes);
 
 app.use(express.json({ limit: "100kb" }));
 

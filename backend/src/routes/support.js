@@ -6,7 +6,7 @@
 // to the team (with the attachments), with Reply-To set to the sender.
 
 const express = require("express");
-const rateLimit = require("express-rate-limit");
+const { rateLimit, ipKeyGenerator } = require("express-rate-limit");
 const { connectDatabase } = require("../config/database");
 const Feedback = require("../models/Feedback");
 const { sendMail } = require("../services/mailer");
@@ -14,7 +14,18 @@ const { TYPES } = require("../pages/helpPages");
 
 const router = express.Router();
 
+// A safe key for the limiter: on some hosts (Vercel / proxies) req.ip can be empty, and the default
+// key builder then throws -> "Internal server error". Fall back to the forwarded address.
+const keyFor = (req) => {
+  const fwd = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  const ip = req.ip || fwd || (req.socket && req.socket.remoteAddress) || "unknown";
+  try { return ipKeyGenerator(ip); } catch { return String(ip); }
+};
+
 const limiter = rateLimit({
+  keyGenerator: keyFor,
+  validate: false,
+  passOnStoreError: true,
   windowMs: 60 * 60 * 1000,
   limit: Number(process.env.FEEDBACK_RATE_LIMIT) || 6,
   standardHeaders: "draft-8",
@@ -47,7 +58,7 @@ router.post("/feedback", limiter, async (req, res) => {
     const list = Array.isArray(b.attachments) ? b.attachments.slice(0, MAX_FILES) : [];
     for (const f of list) {
       const mime = clean(f && f.type, 60);
-      const data = String((f && f.data) || "");
+      const data = String((f && f.data) || "").replace(/\s+/g, "").replace(/^data:[^,]*,/, "");
       if (!OK_TYPES.has(mime) || !/^[A-Za-z0-9+/=]+$/.test(data)) return res.status(400).json({ error: "Only images and PDF files can be attached." });
       bytes += Math.floor((data.length * 3) / 4);
       if (bytes > MAX_BYTES) return res.status(400).json({ error: "Attachments can be 3 MB in total." });
@@ -55,12 +66,18 @@ router.post("/feedback", limiter, async (req, res) => {
       files.push({ filename: name, content: data });
     }
 
-    await connectDatabase();
-    const row = await Feedback.create({
+    let row = null;
+    try {
+      await connectDatabase();
+      row = await Feedback.create({
       email, subject, description, type,
       attachmentNames: files.map((f) => f.filename),
       userAgent: clean(req.get("user-agent"), 300),
-    });
+      });
+    } catch (err) {
+      // Saving failed: still try to email it, so the message is not lost.
+      if (req.log) req.log.error({ err }, "Feedback could not be saved");
+    }
 
     const to = (process.env.SUPPORT_EMAIL || "").trim();
     if (to) {
@@ -73,16 +90,26 @@ router.post("/feedback", limiter, async (req, res) => {
           html: `<p><b>From:</b> ${esc(email)}<br><b>Type:</b> ${esc(type)}</p><p style="white-space:pre-wrap">${esc(description)}</p>`,
           attachments: files,
         });
-        if (sent && sent.ok) await Feedback.updateOne({ _id: row._id }, { emailed: true });
+        if (sent && sent.ok && row) await Feedback.updateOne({ _id: row._id }, { emailed: true });
       } catch (err) {
         if (req.log) req.log.warn({ err }, "Feedback email failed (the message is saved in the database)");
       }
     }
+    if (!row && !to) return res.status(503).json({ error: "Could not send right now. Please try again in a minute." });
     return res.json({ ok: true });
   } catch (err) {
     if (req.log) req.log.error({ err }, "Feedback failed");
     return res.status(500).json({ error: "Could not send. Please try again." });
   }
+});
+
+// Any error inside this router answers with a clear message (never the generic "Internal server error").
+router.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  if (err && err.type === "entity.too.large") return res.status(413).json({ error: "Attachments are too large. Keep them under 3 MB in total." });
+  if (err instanceof SyntaxError) return res.status(400).json({ error: "Could not read the form. Please try again." });
+  if (req.log) req.log.error({ err }, "Feedback route failed");
+  return res.status(500).json({ error: "Could not send. Please try again." });
 });
 
 module.exports = router;

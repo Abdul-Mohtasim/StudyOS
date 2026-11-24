@@ -123,6 +123,32 @@ select{font-size:8.5px;letter-spacing:.06em;text-transform:uppercase}
 .files{font-size:10px}
 .row{justify-content:flex-end}
 .done{border-radius:8px}
+
+/* ---- Thank-you card (after sending feedback): follows dark / light and the paid colour theme ---- */
+.done{border:0!important;padding:8px 0 0!important;background:none!important}
+.ty{position:relative;overflow:hidden;max-width:600px;margin:6px auto 0;padding:44px 28px 34px;border-radius:22px;text-align:center;
+ border:1px solid color-mix(in srgb,var(--acc) 26%,transparent);
+ background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 30%,#1a1014) 0%,color-mix(in srgb,var(--acc) 12%,#151116) 100%);
+ color:#f6efee;box-shadow:0 24px 50px -28px rgba(0,0,0,.7);
+ animation:tyIn .6s cubic-bezier(.2,.9,.3,1.1) both}
+.ty::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+ background-image:radial-gradient(color-mix(in srgb,var(--acc) 55%,transparent) 1px,transparent 1.3px);background-size:14px 14px;
+ -webkit-mask-image:linear-gradient(235deg,#000 0%,transparent 55%);mask-image:linear-gradient(235deg,#000 0%,transparent 55%);animation:tyDots 1.4s ease both .2s}
+:root[data-theme="light"] .ty{background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 24%,#fff) 0%,color-mix(in srgb,var(--acc) 9%,#fff) 100%);color:#1f2a30;box-shadow:0 22px 44px -30px color-mix(in srgb,var(--acc) 80%,#000)}
+.ty-ic{position:relative;width:104px;height:104px;display:block;margin:0 auto 18px;overflow:visible}
+.ty-ln{fill:none;stroke:currentColor;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:420;stroke-dashoffset:420;animation:tyDraw 1.1s ease forwards .35s}
+.ty-hand{animation-delay:.6s}
+.ty-heart{fill:color-mix(in srgb,var(--acc) 70%,#555);transform-origin:60px 34px;transform:scale(0);animation:tyPop .55s cubic-bezier(.3,1.6,.5,1) forwards 1.05s,tyBeat 1.6s ease-in-out infinite 2s}
+.ty h2{position:relative;margin:0 0 12px;font:600 26px/1.25 "Fredoka","Nunito",system-ui,sans-serif;animation:tyUp .5s ease both .9s}
+.ty p{position:relative;margin:0 auto 22px;max-width:430px;font:600 17px/1.5 "Nunito",system-ui,sans-serif;opacity:.78;animation:tyUp .5s ease both 1.05s}
+.ty-btn{position:relative;background:var(--acc)!important;color:#1b1e25!important;animation:tyUp .5s ease both 1.2s}
+@keyframes tyIn{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes tyDots{from{opacity:0}to{opacity:.55}}
+@keyframes tyDraw{to{stroke-dashoffset:0}}
+@keyframes tyPop{to{transform:scale(1)}}
+@keyframes tyBeat{0%,100%{transform:scale(1)}15%{transform:scale(1.09)}30%{transform:scale(.98)}45%{transform:scale(1.05)}}
+@keyframes tyUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.ty,.ty::before,.ty h2,.ty p,.ty-btn{animation:none}.ty-ln{animation:none;stroke-dashoffset:0}.ty-heart{animation:none;transform:none}}
 `;
 
 const FONTS =
@@ -173,7 +199,16 @@ function feedbackPage(q) {
 <input class="hp" type="text" name="website" id="website" tabindex="-1" autocomplete="off" aria-hidden="true">
 <div class="row"><span class="msg" id="msg" role="status"></span><button class="btn" id="go" type="submit">Submit</button></div>
 </div></form>
-<div class="done" id="done" hidden><h2>Thank you!</h2><p>We got your message and will reply to your email address.</p><a class="btn" href="/help${keep(q)}">Back to Help Center</a></div>`;
+<div class="done" id="done" hidden role="status" aria-live="polite"><div class="ty">
+<svg class="ty-ic" viewBox="0 0 120 120" aria-hidden="true">
+<path class="ty-heart" d="M60 58C48 48 30 37 30 23.5 30 14 37.5 8 45.5 8c6 0 11 3.4 14.5 8.8C63.5 11.4 68.5 8 74.5 8 82.5 8 90 14 90 23.5 90 37 72 48 60 58z"/>
+<path class="ty-ln" d="M60 58C48 48 30 37 30 23.5 30 14 37.5 8 45.5 8c6 0 11 3.4 14.5 8.8C63.5 11.4 68.5 8 74.5 8 82.5 8 90 14 90 23.5 90 37 72 48 60 58z"/>
+<path class="ty-ln ty-hand" d="M34 64h16c6 0 9 3 9 7v1h10l21-9c4-1.8 8 1.5 6.5 5.6C95 72 91 75 87 77l-22 13c-3 1.7-6 2.4-9.5 2.4H34z M34 112V64 M59 72c0 4-3 6-7 6h-6"/>
+</svg>
+<h2>Thanks for your feedback</h2>
+<p>Your response helps make StudyOS better for everyone.</p>
+<a class="btn ty-btn" href="/help${keep(q)}">Back to Help Center</a>
+</div></div>`;
   const script = `<script>
 (function(){
 var $=function(i){return document.getElementById(i)},files=[],MAX=3,LIMIT=3*1024*1024;
@@ -199,8 +234,8 @@ $('f').addEventListener('submit',function(e){e.preventDefault();
  var go=$('go');go.disabled=true;say('Sending...',true);
  Promise.all(files.map(function(f){return b64(f).then(function(c){return{name:f.name,type:f.type,data:c}})})).then(function(att){
   return fetch('/api/support/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,subject:subject,description:desc,type:type,website:$('website').value,attachments:att})})
- }).then(function(r){return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw new Error(j.error||'Could not send. Please try again.');return j})})
- .then(function(){$('f').hidden=true;$('done').hidden=false;window.scrollTo(0,0)})
+ }).then(function(r){if(r.status===413)throw new Error('Attachments are too large. Keep them under 3 MB in total.');return r.json().catch(function(){return{}}).then(function(j){if(!r.ok)throw new Error(j.error||'Could not send. Please try again.');return j})})
+ .then(function(){$('f').hidden=true;var h=document.querySelector('h1');if(h)h.hidden=true;$('done').hidden=false;window.scrollTo(0,0)})
  .catch(function(err){go.disabled=false;say(err.message||'Could not send. Please try again.')})
 });
 })();
