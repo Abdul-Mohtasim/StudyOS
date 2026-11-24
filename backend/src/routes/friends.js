@@ -5,6 +5,8 @@ const mongoose = require("mongoose");
 const Student = require("../models/Student");
 const Friendship = require("../models/Friendship");
 const Notification = require("../models/Notification");
+const Block = require("../models/Block");
+const Report = require("../models/Report");
 const FocusSession = require("../models/FocusSession");
 const Task = require("../models/Task");
 const requireAuth = require("../middleware/auth");
@@ -26,6 +28,29 @@ const publicUser = (s) => ({
 const USER_FIELDS = "name displayName picture gems";
 const displayOf = (s) => s.displayName || s.name || "Someone";
 
+
+// True when either person has blocked the other.
+async function isBlocked(a, b) {
+  const hit = await Block.exists({
+    $or: [{ blocker: a, blocked: b }, { blocker: b, blocked: a }],
+  });
+  return !!hit;
+}
+// Everyone who has a block with this person, in either direction.
+async function blockedIds(me) {
+  const rows = await Block.find({ $or: [{ blocker: me }, { blocked: me }] }).select("blocker blocked").lean();
+  return rows.map((r) => (String(r.blocker) === String(me) ? r.blocked : r.blocker));
+}
+// A short @name made from the display name plus two digits taken from the id.
+function handleOf(student) {
+  const base = String(student.displayName || student.name || "student")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 16) || "student";
+  const digits = String(student._id).replace(/[^0-9]/g, "").slice(-2).padStart(2, "0");
+  return base + digits;
+}
+
 // Which of the phone's contacts already use StudyOS?
 // The emails are only compared, never stored.
 router.post("/match", async (req, res) => {
@@ -39,12 +64,13 @@ router.post("/match", async (req, res) => {
     )].slice(0, MAX_EMAILS);
     if (!emails.length) return res.json({ matches: [] });
 
-    const found = await Student.find({ email: { $in: emails }, _id: { $ne: req.student._id } })
+    const hidden = await blockedIds(req.student._id);
+    const found = await Student.find({ email: { $in: emails }, _id: { $nin: [req.student._id, ...hidden] } })
       .select("name displayName picture email")
       .limit(50)
       .lean();
 
-    // How am I already connected to each person? (none | sent | incoming | friends)
+    // Tell the app who is already a friend or already has a pending request.
     const me = req.student._id;
     const ids = found.map((s) => s._id);
     const links = ids.length
@@ -56,10 +82,10 @@ router.post("/match", async (req, res) => {
         }).lean()
       : [];
     const relationOf = new Map();
-    for (const l of links) {
-      const mine = String(l.requester) === String(me);
-      const other = String(mine ? l.recipient : l.requester);
-      relationOf.set(other, l.status === "accepted" ? "friends" : mine ? "sent" : "incoming");
+    for (const row of links) {
+      const mine = String(row.requester) === String(me);
+      const other = String(mine ? row.recipient : row.requester);
+      relationOf.set(other, row.status === "accepted" ? "friends" : mine ? "sent" : "incoming");
     }
 
     res.json({
@@ -211,6 +237,7 @@ router.get("/:userId/profile", async (req, res) => {
     if (!link) return res.status(403).json({ message: "You can only open the profile of a friend." });
 
     const friend = await Student.findById(other).select("name displayName picture gems createdAt protectedDays").lean();
+    if (await isBlocked(me, other)) return res.status(403).json({ message: "This profile is not available." });
     if (!friend) return res.status(404).json({ message: "That friend could not be found." });
 
     const [theirs, mine, friendsCount] = await Promise.all([
@@ -223,6 +250,7 @@ router.get("/:userId/profile", async (req, res) => {
       id: String(friend._id),
       name: friend.displayName || friend.name,
       picture: friend.picture || "",
+      username: handleOf(friend),
       joinedYear: friend.createdAt ? new Date(friend.createdAt).getUTCFullYear() : null,
       gems: friend.gems || 0,
       streak: streakOf(theirs.days, friend.protectedDays),
@@ -236,6 +264,57 @@ router.get("/:userId/profile", async (req, res) => {
   } catch (error) {
     req.log?.error?.(error);
     res.status(500).json({ message: "Could not load that profile right now." });
+  }
+});
+
+
+// POST /api/friends/:userId/block -> removes the friendship and stops requests both ways.
+router.post("/:userId/block", async (req, res) => {
+  try {
+    const other = req.params.userId;
+    if (!mongoose.isValidObjectId(other)) return res.status(400).json({ message: "Invalid person." });
+    const me = req.student._id;
+    if (String(other) === String(me)) return res.status(400).json({ message: "You cannot block yourself." });
+    const target = await Student.findById(other).select("_id").lean();
+    if (!target) return res.status(404).json({ message: "That person could not be found." });
+
+    await Block.updateOne({ blocker: me, blocked: other }, { $setOnInsert: { blocker: me, blocked: other } }, { upsert: true });
+    await Friendship.deleteMany({
+      $or: [{ requester: me, recipient: other }, { requester: other, recipient: me }],
+    });
+    await Notification.deleteMany({
+      type: { $in: ["friend_request", "friend_accepted"] },
+      $or: [{ student: me, from: other }, { student: other, from: me }],
+    });
+    res.json({ ok: true });
+  } catch (error) {
+    req.log?.error?.(error);
+    res.status(500).json({ message: "Could not block that person right now." });
+  }
+});
+
+// POST /api/friends/:userId/report  { reason, details? } -> saves a report for review.
+const REPORT_REASONS = ["spam", "harassment", "inappropriate", "fake", "other"];
+router.post("/:userId/report", async (req, res) => {
+  try {
+    const other = req.params.userId;
+    if (!mongoose.isValidObjectId(other)) return res.status(400).json({ message: "Invalid person." });
+    const me = req.student._id;
+    if (String(other) === String(me)) return res.status(400).json({ message: "You cannot report yourself." });
+    const reason = typeof req.body?.reason === "string" ? req.body.reason : "";
+    if (!REPORT_REASONS.includes(reason)) return res.status(400).json({ message: "Choose a reason." });
+    const details = typeof req.body?.details === "string" ? req.body.details.trim().slice(0, 500) : "";
+    const target = await Student.findById(other).select("_id").lean();
+    if (!target) return res.status(404).json({ message: "That person could not be found." });
+
+    // One open report per person and reason in a day is enough.
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const dup = await Report.exists({ reporter: me, reported: other, reason, createdAt: { $gte: dayAgo } });
+    if (!dup) await Report.create({ reporter: me, reported: other, reason, details });
+    res.json({ ok: true });
+  } catch (error) {
+    req.log?.error?.(error);
+    res.status(500).json({ message: "Could not send your report right now." });
   }
 });
 
@@ -280,6 +359,11 @@ router.post("/request", async (req, res) => {
       return res.status(400).json({ message: "You cannot add yourself." });
     }
 
+    // A block in either direction: answer like an unknown person so nobody learns who blocked whom.
+    if (await isBlocked(me, target._id)) {
+      return res.json({ status: "sent", message: "Request sent, if that person has StudyOS." });
+    }
+
     const existing = await Friendship.findOne({
       $or: [
         { requester: me, recipient: target._id },
@@ -320,8 +404,8 @@ router.post("/request", async (req, res) => {
     await Notification.create({
       student: target._id,
       type: "friend_request",
-      title: `${displayOf(req.student)} sent you a friend request`,
-      body: "Open StudyOS to accept and earn gems together.",
+      title: `${displayOf(req.student)} wants to study with you`,
+      body: "Accept to become friends and earn gems.",
       from: me,
     });
     res.json({ status: "sent", message: "Request sent.", user: publicUser(target) });

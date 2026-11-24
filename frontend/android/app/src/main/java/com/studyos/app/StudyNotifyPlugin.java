@@ -127,7 +127,7 @@ public class StudyNotifyPlugin extends Plugin {
     public void showNow(PluginCall call) {
         ReminderScheduler.show(
             getContext(),
-            call.getInt("id", 2900),
+            2900,
             call.getString("title", "StudyOS"),
             call.getString("body", ""));
         call.resolve();
