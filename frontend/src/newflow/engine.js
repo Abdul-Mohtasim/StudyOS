@@ -524,39 +524,52 @@ SCREENS.push({t:'Starting score',d:'Score from the exam',next:'Streak: day 1',sp
 const FCOL=['#e8a83a','#7fa8ff','#6fcf97','#ff9aa2','#c9b8c3'];
 const esc=t=>String(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function ffHtml(){return nx(`<div id="ffb" class="xhm"></div>`)}
+const PLUS='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+const TICK2='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 function ffRender(){
  const el=$('#ffb',R),F=X.ff;
  const bubble=t=>`<div class="xz" style="margin:70px 18px 0">${MZ()}<div class="xbub">${t}</div></div>`;
- const err=F.err?`<div class="xerr" style="bottom:250px;left:20px;right:20px;text-align:center">${esc(F.err)}</div>`:'';
- if(F.st==='home')el.innerHTML=bubble('Study is better with friends! See who you know is already here, or invite someone.')+err+`<div class="xbar"><button class="xbtn" type="button" data-a="contacts">Find friends from contacts</button><button class="xbtn sec" type="button" data-a="invite">Invite friends</button><button class="xbtn sec" type="button" data-a="later">${F.shared?'Continue':'Maybe later'}</button></div>`;
+ const err=F.err?`<div class="xerr" role="alert">${esc(F.err)}</div>`:'';
+ const later=`<button class="xbtn sec" type="button" data-a="later">${F.shared||F.sent?'Continue':'Maybe later'}</button>`;
+ if(F.st==='home')el.innerHTML=bubble('Study is better with friends! See who you know is already here, or invite someone.')+`<div class="xbar ff">${err}<button class="xbtn" type="button" data-a="contacts">Find friends from contacts</button><button class="xbtn sec" type="button" data-a="invite">Invite friends</button>${later}</div>`;
  else if(F.st==='load')el.innerHTML=bubble('Looking through your contacts...')+`<div style="position:absolute;left:0;right:0;top:300px;text-align:center">${dots}</div>`;
- else if(F.st==='none')el.innerHTML=bubble(F.denied?'Contacts access is off. You can turn it on in your phone settings, or invite friends with a link.':'None of your contacts are on StudyOS yet. Invite them and study together!')+err+`<div class="xbar"><button class="xbtn" type="button" data-a="invite">Invite friends</button><button class="xbtn sec" type="button" data-a="later">${F.shared?'Continue':'Maybe later'}</button></div>`;
- else if(F.st==='list'){const sent=F.list.filter(f=>f.relation==='sent'||f.relation==='friends').length;el.innerHTML=`<div class="xb xlist"><h2 class="xh" style="margin-top:56px">These friends are already on StudyOS</h2>${F.list.map((f,i)=>{const rel=F.busyIds&&F.busyIds.has(f.id)?'busy':(f.relation||'none');const lbl=rel==='friends'?'Friends':rel==='sent'?'Requested':rel==='incoming'?'Accept':'+ Send Request';return `<div class="xfr"><span class="av" style="background:${FCOL[i%5]}">${f.picture?`<img src="${esc(f.picture)}" alt="" referrerpolicy="no-referrer">`:esc((f.name||'?')[0].toUpperCase())}</span><span class="xfn"><b>${esc(f.name)}</b><small>${esc(f.email)}</small></span><button type="button" class="xrq${rel==='sent'||rel==='friends'?' done':''}" data-a="req" data-i="${i}" ${rel==='busy'||rel==='sent'||rel==='friends'?'disabled':''}>${rel==='busy'?'<span class="xdots" style="height:14px;gap:5px"><i style="background:currentColor"></i><i style="background:currentColor"></i><i style="background:currentColor"></i></span>':lbl}</button></div>`}).join('')}</div>${err}<div class="xbar"><button class="xbtn" type="button" data-a="add">${sent?'Done':'Skip for now'}</button><button class="xbtn sec" type="button" data-a="invite">Invite more friends</button></div>`}
+ else if(F.st==='none'){
+  const msg=F.denied?'Contacts access is off. You can turn it on in your phone settings, or invite friends with a link.':F.noEmails?'None of your contacts have an email address saved. Invite them with a link instead!':'None of your contacts are on StudyOS yet. Invite them and study together!';
+  el.innerHTML=bubble(msg)+`<div class="xbar ff">${err}<button class="xbtn" type="button" data-a="invite">Invite friends</button>${later}</div>`}
+ else if(F.st==='list'){
+  const row=(f,i)=>{const r=F.rs[i]||f.relation||'none';
+   const btn=r==='sent'?`<button class="xadd done" type="button" disabled aria-label="Request sent to ${esc(f.name)}">${TICK2}<span>Sent</span></button>`
+    :r==='friends'?`<button class="xadd done" type="button" disabled aria-label="Already friends with ${esc(f.name)}">${TICK2}<span>Friends</span></button>`
+    :r==='busy'?`<button class="xadd" type="button" disabled aria-label="Sending">${dots2}</button>`
+    :`<button class="xadd" type="button" data-a="req" data-i="${i}" aria-label="Send friend request to ${esc(f.name)}">${PLUS}<span>${r==='incoming'?'Accept':'Add'}</span></button>`;
+   return `<div class="xfr"><span class="av" style="background:${FCOL[i%5]}">${esc((f.name||'?')[0].toUpperCase())}</span><span class="xfi"><b>${esc(f.name)}</b><small>${esc(f.email)}</small></span>${btn}</div>`};
+  el.innerHTML=`<div class="xb xflist"><h2 class="xh" style="margin-top:56px">These friends are already on StudyOS</h2>${F.list.map(row).join('')}</div><div class="xbar ff">${err}<button class="xbtn" type="button" data-a="later">${F.sent?'Continue':'Next'}</button><button class="xbtn sec" type="button" data-a="invite">Invite more friends</button></div>`}
 }
+const dots2='<span class="xmini"><i></i><i></i><i></i></span>';
 function ffPlay(){
- S.mute=false;X.ff={st:'home',list:[],sel:new Set(),shared:false,err:'',denied:false};ffRender();rise('.xz',100);rise('.xbar',300);
+ S.mute=false;X.ff={st:'home',list:[],rs:{},sent:0,shared:false,err:'',denied:false,noEmails:false};X.addedFriends=[];ffRender();rise('.xz',100);rise('.xbar',300);
  fx($('.xz img',R),[{transform:'translateY(14px) scale(.8)'},{transform:'none'}],{duration:480});hap('tick');
  const my=RUN,F=X.ff;
  R.onclick=async e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
   if(a==='later'){hap('light');go(IDX('Profile created'))}
-  else if(a==='req'){const i=+b.dataset.i,f=F.list[i];if(!f||b.disabled)return;hap('medium');
-   F.busyIds=F.busyIds||new Set();F.busyIds.add(f.id);F.err='';ffRender();
-   let r;try{r=await (opts.sendRequest&&opts.sendRequest(f.id))}catch(err){r={ok:false,error:'Could not send the request.'}}
-   F.busyIds.delete(f.id);if(my!==RUN)return;
-   if(r&&r.ok){f.relation=r.status==='friends'?'friends':'sent';hap('success')}else{F.err=(r&&r.error)||'Could not send the request.';hap('buzz')}
-   ffRender()}
-  else if(a==='add'){hap('heavy');X.addedFriends=[];go(IDX('Profile created'))}
+  else if(a==='req'){const i=+b.dataset.i,f=F.list[i];if(!f||F.rs[i]==='busy')return;hap('medium');F.err='';F.rs[i]='busy';ffRender();
+   let r;try{r=await (opts.request&&opts.request(f.id))}catch(err){r={ok:false,error:'Could not send the request.'}}
+   if(my!==RUN)return;
+   if(r&&r.ok){F.rs[i]=r.status==='friends'?'friends':'sent';F.sent++;hap('success');X.addedFriends.push(f)}else{delete F.rs[i];F.err=(r&&r.error)||'Could not send the request.';hap('buzz')}
+   const sc=$('.xflist',R),top=sc?sc.scrollTop:0;ffRender();const sc2=$('.xflist',R);if(sc2)sc2.scrollTop=top}
   else if(a==='invite'){hap('medium');if(F.busy)return;F.busy=1;F.err='';
    let r;try{r=await (opts.invite&&opts.invite())}catch(err){r={ok:false,error:'Could not open sharing.'}}
    F.busy=0;if(my!==RUN)return;
    if(r&&r.ok){F.shared=true;hap('success')}else if(r&&r.error){F.err=r.error}
-   ffRender()}
+   const sc=$('.xflist',R),top=sc?sc.scrollTop:0;ffRender();const sc2=$('.xflist',R);if(sc2)sc2.scrollTop=top}
   else if(a==='contacts'){hap('medium');if(F.busy)return;F.busy=1;F.err='';F.st='load';ffRender();
    let r;try{r=await (opts.contacts&&opts.contacts())}catch(err){r={ok:false,error:'Could not read your contacts.'}}
    F.busy=0;if(my!==RUN)return;
-   if(r&&r.ok&&r.matches&&r.matches.length){F.list=r.matches;F.sel=new Set();F.st='list';hap('success');ffRender();rise('.xfr',0,90)}
+   F.denied=!!(r&&r.denied);F.noEmails=!!(r&&r.noEmails);
+   if(r&&r.ok&&r.matches&&r.matches.length){F.list=r.matches;F.rs={};F.st='list';hap('success');ffRender();rise('.xfr',0,90)}
    else if(r&&r.ok){F.st='none';ffRender();rise('.xz',0)}
-   else{F.denied=!!(r&&r.denied);F.err=(r&&r.error)||'';F.st=(F.denied||!F.err)?'none':'home';ffRender();rise('.xz',0)}}
+   else if(F.denied){F.st='none';ffRender();rise('.xz',0)}
+   else{F.err=(r&&r.error)||'Could not read your contacts. Please try again.';F.st='home';ffRender();rise('.xz',0)}}
  };
 }
 

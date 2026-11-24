@@ -122,7 +122,7 @@ import { App as CapApp } from "@capacitor/app";
 import { Contacts } from "@capacitor-community/contacts";
 import "./skeleton.css";
 import { ForgotPasswordModal, EmailSettingsCard, EmailNoteButton, EmailFlashcardsButton } from "./EmailFeatures";
-import { loadReminderPrefs, saveReminderPrefs, syncReminders, reminderPermission, requestReminderPermission } from "./reminders";
+import { loadReminderPrefs, saveReminderPrefs, syncReminders, reminderPermission, requestReminderPermission, showPhoneNotification } from "./reminders";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { setLanguage, getLanguage } from "./i18n";
 import {
@@ -221,43 +221,6 @@ async function scheduleTimerAlert({ at, title, body }) {
     /* the timer still works inside the app */
   }
 }
-// A friend request that arrives while the app is open or just came back to the front shows a phone
-// notification with the sender's name. (A request sent while the app is fully closed needs push
-// from Firebase, which this project does not use yet.)
-let friendChannelReady = false;
-async function notifyFriendRequest(name, key) {
-  if (!IS_NATIVE) return;
-  try {
-    if ((await reminderPermission()) !== "granted") return;
-    if (!friendChannelReady) {
-      await LocalNotifications.createChannel({
-        id: "studyos-friends",
-        name: "Friend requests",
-        description: "Tells you when someone wants to study with you",
-        importance: 4,
-        sound: "studyos_notify.mp3",
-        vibration: true,
-        visibility: 1,
-      });
-      friendChannelReady = true;
-    }
-    let id = 0;
-    for (const ch of String(key)) id = (id * 31 + ch.charCodeAt(0)) % 800000;
-    await LocalNotifications.schedule({
-      notifications: [{
-        id: 100000 + id,
-        title: `${name} wants to study with you`,
-        body: "Open StudyOS to accept the friend request.",
-        channelId: "studyos-friends",
-        smallIcon: "ic_stat_studyos",
-        schedule: { at: new Date(Date.now() + 400), allowWhileIdle: true },
-      }],
-    });
-  } catch {
-    /* the request still shows inside the app */
-  }
-}
-
 async function cancelTimerAlert() {
   if (!IS_NATIVE) return;
   try {
@@ -2175,42 +2138,51 @@ useEffect(() => {
       return { ok: false, error: `Could not open sharing. Send this link: ${INVITE_URL}` };
     }
   }
-  // The token of whoever is signed in right now (a brand-new account, a guest turning into a
-  // profile, or an existing session). This was the cause of the empty "none of your contacts" screen.
-  function flowToken() {
-    return pendingAuthRef.current?.token || authToken || localStorage.getItem("studyos_auth_token") || "";
-  }
   // Find phone contacts (by email) who already use StudyOS.
+  // Every failure is reported with a clear reason (never silently shown as "no friends").
   async function findContactsForFlow() {
+    let perm;
     try {
-      let perm = await Contacts.checkPermissions();
-      if (perm.contacts !== "granted") perm = await Contacts.requestPermissions();
-      if (perm.contacts !== "granted") return { ok: false, denied: true };
-      const res = await Contacts.getContacts({ projection: { name: true, emails: true } });
-      const emails = [];
-      for (const c of res.contacts || []) for (const e of c.emails || []) if (e?.address) emails.push(e.address);
-      if (!emails.length) return { ok: true, matches: [] };
-      const token = flowToken();
-      if (!token) return { ok: false, error: "Please sign in first, then try again." };
-      const { ok, data, status } = await nativeApi("/api/friends/match", "POST", { emails: emails.slice(0, 500) }, token);
-      if (!ok) {
-        return { ok: false, error: status === 0 ? "No connection. Check your internet and try again." : "Could not check your contacts right now. Please try again." };
-      }
-      return { ok: true, matches: Array.isArray(data.matches) ? data.matches : [] };
+      perm = await Contacts.checkPermissions();
+      if (perm.contacts !== "granted" && perm.contacts !== "limited") perm = await Contacts.requestPermissions();
     } catch (error) {
-      const reason = String(error?.message || "").toLowerCase();
-      if (reason.includes("denied") || reason.includes("permission")) return { ok: false, denied: true };
-      return { ok: false, error: "Could not read your contacts. You can still invite friends with a link." };
+      return { ok: false, error: `Could not open your contacts (${error?.message || "plugin missing"}). Please update the app.` };
     }
+    if (perm.contacts !== "granted" && perm.contacts !== "limited") return { ok: false, denied: true };
+
+    let list = [];
+    try {
+      const res = await Contacts.getContacts({ projection: { name: true, emails: true } });
+      list = res?.contacts || [];
+    } catch (error) {
+      return { ok: false, error: `Could not read your contacts (${error?.message || "unknown error"}).` };
+    }
+    const emails = [];
+    for (const c of list) for (const e of c.emails || []) {
+      const a = typeof e?.address === "string" ? e.address.trim().toLowerCase() : "";
+      if (a.includes("@")) emails.push(a);
+    }
+    const unique = [...new Set(emails)].slice(0, 500);
+    if (!unique.length) return { ok: true, matches: [], noEmails: true };
+
+    const token = pendingAuthRef.current?.token || authToken;
+    if (!token) return { ok: false, error: "Please sign in again, then try once more." };
+    const { ok, data, status } = await nativeApi("/api/friends/match", "POST", { emails: unique }, token);
+    if (status === 0) return { ok: false, error: "No connection. Check your internet and try again." };
+    if (status === 401 || status === 403) return { ok: false, error: "Your session expired. Please sign in again." };
+    if (status === 404) return { ok: false, error: "The server is out of date. Please update the backend, then try again." };
+    if (!ok) return { ok: false, error: data?.error || data?.message || "Could not check your contacts right now. Please try again." };
+    return { ok: true, matches: Array.isArray(data.matches) ? data.matches : [] };
   }
-  // "+ Send Request" next to a contact. The other person gets a notification with your name.
-  async function sendRequestForFlow(userId) {
-    const token = flowToken();
-    if (!token) return { ok: false, error: "Please sign in first." };
+
+  // The "+" button next to a contact: sends a real friend request (they get a notification with my name).
+  async function requestFriendForFlow(userId) {
+    const token = pendingAuthRef.current?.token || authToken;
+    if (!token) return { ok: false, error: "Please sign in again." };
     const { ok, data, status } = await nativeApi("/api/friends/request", "POST", { userId }, token);
-    if (!ok) return { ok: false, error: status === 0 ? "No connection. Try again." : (data?.message || "Could not send the request.") };
-    if (tokenIsCurrent(token)) loadSocial(token);
-    return { ok: true, status: data?.status || "sent" };
+    if (status === 0) return { ok: false, error: "No connection. Try again." };
+    if (!ok) return { ok: false, error: data?.message || data?.error || "Could not send the request." };
+    return { ok: true, status: data.status || "sent" };
   }
   function finishNewUserFlow(info) {
     const d = pendingAuthRef.current;
@@ -2507,36 +2479,6 @@ useEffect(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken, student?.guest]);
 
-  // Check for new friend requests every 30 seconds while the app is open, and when it comes back to the front.
-  const announcedRequestsRef = useRef(null);
-  useEffect(() => {
-    if (!IS_NATIVE || !authToken || student?.guest) return undefined;
-    let alive = true;
-    const check = async () => {
-      if (!alive || document.visibilityState === "hidden") return;
-      const { ok, data } = await nativeApi("/api/friends", "GET", null, authToken);
-      if (!alive || !ok || !Array.isArray(data.incoming) || !tokenIsCurrent(authToken)) return;
-      const seen = announcedRequestsRef.current;
-      announcedRequestsRef.current = new Set(data.incoming.map((u) => u.id));
-      if (seen) {
-        for (const u of data.incoming) if (!seen.has(u.id)) notifyFriendRequest(u.name || "Someone", u.id);
-      }
-      setSocial((prev) => ({
-        ...(prev || {}),
-        friends: Array.isArray(data.friends) ? data.friends : prev?.friends || [],
-        incoming: data.incoming,
-        outgoing: Array.isArray(data.outgoing) ? data.outgoing : prev?.outgoing || [],
-        leaderboard: Array.isArray(data.leaderboard) ? data.leaderboard : prev?.leaderboard || [],
-      }));
-    };
-    check();
-    const timer = setInterval(check, 30000);
-    const onVisible = () => { if (document.visibilityState === "visible") check(); };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => { alive = false; clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authToken, student?.guest]);
-
   // The phone got its connection back: load the shop if it has no data yet.
   useEffect(() => {
     if (!IS_NATIVE || !authToken || student?.guest || !netOnline || shopStatus.state === "ok") return;
@@ -2551,6 +2493,36 @@ useEffect(() => {
     else if (activeSection === "dashboard") { loadGems(); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection]);
+
+  // New friend requests show up as a phone notification with the sender's name.
+  // (Checked on launch, when the app comes back to the front and every 45 seconds while it is open.)
+  useEffect(() => {
+    if (!IS_NATIVE || !authToken || student?.guest) return undefined;
+    let alive = true;
+    const seenKey = `studyos_notified_${authToken.slice(-12)}`;
+    async function check() {
+      if (!alive || document.visibilityState === "hidden") return;
+      const { ok, data } = await nativeApi("/api/notifications", "GET", null, authToken);
+      if (!alive || !ok || !Array.isArray(data.notifications)) return;
+      let seen = [];
+      try { seen = JSON.parse(localStorage.getItem(seenKey) || "[]"); } catch { /* ignore */ }
+      const fresh = data.notifications.filter((n) =>
+        !n.read && (n.type === "friend_request" || n.type === "friend_accepted") && !seen.includes(n.id) &&
+        Date.now() - new Date(n.createdAt).getTime() < 3 * 24 * 60 * 60 * 1000);
+      if (!fresh.length) return;
+      for (const n of fresh.slice(0, 5)) {
+        await showPhoneNotification(n.title, n.body, 3100 + (parseInt(n.id.slice(-4), 16) % 800));
+      }
+      try { localStorage.setItem(seenKey, JSON.stringify([...seen, ...fresh.map((n) => n.id)].slice(-100))); } catch { /* ignore */ }
+      loadSocial(authToken);
+    }
+    const first = setTimeout(check, 3000);
+    const timer = setInterval(check, 45000);
+    const onVisible = () => { if (document.visibilityState === "visible") check(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { alive = false; clearTimeout(first); clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authToken, student?.guest]);
 
   async function addFriendByEmail(email) {
     if (!authToken || student?.guest) return { ok: false, message: "Create your profile to add friends." };
@@ -4537,7 +4509,7 @@ async function undoDeleteTask() {
             google={googleForFlow}
             invite={inviteForFlow}
             contacts={findContactsForFlow}
-            sendRequest={sendRequestForFlow}
+            request={requestFriendForFlow}
             onFinish={finishNewUserFlow}
             guest={startGuest}
           />
@@ -5057,7 +5029,7 @@ async function undoDeleteTask() {
           google={googleForFlow}
           invite={inviteForFlow}
           contacts={findContactsForFlow}
-          sendRequest={sendRequestForFlow}
+          request={requestFriendForFlow}
           onFinish={finishNewUserFlow}
         />
       )}

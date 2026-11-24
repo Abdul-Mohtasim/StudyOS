@@ -353,6 +353,17 @@ function syncWeb(prefs, state) {
   checkWebPlan();
 }
 
+// Shows one notification on the phone right now (used for friend requests). Resolves true if shown.
+export async function showPhoneNotification(title, body, id) {
+  if (!isNative() || !StudyNotify) return false;
+  try {
+    const status = await getNotifyStatus();
+    if (!status || !status.enabled) return false;
+    await native(StudyNotify.showNow({ title, body, id }));
+    return true;
+  } catch { return false; }
+}
+
 // ---------------------------------------------------------------- test button
 // Shows a reminder right now (with sound) so you can check permission, sound and timing.
 // Resolves to { ok, message?, soundIssue? }

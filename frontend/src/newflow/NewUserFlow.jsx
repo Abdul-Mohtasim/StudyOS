@@ -2,10 +2,10 @@ import { useEffect, useRef } from "react";
 import { mountNewUserFlow } from "./engine";
 
 // Thin React wrapper around the imperative new-user flow (app only).
-export default function NewUserFlow({ onBack, register, google, invite, contacts, sendRequest, onFinish, guest, startAt }) {
+export default function NewUserFlow({ onBack, register, google, invite, contacts, request, onFinish, guest, startAt }) {
   const hostRef = useRef(null);
   const cb = useRef({});
-  cb.current = { onBack, register, google, invite, contacts, sendRequest, onFinish, guest };
+  cb.current = { onBack, register, google, invite, contacts, request, onFinish, guest };
   useEffect(() => {
     const api = mountNewUserFlow(hostRef.current, {
       onBack: () => cb.current.onBack?.(),
@@ -13,7 +13,7 @@ export default function NewUserFlow({ onBack, register, google, invite, contacts
       google: () => cb.current.google(),
       invite: () => cb.current.invite?.(),
       contacts: () => cb.current.contacts?.(),
-      sendRequest: (id) => cb.current.sendRequest?.(id),
+      request: (id) => cb.current.request?.(id),
       onFinish: (d) => cb.current.onFinish?.(d),
       guest: cb.current.guest ? (d) => cb.current.guest?.(d) : undefined,
       startAt,

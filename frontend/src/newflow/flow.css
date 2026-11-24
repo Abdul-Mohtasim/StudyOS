@@ -284,25 +284,21 @@
 .nuf .ipo.chip.cal{gap:0;color:var(--fg)}
 .nuf .ipo.chip.cal svg{color:var(--mauve)}
 
-/* ---- Find friends: responsive buttons + contact rows ---- */
-.nuf .nx .xbar{display:flex;flex-direction:column;gap:6px;padding:14px clamp(16px,5vw,24px) calc(18px + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,#0f1317 72%,rgba(15,19,23,0))}
-.nuf .nx .xbar .xbtn{flex:none;min-height:52px;height:auto;padding:0 16px;line-height:1.2;display:flex;align-items:center;justify-content:center;text-align:center;white-space:normal;font-size:clamp(13px,3.9vw,15px)}
-.nuf .nx .xbar .xbtn.sec{min-height:44px;margin-top:0;background:none;box-shadow:none}
-.nuf .nx .xbar .xbtn.sec:active{transform:none;opacity:.7}
-.nuf .nx .xbar+.xerr,.nuf .nx .xerr{position:static;margin:8px 20px 0}
-.nuf .nx .xhm .xerr{position:absolute;left:20px;right:20px;bottom:calc(160px + env(safe-area-inset-bottom,0px))}
-.nuf .nx .xhm .xbar{position:absolute}
-.nuf .nx .xlist{bottom:calc(150px + env(safe-area-inset-bottom,0px));overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none}
-.nuf .nx .xlist::-webkit-scrollbar{display:none}
-.nuf .nx .xlist .xh{margin-top:20px!important}
-.nuf .nx .xfr{padding:10px 0;min-width:0}
-.nuf .nx .xfr .av{overflow:hidden}
-.nuf .nx .xfr .av img{width:100%;height:100%;object-fit:cover}
-.nuf .nx .xfr .xfn{flex:1;min-width:0}
-.nuf .nx .xfr .xfn b,.nuf .nx .xfr .xfn small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nuf .nx .xrq{flex:none;min-width:104px;max-width:46%;height:38px;padding:0 12px;border:0;border-radius:12px;background:#c9b8c3;color:#1a1418;font:800 12.5px var(--body);letter-spacing:.03em;box-shadow:0 3px 0 #8d7c88;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;transition:transform .08s,box-shadow .08s,background .2s}
-.nuf .nx .xrq:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #8d7c88}
-.nuf .nx .xrq.done{background:#232b33;color:#8f9ca8;box-shadow:0 3px 0 #181e24}
-.nuf .nx .xrq:disabled{cursor:default}
-@media (max-height:640px){.nuf .nx .xz{margin-top:40px!important}.nuf .nx .xbar .xbtn{min-height:48px}}
-@media (max-width:340px){.nuf .nx .xrq{min-width:92px;font-size:11.5px;padding:0 8px}}
+/* ---- Find friends: responsive button bar + contact list ---- */
+.nuf .nx .xbar.ff{display:flex;flex-direction:column;gap:8px;padding:14px 20px calc(18px + env(safe-area-inset-bottom,0px))}
+.nuf .nx .xbar.ff .xbtn{margin:0;height:auto;min-height:54px;padding:12px 16px;line-height:1.2;font-size:14.5px;white-space:normal;overflow-wrap:anywhere}
+.nuf .nx .xbar.ff .xbtn.sec{min-height:46px;padding:10px 12px}
+.nuf .nx .xbar.ff .xerr{position:static;left:auto;right:auto;bottom:auto;margin:0 0 4px;font-size:12.5px}
+.nuf .nx .xb.xflist{bottom:150px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:8px;scrollbar-width:none}
+.nuf .nx .xb.xflist::-webkit-scrollbar{display:none}
+.nuf .nx .xfr{gap:10px;min-width:0}
+.nuf .nx .xfr .xfi{flex:1;min-width:0}
+.nuf .nx .xfr .xfi b,.nuf .nx .xfr .xfi small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nuf .nx .xadd{flex:none;min-width:84px;height:38px;padding:0 12px;border:0;border-radius:12px;background:#c9b8c3;color:#1a1418;font:800 12.5px var(--body);letter-spacing:.06em;text-transform:uppercase;box-shadow:0 3px 0 #8d7c88;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:transform .08s,box-shadow .08s}
+.nuf .nx .xadd:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #8d7c88}
+.nuf .nx .xadd:disabled{cursor:default}
+.nuf .nx .xadd.done{background:#16372a;color:#6fcf97;box-shadow:none}
+.nuf .nx .xmini{display:inline-flex;gap:4px}
+.nuf .nx .xmini i{width:6px;height:6px;border-radius:50%;background:#1a1418;animation:xdb .9s infinite ease-in-out}
+.nuf .nx .xmini i:nth-child(2){animation-delay:.15s}.nuf .nx .xmini i:nth-child(3){animation-delay:.3s}
+@keyframes xdb{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1.1)}}
