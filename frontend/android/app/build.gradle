@@ -1,7 +1,3 @@
-if (!rootProject.ext.has('modules')) {
-    rootProject.ext.modules = []
-}
-
 apply plugin: 'com.android.application'
 
 android {
