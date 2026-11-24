@@ -111,7 +111,7 @@ const isoOf=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+St
 const CALIC='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;flex:none"><rect x="3.500" y="5" width="17" height="15.500" rx="3"/><path d="M3.500 10h17M8 3v4M16 3v4"/></svg>';
 const IPG=[
 {k:'say',m:0,at:0,say:"Hi there! I'm Zip!"},
-{k:'say',m:1,at:4,say:'Just 7 quick questions before we plan your first day!'},
+{k:'say',m:1,at:4,say:'Just 8 quick questions before we plan your first day!'},
 {k:'name',m:3,at:8.5,say:'First, what should I call you?',id:'name'},
 {k:'list',m:4,at:12.5,say:'What are you studying for?',id:'why',opts:[['School exams','Class 9 to 12'],['College','Degree courses'],['Entrance exams','Competitive tests'],['Self learning','At my own pace']]},
 {k:'load',m:2,at:18.5,say:'Getting your study space ready...'},
@@ -138,7 +138,9 @@ function iBody(p){
   if(p.k==='list'||p.k==='multi')return '<div class="ipl">'+p.opts.map((o,j)=>{const d=o[1]||'';return `<button class="ipo${s.includes(j)?' on':''}" type="button" data-a="opt" data-j="${j}"><span class="ipx">${o[0]}${d&&!p.right?`<small>${d}</small>`:''}</span>${p.right&&d?`<em>${d}</em>`:''}${p.k==='multi'?'<i class="ipc"></i>':''}</button>`}).join('')+'</div>';
   if(p.k==='chips')return '<div class="ipch">'+p.opts.map((o,j)=>`<button class="ipo chip${s.includes(j)?' on':''}" type="button" data-a="opt" data-j="${j}">${o}</button>`).join('')+(p.date?`<button class="ipo chip cal${s.includes(99)?' on':''}" type="button" data-a="cal" data-j="99" style="display:inline-flex;align-items:center">${CALIC}${U.examDate?MON(new Date(U.examDate+'T12:00:00')):'Pick a date'}</button><input class="ipdate" type="date" min="${isoOf(new Date())}" value="${U.examDate||''}" tabindex="-1" aria-hidden="true">`:'')+'</div>';
   if(p.k==='name')return `<input class="ipi" placeholder="Your first name" maxlength="20" autocomplete="off" value="${U.name.replace(/"/g,'')}">`;
-  if(p.k==='load')return '<div class="ipld"><div class="ipbar"><i><em>0%</em></i></div><div class="ipcap">BUILDING YOUR STUDY SPACE...</div></div>';
+  if(p.k==='load')return '<div class="ipld ipld2"><div class="ipor" aria-hidden="true"><span></span><span></span><span></span><b></b></div>'
+    +'<ul class="ipsteps">'+[['Saving your answers',0],['Picking your subjects',1],['Planning your first day',2],['Setting up reminders',3]].map(([t,k])=>`<li style="--k:${k}"><i><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg></i><span>${t}</span></li>`).join('')+'</ul>'
+    +'<div class="ipbar"><i><em>0%</em></i></div><div class="ipcap">BUILDING YOUR STUDY SPACE<span class="ipdots"><b>.</b><b>.</b><b>.</b></span></div></div>';
   if(p.k==='remind')return `<div class="ipph"><div class="ipwg">${FLM('#c9b8c3','#1b1e25',30,36)}<b>${U.streak}</b><small>day streak</small></div><div class="ipwg g">${ring(66,7,.6,'#1b1e25','#c8c6c8')}<small>Daily goal</small></div></div>`;
   if(p.k==='gain')return '<div class="ipg">'+[['<svg viewBox="0 0 48 48" width="52" height="52"><path d="M5 9a5 5 0 015-5h18a5 5 0 015 5v12a5 5 0 01-5 5H17l-7 6v-6.4A5 5 0 015 21z" fill="#e2c4fb"/><path d="M17 19a5 5 0 015-5h17a5 5 0 015 5v13a5 5 0 01-5 5h-4v6l-8-6h-5a5 5 0 01-5-5z" fill="#b66dff" stroke="#2a1850" stroke-width="2.4" stroke-linejoin="round"/></svg>','Study with confidence','A plan for every subject and exam.'],['<svg viewBox="0 0 48 48" width="52" height="52"><defs><clipPath id="fcc"><rect x="5" y="7" width="26" height="32" rx="5.5"/></clipPath></defs><path d="M30 12.5l9.5-2.2a3.5 3.5 0 014.2 2.6l3 13.800a3.500 3.500 0 01-2.600 4.200L31 37.500z" fill="#1fa4f5" transform="translate(-2 3)"/><rect x="5" y="7" width="26" height="32" rx="5.5" fill="#7fd0f6"/><g clip-path="url(#fcc)"><path d="M3 27L21 5h6L3 34z" fill="#fff" opacity=".38"/><path d="M12 42L34 15v8L18 42z" fill="#fff" opacity=".26"/></g><rect x="5" y="7" width="26" height="32" rx="5.5" fill="none" stroke="#173f66" stroke-width="2.4"/><text x="18" y="30.500" font-size="17" font-weight="800" text-anchor="middle" fill="#14283a" font-family="Space Grotesk,Inter,Arial,sans-serif">A</text></svg>','Remember more','Notes, flashcards and spaced repetition.'],['<svg viewBox="0 0 48 48" width="52" height="52"><rect x="15" y="2.500" width="18" height="10" rx="3.500" fill="#ffb300"/><rect x="15" y="35.500" width="18" height="10" rx="3.500" fill="#ffb300"/><rect x="38" y="20" width="4.500" height="8" rx="2.200" fill="#ffa000"/><rect x="7" y="8" width="33" height="32" rx="10" fill="#ffb800"/><rect x="11.500" y="12.500" width="24" height="23" rx="6.500" fill="#fff0cc"/><path d="M22 17.500v7.500h5.500" fill="none" stroke="#c46f00" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>','Build a daily habit','Streaks, reminders and focus sessions.']].map(([ico,t,d])=>`<div class="igr"><div class="igi">${ico}</div><div><b>${t}</b><span>${d}</span></div></div>`).join('')+'</div>';
   if(p.k==='score')return `<div class="ipsc"><svg viewBox="0 0 300 270" width="100%"><path d="M79.3 210.7A100 100 0 1 1 220.7 210.7" fill="none" stroke="#37434c" stroke-width="26" stroke-linecap="round"/><path class="scarc" pathLength="100" d="M79.3 210.7A100 100 0 1 1 220.7 210.7" fill="none" stroke="#c9b8c3" stroke-width="26" stroke-linecap="round" stroke-dasharray="0 100"/><path d="M42 130l23-10 23 10-23 10z" transform="translate(0 0)" fill="none"/><g transform="translate(95 124)"><path d="M20 2L2 10l18 8 18-8z" fill="#c9b8c3"/><path d="M9 15v8c0 3 5 6 11 6s11-3 11-6v-8l-11 5z" fill="#9d8c98"/><path d="M37 11v11" stroke="#c9b8c3" stroke-width="2.400" stroke-linecap="round"/></g><text class="scn" x="188" y="160" text-anchor="middle" font-size="58" font-weight="700" fill="#f4f2f3" font-family="Space Grotesk,Inter,Arial,sans-serif">0</text><text x="79" y="262" text-anchor="middle" font-size="22" font-weight="700" fill="#5d6b75" font-family="Space Grotesk,Inter,Arial,sans-serif">0</text><text x="221" y="262" text-anchor="middle" font-size="22" font-weight="700" fill="#5d6b75" font-family="Space Grotesk,Inter,Arial,sans-serif">160</text></svg></div>`;
@@ -163,7 +165,7 @@ function iRender(){
   [iq('.ibub'),iq('.ipbody'),iq('.ipz')].forEach(e=>e&&e.getAnimations().forEach(x=>x.cancel()));
   const m=iq('.ipz'),z=iq('.ipm .zn'),r0=m.getBoundingClientRect();znInit(R);
   iq('.ipp i').style.width=(U.i/(IPG.length-1)*100)+'%';iq('.ipp').style.opacity=big&&U.i<2?0:1;iq('.ipb').style.visibility='visible';
-  const wasBig=R.classList.contains('big');R.classList.toggle('big',big);
+  const wasBig=R.classList.contains('big');R.classList.toggle('big',big);R.classList.toggle('ld',p.k==='load');
   const sy0=sayOf(p);const sy={say:tr(sy0.say),hl:sy0.hl?tr(sy0.hl):sy0.hl};
   const html=sy.hl?sy.say.replace(sy.hl,'<span style="color:#e8a83a">'+sy.hl+'</span>'):sy.say;
   iq('.ipbody').innerHTML=iBody(p);iCTA();
@@ -181,7 +183,7 @@ function iRender(){
   else body.animate([{opacity:0,transform:'translateY(40px)'},{opacity:1,transform:'none'}],{duration:440,delay:(first?500:300),easing:'cubic-bezier(.2,.85,.3,1)',fill:'backwards'});
   hap('tick');
   if(S.sound&&!IS)introPlay(0);
-  if(p.k==='load'){at(2900,()=>znSet(z,'think'));(function pc(){const i=iq('.ipbar i');if(!i||U.tok!==tok)return;const e=i.querySelector('em'),w=i.getBoundingClientRect().width/(i.parentNode.getBoundingClientRect().width||1);if(e){const v=Math.min(100,Math.round(w*100));e.textContent=v+'%';e.style.opacity=v>16?1:0}requestAnimationFrame(pc)})();iq('.ipbar i').animate([{width:'0%'},{width:'100%'}],{duration:3000,delay:300,easing:'cubic-bezier(.4,.1,.3,1)',fill:'forwards'});at(3500,()=>{if(U.tok===tok&&IPG[U.i].k==='load'){hap('success');iNext()}})}
+  if(p.k==='load'){at(2900,()=>znSet(z,'think'));(function pc(){const i=iq('.ipbar i');if(!i||U.tok!==tok)return;const e=i.querySelector('em'),w=i.getBoundingClientRect().width/(i.parentNode.getBoundingClientRect().width||1);if(e){const v=Math.min(100,Math.round(w*100));e.textContent=v+'%';e.style.opacity=v>16?1:0}requestAnimationFrame(pc)})();iq('.ipbar i').animate([{width:'0%'},{width:'100%'}],{duration:3000,delay:300,easing:'cubic-bezier(.4,.1,.3,1)',fill:'forwards'});[0,1,2,3].forEach(k=>at(700+k*650,()=>{if(U.tok!==tok)return;tone(700+k*120,.09,{type:'triangle',g:.1});hap('tick')}));at(3300,()=>{if(U.tok===tok){tone(1047,.16,{g:.12});tone(1568,.22,{t:.07,g:.1})}});at(3500,()=>{if(U.tok===tok&&IPG[U.i].k==='load'){hap('success');iNext()}})}
   if(p.k==='ready')at(500,()=>{hap('success');burst(190,330,26,{})});
 }
 // leave the current page (text fades, options drop away), then show the next one
@@ -242,13 +244,105 @@ const IC={
   Biology:'<svg viewBox="0 0 24 24" fill="none" stroke="#c9b8c3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4c0 6 10 10 10 16M17 4c0 6-10 10-10 16M8.500 8h7M8.500 16h7"/></svg>'
  }
 };
-const Q=[
- {s:'English',topic:'Grammar',k:'blank',h:'Complete the sentence',pre:'Neither of the students',post:'ready for the test.',bank:['were','was','are','be'],a:'was',why:'"Neither" is singular, so it takes "was".'},
- {s:'Physics',topic:'Forces',k:'mc',h:'A 2 kg trolley accelerates at 3 m/s². What net force acts on it?',opts:['1.5 N','5 N','6 N','9 N'],a:2,why:'F = m × a = 2 kg × 3 m/s² = 6 N.'},
- {s:'Chemistry',topic:'Elements',k:'pairs',h:'Tap the matching pairs',L:['Na','Fe','K','Au'],Rt:['Gold','Sodium','Iron','Potassium'],map:{Na:'Sodium',Fe:'Iron',K:'Potassium',Au:'Gold'},why:'Na is sodium, Fe is iron, K is potassium and Au is gold.'},
- {s:'Maths',topic:'Algebra',k:'grid',h:'Solve for x:  3x + 5 = 20',opts:['x = 3','x = 5','x = 6','x = 15'],a:1,why:'3x = 20 − 5 = 15, so x = 5.'},
- {s:'Biology',topic:'Cells',k:'mc',h:'Which part of a cell makes most of its ATP?',opts:['Ribosome','Nucleus','Mitochondria','Golgi body'],a:2,why:'Mitochondria release energy from glucose and store it as ATP.'}
-];
+/* Placement exam: a big question pool for each subject. Every time the exam starts (each new account,
+   each retry) one question per subject is picked at random, and answer options are shuffled. The last
+   questions shown on this phone are skipped, so users see different questions. */
+const QPOOL={
+ English:[
+  {k:'blank',h:'Complete the sentence',pre:'Neither of the students',post:'ready for the test.',bank:['were','was','are','be'],a:'was',why:'"Neither" is singular, so it takes "was".'},
+  {k:'blank',h:'Complete the sentence',pre:'She has lived here',post:'2019.',bank:['for','since','from','during'],a:'since',why:'Use "since" with a starting point in time.'},
+  {k:'blank',h:'Complete the sentence',pre:'If I',post:'you, I would study harder.',bank:['was','am','were','be'],a:'were',why:'The second conditional uses "were" for every person.'},
+  {k:'blank',h:'Complete the sentence',pre:'Each of the boys',post:'his own book.',bank:['have','has','having','are'],a:'has',why:'"Each" is singular, so it takes "has".'},
+  {k:'mc',h:'Which word is a synonym of "rapid"?',opts:['Slow','Quick','Heavy','Quiet'],a:1,why:'"Rapid" means fast, so "quick" is the synonym.'},
+  {k:'mc',h:'Which sentence is correct?',opts:['He don\u2019t like tea.','He doesn\u2019t likes tea.','He doesn\u2019t like tea.','He not like tea.'],a:2,why:'After "doesn\u2019t" the verb stays in its base form: like.'},
+  {k:'grid',h:'Choose the antonym of "ancient"',opts:['Old','Modern','Huge','Famous'],a:1,why:'Ancient means very old; the opposite is modern.'},
+  {k:'pairs',h:'Match each word to its opposite',L:['Brave','Early','Rich','Wide'],Rt:['Late','Narrow','Poor','Cowardly'],map:{Brave:'Cowardly',Early:'Late',Rich:'Poor',Wide:'Narrow'},why:'Brave–cowardly, early–late, rich–poor, wide–narrow.'},
+  {k:'mc',h:'Choose the correctly punctuated sentence',opts:['Its raining, so bring you\u2019re coat.','It\u2019s raining, so bring your coat.','Its\u2019 raining so bring your coat.','It\u2019s raining so, bring you\u2019re coat.'],a:1,why:'\u201cIt\u2019s\u201d = it is; \u201cyour\u201d shows ownership; the comma goes before \u201cso\u201d.'},
+  {k:'blank',h:'Complete the sentence',pre:'By the time we arrived, the film',post:'.',bank:['started','has started','had started','was start'],a:'had started',why:'The past perfect shows an action finished before another past action.'},
+  {k:'grid',h:'Which word means \u201cto make something less severe\u201d?',opts:['Aggravate','Mitigate','Exaggerate','Fabricate'],a:1,why:'To mitigate is to reduce how bad something is.'}
+ ],
+ Physics:[
+  {k:'mc',h:'A 2 kg trolley accelerates at 3 m/s\u00b2. What net force acts on it?',opts:['1.5 N','5 N','6 N','9 N'],a:2,why:'F = m \u00d7 a = 2 kg \u00d7 3 m/s\u00b2 = 6 N.'},
+  {k:'mc',h:'A car travels 120 m in 6 s. What is its average speed?',opts:['20 m/s','18 m/s','72 m/s','26 m/s'],a:0,why:'Speed = distance \u00f7 time = 120 \u00f7 6 = 20 m/s.'},
+  {k:'grid',h:'What is the SI unit of power?',opts:['Joule','Newton','Watt','Pascal'],a:2,why:'Power is measured in watts (1 W = 1 J/s).'},
+  {k:'mc',h:'A 12 V battery drives 3 A through a resistor. What is its resistance?',opts:['36 \u03a9','4 \u03a9','15 \u03a9','0.25 \u03a9'],a:1,why:'R = V \u00f7 I = 12 \u00f7 3 = 4 \u03a9.'},
+  {k:'grid',h:'Which wave needs a medium to travel?',opts:['Light','Radio','Sound','X-ray'],a:2,why:'Sound is a mechanical wave and cannot travel through a vacuum.'},
+  {k:'mc',h:'A 5 kg box is lifted 2 m (g = 10 m/s\u00b2). How much energy does it gain?',opts:['10 J','50 J','100 J','25 J'],a:2,why:'Ep = m \u00d7 g \u00d7 h = 5 \u00d7 10 \u00d7 2 = 100 J.'},
+  {k:'pairs',h:'Match each quantity to its unit',L:['Force','Energy','Current','Pressure'],Rt:['Ampere','Pascal','Newton','Joule'],map:{Force:'Newton',Energy:'Joule',Current:'Ampere',Pressure:'Pascal'},why:'Force N, energy J, current A, pressure Pa.'},
+  {k:'blank',h:'Complete the sentence',pre:'Every action has an equal and opposite',post:'.',bank:['force','reaction','motion','mass'],a:'reaction',why:'This is Newton\u2019s third law.'},
+  {k:'mc',h:'A ball is dropped from rest. What is its speed after 3 s? (g = 10 m/s\u00b2)',opts:['3 m/s','10 m/s','30 m/s','45 m/s'],a:2,why:'v = u + gt = 0 + 10 \u00d7 3 = 30 m/s.'},
+  {k:'mc',h:'Two 6 \u03a9 resistors are connected in parallel. What is the total resistance?',opts:['12 \u03a9','6 \u03a9','3 \u03a9','0.5 \u03a9'],a:2,why:'1/R = 1/6 + 1/6 = 1/3, so R = 3 \u03a9.'},
+  {k:'grid',h:'A wave has frequency 50 Hz and wavelength 4 m. What is its speed?',opts:['12.5 m/s','54 m/s','200 m/s','46 m/s'],a:2,why:'v = f \u00d7 \u03bb = 50 \u00d7 4 = 200 m/s.'}
+ ],
+ Chemistry:[
+  {k:'pairs',h:'Tap the matching pairs',L:['Na','Fe','K','Au'],Rt:['Gold','Sodium','Iron','Potassium'],map:{Na:'Sodium',Fe:'Iron',K:'Potassium',Au:'Gold'},why:'Na is sodium, Fe is iron, K is potassium and Au is gold.'},
+  {k:'pairs',h:'Match each formula to its name',L:['H\u2082O','CO\u2082','NaCl','CH\u2084'],Rt:['Methane','Salt','Water','Carbon dioxide'],map:{'H\u2082O':'Water','CO\u2082':'Carbon dioxide','NaCl':'Salt','CH\u2084':'Methane'},why:'H\u2082O water, CO\u2082 carbon dioxide, NaCl salt, CH\u2084 methane.'},
+  {k:'mc',h:'What is the pH of pure water at 25 \u00b0C?',opts:['0','7','10','14'],a:1,why:'Pure water is neutral, pH 7.'},
+  {k:'grid',h:'Which gas do plants take in for photosynthesis?',opts:['Oxygen','Nitrogen','Carbon dioxide','Hydrogen'],a:2,why:'Plants use carbon dioxide and water to make glucose.'},
+  {k:'mc',h:'How many protons does a carbon atom have?',opts:['4','6','8','12'],a:1,why:'Carbon\u2019s atomic number is 6, so it has 6 protons.'},
+  {k:'grid',h:'Which of these is a noble gas?',opts:['Chlorine','Neon','Oxygen','Sodium'],a:1,why:'Neon is in group 18, the noble gases.'},
+  {k:'blank',h:'Complete the sentence',pre:'An acid reacts with a base to form a salt and',post:'.',bank:['oxygen','water','hydrogen','carbon'],a:'water',why:'Neutralisation: acid + base \u2192 salt + water.'},
+  {k:'mc',h:'Which particle has a negative charge?',opts:['Proton','Neutron','Electron','Nucleus'],a:2,why:'Electrons carry a negative charge.'},
+  {k:'mc',h:'How many moles are in 22 g of CO\u2082? (C = 12, O = 16)',opts:['0.5 mol','1 mol','2 mol','22 mol'],a:0,why:'Mr of CO\u2082 = 44, so 22 \u00f7 44 = 0.5 mol.'},
+  {k:'grid',h:'What type of bond holds the atoms in a water molecule together?',opts:['Ionic','Covalent','Metallic','Hydrogen'],a:1,why:'O and H share electrons: covalent bonds. Hydrogen bonds are between molecules.'},
+  {k:'mc',h:'Balance: _H\u2082 + O\u2082 \u2192 _H\u2082O. What are the missing numbers?',opts:['1 and 1','2 and 2','2 and 1','1 and 2'],a:1,why:'2H\u2082 + O\u2082 \u2192 2H\u2082O gives 4 H and 2 O on each side.'}
+ ],
+ Maths:[
+  {k:'grid',h:'Solve for x:  3x + 5 = 20',opts:['x = 3','x = 5','x = 6','x = 15'],a:1,why:'3x = 20 \u2212 5 = 15, so x = 5.'},
+  {k:'grid',h:'Solve for x:  2x \u2212 7 = 9',opts:['x = 1','x = 8','x = 6','x = 16'],a:1,why:'2x = 9 + 7 = 16, so x = 8.'},
+  {k:'mc',h:'What is 15% of 80?',opts:['8','12','15','20'],a:1,why:'0.15 \u00d7 80 = 12.'},
+  {k:'mc',h:'The angles of a triangle are 50\u00b0 and 60\u00b0. What is the third angle?',opts:['70\u00b0','80\u00b0','90\u00b0','110\u00b0'],a:0,why:'180 \u2212 50 \u2212 60 = 70\u00b0.'},
+  {k:'grid',h:'What is \u221a144?',opts:['11','12','14','72'],a:1,why:'12 \u00d7 12 = 144.'},
+  {k:'mc',h:'Area of a rectangle 7 cm by 4 cm?',opts:['11 cm\u00b2','22 cm\u00b2','28 cm\u00b2','47 cm\u00b2'],a:2,why:'Area = 7 \u00d7 4 = 28 cm\u00b2.'},
+  {k:'grid',h:'Simplify:  2\u00b3 \u00d7 2\u00b2',opts:['2\u2075','2\u2076','4\u2075','2\u00b9'],a:0,why:'Add the powers: 3 + 2 = 5.'},
+  {k:'mc',h:'What is the mean of 4, 8, 10 and 6?',opts:['6','7','8','28'],a:1,why:'(4 + 8 + 10 + 6) \u00f7 4 = 28 \u00f7 4 = 7.'},
+  {k:'grid',h:'Solve:  x\u00b2 \u2212 5x + 6 = 0',opts:['x = 1 or 6','x = 2 or 3','x = \u22122 or \u22123','x = 5 or 6'],a:1,why:'(x \u2212 2)(x \u2212 3) = 0, so x = 2 or 3.'},
+  {k:'mc',h:'A price of 200 rises by 10% and then falls by 10%. What is the new price?',opts:['200','198','202','180'],a:1,why:'200 \u00d7 1.1 = 220, then 220 \u00d7 0.9 = 198.'},
+  {k:'mc',h:'What is the gradient of the line through (1, 2) and (3, 8)?',opts:['2','3','4','6'],a:1,why:'(8 \u2212 2) \u00f7 (3 \u2212 1) = 6 \u00f7 2 = 3.'}
+ ],
+ Biology:[
+  {k:'mc',h:'Which part of a cell makes most of its ATP?',opts:['Ribosome','Nucleus','Mitochondria','Golgi body'],a:2,why:'Mitochondria release energy from glucose and store it as ATP.'},
+  {k:'grid',h:'Which blood cells fight infection?',opts:['Red cells','White cells','Platelets','Plasma'],a:1,why:'White blood cells are part of the immune system.'},
+  {k:'mc',h:'Where does photosynthesis take place in a plant cell?',opts:['Chloroplast','Vacuole','Cell wall','Nucleus'],a:0,why:'Chloroplasts contain chlorophyll, which captures light.'},
+  {k:'pairs',h:'Match each organ to its job',L:['Heart','Lungs','Kidneys','Stomach'],Rt:['Filter blood','Pump blood','Digest food','Exchange gases'],map:{Heart:'Pump blood',Lungs:'Exchange gases',Kidneys:'Filter blood',Stomach:'Digest food'},why:'Heart pumps, lungs exchange gases, kidneys filter, stomach digests.'},
+  {k:'grid',h:'Which molecule carries genetic information?',opts:['ATP','DNA','Glucose','Protein'],a:1,why:'DNA stores the genetic code.'},
+  {k:'mc',h:'How many chambers does a human heart have?',opts:['2','3','4','6'],a:2,why:'Two atria and two ventricles.'},
+  {k:'blank',h:'Complete the sentence',pre:'Plants release',post:'during photosynthesis.',bank:['carbon dioxide','oxygen','nitrogen','water'],a:'oxygen',why:'Oxygen is the by-product of photosynthesis.'},
+  {k:'mc',h:'Which enzyme in saliva starts digesting starch?',opts:['Pepsin','Lipase','Amylase','Trypsin'],a:2,why:'Salivary amylase breaks starch into sugars.'},
+  {k:'mc',h:'Two Bb parents have a child. What is the chance it is bb?',opts:['0%','25%','50%','75%'],a:1,why:'Bb \u00d7 Bb gives BB, Bb, Bb, bb: 1 in 4 is bb.'},
+  {k:'grid',h:'In which part of the cell does the Krebs cycle happen?',opts:['Cytoplasm','Nucleus','Mitochondrial matrix','Ribosome'],a:2,why:'The Krebs cycle takes place in the matrix of the mitochondria.'},
+  {k:'mc',h:'Which hormone lowers blood glucose?',opts:['Glucagon','Adrenaline','Insulin','Thyroxine'],a:2,why:'Insulin makes cells take up glucose and the liver store it as glycogen.'}
+ ]
+};
+const QTOPIC={"English": ["Grammar", "Grammar", "Grammar", "Grammar", "Vocabulary", "Grammar", "Vocabulary", "Vocabulary", "Punctuation", "Tenses", "Vocabulary"], "Physics": ["Forces", "Motion", "Units", "Electricity", "Waves", "Energy", "Units", "Forces", "Motion", "Electricity", "Waves"], "Chemistry": ["Elements", "Compounds", "Acids", "Reactions", "Atoms", "Periodic table", "Acids", "Atoms", "Moles", "Bonding", "Equations"], "Maths": ["Algebra", "Algebra", "Percentages", "Geometry", "Numbers", "Geometry", "Powers", "Statistics", "Quadratics", "Percentages", "Graphs"], "Biology": ["Cells", "Blood", "Plants", "Organs", "Genetics", "Heart", "Plants", "Digestion", "Genetics", "Respiration", "Hormones"]};
+const QLEVEL={"English": ["m", "e", "m", "m", "e", "e", "e", "m", "h", "h", "h"], "Physics": ["m", "e", "e", "m", "e", "m", "m", "e", "h", "h", "h"], "Chemistry": ["e", "m", "e", "e", "m", "m", "m", "e", "h", "h", "h"], "Maths": ["e", "m", "m", "e", "e", "e", "m", "m", "h", "h", "h"], "Biology": ["m", "e", "e", "m", "e", "e", "m", "m", "h", "h", "h"]};
+const QSUBJ=['English','Physics','Chemistry','Maths','Biology'];
+const qRnd=n=>{try{const u=new Uint32Array(1);crypto.getRandomValues(u);return u[0]%n}catch(_){return Math.floor(Math.random()*n)}};
+const qShuf=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const k=qRnd(i+1);[a[i],a[k]]=[a[k],a[i]]}return a};
+const QSEEN='studyos_exam_seen';
+const Q=[];
+const QLVNAME={e:'Easy',m:'Medium',h:'Hard'};
+let QMODE=(()=>{try{const v=localStorage.getItem('studyos_exam_mode');return /^[emh]$/.test(v||'')?v:'m'}catch(_){return 'm'}})();
+function setExamMode(m){if(!/^[emh]$/.test(m))return;QMODE=m;try{localStorage.setItem('studyos_exam_mode',m)}catch(_){}newExam()}
+function newExam(){
+  let seen={};try{seen=JSON.parse(localStorage.getItem(QSEEN)||'{}')||{}}catch(_){seen={}}
+  Q.length=0;
+  QSUBJ.forEach(s=>{
+    const pool=QPOOL[s],lv=QLEVEL[s]||[],key=s+':'+QMODE;
+    // only questions of the chosen level (falls back to the whole pool if a level is empty)
+    let cand=pool.map((_,i)=>i).filter(i=>(lv[i]||'m')===QMODE);if(!cand.length)cand=pool.map((_,i)=>i);
+    const last=Array.isArray(seen[key])?seen[key]:[];
+    let pick=cand.filter(i=>!last.includes(i));if(!pick.length)pick=cand.slice();
+    const i=pick[qRnd(pick.length)];seen[key]=[i,...last.filter(x=>x!==i)].slice(0,Math.max(1,cand.length-1));
+    const q=Object.assign({s,topic:(QTOPIC[s]&&QTOPIC[s][i])||s,lv:lv[i]||'m'},JSON.parse(JSON.stringify(pool[i])));
+    if(q.k==='mc'||q.k==='grid'){const right=q.opts[q.a];q.opts=qShuf(q.opts);q.a=q.opts.indexOf(right)}
+    else if(q.k==='blank')q.bank=qShuf(q.bank);
+    else if(q.k==='pairs'){q.L=qShuf(q.L);q.Rt=qShuf(q.Rt)}
+    Q.push(q);
+  });
+  try{localStorage.setItem(QSEEN,JSON.stringify(seen))}catch(_){}
+}
+newExam();
 const BKB=(a='back')=>`<button class="xi bk" data-a="${a}" type="button" aria-label="Back">${IC.back}Back</button>`;
 const GEM=w=>`<svg viewBox="40 0 385 466" style="width:${w*385/466}px;height:${w}px;display:block"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>`;
 const FLAME=(w,h)=>FLM('#f0243a','#ff9a3a',w,h);
@@ -266,13 +360,28 @@ function xTop(){const n=Q.length+Object.keys(X.tries).filter(k=>X.tries[k]>0).le
 function exHtml(){
  return nx(`<div id="xtop"></div><div class="xb" id="xb"></div><div class="xbar" id="xbar"></div>`);
 }
+function exModeHtml(){
+ const D=[['e','Easy','Warm up','#6fcf97'],['m','Medium','Balanced','#e8a83a'],['h','Hard','Challenge','#ff7a85']];
+ return `<div class="xmode" role="radiogroup" aria-label="Exam difficulty">${D.map(([k,l,s,c])=>`<button type="button" class="xmd${QMODE===k?' on':''}" data-a="lvl" data-l="${k}" role="radio" aria-checked="${QMODE===k}" style="--c:${c}"><i>${k==='e'?'\u25CF':k==='m'?'\u25CF\u25CF':'\u25CF\u25CF\u25CF'}</i><b>${l}</b><small>${s}</small></button>`).join('')}</div>`;
+}
+function exListHtml(){
+ return Q.map(q=>`<div class="xo xrow" style="border-bottom-width:2px;cursor:default"><span style="width:26px;height:26px;display:grid;place-items:center">${IC.sub[q.s]}</span><span style="flex:1">${q.s}</span><small class="xlv xlv-${q.lv}">${q.topic} · ${QLVNAME[q.lv]||'Medium'}</small></div>`).join('');
+}
 function exIntro(){
  $('#xtop').innerHTML=`<div class="xt">${BKB()}</div>`;$('#xbar').style.visibility='visible';
- $('#xb').innerHTML=`<div class="xz" style="margin-top:34px">${MZ()}<div class="xbub">Let's see where you stand! One quick question from each subject.</div></div>
- <div class="xl" style="margin-top:34px">${Q.map(q=>`<div class="xo" style="border-bottom-width:2px;cursor:default"><span style="width:26px;height:26px;display:grid;place-items:center">${IC.sub[q.s]}</span><span style="flex:1">${q.s}</span><small style="color:#8f9ca8;font-weight:600;font-size:12.5px">${q.topic} · Medium</small></div>`).join('')}</div>`;
+ $('#xb').innerHTML=`<div class="xz" style="margin-top:18px">${MZ()}<div class="xbub">Pick your level, then one quick question from each subject.</div></div>
+ <div class="xmlab">Choose your level</div>${exModeHtml()}
+ <div class="xl" id="xlist" style="margin-top:16px">${exListHtml()}</div>`;
  $('#xbar').innerHTML=btn('Start exam','start')+'<div style="text-align:center;font:600 12.5px var(--body);color:#6f7b86;margin-top:10px">Takes about 2 minutes. No pressure.</div>';
- rise('#xb .xz,#xb .xo',60,70);fx($('#xbar'),[{transform:'translateY(40px)',opacity:0},{transform:'none',opacity:1}],{delay:380});
+ rise('#xb .xz,#xb .xmlab,#xb .xmd,#xb .xo',60,60);fx($('#xbar'),[{transform:'translateY(40px)',opacity:0},{transform:'none',opacity:1}],{delay:380});
  hap('tick');
+}
+function exPickMode(b){
+ const m=b.dataset.l;if(!m||m===QMODE)return;setExamMode(m);
+ $$('.xmd',R).forEach(el=>{const on=el.dataset.l===m;el.classList.toggle('on',on);el.setAttribute('aria-checked',on)});
+ b.animate([{transform:'scale(.92)'},{transform:'scale(1.05)'},{transform:'none'}],{duration:280,easing:'ease-out'});
+ sfx.tick(m==='e'?0:m==='m'?2:4);hap('tick');
+ const L=$('#xlist');if(L){L.innerHTML=exListHtml();$$('#xlist .xo',R).forEach((el,i)=>el.animate([{opacity:0,transform:'translateX(18px)'},{opacity:1,transform:'none'}],{duration:300,delay:i*45,easing:'cubic-bezier(.2,.9,.3,1)',fill:'backwards'}))}
 }
 function exQ(){
  const q=qCur();X.sel=null;X.sheet=null;X.m=0;X.pm={};X.sl=null;X.sr=null;
@@ -313,7 +422,8 @@ function exPlay(){
  R.onclick=e=>{
   const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a;
   if(a==='back'){sfx.tick();hap('light');go(IDX('Intro flow'));return}
-  if(a==='quit'){hap('medium');Object.assign(X,{q:-1,queue:[0,1,2,3,4],sel:null,res:{},combo:0,best:0,xp:0,ok:0,tot:0,done:0,tries:{}});const o=$('.xsh',R);if(o)o.remove();exIntro();return}
+  if(a==='quit'){hap('medium');newExam();Object.assign(X,{q:-1,queue:[0,1,2,3,4],sel:null,res:{},combo:0,best:0,xp:0,ok:0,tot:0,done:0,tries:{}});const o=$('.xsh',R);if(o)o.remove();exIntro();return}
+  if(a==='lvl'){exPickMode(b);return}
   if(a==='start'){X.q=0;X.t0=performance.now();sfx.whoosh(.4);hap('medium');exQ();return}
   const q=X.q>=0&&qCur();
   if(a==='pick'){const j=+b.dataset.j;X.sel=j;$$('.xo',R).forEach((el,i)=>el.classList.toggle('on',i===j));const c=$('[data-a=check]');c.disabled=false;sfx.tick(j);hap('tick');b.animate([{transform:'scale(.97)'},{transform:'none'}],{duration:160})}
@@ -342,25 +452,58 @@ function lcStats(){
  const head=acc>=90?'Perfect run!':acc>=70?'Great exam!':acc>=50?'Good start!':'Nice try!';
  return {acc,sec,tm,first,miss,lab,lvl,head,xp:X.xp,ok:X.ok}}
 function lcHtml(){
- const R0=lcStats(),tm=R0.tm,acc=R0.acc,xp=R0.xp;
- return nx(`<div class="xt">${BKB()}</div><div style="position:absolute;top:40px;left:0;right:0;text-align:center">${znHtml(148,'lcz')}<div id="lct" style="font:700 28px var(--display);color:#c9b8c3;margin-top:4px">${R0.head}</div><div style="font:600 14px var(--body);color:#8f9ca8;margin-top:4px">You're ${R0.lvl}, ${nm()}</div></div>
- <div class="xb" style="top:250px;bottom:110px"><div class="xstat">
- <div style="border-color:#e8a83a"><small style="background:#e8a83a">TOTAL XP</small><b id="lxp" style="color:#e8a83a">0</b></div>
- <div style="border-color:#6fcf97"><small style="background:#6fcf97">${R0.lab}</small><b id="lac" style="color:#6fcf97">0%</b></div>
- <div style="border-color:#7fa8ff"><small style="background:#7fa8ff">COMMITTED</small><b style="color:#7fa8ff">${tm}</b></div></div>
- <div style="display:flex;gap:10px;margin:18px 0 0"><div style="flex:1;border:2px solid #2f3a44;border-radius:14px;padding:9px 12px"><b style="font:700 20px var(--display);color:#8fe3b2">${R0.ok}</b><div style="font:600 12px var(--body);color:#8f9ca8">Correct</div></div><div style="flex:1;border:2px solid #2f3a44;border-radius:14px;padding:9px 12px"><b style="font:700 20px var(--display);color:#ff9aa2">${R0.miss}</b><div style="font:600 12px var(--body);color:#8f9ca8">Mistakes</div></div></div><div style="font:700 15px var(--display);margin:18px 0 2px">Your starting point</div>
- ${Q.map(q=>{const r=X.res[q.s];const v=r===1;return `<div class="xsl"><span>${q.s}</span><div class="t"><i style="width:0;background:${SC[q.s]}" data-w="${v?100:45}"></i></div><em style="color:${v?'#8fe3b2':'#ff9aa2'}">${v?'Solid':'Learn'}</em></div>`}).join('')}</div>
+ const R0=lcStats(),tm=R0.tm,acc=R0.acc;
+ const md=QLVNAME[QMODE]||'Medium',mc=QMODE==='e'?'#6fcf97':QMODE==='h'?'#ff7a85':'#e8a83a';
+ const C=2*Math.PI*52,tot=Math.max(1,R0.ok+R0.miss),okp=Math.round(R0.ok/tot*100);
+ const stars=acc>=90?3:acc>=60?2:acc>0?1:0;
+ const ST='<svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.3L12 17.1 6.3 20.2l1.2-6.3L2.8 9.5l6.4-.8z"/></svg>';
+ const rows=Q.map((q,i)=>{const v=X.res[q.s]===1;return `<div class="xsr${v?' ok':' bad'}" style="--i:${i};--sc:${SC[q.s]}"><span class="xsr-i">${IC.sub[q.s]}</span><div class="xsr-t"><b>${q.s}</b><small>${esc0(q.topic)} · ${QLVNAME[q.lv]||'Medium'}</small><div class="xsl"><div class="t"><i style="width:0;background:${SC[q.s]}" data-w="${v?100:40}"></i></div></div></div><em class="xsr-p">${v?'\u2713 Solid':'\u21BB Review'}</em></div>`}).join('');
+ return nx(`<div class="xt">${BKB()}</div><div class="lc-glow"></div>
+ <div class="xb lcb" style="top:64px;bottom:104px">
+  <div class="lc-hero">${znHtml(104,'lcz')}
+   <div class="lc-ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" class="lc-tr"/><circle cx="60" cy="60" r="52" class="lc-pr" id="lcr" style="stroke-dasharray:${C.toFixed(1)};stroke-dashoffset:${C.toFixed(1)}" data-c="${C.toFixed(1)}" data-p="${acc}"/></svg><div class="lc-rc"><b id="lac">0%</b><small>accuracy</small></div></div>
+  </div>
+  <div class="lc-stars">${[0,1,2].map(i=>`<span class="lc-st${i<stars?' on':''}" style="--k:${i}">${ST}</span>`).join('')}</div>
+  <div id="lct" class="lc-h">${R0.head}</div>
+  <div class="lc-s">You're ${R0.lvl}, ${nm()} <span class="lc-md" style="--mc:${mc}">${md} mode</span></div>
+  <div class="xstat lc-stat">
+   <div style="--c:#e8a83a"><small>TOTAL XP</small><b id="lxp">0</b></div>
+   <div style="--c:#7fa8ff"><small>TIME</small><b>${tm}</b></div>
+   <div style="--c:#c9b8c3"><small>${R0.lab}</small><b>${R0.first}/${Q.length}</b></div>
+  </div>
+  <div class="lc-split"><div class="lc-sh"><span><i class="g"></i>${R0.ok} correct</span><span><i class="r"></i>${R0.miss} ${R0.miss===1?'mistake':'mistakes'}</span></div><div class="lc-bar"><i class="g" data-w="${okp}"></i><i class="r" data-w="${100-okp}"></i></div></div>
+  <div class="lc-sec">Your starting point</div>
+  <div class="lc-rows">${rows}</div>
+ </div>
  <div class="xbar">${btn('Claim XP','claim')}</div>`).replace('data-xp','');
 }
+function esc0(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function lcPlay(){
- S.mute=false;const R0=lcStats(),acc=R0.acc,xp=R0.xp;
- rise('.xstat>div',0,300);rise('.xsl',900,90);
+ S.mute=false;const R0=lcStats(),acc=R0.acc,xp=R0.xp,good=acc>=60;
  fx($('#lcz'),[{transform:'translateY(30px) scale(.6)',opacity:0},{transform:'translateY(-10px) scale(1.1)',offset:.6,opacity:1},{transform:'none',opacity:1}],{duration:600});
+ fx($('.lc-ring'),[{transform:'scale(.4) rotate(-90deg)',opacity:0},{transform:'scale(1.06) rotate(8deg)',offset:.7,opacity:1},{transform:'none',opacity:1}],{duration:700,delay:120,easing:'cubic-bezier(.2,.9,.3,1)'});
+ fx($('#lct'),[{transform:'translateY(16px) scale(.9)',opacity:0,filter:'blur(6px)'},{transform:'none',opacity:1,filter:'blur(0)'}],{duration:520,delay:380});
+ fx($('.lc-s'),[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:420,delay:520});
+ rise('.lc-stat>div',600,110);rise('.lc-split',950,0);rise('.lc-sec',1050,0);rise('.xsr',1150,110);
  E(0,null,'hard',playLC);
- at(500,()=>burst(190,170,34,{up:true,speed:340,fall:300,life:1500,colors:['#c9b8c3','#e8a83a','#7fa8ff','#6fcf97']}));
- const t0=performance.now()+600;let last=-1;(function c(){const k=Math.min(1,(performance.now()-t0)/900);if(k<0){requestAnimationFrame(c);return}const n=Math.round(xp*k),a=Math.round(acc*k);const e=$('#lxp');if(!e)return;e.textContent='+'+n;$('#lac').textContent=a+'%';if(n!==last&&n%10===0){hap('tick');last=n}if(k<1)requestAnimationFrame(c);else{hap('thud');sfx.slam()}})();
- $$('.xsl .t i',R).forEach((el,i)=>el.animate([{width:'0%'},{width:el.dataset.w+'%'}],{duration:700,delay:800+i*90,easing:'cubic-bezier(.3,.8,.3,1)',fill:'forwards'}));
- R.onclick=e=>{if(e.target.closest('[data-a=back]')){hap('light');go(IDX('Placement exam'));return}if(!e.target.closest('[data-a=claim]'))return;hap('heavy');go(IDX('Starting score'))};
+ sfx.whoosh(.5);
+ // ring fills with the accuracy
+ const rc=$('#lcr');if(rc){const C=+rc.dataset.c;rc.animate([{strokeDashoffset:C},{strokeDashoffset:C*(1-acc/100)}],{duration:1100,delay:450,easing:'cubic-bezier(.3,.8,.25,1)',fill:'forwards'})}
+ // stars pop one by one with a rising chime
+ $$('.lc-st.on',R).forEach((el,i)=>at(900+i*230,()=>{el.animate([{transform:'scale(0) rotate(-40deg)',opacity:0},{transform:'scale(1.35) rotate(8deg)',opacity:1,offset:.6},{transform:'none',opacity:1}],{duration:460,easing:'ease-out',fill:'forwards'});tone(880+i*220,.22,{type:'triangle',g:.18});tone(1320+i*330,.18,{t:.04,g:.08});hap('light')}));
+ at(500,()=>burst(190,150,good?40:18,{up:true,speed:340,fall:300,life:1500,colors:['#c9b8c3','#e8a83a','#7fa8ff','#6fcf97']}));
+ if(acc>=90)at(1700,()=>burst(190,320,30,{up:true,speed:300,fall:260,life:1400,colors:['#ffd76a','#ffffff','#e8a83a']}));
+ // XP and accuracy count up
+ const t0=performance.now()+600;let last=-1;(function c(){const k=Math.min(1,(performance.now()-t0)/1000);if(k<0){requestAnimationFrame(c);return}const ek=1-Math.pow(1-k,3),n=Math.round(xp*ek),a=Math.round(acc*ek);const e=$('#lxp');if(!e)return;e.textContent='+'+n;$('#lac').textContent=a+'%';if(n!==last&&n%10===0){hap('tick');tone(600+n*3,.05,{type:'triangle',g:.06});last=n}if(k<1)requestAnimationFrame(c);else{hap('thud');sfx.slam&&sfx.slam();e.animate([{transform:'scale(1.35)'},{transform:'none'}],{duration:320,easing:'ease-out'})}})();
+ // correct / mistakes split bar
+ $$('.lc-bar i',R).forEach((el,i)=>el.animate([{width:'0%'},{width:el.dataset.w+'%'}],{duration:800,delay:1000+i*120,easing:'cubic-bezier(.3,.8,.3,1)',fill:'forwards'}));
+ // subject rows: bar fills, status stamps in, a soft note for each
+ $$('.xsr',R).forEach((row,i)=>{const ok=row.classList.contains('ok'),bar=row.querySelector('.t i'),p=row.querySelector('.xsr-p');
+  if(bar)bar.animate([{width:'0%'},{width:bar.dataset.w+'%'}],{duration:700,delay:1250+i*110,easing:'cubic-bezier(.3,.8,.3,1)',fill:'forwards'});
+  if(p)p.animate([{transform:'scale(.3)',opacity:0},{transform:'scale(1.15)',opacity:1,offset:.7},{transform:'none',opacity:1}],{duration:380,delay:1650+i*110,easing:'ease-out',fill:'backwards'});
+  at(1650+i*110,()=>{ok?tone(660+i*90,.14,{type:'sine',g:.12}):tone(300,.12,{type:'triangle',g:.08});hap(ok?'tick':'light')})});
+ at(1650+Q.length*110+150,()=>{good?(sfx.chime?sfx.chime():sfx.sparkle&&sfx.sparkle()):(sfx.pop&&sfx.pop())});
+ R.onclick=e=>{if(e.target.closest('[data-a=back]')){hap('light');go(IDX('Placement exam'));return}if(!e.target.closest('[data-a=claim]'))return;hap('heavy');sfx.coin&&sfx.coin();go(IDX('Starting score'))};
 }
 
 /* ================= 3. STREAK DAY 1 ================= */
@@ -506,17 +649,51 @@ function gSheet(){
 
 /* ================= 5b. STARTING SCORE (from the exam) ================= */
 function calcScore(){const c=Object.values(X.res).filter(v=>v===1).length,acc=X.tot?X.ok/X.tot:0;return Math.max(20,Math.min(150,Math.round(25+c*18+acc*30+(X.best>=3?5:0))))}
+function scTier(sc){return sc>=130?['Expert','#ffcc4d']:sc>=110?['Strong','#6fcf97']:sc>=80?['Rising','#7fa8ff']:sc>=50?['Building','#e8a83a']:['Starter','#c9b8c3']}
 function scHtml(){
- return `<div class="scr ip"><div class="ipt"><button class="ipb" type="button" data-a="back" aria-label="Back" style="visibility:visible"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="ipbt">Back</span></button></div><div class="ipm"><div class="ipz">${znHtml(92)}</div><div class="ibub" id="scb"></div></div><div class="ipbody">${iBody({k:'score'})}</div><div class="bar" style="display:flex"><button class="btn" type="button" data-a="cta">CONTINUE</button></div></div>`}
+ const sc=calcScore(),[tier,tc]=scTier(sc),ok=X.ok||0,tot=X.tot||0,acc=tot?Math.round(ok/tot*100):0,md=(typeof QLVNAME!=='undefined'&&QLVNAME[QMODE])||'Medium';
+ const goals=[50,80,110,130,160],nxt=goals.find(g=>g>sc)||160,prev=[0,...goals].filter(g=>g<=sc).pop()||0,np=Math.round((sc-prev)/Math.max(1,nxt-prev)*100);
+ const ticks=Array.from({length:17},(_,i)=>{const ang=(135+i*270/16)*Math.PI/180,r1=i%4===0?118:122,r2=128;return `<line x1="${(150+r1*Math.cos(ang)).toFixed(1)}" y1="${(150+r1*Math.sin(ang)).toFixed(1)}" x2="${(150+r2*Math.cos(ang)).toFixed(1)}" y2="${(150+r2*Math.sin(ang)).toFixed(1)}" class="sct${i%4===0?' big':''}" style="--k:${i}"/>`}).join('');
+ const sp=Array.from({length:10},(_,i)=>`<i style="--k:${i};--a:${i*36}deg"></i>`).join('');
+ return `<div class="scr ip scx"><div class="ipt"><button class="ipb" type="button" data-a="back" aria-label="Back" style="visibility:visible"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="ipbt">Back</span></button></div><div class="ipm"><div class="ipz">${znHtml(92)}</div><div class="ibub" id="scb"></div></div>
+ <div class="ipbody scb2"><div class="scw" style="--tc:${tc}">
+  <div class="sc-halo"></div><div class="sc-sp">${sp}</div>
+  <svg class="sc-g" viewBox="0 0 300 300" aria-hidden="true"><defs><linearGradient id="scgr" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7fa8ff"/><stop offset=".5" stop-color="var(--mauve,#c9b8c3)"/><stop offset="1" stop-color="${tc}"/></linearGradient></defs>
+   <path d="M59.5 240.5A128 128 0 1 1 240.5 240.5" fill="none" class="sc-tr" pathLength="100"/>
+   <path d="M66.6 233.4A118 118 0 1 1 233.4 233.4" fill="none" stroke="url(#scgr)" stroke-width="20" stroke-linecap="round" class="scarc" pathLength="100" stroke-dasharray="0 100"/>
+   ${ticks}<circle r="10" class="sc-dot" cx="66.6" cy="233.4"/></svg>
+  <div class="sc-c"><svg width="30" height="30" viewBox="0 0 40 32" class="sc-cap"><path d="M20 2L2 10l18 8 18-8z" fill="currentColor"/><path d="M9 15v8c0 3 5 6 11 6s11-3 11-6v-8l-11 5z" fill="currentColor" opacity=".7"/></svg><b class="scn">0</b><small>out of 160</small><span class="sc-tier">${tier}</span></div>
+ </div>
+ <div class="sc-chips"><div style="--c:#6fcf97"><b>${ok}/${tot||5}</b><small>Correct</small></div><div style="--c:#7fa8ff"><b>${acc}%</b><small>Accuracy</small></div><div style="--c:#e8a83a"><b>${md}</b><small>Level</small></div></div>
+ <div class="sc-nx"><div class="sc-nxh"><span>Next goal</span><b>Score ${nxt}</b></div><div class="sc-nxb"><i data-w="${Math.max(4,Math.min(100,np))}"></i></div><small>${sc>=160?'Top score! Keep it up every day.':(nxt-sc)+' points to go. Study daily to climb.'}</small></div>
+ </div><div class="bar" style="display:flex"><button class="btn" type="button" data-a="cta">CONTINUE</button></div></div>`}
 function scPlay(){
- S.mute=false;const sc=calcScore();X.score=sc;{const t=$('.scn',R);if(sc>=100){t.setAttribute('font-size','46');t.setAttribute('x','194')}}
+ S.mute=false;const sc=calcScore();X.score=sc;const my=RUN;
  const say=sc>=110?`You're starting strong at Score ${sc}!`:sc>=70?`Based on your exam, you start at Score ${sc}!`:`Your exam shows you start at Score ${sc}. Let's grow it together!`;
  U.tok++;typeIn($('#scb',R),tr(say).replace(String(sc),'<b style="color:#fff">'+sc+'</b>'),U.tok,$('.zn',R));at(900,()=>znSet($('.zn',R),sc>=110?'success':sc>=70?'greet':'explain'));
  const m=$('.ipm img',R);fx(m,[{transform:'translateY(16px) scale(.8)',opacity:.4},{transform:'translateY(-6px) scale(1.05)',opacity:1,offset:.6},{transform:'none',opacity:1}],{duration:520});
  fx($('#scb',R),[{opacity:0,transform:'scale(.7)'},{opacity:1,transform:'none'}],{duration:420,delay:120});
- const arc=$('.scarc',R),n=$('.scn',R);arc.animate([{strokeDasharray:'0 100'},{strokeDasharray:(sc/160*100)+' 100'}],{duration:1500,delay:350,easing:'cubic-bezier(.3,.1,.2,1)',fill:'forwards'});
- const t0=performance.now()+350,my=RUN;(function cnt(t){if(my!==RUN||!n.isConnected)return;const k=Math.min(1,Math.max(0,(t-t0)/1500)),e=1-Math.pow(1-k,3);n.textContent=Math.round(sc*e);if(k<1)requestAnimationFrame(cnt);else{sfx.chime();hap('success')}})(performance.now());
- R.onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;if(b.dataset.a==='back'){hap('light');go(IDX('Lesson complete'))}else{hap('heavy');go(IDX('Streak: day 1'))}};
+ fx($('.scw',R),[{opacity:0,transform:'scale(.6) rotate(-25deg)'},{opacity:1,transform:'scale(1.04) rotate(3deg)',offset:.7},{opacity:1,transform:'none'}],{duration:760,delay:200,easing:'cubic-bezier(.2,.9,.3,1)'});
+ $$('.sc-chips>div',R).forEach((el,i)=>fx(el,[{opacity:0,transform:'translateY(24px) scale(.9)'},{opacity:1,transform:'none'}],{duration:460,delay:1500+i*120}));
+ fx($('.sc-nx',R),[{opacity:0,transform:'translateY(20px)'},{opacity:1,transform:'none'}],{duration:460,delay:1900});
+ sfx.whoosh&&sfx.whoosh(.4);
+ const arc=$('.scarc',R),n=$('.scn',R),dot=$('.sc-dot',R),k1=sc/160,D0=1600;
+ arc.animate([{strokeDasharray:'0 100'},{strokeDasharray:(k1*100)+' 100'}],{duration:D0,delay:450,easing:'cubic-bezier(.3,.1,.2,1)',fill:'forwards'});
+ // the glowing dot rides the end of the arc; ticks light up as it passes; a rising tone plays
+ const ticks=$$('.sct',R);let lit=-1;
+ const t0=performance.now()+450;(function cnt(t){if(my!==RUN||!n.isConnected)return;const k=Math.min(1,Math.max(0,(t-t0)/D0)),e=1-Math.pow(1-k,3),v=e*k1;
+  n.textContent=Math.round(sc*e);
+  const ang=(135+v*270)*Math.PI/180;if(dot){dot.setAttribute('cx',(150+118*Math.cos(ang)).toFixed(1));dot.setAttribute('cy',(150+118*Math.sin(ang)).toFixed(1));dot.style.opacity=k>0?1:0}
+  const want=Math.floor(v*16+.0001);while(lit<want&&lit<16){lit++;const tk=ticks[lit];if(tk)tk.classList.add('on');if(lit%2===0){tone(420+lit*45,.06,{type:'triangle',g:.08});hap('tick')}}
+  if(k<1)requestAnimationFrame(cnt);
+  else{sfx.chime&&sfx.chime();hap('success');const w=$('.scw',R);if(w)w.classList.add('done');
+   n.animate([{transform:'scale(1.3)'},{transform:'scale(.95)'},{transform:'none'}],{duration:480,easing:'ease-out'});
+   const tr0=$('.sc-tier',R);if(tr0)tr0.animate([{opacity:0,transform:'translateY(8px) scale(.6)'},{opacity:1,transform:'scale(1.15)',offset:.6},{opacity:1,transform:'none'}],{duration:480,fill:'forwards'});
+   try{const bb=$('.scw',R).getBoundingClientRect(),hb=R.getBoundingClientRect(),K=(hb.width||360)/360;burst((bb.left-hb.left+bb.width/2)/K,(bb.top-hb.top+bb.height/2)/K,sc>=110?40:22,{up:true,speed:320,fall:260,life:1400,colors:['#c9b8c3','#e8a83a','#7fa8ff','#6fcf97','#ffcc4d']})}catch(_){}
+   if(sc>=110)at(260,()=>{tone(1319,.18,{g:.12});tone(1760,.26,{t:.08,g:.1})});
+   const nb=$('.sc-nxb i',R);if(nb)nb.animate([{width:'0%'},{width:nb.dataset.w+'%'}],{duration:900,delay:500,easing:'cubic-bezier(.3,.8,.3,1)',fill:'forwards'});
+  }})(performance.now());
+ R.onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;if(b.dataset.a==='back'){hap('light');go(IDX('Lesson complete'))}else{hap('heavy');sfx.pop&&sfx.pop();go(IDX('Streak: day 1'))}};
 }
 SCREENS.push({t:'Starting score',d:'Score from the exam',next:'Streak: day 1',spec:{m:'Gauge fills to the score worked out from the exam.',h:'Success when the number lands.',s:'Chime.'},html:scHtml,play:scPlay});
 

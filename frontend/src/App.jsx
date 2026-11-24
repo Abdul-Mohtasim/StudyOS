@@ -2230,6 +2230,8 @@ useEffect(() => {
     pendingAuthRef.current = null;
     localStorage.removeItem("studyos_guest");
     setGuestFlowOpen(false);
+    // Close the new-user flow too, otherwise the home screens stay hidden (blank page after sign-up).
+    setNewUserFlowOpen(false);
     setStudent(d.student);
     setAuthToken(d.token);
     // Friends picked in the lesson become real friend requests on the server.
@@ -7897,7 +7899,7 @@ async function undoDeleteTask() {
       {IS_NATIVE && activeSection === "subjects" && (
         <NativeNotes dark={settingsTheme === "dark"} loading={notesLoading} notes={subjectNotes} setNotes={setSubjectNotes} subjects={subjects.map((x) => x.name)} tasks={tasks} exams={exams} setExams={setExams} api={nativeApi} normalizeNote={normalizeNote} normalizeExam={normalizeExam} onBack={() => goTab("study")} setNotice={setNotice} />
       )}
-      {IS_NATIVE && !guestFlowOpen && !newUserFlowOpen && (
+      {IS_NATIVE && !guestFlowOpen && (
         <DesignShell data={designData} actions={designActions} onTab={designTab} section={activeSection} />
       )}
       <OfflineBanner />
