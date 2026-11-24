@@ -2039,6 +2039,17 @@ host.addEventListener('click',e=>{
     const on=hit>0,n=on?hit:st[0],[c1,c2]=on?BCOL[kind]:['#4a5963','#2b363d'];
     return `<div class="fp-bdg${on?'':' off'}"><svg viewBox="0 0 64 78" aria-label="${kind} ${n}${on?'':' locked'}"><path d="M32 3 57 14v24c0 14-10.500 24-25 31C17.500 62 7 52 7 38V14z" fill="${c2}"/><path d="M32 7 53 16.500V38c0 11.500-8.500 20-21 26C19.500 58 11 49.500 11 38V16.500z" fill="${c1}"/>${BICO[kind]}<g><rect x="9" y="58" width="46" height="17" rx="8.500" fill="#131f24" stroke="${c1}" stroke-width="2.200"/><text x="32" y="71" text-anchor="middle" font-family="Nunito,system-ui,sans-serif" font-size="12.500" font-weight="800" fill="#fff">${n}</text></g></svg></div>`;
   };
+  // The friend's own avatar character (made in Edit avatar), or '' when they have none.
+  const fpChr=(code,view)=>{if(!code||typeof code!=='string')return '';try{return avatarSvg(avDecode(code),{view:view||'full'})}catch(_){return ''}};
+  // "Followed by" row: friends you both have.
+  const mutualRow=(d,name,col,pic)=>{
+    const m=Array.isArray(d.mutual)?d.mutual.filter(x=>x&&x.name):[],more=Math.max(0,(Number(d.mutualCount)||m.length)-m.length);
+    if(!m.length)return `<div class="fp-tog"><span class="fp-pp"><span class="fp-pa" style="background:${col}">${pic?`<img src="${esc(pic)}" alt="" referrerpolicy="no-referrer">`:esc(name.charAt(0).toUpperCase())}</span><span class="fp-pa me">${myInitial()}</span></span><span>You and <b>${esc(first(name))}</b> are study friends</span></div>`;
+    const faces=m.slice(0,3).map(x=>{const a=fpChr(x.avatar,'face');return `<span class="fp-pa" style="background:${fpCol(x.name)}">${a||(x.picture?`<img src="${esc(x.picture)}" alt="" referrerpolicy="no-referrer">`:esc(String(x.name).charAt(0).toUpperCase()))}</span>`}).join('');
+    const names=m.slice(0,3).map(x=>`<b>${esc(first(x.name))}</b>`);
+    const list=names.length===1?names[0]:names.slice(0,-1).join(', ')+(more?', '+names[names.length-1]:' and '+names[names.length-1]);
+    return `<div class="fp-tog"><span class="fp-pp">${faces}</span><span>Followed by ${list}${more?` and <b>${more} other${more===1?'':'s'}</b>`:''}</span></div>`;
+  };
   const myInitial=()=>esc(String(D.fullName||D.name||'Y').trim().charAt(0).toUpperCase()||'Y');
   const handleOf=(name,d)=>d&&d.username?d.username:String(name||'friend').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,18)||'friend';
   FP.handle=handleOf;
@@ -2054,13 +2065,14 @@ host.addEventListener('click',e=>{
     const d=FP.data||{};
     const name=d.name||list.name||'Friend',pic=d.picture||list.picture||'';
     const col=fpCol(name),ready=!!FP.data;
+    const chr=fpChr(d.avatar,'full');
     const price=(D.shop&&D.shop.prices&&D.shop.prices.gift)||25;
     const sk=t=>ready?t:'<i class="fp-sk"></i>';
     const body=FP.err&&!ready
       ?`<div class="fp-err"><p>${esc(FP.err)}</p><button type="button" class="fp-btn" data-fpretry>TRY AGAIN</button></div>`
       :`<div class="fp-handle">@${esc(handleOf(name,d)).toUpperCase()}${d.joinedYear?' · JOINED '+esc(d.joinedYear):''}</div>
 <div class="fp-3"><div><b>${sk(num(d.streak))}</b><small>Day streak</small></div><div><b>${sk(num(d.friendsCount))}</b><small>Friends</small></div><div><b>${sk(num(d.gems!=null?d.gems:list.gems))}</b><small>Gems</small></div></div>
-<div class="fp-tog"><span class="fp-pp"><span class="fp-pa" style="background:${col}">${pic?`<img src="${esc(pic)}" alt="" referrerpolicy="no-referrer">`:esc(name.charAt(0).toUpperCase())}</span><span class="fp-pa me">${myInitial()}</span></span><span>You and <b>${esc(first(name))}</b> are study friends</span></div>
+${mutualRow(d,name,col,pic)}
 <div class="fp-act2"><button type="button" class="fp-fb" data-fpnone aria-label="You are friends">${PFR}<span>FRIENDS</span></button><button type="button" class="fp-qb" data-fpqr aria-label="Share ${esc(first(name))}'s profile">${QRI}</button></div>
 <button type="button" class="fp-gf${FP.gift?' armed':''}${FP.busy?' busy':''}" data-fpgift aria-label="Send ${price} gems to ${esc(name)}"><span class="fp-gi">${CUBE}</span>${FP.busy?'SENDING…':(FP.gift?'CONFIRM '+price+' GEMS':'GIFT '+price+' GEMS')}</button>
 ${FP.msg?`<div class="fp-msg${FP.msgOk?' ok':''}" role="status">${esc(FP.msg)}</div>`:''}
@@ -2079,7 +2091,7 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
 <button type="button" class="fp-rm${FP.rm?' armed':''}" data-fprm>${FP.rm?'TAP AGAIN TO REMOVE '+esc(first(name)).toUpperCase():'REMOVE FRIEND'}</button>
 <div class="fp-dgs"><button type="button" class="fp-dg" data-fpreport>${FLG}<span>REPORT USER</span></button><button type="button" class="fp-dg" data-fpblock>${NOP}<span>BLOCK USER</span></button></div>`;
     return `<div class="scr n nd" style="--pg:#131f24"><div class="fp" data-fpscroll>
-<div class="fp-hero"><div class="fp-av" style="--c:${col}">${avatar(name,pic)}</div></div>
+<div class="fp-hero${chr?' has-chr':''}">${chr?`<div class="fp-chr" aria-hidden="true">${chr}</div>`:`<div class="fp-av" style="--c:${col}">${avatar(name,pic)}</div>`}</div>
 <div class="fp-body">${body}</div></div>
 <div class="fp-bar"><button type="button" class="fp-bk" data-fpback aria-label="Back">${BACK}</button><h1>${esc(name)}</h1><span class="fp-bsp"></span></div>${sheetHtml(name)}</div>`;
   };
@@ -2134,7 +2146,7 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
       if(t.closest('[data-fpback]')){back();return}
       if(t.closest('[data-fpreport]')){hap('light');sheet('report');return}
       if(t.closest('[data-fpblock]')){hap('light');sheet('block');return}
-      if(t.closest('[data-fpqr]')){hap('medium');const d=FP.data||{},l=(D.friends||[]).find(f=>f.id===FP.id)||{};const nm=d.name||l.name||'Friend';DZ.fsData={id:FP.id,name:nm,pic:d.picture||l.picture||'',handle:handleOf(nm,d),col:fpCol(nm)};go('Friend share');return}
+      if(t.closest('[data-fpqr]')){hap('medium');const d=FP.data||{},l=(D.friends||[]).find(f=>f.id===FP.id)||{};const nm=d.name||l.name||'Friend';DZ.fsData={id:FP.id,name:nm,pic:d.picture||l.picture||'',handle:handleOf(nm,d),col:fpCol(nm),avatar:d.avatar||''};go('Friend share');return}
       if(t.closest('[data-fpretry]')){hap('light');FP.err='';FP.data=null;go('Friend profile',true);load();return}
       if(t.closest('[data-fpgift]')){
         if(FP.busy)return;
@@ -2168,20 +2180,46 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
   const IMR='<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#e8ebf0"/><g fill="#2b2f36"><circle cx="14.500" cy="24" r="3"/><circle cx="24" cy="24" r="3"/><circle cx="33.500" cy="24" r="3"/></g></svg>';
   const FSLOGO='<svg width="28" height="28" viewBox="0 0 48 48"><path d="M24 8L4 18l20 10 20-10z" fill="#c9b8c3"/><path d="M12 24v9c0 4 6 8 12 8s12-4 12-8v-9l-12 6z" fill="#9d8c98"/><path d="M42 20v14" stroke="#c9b8c3" stroke-width="3" stroke-linecap="round"/></svg>';
   const fsHtml=()=>{const f=DZ.fsData||{name:'Friend',handle:'friend',col:'#c9b8c3',pic:''};
-    const av=f.pic?`<img src="${esc(f.pic)}" alt="" referrerpolicy="no-referrer">`:`<span>${esc((f.name||'?').charAt(0).toUpperCase())}</span>`;
-    return `<div class="scr n nd" style="--pg:#131f24"><div class="fs-dim" data-fsx></div><div class="fs-card"><div class="fs-pic" style="--c:${f.col}">${av}</div><div class="fs-row"><div class="fs-who"><b>${esc(f.name)}</b><small>${esc(f.handle)}</small><div class="fs-logo">${FSLOGO}<span>StudyOS</span></div></div><div class="fs-qr">${fsQr()}</div></div></div><div class="fs-sheet"><button type="button" class="fs-x" data-fsx aria-label="Close">${X}</button><div class="fs-opts"><button type="button" data-fsw><i>${IWA}</i><span>WhatsApp</span></button><button type="button" data-fsi><i>${IIG}</i><span>Instagram</span></button><button type="button" data-fsm><i>${IMS}</i><span>Messages</span></button><button type="button" data-fsc><i>${ICP}</i><span>Copy link</span></button><button type="button" data-fso><i>${IMR}</i><span>More</span></button></div></div></div>`};
+    const ch=fpChr(f.avatar,'full');
+    const av=ch?`<div class="fs-chr">${ch}</div>`:f.pic?`<img src="${esc(f.pic)}" alt="" referrerpolicy="no-referrer">`:`<span>${esc((f.name||'?').charAt(0).toUpperCase())}</span>`;
+    return `<div class="scr n nd" style="--pg:#131f24"><div class="fs-dim" data-fsx></div><div class="fs-card"><div class="fs-pic${ch?' chr':''}" style="--c:${f.col}">${av}</div><div class="fs-row"><div class="fs-who"><b>${esc(f.name)}</b><small>${esc(f.handle)}</small><div class="fs-logo">${FSLOGO}<span>StudyOS</span></div></div><div class="fs-qr">${fsQr()}</div></div></div><div class="fs-sheet"><button type="button" class="fs-x" data-fsx aria-label="Close">${X}</button><div class="fs-opts"><button type="button" data-fsi><i>${IIG}</i><span>Instagram</span></button><button type="button" data-fsw><i>${IWA}</i><span>WhatsApp</span></button><button type="button" data-fsm><i>${IMS}</i><span>Messages</span></button><button type="button" data-fss><i><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#e8ebf0"/><g fill="none" stroke="#2b2f36" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"><path d="M24 13v15M18 22.500l6 6 6-6"/><path d="M14 30v3.500a2.500 2.500 0 0 0 2.500 2.500h15a2.500 2.500 0 0 0 2.500-2.500V30"/></g></svg></i><span>Save</span></button><button type="button" data-fso><i>${IMR}</i><span>More</span></button></div></div></div>`};
+  // Save: draws the card (picture, name, handle, StudyOS, QR code) into a PNG and saves or shares it.
+  const fsSave=async()=>{
+    const f=DZ.fsData||{name:'Friend',handle:'friend',col:'#c9b8c3'};
+    const W=600,H=560,ch=fpChr(f.avatar,'full');
+    const inner=s=>{const m=String(s||'').match(/<svg[^>]*viewBox="([^"]+)"[^>]*>([\s\S]*)<\/svg>\s*$/);return m?{vb:m[1],body:m[2]}:null};
+    const a=ch?inner(ch):null,q=inner(fsQr());
+    const pic=a?`<svg x="40" y="40" width="520" height="340" viewBox="${a.vb}" preserveAspectRatio="xMidYMax meet">${a.body}</svg>`
+      :`<circle cx="300" cy="210" r="120" fill="${f.col}"/><text x="300" y="250" text-anchor="middle" font-family="Arial,sans-serif" font-size="120" font-weight="700" fill="#2a1d1d">${esc(String(f.name||'?').charAt(0).toUpperCase())}</text>`;
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" rx="36" fill="#f7f7f7"/><rect x="24" y="24" width="552" height="372" rx="26" fill="#e5e5e7"/>${pic}
+<text x="44" y="458" font-family="Arial,sans-serif" font-size="38" font-weight="700" fill="#3c3c43">${esc(String(f.name||'Friend').split(' ')[0])}</text>
+<text x="44" y="490" font-family="Arial,sans-serif" font-size="20" fill="#777">${esc(f.handle||'')}</text>
+<text x="44" y="532" font-family="Arial,sans-serif" font-size="28" font-weight="800" fill="#9d8c98">StudyOS</text>
+${q?`<svg x="420" y="410" width="136" height="136" viewBox="${q.vb}">${q.body}</svg>`:''}</svg>`;
+    const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
+    try{
+      const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url});
+      const c=document.createElement('canvas');c.width=W*2;c.height=H*2;const g=c.getContext('2d');g.scale(2,2);g.drawImage(img,0,0);
+      const blob=await new Promise(r=>c.toBlob(r,'image/png'));if(!blob)throw new Error('no image');
+      const file=new File([blob],'studyos-'+(f.handle||'friend')+'.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:f.name+' on StudyOS'});return true}catch(e){if(/abort|cancel/i.test(String(e&&e.name||e)))return true}}
+      const a2=document.createElement('a');a2.href=URL.createObjectURL(blob);a2.download=file.name;document.body.appendChild(a2);a2.click();a2.remove();setTimeout(()=>URL.revokeObjectURL(a2.href),4000);
+      return true;
+    }catch(_){return false}finally{URL.revokeObjectURL(url)}
+  };
   const fsPlay=()=>{
     const f=DZ.fsData||{name:'Friend',handle:'friend'};
     const text=`Meet ${f.name} (@${f.handle}) on StudyOS. Study together: ${D.inviteUrl||'https://studyos.app'}`;
     R.querySelector('.fs-sheet').animate([{transform:'translateY(100%)'},{transform:'none'}],{duration:230,easing:'cubic-bezier(.22,.9,.28,1)',fill:'backwards'});
     R.querySelector('.fs-card').animate([{transform:'translateY(-14px) scale(.96)',opacity:0},{transform:'none',opacity:1}],{duration:230,easing:'cubic-bezier(.22,.9,.28,1)',fill:'backwards'});
-    const sys=()=>{try{CB.share?CB.share(text):toast('Sharing is not available here.')}catch(_){toast('Could not open sharing.')}};
+    const sys=()=>{try{if(CB.share)CB.share(text);else if(navigator.share)navigator.share({text}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>toast('Link copied')).catch(()=>toast('Could not copy'));else toast('Sharing is not available here.')}catch(_){toast('Could not open sharing.')}};
     R.onclick=e=>{
       const t=e.target;
       if(t.closest('[data-fsx]')){hap('light');go('Friend profile');return}
       if(t.closest('[data-fsw]')){hap('medium');try{window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank')}catch(_){sys()}return}
       if(t.closest('[data-fsm]')){hap('medium');try{window.location.href='sms:?body='+encodeURIComponent(text)}catch(_){sys()}return}
       if(t.closest('[data-fsi]')||t.closest('[data-fso]')){hap('medium');sys();return}
+      if(t.closest('[data-fss]')){const b=t.closest('[data-fss]');if(b.dataset.busy)return;b.dataset.busy=1;hap('medium');fsSave().then(ok=>{delete b.dataset.busy;toast(ok?'Profile card saved':'Could not save the card')});return}
       if(t.closest('[data-fsc]')){hap('medium');try{navigator.clipboard.writeText(text).then(()=>toast('Link copied')).catch(()=>toast('Could not copy'))}catch(_){toast('Could not copy')}return}
     };
   };

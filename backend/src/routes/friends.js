@@ -9,6 +9,7 @@ const Block = require("../models/Block");
 const Report = require("../models/Report");
 const FocusSession = require("../models/FocusSession");
 const Task = require("../models/Task");
+const StudentSettings = require("../models/StudentSettings");
 const requireAuth = require("../middleware/auth");
 const { award } = require("../services/gems");
 
@@ -246,6 +247,29 @@ router.get("/:userId/profile", async (req, res) => {
       Friendship.countDocuments({ status: "accepted", $or: [{ requester: other }, { recipient: other }] }),
     ]);
 
+    // Their avatar character and the friends you both have ("Followed by ...").
+    let avatar = "";
+    let mutual = [];
+    let mutualCount = 0;
+    try {
+      const idsOf = async (who) => (await Friendship.find({ status: "accepted", $or: [{ requester: who }, { recipient: who }] }).select("requester recipient").lean())
+        .map((f) => String(String(f.requester) === String(who) ? f.recipient : f.requester));
+      const [mineIds, theirIds] = await Promise.all([idsOf(me), idsOf(other)]);
+      const mineSet = new Set(mineIds);
+      const both = theirIds.filter((id) => mineSet.has(id) && id !== String(me) && id !== String(other));
+      mutualCount = both.length;
+      const pick = both.slice(0, 3);
+      const [people, settings] = await Promise.all([
+        pick.length ? Student.find({ _id: { $in: pick } }).select("name displayName picture").lean() : [],
+        StudentSettings.find({ student: { $in: [other, ...pick] } }).select("student prefs.avatar").lean(),
+      ]);
+      const av = new Map(settings.map((s) => [String(s.student), (s.prefs && typeof s.prefs.avatar === "string" ? s.prefs.avatar : "").slice(0, 200)]));
+      avatar = av.get(String(other)) || "";
+      mutual = people.map((p) => ({ id: String(p._id), name: p.displayName || p.name || "Friend", picture: p.picture || "", avatar: av.get(String(p._id)) || "" }));
+    } catch {
+      /* extras only: the profile still loads without them */
+    }
+
     res.json({
       id: String(friend._id),
       name: friend.displayName || friend.name,
@@ -260,6 +284,9 @@ router.get("/:userId/profile", async (req, res) => {
       friendsCount,
       week: weekOf(theirs.minutesByDay),
       meWeek: weekOf(mine.minutesByDay),
+      avatar,
+      mutual,
+      mutualCount,
     });
   } catch (error) {
     req.log?.error?.(error);

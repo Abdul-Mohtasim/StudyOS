@@ -2226,3 +2226,31 @@ html[data-theme="dark"] .dz .dz-undo{background:#ebe8ea;color:#1b1e25}
 .dz .dz-undo{left:12px;right:84px;bottom:calc(92px + env(safe-area-inset-bottom,0px));min-height:54px;border-radius:20px;padding:6px 6px 6px 14px;gap:8px;font-size:13.5px}
 .dz .dz-undo-b{height:42px;padding:0 12px;border-radius:15px;font-size:13px}
 .dz .dz-undo-t{line-height:1.25}
+
+
+/* ==== v99: friend profile like the reference: avatar character on grey, "Followed by", share sheet, report & block ==== */
+.dz .fp-hero.has-chr{height:calc(330px + env(safe-area-inset-top,0px));background:#e5e5e7;align-items:flex-end;overflow:hidden}
+.dz .fp-hero.has-chr::before{display:none}
+.dz .fp-chr{width:min(300px,82%);height:calc(100% - 64px - env(safe-area-inset-top,0px));display:flex;align-items:flex-end;justify-content:center;animation:fpChrIn .5s cubic-bezier(.2,.9,.3,1.1) both}
+.dz .fp-chr svg{width:100%;height:100%;display:block}
+@keyframes fpChrIn{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+@media (max-height:700px){.dz .fp-hero.has-chr{height:calc(260px + env(safe-area-inset-top,0px))}}
+.dz .fp-tog .fp-pp .fp-pa+.fp-pa{margin-left:-10px}
+.dz .fp-tog .fp-pa svg{width:100%;height:100%;display:block}
+/* share sheet: Instagram, WhatsApp, Messages / Save, More */
+.dz .fs-opts{grid-template-columns:repeat(4,minmax(0,1fr))!important;justify-items:center;gap:20px 8px!important;margin-top:18px!important}
+.dz .fs-opts button i{width:62px;height:62px;display:block}
+.dz .fs-opts button i svg{width:100%;height:100%;display:block}
+.dz .fs-opts button span{font:600 14px var(--body)!important;color:#ebe8ea}
+.dz .fs-opts button[data-fss],.dz .fs-opts button[data-fso]{grid-row:2}
+.dz .fs-opts button[data-fss]{grid-column:1}.dz .fs-opts button[data-fso]{grid-column:2}
+.dz .fs-opts button[data-fss][data-busy]{opacity:.5}
+.dz .fs-pic.chr{background:#e5e5e7!important;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.dz .fs-chr{width:100%;height:100%;display:flex;align-items:flex-end;justify-content:center}
+.dz .fs-chr svg{width:92%;height:100%;display:block}
+/* report and block: small, grey, centred, icon on the left */
+.dz .fp-dgs{gap:2px!important;margin:22px 0 calc(26px + env(safe-area-inset-bottom,0px))!important}
+.dz .fp .fp-dg{gap:10px!important;min-height:52px!important;padding:0 20px!important;color:#8b98a2!important;font:800 15px var(--body)!important;letter-spacing:.05em!important;border-radius:14px}
+.dz .fp .fp-dg svg{width:24px!important;height:24px!important}
+.dz .fp .fp-dg:active{background:rgba(255,255,255,.05);opacity:1}
+.dz .scr.nd.lt .fp .fp-dg{color:var(--mut)!important}
