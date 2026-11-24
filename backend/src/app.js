@@ -53,14 +53,17 @@ app.use(
 app.options(/.*/, cors(corsOptions));
 app.use(cors(corsOptions));
 
+// Feedback form: mounted first, before compression / overload guard / JSON parsing, and it reads its own body.
+// (On Vercel the request body can already be read by the platform, which made express.json fail with
+// "Internal server error". The route handles both cases itself.)
+app.use("/api/support", supportRoutes);
+
 // Smaller answers (gzip) and "busy, retry" instead of freezing when overloaded.
 // (After CORS, so the browser can read the "busy" answer and retry.)
 app.use(compress());
 app.use("/api", guard());
 app.use("/api", apiHeaders);
 
-// Feedback form: allows attachments (up to 3 MB of files, sent as base64), so it parses its own larger body first.
-app.use("/api/support", express.json({ limit: "6mb" }), supportRoutes);
 
 app.use(express.json({ limit: "100kb" }));
 

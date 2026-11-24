@@ -39,9 +39,49 @@ const MAX_BYTES = 3 * 1024 * 1024;
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const clean = (s, n) => String(s == null ? "" : s).replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").trim().slice(0, n);
 
-router.post("/feedback", limiter, async (req, res) => {
+// Read the JSON body ourselves: works when the host already parsed it (Vercel), when it is a raw
+// string/Buffer, or when the stream still has to be read. Never throws; returns {} on bad input.
+const MAX_BODY = 6 * 1024 * 1024;
+function readBody(req) {
+  return new Promise((resolve) => {
+    let pre;
+    try { pre = req.body; } catch { pre = undefined; }
+    if (pre && typeof pre === "object" && !Buffer.isBuffer(pre)) return resolve(pre);
+    if (typeof pre === "string" || Buffer.isBuffer(pre)) {
+      try { return resolve(JSON.parse(String(pre)) || {}); } catch { return resolve({ __bad: true }); }
+    }
+    if (req.readableEnded || req.complete === true && !req.readable) return resolve({});
+    const chunks = [];
+    let size = 0;
+    let done = false;
+    const finish = (v) => { if (!done) { done = true; resolve(v); } };
+    req.on("data", (c) => {
+      size += c.length;
+      if (size > MAX_BODY) { finish({ __big: true }); return; }
+      chunks.push(c);
+    });
+    req.on("end", () => {
+      if (done) return;
+      const txt = Buffer.concat(chunks).toString("utf8");
+      if (!txt) return finish({});
+      try { finish(JSON.parse(txt) || {}); } catch { finish({ __bad: true }); }
+    });
+    req.on("error", () => finish({ __bad: true }));
+    setTimeout(() => finish({ __bad: true }), 20000).unref?.();
+  });
+}
+
+router.post("/feedback", async (req, res, next) => {
+  req.body = await readBody(req);
+  next();
+}, (req, res, next) => {
+  // The limiter must never stop a real message by crashing.
+  try { limiter(req, res, () => next()); } catch { next(); }
+}, async (req, res) => {
   try {
     const b = req.body || {};
+    if (b.__big) return res.status(413).json({ error: "Attachments are too large. Keep them under 3 MB in total." });
+    if (b.__bad) return res.status(400).json({ error: "Could not read the form. Please try again." });
     if (b.website) return res.json({ ok: true }); // honeypot: bots fill this hidden field
 
     const email = clean(b.email, 200).toLowerCase();
@@ -98,8 +138,8 @@ router.post("/feedback", limiter, async (req, res) => {
     if (!row && !to) return res.status(503).json({ error: "Could not send right now. Please try again in a minute." });
     return res.json({ ok: true });
   } catch (err) {
-    if (req.log) req.log.error({ err }, "Feedback failed");
-    return res.status(500).json({ error: "Could not send. Please try again." });
+    console.error("Feedback failed:", err);
+    return res.status(500).json({ error: "Could not send. Please try again.", code: String((err && (err.code || err.name)) || "ERR").slice(0, 40) });
   }
 });
 
