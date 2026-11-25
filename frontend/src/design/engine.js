@@ -801,7 +801,8 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
       const ed=editing();
       let subs=SUBJR().slice();
       if(ed&&ed.subject&&!subs.some(x=>x.toLowerCase()===String(ed.subject).toLowerCase()))subs=[ed.subject,...subs];
-      const si=ed?Math.max(0,subs.findIndex(x=>x.toLowerCase()===String(ed.subject||'').toLowerCase())):0;
+      const pre=!ed&&DZ.preSubj?String(DZ.preSubj):'';if(pre&&!subs.some(x=>x.toLowerCase()===pre.toLowerCase()))subs=[pre,...subs];
+      const si=ed?Math.max(0,subs.findIndex(x=>x.toLowerCase()===String(ed.subject||'').toLowerCase())):pre?Math.max(0,subs.findIndex(x=>x.toLowerCase()===pre.toLowerCase())):0;DZ.preSubj='';
       const pi=ed?Math.max(0,['low','medium','high'].indexOf(String(ed.priority||'medium').toLowerCase())):1;
       let dueChips=['Today','Tomorrow','Pick date'],di=0;
       if(ed&&ed.dueDate){const t0=new Date(),t1=new Date();t1.setDate(t1.getDate()+1);
@@ -962,7 +963,8 @@ function fxLocked(name){
   if(F.running){hap('light');toast(name+' is in the Gem Shop.');return}
   DZ.openShop('Focus');toast('Unlock '+name+' under Focus and study.');
 }
-const focusHtml=()=>{
+const focusHtml=()=>{if(DZ.preFocusSubj&&!F.running){F.subj=DZ.preFocusSubj;DZ.preFocusSubj=''}return focusHtml0()};
+const focusHtml0=()=>{
   const run=F.running,idleFocus=isIdle()&&F.mode==='focus',pct=F.left/F.total;
   return wrap(`<div class="pg" style="padding-bottom:0"><div style="position:relative;height:40px">${run?`<span data-fstop style="position:absolute;left:8px;top:6px;color:#c9c9cc">${ICO.x}</span>`:fxBtn('plus',idleFocus)}${fxBtn('sound',true)}<span class="tag" data-fsubj style="position:absolute;left:50%;transform:translateX(-50%);top:2px;padding:9px 18px;border-radius:16px;font-size:14px;font-weight:700;white-space:nowrap;max-width:calc(100% - 128px);overflow:hidden;text-overflow:ellipsis">${esc(F.subj||'No subject')}</span></div>
 <div style="text-align:center;font:700 13px var(--body);letter-spacing:.1em;color:#bfc4c9;margin-top:22px">${MODES[F.mode].toUpperCase()}</div>
@@ -1214,7 +1216,7 @@ replace('Upload file',{
 });
 
 /* Search v106: suggestions, recent searches, filters, quick actions, highlighted matches */
-let SQ='',SFROM='Home',SF='All',SSEL=-1;
+let SQ='',SFROM='Home',SF='All',SSEL=-1;DZ.openSearch=q=>{SQ=String(q||'');SF='Tasks';SFROM=SCREENS[CUR]?SCREENS[CUR].t:'Home';go('Search')};
 const SRK='studyos_recent_search';
 const sRecent=()=>{try{const a=JSON.parse(localStorage.getItem(SRK)||'[]');return Array.isArray(a)?a.filter(x=>typeof x==='string').slice(0,8):[]}catch(_){return []}};
 const sRemember=q=>{q=String(q||'').trim();if(q.length<2)return;const a=[q,...sRecent().filter(x=>x.toLowerCase()!==q.toLowerCase())].slice(0,8);try{localStorage.setItem(SRK,JSON.stringify(a))}catch(_){}};
@@ -1338,7 +1340,7 @@ def:`<g ${SJO}><rect x="8" y="36" width="48" height="13" rx="3" fill="#7fd6c8"/>
 const sjKind=n=>{const t=String(n||'').toLowerCase();
   const T=[['chem',/chem/],['cs',/comput|program|coding|\bcode\b|\bit\b|software|informatic|robot|\bai\b/],['phys',/phys|mechanic|astronom/],['bio',/bio|science|nature|environment|health|medic|anatomy/],['math',/math|algebra|calcul|geometr|statist|trigon|arithm/],['geo',/geo|earth/],['hist',/hist|civic|social|pak.?stud|politic|law|ancient/],['isl',/islam|quran|religio|deen|theolog/],['econ',/econ|business|account|commerce|financ|market/],['art',/\bart\b|draw|design|paint|sketch/],['music',/music|piano|guitar|sing/],['eng',/engl|literat|writing|grammar|essay|reading|novel/],['lang',/urdu|hindi|arab|french|german|spanish|chinese|language|persian|punjabi|pashto|sindhi|turkish|japanese|korean/]];
   for(const [k,r] of T)if(r.test(t))return k;return 'def'};
-const subIcon=n=>`<svg viewBox="0 0 64 64" aria-hidden="true">${SJI[sjKind(n)]}</svg>`;
+const subIcon=n=>`<svg viewBox="0 0 64 64" aria-hidden="true">${SJI[sjKind(n)]}</svg>`;DZ.subIcon=subIcon;
 const subCol=s=>{let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))>>>0;return SC[h%SC.length]};
 const subList=()=>(D.subjectProgress&&D.subjectProgress.length)?D.subjectProgress:(D.subjects||[]).map(n=>({name:n,pct:0,done:0,total:0,min:0}));
 const subMin=m=>{m=Math.round(m||0);return m>=60?Math.floor(m/60)+'h '+(m%60)+'m':m+'m'};
@@ -1993,8 +1995,30 @@ ${row(I.eye,'Contacts','If you choose Find friends from contacts, email addresse
       let f='';[[0,0],[0,n-7],[n-7,0]].forEach(([r,c])=>{const x=c+m,y=r+m;f+=`<rect x="${x+.5}" y="${y+.5}" width="6" height="6" rx="1.9" fill="none" style="stroke:var(--qm,#181b22)" stroke-width="1"/><rect x="${x+2}" y="${y+2}" width="3" height="3" rx="1" style="fill:var(--qm,#181b22)"/>`});
       return `<svg viewBox="0 0 ${s} ${s}"><g style="fill:var(--qm,#181b22)">${d}</g>${f}</svg>`}catch(_){return ''}};
     const overlay=()=>{const h=qh();const i=h.indexOf('<div class="ov"');return h.slice(i)};
-    SCREENS[k].html=()=>(SCREENS[IDX('Profile')].html().replace(/<\/div><\/div>$/,'')+overlay()).replace(/(<div class="qimg">)[\s\S]*?<\/svg>/,'$1'+realQr()).replace('Friends scan this to add you on StudyOS.','Friends scan this to get StudyOS.').replace(/<button type="button" data-sh><svg(?:(?!<\/button>)[\s\S])*?Save<\/button>/,'');
+    SCREENS[k].html=()=>(SCREENS[IDX('Profile')].html().replace(/<\/div><\/div>$/,'')+overlay()).replace(/(<div class="qimg">)[\s\S]*?<\/svg>/,'$1'+realQr()).replace('Friends scan this to add you on StudyOS.','Friends scan this to get StudyOS.').replace(/(<button type="button") data-sh>(<svg(?:(?!<\/button>)[\s\S])*?)Save<\/button>/,'$1 data-qrsave>$2Save</button>');
+
+    // Save: draws only the card (QR code, logo, name, @username, StudyOS) into a PNG for the gallery.
+    const qrCardSave=async()=>{
+      const inner=s=>{const m=String(s||'').match(/<svg[^>]*viewBox="([^"]+)"[^>]*>([\s\S]*)<\/svg>\s*$/);return m?{vb:m[1],body:m[2]}:null};
+      const q=inner(realQr()),lg=inner(LOGO),W=640,H=820,nm=esc(D.fullName||'Student'),hn=esc('@'+(D.username||'student'));
+      const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#232b33"/><stop offset="1" stop-color="#181b22"/></linearGradient></defs>
+<rect width="${W}" height="${H}" rx="48" fill="url(#g)"/><rect x="60" y="60" width="520" height="520" rx="40" fill="#ffffff"/>
+${q?`<svg x="90" y="90" width="460" height="460" viewBox="${q.vb}">${q.body}</svg>`:''}
+<rect x="272" y="272" width="96" height="96" rx="22" fill="#1b1e25"/>${lg?`<svg x="290" y="290" width="60" height="60" viewBox="${lg.vb}">${lg.body}</svg>`:''}
+<text x="320" y="652" text-anchor="middle" font-family="Fredoka,Nunito,Arial,sans-serif" font-size="46" font-weight="700" fill="#ebe8ea">${nm}</text>
+<text x="320" y="700" text-anchor="middle" font-family="Nunito,Arial,sans-serif" font-size="28" font-weight="700" fill="#c9b8c3">${hn}</text>
+<text x="320" y="770" text-anchor="middle" font-family="Nunito,Arial,sans-serif" font-size="22" font-weight="700" fill="#76838d">Scan to study with me on StudyOS</text></svg>`;
+      const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
+      try{const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url});
+        const c=document.createElement('canvas');c.width=W*2;c.height=H*2;const g=c.getContext('2d');g.scale(2,2);g.drawImage(img,0,0);
+        const blob=await new Promise(r=>c.toBlob(r,'image/png'));if(!blob)throw 0;
+        const file=new File([blob],'studyos-'+(D.username||'profile')+'-qr.png',{type:'image/png'});
+        if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'My StudyOS QR code'});return 'shared'}catch(e){if(/abort|cancel/i.test(String(e&&e.name||e)))return 'cancel'}}
+        const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);return 'saved'
+      }catch(_){return 'fail'}finally{URL.revokeObjectURL(url)}};
     SCREENS[k].play=()=>{qp();const old=R.onclick;R.onclick=e=>{
+      const sv=e.target.closest('[data-qrsave]');if(sv){if(sv.dataset.busy)return;sv.dataset.busy=1;hap('medium');sv.animate([{transform:'scale(.93)'},{transform:'none'}],{duration:200});
+        qrCardSave().then(r=>{delete sv.dataset.busy;if(r==='saved')toast('QR card saved');else if(r==='shared')toast('Choose "Save to gallery" to keep it');else if(r==='fail')toast('Could not save the card')});return}
       const b=e.target.closest('[data-sh]');
       if(b){const txt=en0(b).trim();
         if(/Copy/.test(txt)){try{navigator.clipboard.writeText(D.inviteUrl||'').then(()=>toast('Link copied')).catch(()=>toast('Could not copy'))}catch(_){toast('Could not copy')}hap('medium');return}
@@ -2100,6 +2124,7 @@ host.addEventListener('click',e=>{
   const BACK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4M10 6l-6 6 6 6"/></svg>';
   const QRI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><path d="M14 14h3v3h-3zM19 14h2M14 19h2M18 18h3v3h-3z" stroke-linecap="round"/></svg>';
   const PFR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.6" fill="currentColor" stroke="none"/><path d="M2.5 20.5c.6-3.800 3.200-5.800 6.500-5.800s5.900 2 6.500 5.800z" fill="currentColor" stroke="none"/><path d="M16 11.500l2.600 2.600 4.400-5"/></svg>';
+  const FUSR='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="8" r="3.600"/><path d="M2.500 20.500c.6-3.800 3.200-5.800 6.500-5.800s5.900 2 6.500 5.800z"/><path d="M19 8v8M15 12h8" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" fill="none"/></svg>';
   const FLG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4.500h12.500l-2.300 3.800 2.300 3.800H5"/></svg>';
   const NOP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M5.600 5.600l12.800 12.800"/></svg>';
   const REASONS=[['spam','Spam or advertising'],['harassment','Harassment or bullying'],['inappropriate','Inappropriate name or picture'],['fake','Fake or impersonating account'],['other','Something else']];
@@ -2167,8 +2192,7 @@ host.addEventListener('click',e=>{
       :`<div class="fp-handle">@${esc(handleOf(name,d)).toUpperCase()}${d.joinedYear?' · JOINED '+esc(d.joinedYear):''}</div>
 <div class="fp-3 fx-3s"><div><b><i>${FLAME}</i>${sk(num(d.streak))}</b><small>Day streak</small></div><div><b><i>${PPL}</i>${sk(num(d.friendsCount))}</b><small>Friends</small></div><div><b><i>${CUBE}</i>${sk(num(d.gems!=null?d.gems:list.gems))}</b><small>Gems</small></div></div>
 ${mutualRow(d,name,col,pic)}
-<div class="fp-act2"><button type="button" class="fp-fb" data-fpnone aria-label="You are friends">${PFR}<span>FRIENDS</span></button><button type="button" class="fp-qb" data-fpqr aria-label="Share ${esc(first(name))}'s profile">${QRI}</button></div>
-<button type="button" class="fp-gf${FP.gift?' armed':''}${FP.busy?' busy':''}" data-fpgift aria-label="Send ${price} gems to ${esc(name)}"><span class="fp-gi">${CUBE}</span>${FP.busy?'SENDING…':(FP.gift?'CONFIRM '+price+' GEMS':'GIFT '+price+' GEMS')}</button>
+<div class="fp-act2">${FP.unf?`<button type="button" class="fp-fb fp-follow" data-fpfollow aria-label="Follow ${esc(first(name))}">${FUSR}<span>${FP.req?'REQUESTED':'FOLLOW'}</span></button>`:`<button type="button" class="fp-fb${FP.unc?' armed':''}" data-fpunf aria-label="${FP.unc?'Tap again to unfollow':'Following. Tap to unfollow'}">${PFR}<span>${FP.unc?'UNFOLLOW?':'FOLLOWING'}</span></button>`}<button type="button" class="fp-qb" data-fpqr aria-label="Share ${esc(first(name))}'s profile">${QRI}</button></div>
 ${FP.msg?`<div class="fp-msg${FP.msgOk?' ok':''}" role="status">${esc(FP.msg)}</div>`:''}
 <div class="fp-sec">WEEKLY PROGRESS</div>
 ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="height:150px"></div>'}
@@ -2182,7 +2206,7 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
   <div><span class="fp-ico">${TSK}</span><b>${sk(num(d.tasksDone)+(d.tasksDone===1?' task':' tasks'))}</b></div></div>
 <div class="fp-sec">ACHIEVEMENTS</div>
 <div class="fp-bds fx-bds">${ready?fxBadges(d):'<i class="fp-sk" style="width:100%;height:84px;border-radius:16px"></i>'}</div>
-<button type="button" class="fp-rm${FP.rm?' armed':''}" data-fprm>${FP.rm?'TAP AGAIN TO REMOVE '+esc(first(name)).toUpperCase():'REMOVE FRIEND'}</button>
+${FP.unf?'':`<button type="button" class="fp-rm${FP.rm?' armed':''}" data-fprm>${FP.rm?'TAP AGAIN TO REMOVE '+esc(first(name)).toUpperCase():'REMOVE FRIEND'}</button>`}
 <div class="fp-dgs"><button type="button" class="fp-dg" data-fpreport>${FLG}<span>REPORT USER</span></button><button type="button" class="fp-dg" data-fpblock>${NOP}<span>BLOCK USER</span></button></div>`;
     return `<div class="scr n nd fx3" style="--pg:#181b22"><div class="fp" data-fpscroll>
 <div class="fp-hero has-chr fx-hero"><i class="fx-hb1"></i><i class="fx-hb2"></i>${chr?`<div class="fp-chr" aria-hidden="true">${chr}</div>`:`<div class="fp-av" style="--c:${col}">${avatar(name,pic)}</div>`}</div>
@@ -2242,6 +2266,17 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
       if(t.closest('[data-fpblock]')){hap('light');sheet('block');return}
       if(t.closest('[data-fpqr]')){hap('medium');const d=FP.data||{},l=(D.friends||[]).find(f=>f.id===FP.id)||{};const nm=d.name||l.name||'Friend';DZ.fsBack='';DZ.fsData={id:FP.id,name:nm,pic:d.picture||l.picture||'',handle:handleOf(nm,d),col:fpCol(nm),avatar:d.avatar||''};go('Friend share');return}
       if(t.closest('[data-fpretry]')){hap('light');FP.err='';FP.data=null;go('Friend profile',true);load();return}
+      if(t.closest('[data-fpunf]')){
+        if(!FP.unc){hap('light');FP.unc=true;redraw();setTimeout(()=>{if(FP.unc){FP.unc=false;if(SCREENS[CUR]&&SCREENS[CUR].t==='Friend profile')redraw()}},3500);return}
+        FP.unc=false;hap('press');const id=FP.id;
+        let r=null;try{r=CB.removeFriend?await CB.removeFriend(id):null}catch(_){r=null}
+        if(r&&r.ok!==false){FP.unf=true;FP.req=false;D.friends=(D.friends||[]).filter(f=>String(f.id)!==String(id));toast('Unfollowed '+((FP.data&&FP.data.name)||'friend').split(' ')[0])}else toast((r&&r.message)||'Could not unfollow. Try again.');
+        if(SCREENS[CUR]&&SCREENS[CUR].t==='Friend profile')redraw();return}
+      if(t.closest('[data-fpfollow]')){
+        if(FP.req)return;hap('press');FP.req=true;redraw();
+        let r=null;try{r=CB.sendRequest?await CB.sendRequest(FP.id):null}catch(_){r=null}
+        if(r&&r.ok){if(r.status==='friends'){FP.unf=false;FP.req=false;toast('You follow each other again!')}else toast('Follow request sent')}else{FP.req=false;toast((r&&r.error)||'Could not follow. Try again.')}
+        if(SCREENS[CUR]&&SCREENS[CUR].t==='Friend profile')redraw();return}
       if(t.closest('[data-fpgift]')){
         if(FP.busy)return;
         if(!FP.gift){hap('light');FP.gift=true;FP.msg='';redraw();return}
@@ -2321,7 +2356,7 @@ ${q?`<svg x="420" y="410" width="136" height="136" viewBox="${q.vb}">${q.body}</
   DZ.fpFrom='Profile';
   DZ.openFriend=(id,from)=>{
     if(!id)return;
-    FP={id:String(id),from:from||'Profile',loading:false,data:null,err:'',rm:false,gift:false,busy:false,msg:'',sheet:null,reason:''};
+    FP={unf:false,unc:false,req:false,id:String(id),from:from||'Profile',loading:false,data:null,err:'',rm:false,gift:false,busy:false,msg:'',sheet:null,reason:''};
     DZ.fpFrom=from||'Profile';hap('light');go('Friend profile');load();
   };
 }
@@ -2511,28 +2546,28 @@ const MN=['January','February','March','April','May','June','July','August','Sep
 const svKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 let SVM=0;
 DZ.slide=dir=>{try{if(R&&R.animate){const s=R.querySelector('.svs');R.animate([{opacity:.0,transform:`translateX(${dir*56}px)`},{opacity:1,transform:'none'}],{duration:260,easing:'cubic-bezier(.2,.85,.25,1)'})}}catch(_){}};
-const svTier=n=>n>=100?'Legend':n>=30?'Blazing':n>=7?'On fire':n>0?'Warming up':'Not started';
+const svTier=n=>n>=365?'Streak legend':n>=100?'Streak society':n>=30?'Blazing':n>=7?'On fire':n>0?'Warming up':'Start today';
 const svHead=(tab)=>`<div class="svh"><button class="svx" type="button" data-svx aria-label="Close">${SV_X}</button><b>Streak</b><button class="svx" type="button" data-svsh aria-label="Share my streak">${SV_SH}</button></div>
 <div class="svtabs" role="tablist"><button type="button" role="tab" aria-selected="${tab==='p'}" class="${tab==='p'?'on':''}" data-svtab="p">Personal</button><button type="button" role="tab" aria-selected="${tab==='f'}" class="${tab==='f'?'on':''}" data-svtab="f">Friends</button></div>`;
 const svCal=()=>{
   const keys=new Set(D.streakDays||[]),ice=new Set((D.shop&&D.shop.protectedDays)||[]);
   const now=new Date(),base=new Date(now.getFullYear(),now.getMonth()+SVM,1),y=base.getFullYear(),m=base.getMonth();
-  const lead=(base.getDay()+6)%7,dim=new Date(y,m+1,0).getDate(),today=svKey(now);
+  const lead=base.getDay(),dim=new Date(y,m+1,0).getDate(),today=svKey(now);
   const cells=[];for(let i=0;i<lead;i++)cells.push(null);for(let d=1;d<=dim;d++)cells.push(d);while(cells.length%7)cells.push(null);
   let rows='';
   for(let r=0;r<cells.length/7;r++){
     const row=cells.slice(r*7,r*7+7);let caps='',run=null;const flush=()=>{if(run){caps+=`<i class="svcap${run.ice?' ice':''}" style="left:calc(${run.s}*100%/7 + 2px);width:calc(${run.e-run.s+1}*100%/7 - 4px)"></i>`;run=null}};
     const nums=row.map((d,c)=>{
       if(!d){flush();return '<span></span>'}
-      const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),st=keys.has(k),ic=ice.has(k)&&!st,on=st||ic;
+      const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),ic=ice.has(k),st=keys.has(k)&&!ic,on=st||ic;
       if(on){if(run&&run.ice!==ic)flush();if(run)run.e=c;else run={s:c,e:c,ice:ic}}else flush();
-      const cls=(on?'on':'')+(k===today?' td':'')+(!on&&k>today?' fu':'');
+      const cls=(st?'on':'')+(ic?' ice':'')+(k===today?' td':'')+(!on&&k>today?' fu':'');
       return `<span class="${cls.trim()}">${d}</span>`;
     }).join('');flush();
-    rows+=`<div class="svrow">${caps}${nums}</div>`;
+    rows+=`<div class="svrow simple">${nums}</div>`;
   }
   return `<div class="svcm"><button type="button" data-svmo="-1" aria-label="Previous month">${SV_CH(0)}</button><b>${MN[m]} ${y}</b><button type="button" data-svmo="1" aria-label="Next month"${SVM>=0?' disabled':''}>${SV_CH(1)}</button></div>
-<div class="svwd">${['Mo','Tu','We','Th','Fr','Sa','Su'].map(x=>`<span>${x}</span>`).join('')}</div>${rows}`;
+<div class="svwd">${['Su','Mo','Tu','We','Th','Fr','Sa'].map(x=>`<span>${x}</span>`).join('')}</div>${rows}`;
 };
 const svPersonal=()=>{
   const n=Math.max(0,D.streak||0),nx=GOALS.find(g=>g>n)||(Math.ceil((n+1)/100)*100),pct=Math.min(100,n/nx*100);
@@ -2589,7 +2624,7 @@ const svPlay=tab=>()=>{
   const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(DZ.flame){DZ.flame.destroy();DZ.flame=null}
   const n=Math.max(0,D.streak||0);
-  const hostEl=$(tab==='p'?'[data-svfl]':'[data-svfl2]',R);
+  const hostEl=tab==='p'?$('[data-svfl]',R):null;
   if(hostEl){DZ.flame=createFlame(hostEl,{state:n===0?'inactive':'idle'});hostEl.onclick=()=>{hap('streakIgnite');DZ.flame&&DZ.flame.increase();playStreakClip(.8)}}
   const swapCal=()=>{const c=$('.svcal',R);if(c){c.innerHTML=svCal();c.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:220,easing:'ease-out'})}};
   R.onclick=e=>{
@@ -2627,7 +2662,7 @@ SCREENS.push({t:'Streak friends',d:'Your friends and their streaks',spec:{m:'An 
   const ensure=()=>{
     if(bar&&bar.isConnected)return bar;
     bar=document.createElement('div');bar.className='dz-undo';bar.setAttribute('role','status');bar.setAttribute('aria-live','polite');
-    bar.innerHTML='<span class="dz-undo-t"></span><button type="button" class="dz-undo-b" aria-label="Undo">\u21B6 UNDO</button><i class="dz-undo-p"></i>';
+    bar.innerHTML='<span class="dz-undo-t"></span><button type="button" class="dz-undo-b" aria-label="Undo"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.600\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 14L4 9l5-5\"/><path d=\"M4 9h10.500a5.500 5.500 0 010 11H11\"/></svg><span>UNDO</span></button><i class="dz-undo-p"></i>';
     bar.querySelector('.dz-undo-b').addEventListener('click',async ev=>{
       ev.stopPropagation();const c=cur;if(!c)return;hide();hap('light');
       try{if(c.pending)await c.pending}catch(_){}
@@ -2675,6 +2710,83 @@ SCREENS.push({t:'Streak friends',d:'Your friends and their streaks',spec:{m:'An 
           return}
         if(old)old(e)};
     };
+  }
+}
+
+
+/* ==== v108: My subjects redesign: summary, filters, sort, actions, add subject ==== */
+{
+  const k=IDX('My subjects');
+  if(k>=0){
+    let SF2='All',SS2='progress',OPEN='';
+    const BK2=DZ.BKX||'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4M10 6l-6 6 6 6"/></svg>';
+    const I={
+      up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>',
+      plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+      clk:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round"><circle cx="12" cy="12" r="8.500"/><path d="M12 7.500V12l3 2"/></svg>',
+      list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.500 12.500l2.500 2.500 4.500-5"/></svg>',
+      note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h5"/></svg>',
+      del:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+      chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+      ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.500l4.500 4.500L19 7.500"/></svg>'
+    };
+    const COLS=['#7fa8ff','#6fcf97','#e8a83a','#ff8a9a','#b9a7ff','#4fc3f7','#f0a868','#9ad0c2'];
+    const colOf2=s=>{let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))>>>0;return COLS[h%COLS.length]};
+    const mins=m=>{m=Math.round(m||0);return m>=60?Math.floor(m/60)+'h '+(m%60?m%60+'m':''):m+'m'};
+    const list=()=>(D.subjectProgress&&D.subjectProgress.length)?D.subjectProgress:(D.subjects||[]).map(n=>({name:n,pct:0,done:0,total:0,min:0}));
+    const notesOf=n=>(D.notes||[]).filter(x=>String(x.subject||'').toLowerCase()===String(n).toLowerCase()).length;
+    const status=x=>x.total&&x.done>=x.total?'done':x.done>0||x.min>0?'going':'new';
+    const ring=(p,c)=>{const C=2*Math.PI*42;return `<svg viewBox="0 0 100 100" class="sj-ring"><circle cx="50" cy="50" r="42" class="sj-rt"/><circle cx="50" cy="50" r="42" class="sj-rp" style="stroke:${c};stroke-dasharray:${C.toFixed(1)};--off:${(C*(1-p/100)).toFixed(1)};--c0:${C.toFixed(1)}"/></svg>`};
+    const html=()=>{
+      const L=list(),tot=L.reduce((a,x)=>a+(x.total||0),0),dn=L.reduce((a,x)=>a+(x.done||0),0),mn=L.reduce((a,x)=>a+(x.min||0),0);
+      const pct=tot?Math.round(dn/tot*100):0,comp=L.filter(x=>status(x)==='done').length;
+      let V=L.filter(x=>SF2==='All'||(SF2==='In progress'?status(x)!=='done':status(x)==='done'));
+      V=V.slice().sort(SS2==='name'?(a,b)=>String(a.name).localeCompare(b.name):SS2==='time'?(a,b)=>(b.min||0)-(a.min||0):(a,b)=>(b.pct|0)-(a.pct|0));
+      const title=D.fullName?esc(D.fullName)+'’s Subjects':'My Subjects';
+      const cnt={All:L.length,'In progress':L.filter(x=>status(x)!=='done').length,Completed:comp};
+      const rows=V.map((x,i)=>{const nm=String(x.name||'?'),p=Math.max(0,Math.min(100,x.pct|0)),c=colOf2(nm),st=status(x),op=OPEN===nm,nn=notesOf(nm);
+        return `<div class="sj-c${op?' open':''}" style="--i:${i};--sc:${c}">
+<button type="button" class="sj-hd" data-sjo="${esc(nm)}" aria-expanded="${op}"><span class="sj-ic">${DZ.subIcon?DZ.subIcon(nm):''}</span>
+<span class="sj-tx"><b>${esc(nm)}</b><small>${x.total?x.done+'/'+x.total+' tasks':'No tasks yet'}${x.min?' · '+mins(x.min):''}${nn?' · '+nn+' '+(nn===1?'note':'notes'):''}</small><span class="sj-bar"><i style="width:${p}%"></i></span></span>
+<span class="sj-pc">${st==='done'?`<em class="sj-ok">${I.ok}</em>`:''}<b>${p}%</b><span class="sj-chev">${I.chev}</span></span></button>
+<div class="sj-act"><div>
+<button type="button" data-sja="task" data-n="${esc(nm)}">${I.plus}<span>Add task</span></button>
+<button type="button" data-sja="focus" data-n="${esc(nm)}">${I.clk}<span>Focus</span></button>
+<button type="button" data-sja="tasks" data-n="${esc(nm)}">${I.list}<span>Tasks</span></button>
+<button type="button" data-sja="notes" data-n="${esc(nm)}">${I.note}<span>Notes</span></button>
+${x.custom&&!x.total?`<button type="button" class="sj-rm" data-sja="del" data-n="${esc(nm)}">${I.del}<span>Remove</span></button>`:''}
+</div></div></div>`}).join('');
+      const empty=`<div class="sj-empty"><b>${L.length?'Nothing here':'No subjects yet'}</b><p>${L.length?'Try another filter.':'Add a subject to start tracking your progress.'}</p></div>`;
+      return `<div class="scr n nd sjx" style="--pg:#181b22"><div class="sj-pg">
+<div class="sj-h"><button type="button" class="sj-x" data-sback aria-label="Back">${BK2}</button><h1>${title}</h1><button type="button" class="sj-x" data-sshare aria-label="Share">${I.up}</button></div>
+<div class="sj-l" data-sc>
+<div class="sj-sum"><div class="sj-rw">${ring(pct,'var(--mv)')}<div class="sj-rc"><b>${pct}%</b><small>overall</small></div></div>
+<div class="sj-st"><div><b>${comp}<em>/${L.length}</em></b><small>Completed</small></div><div><b>${dn}<em>/${tot}</em></b><small>Tasks done</small></div><div><b>${mins(mn)}</b><small>Focus time</small></div></div></div>
+<div class="sj-ctl"><div class="sj-tabs">${['All','In progress','Completed'].map(n=>`<button type="button" class="sj-tab${SF2===n?' on':''}" data-sjf="${n}">${n}<i>${cnt[n]}</i></button>`).join('')}</div>
+<label class="sj-sort"><span>Sort</span><select data-sjs aria-label="Sort subjects"><option value="progress"${SS2==='progress'?' selected':''}>Progress</option><option value="name"${SS2==='name'?' selected':''}>Name</option><option value="time"${SS2==='time'?' selected':''}>Focus time</option></select></label></div>
+<div class="sj-list">${rows||empty}</div>
+<button type="button" class="sj-add" data-sjadd>${I.plus}<span>Add a subject</span></button>
+</div></div></div>`};
+    const play=()=>{S.mute=false;enter();
+      if(!SOFT){const rp=R.querySelector('.sj-rp');if(rp)rp.animate([{strokeDashoffset:rp.style.getPropertyValue('--c0')},{strokeDashoffset:rp.style.getPropertyValue('--off')}],{duration:900,delay:150,easing:'cubic-bezier(.3,.8,.25,1)',fill:'forwards'});else{}}
+      else{const rp=R.querySelector('.sj-rp');if(rp)rp.style.strokeDashoffset=rp.style.getPropertyValue('--off')}
+      const sel=R.querySelector('[data-sjs]');if(sel)sel.onchange=()=>{SS2=sel.value;hap('tick');go('My subjects',true)};
+      R.onclick=async e=>{const t=e.target;
+        if(t.closest('[data-sback]')){hap('light');go('Profile');return}
+        if(t.closest('[data-sshare]')){hap('light');const L=list(),txt=(D.fullName?D.fullName+'’s Subjects':'My Subjects')+' on StudyOS\n'+(L.length?L.map(x=>'• '+x.name+': '+(x.pct|0)+'%').join('\n'):'No subjects yet');
+          if(CB.share)CB.share(txt);else if(navigator.share)navigator.share({text:txt}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>toast('Copied to clipboard')).catch(()=>{});return}
+        const f=t.closest('[data-sjf]');if(f){SF2=f.dataset.sjf;OPEN='';hap('tick');go('My subjects',true);return}
+        if(t.closest('[data-sjadd]')){hap('light');if(IDX('Add subject')>=0)go('Add subject');else if(CB.open)CB.open('subjects');return}
+        const o=t.closest('[data-sjo]');if(o){const n=o.dataset.sjo;OPEN=OPEN===n?'':n;hap('light');const c=o.closest('.sj-c');R.querySelectorAll('.sj-c.open').forEach(x=>{if(x!==c){x.classList.remove('open');x.querySelector('[data-sjo]').setAttribute('aria-expanded','false')}});if(c){c.classList.toggle('open',OPEN===n);o.setAttribute('aria-expanded',String(OPEN===n))}return}
+        const a=t.closest('[data-sja]');if(!a)return;const n=a.dataset.n,kind=a.dataset.sja;hap('light');
+        if(kind==='task'){DZ.editTask=null;DZ.preSubj=n;go('Add task');return}
+        if(kind==='focus'){DZ.preFocusSubj=n;go('Focus');return}
+        if(kind==='tasks'){if(typeof SQ!=='undefined'){}DZ.searchQ=n;if(DZ.openSearch)DZ.openSearch(n);else go('Tasks');return}
+        if(kind==='notes'){if(CB.open)CB.open('subjects');return}
+        if(kind==='del'){a.disabled=true;hap('press');const removed=CB.removeSubject?await CB.removeSubject(n):null;
+          if(removed){OPEN='';if(DZ.undoOffer)DZ.undoOffer('subject',removed)}else{a.disabled=false;toast('Could not remove the subject.')}return}
+      }};
+    SCREENS[k].html=html;SCREENS[k].play=play;
   }
 }
 
@@ -2870,6 +2982,143 @@ ${suggBlock(12)}`);
       if(e.target.closest('[data-ffstreak]')){hap('light');DZ.openStreakInvite();return}
       if(e.target.closest('[data-friends]')){hap('light');DZ.openFindFriends();return}
       if(old)old(e)}}}}
+}
+
+/* ==== v109: Streak celebration (ignite → spin jump → slam → count up → week fills) + real Streak hub ==== */
+{
+  const dayKey=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  // the real streak data: studied days from the app (focus sessions, finished tasks, freezes)
+  const studied=()=>new Set(Array.isArray(D.streakDays)?D.streakDays:[]);
+  const iced=()=>new Set((D.shop&&D.shop.protectedDays)||[]);
+  // ---- tiny synth for the celebration (separate from the tap sounds, which stay silent) ----
+  let AC=null;const ac=()=>{try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC}catch(_){return null}};
+  const tone=(f,d,o={})=>{const c=ac();if(!c)return;const t=c.currentTime+(o.t||0),os=c.createOscillator(),g=c.createGain();os.type=o.type||'sine';os.frequency.setValueAtTime(f,t);if(o.f2)os.frequency.exponentialRampToValueAtTime(o.f2,t+d);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(o.g||.2,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);os.connect(g);g.connect(c.destination);os.start(t);os.stop(t+d+.05)};
+  const noise=(d,o={})=>{const c=ac();if(!c)return;const t=c.currentTime+(o.t||0),n=Math.floor(c.sampleRate*d),b=c.createBuffer(1,n,c.sampleRate),a=b.getChannelData(0);for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*Math.pow(1-i/n,o.p||2);
+    const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=b;f.type=o.type||'lowpass';f.frequency.setValueAtTime(o.f1||1200,t);if(o.f2)f.frequency.exponentialRampToValueAtTime(o.f2,t+d);g.gain.value=o.g||.3;s.connect(f);f.connect(g);g.connect(c.destination);s.start(t)};
+  const SND={
+    ignite(){noise(.35,{f1:600,f2:4000,type:'bandpass',g:.35});tone(220,.3,{f2:660,type:'triangle',g:.12})},
+    whoosh(){noise(.45,{f1:400,f2:2600,type:'bandpass',g:.3,p:1.2});tone(330,.4,{f2:990,g:.08})},
+    slam(){tone(110,.45,{f2:38,g:.7});noise(.25,{f1:900,f2:120,g:.45});tone(660,.12,{t:.02,type:'square',g:.04})},
+    count(i){tone(740+i*60,.08,{type:'triangle',g:.12})},
+    day(i){tone(880+i*70,.1,{type:'triangle',g:.13});tone(1760+i*140,.06,{t:.03,g:.05})},
+    win(){[784,988,1175,1568].forEach((f,i)=>{tone(f,.28,{t:i*.09,type:'triangle',g:.14});tone(f*2,.16,{t:i*.09,g:.03})})}
+  };
+  // ---- the flame (same shape as the reference: rounded red flame, orange body, white drop) ----
+  const FLAME=(id,grey)=>`<svg viewBox="0 0 120 140" class="sc-fl${grey?' grey':''}" aria-hidden="true"><defs>
+<linearGradient id="${id}a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5a36"/><stop offset="1" stop-color="#ff2b3b"/></linearGradient>
+<linearGradient id="${id}b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb02e"/><stop offset="1" stop-color="#ff6a2a"/></linearGradient></defs>
+<path class="f1" d="M60 6c6 18 20 24 30 38 12 17 14 30 12 44-3 26-22 44-42 44S21 114 18 88c-2-17 3-30 13-42 3 9 9 14 15 15-3-21 2-40 14-55z" fill="url(#${id}a)"/>
+<path class="f2" d="M60 34c5 12 16 18 22 30 8 15 7 30 1 42-6 12-15 18-23 18s-18-6-23-18c-5-11-5-23 1-33 2 6 6 9 10 10-1-17 4-34 12-49z" fill="url(#${id}b)"/>
+<path class="f3" d="M41 58c4-10 10-16 15-20-2 10-1 17 2 23-7-2-13-2-17-3z" fill="#ffd2a3" opacity=".55"/>
+<path class="f4" d="M60 72c6 10 14 15 14 26a14 14 0 01-28 0c0-11 8-16 14-26z" fill="#fff"/></svg>`;
+  const CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.400" stroke-linecap="round" stroke-linejoin="round"><path d="M5.500 12.500l4.500 4.500L18.500 7.500"/></svg>';
+  const CHEST='<svg viewBox="0 0 40 36" aria-hidden="true"><rect x="3" y="12" width="34" height="21" rx="4" fill="#8a95a3"/><path d="M3 16c0-7 6-12 17-12s17 5 17 12z" fill="#a9b3bf"/><rect x="3" y="15" width="34" height="4" fill="#6c7683"/><rect x="16" y="13" width="8" height="10" rx="2" fill="#d6dbe1"/><circle cx="20" cy="18" r="1.800" fill="#6c7683"/></svg>';
+  const SH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7.500 7.500L12 3l4.500 4.500M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>';
+  const info=()=>{const n=Math.max(0,D.streak||0),now=new Date(),dow=(now.getDay()+6)%7,S0=studied(),tk=dayKey(now),today=S0.has(tk)||(D.todayMin||0)>0;
+    const days=[];for(let i=0;i<7;i++){const d=new Date(now);d.setDate(now.getDate()+i-dow);const k=dayKey(d);days.push(i<dow?S0.has(k):i===dow?today:false)}
+    return {n,dow,today,days}};
+  const digits=(s)=>[...s].map(()=>`<span class="sc-d"><span class="sc-c">${'0123456789'.split('').map(x=>`<b>${x}</b>`).join('')}</span></span>`).join('');
+  const html=()=>{const I=info(),L=['Mo','Tu','We','Th','Fr','Sa','Su'],first=String(D.first||'').split(' ')[0];
+    const lo=I.days.indexOf(true),hi=I.days.lastIndexOf(true);
+    return wrapD(`<div class="scx"><button class="sc-x" type="button" data-scback aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+<div class="sc-stage"><div class="sc-arc"></div><div class="sc-sh"></div><div class="sc-fw">${FLAME('scg',true)}${FLAME('scf',false)}</div><div class="sc-pill"></div><div class="sc-emb"></div></div>
+<div class="sc-num" aria-label="${I.n} day streak">${digits(String(I.n))}</div><div class="sc-lb">day streak</div>
+<div class="sc-wk"><div class="sc-wl">${L.map((d,i)=>`<span class="${i===I.dow?'t':''}">${d}</span>`).join('')}</div>
+<div class="sc-wr"><i class="sc-cap" style="--lo:${lo<0?0:lo};--hi:${hi<0?0:hi}"></i>${L.map((d,i)=>`<span class="sc-dot${I.days[i]?' on':''}${i===I.dow?' t':''}${i>I.dow?' fu':''}" style="--k:${i}">${i===6&&!I.days[i]?CHEST:I.days[i]?CHK:''}</span>`).join('')}</div></div>
+<p class="sc-msg">${I.n===0?'Study today to light your first flame!':I.today?`Keep learning tomorrow to make it ${I.n+1}!`:`Study today to keep your ${I.n} day streak!`}</p>
+<div class="sc-bt"><button class="sc-shb" type="button" data-scshare aria-label="Share my streak">${SH}</button><button class="sc-go" type="button" data-scgo>${I.n} ${I.n===1?'DAY':'DAYS'}. GO ${esc(first.toUpperCase()||'YOU')}</button></div></div>`)};
+  const play=()=>{const I=info(),reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const to=String(I.n),from=I.today&&I.n>0?String(I.n-1).padStart(to.length,' '):to;
+    const cols=$$('.sc-c',R),set=(c,ch)=>{c.style.transform=`translateY(${-(ch===' '?0:+ch)*10}%)`;c.parentNode.classList.toggle('blank',ch===' ')};
+    R.onclick=e=>{if(e.target.closest('[data-scback]')){back();return}
+      if(e.target.closest('[data-scshare]')){hap('light');if(CB.share)CB.share(I.n+' day study streak on StudyOS! Can you beat it?');return}
+      if(e.target.closest('[data-scgo]')){hap('success');back();return}
+      if(e.target.closest('.sc-fw')){hap('streakIgnite');SND.ignite();const w=$('.sc-fw',R);w&&w.animate([{transform:'none'},{transform:'translateY(-30px) rotate(-12deg) scale(1.08)'},{transform:'none'}],{duration:460,easing:'cubic-bezier(.3,1.4,.5,1)'});embers(10)}};
+    const root=$('.scx',R),stage=$('.sc-stage',R),fw=$('.sc-fw',R),grey=$('.sc-fl.grey',R),fl=$$('.sc-fl',R)[1],pill=$('.sc-pill',R),arc=$('.sc-arc',R),num=$('.sc-num',R);
+    if(!fw||!fl||!grey||!num){cols.forEach((c,i)=>set(c,to[i]));return}
+    const embers=(n)=>{const box=$('.sc-emb',R);if(!box||reduce)return;for(let i=0;i<n;i++){const p=document.createElement('i'),c=['#ffb02e','#ff6a3d','#ffe680','#ff3b3b'][i%4],x=(Math.random()-.5)*120,y=-90-Math.random()*120,s=3+Math.random()*5;p.style.cssText=`width:${s}px;height:${s}px;background:${c}`;box.appendChild(p);
+      p.animate([{transform:'translate(-50%,0) scale(1)',opacity:1},{transform:`translate(calc(-50% + ${x}px),${y}px) scale(.2)`,opacity:0}],{duration:900+Math.random()*900,easing:'cubic-bezier(.2,.7,.3,1)'}).onfinish=()=>p.remove()}};
+    const finalState=()=>{cols.forEach((c,i)=>set(c,to[i]));root.classList.add('lit');grey.style.opacity=0;fl.style.opacity=1};
+    if(SOFT||reduce||!(I.today&&I.n>0)){finalState();root.classList.add('done');if(!SOFT&&!reduce){$$('.sc-num,.sc-lb,.sc-wk,.sc-msg,.sc-bt',R).forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:420,delay:200+i*90,fill:'backwards'}))}
+      if(!reduce&&I.n>0){const t=setInterval(()=>{if(!R||!R.isConnected||SCREENS[CUR].t!=='Streak celebration'){clearInterval(t);return}embers(2)},420)}return}
+    // 0 — yesterday: grey flame, grey number
+    cols.forEach((c,i)=>set(c,from[i]));fl.style.opacity=0;
+    const A=(el,k,o)=>el&&el.animate(k,Object.assign({fill:'both',easing:'cubic-bezier(.2,.9,.3,1)'},o));
+    A(fw,[{transform:'scale(.6)',opacity:0},{transform:'none',opacity:1}],{duration:380});
+    A(num,[{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'none'}],{duration:380,delay:120});
+    at(80,()=>hap('streakBuild'));
+    // 1 — the grey flame squashes into a glowing pill and ignites
+    at(620,()=>{A(fw,[{transform:'none'},{transform:'scaleY(.35) scaleX(1.25) translateY(40px)'}],{duration:180,easing:'ease-in'});A(pill,[{opacity:0,transform:'translate(-50%,-50%) scale(.5)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:180,delay:120})});
+    at(900,()=>{SND.ignite();hap('streakIgnite');grey.style.opacity=0;fl.style.opacity=1;A(pill,[{opacity:1},{opacity:0,transform:'translate(-50%,-50%) scale(1.6)'}],{duration:260});
+      // sparks swirl out
+      for(let i=0;i<18;i++){const a=i/18*Math.PI*2,sp=document.createElement('i');sp.className='sc-spk';sp.style.background=['#ffb02e','#ff6a3d','#ffe680'][i%3];stage.appendChild(sp);const r=70+(i%4)*26;
+        sp.animate([{transform:'translate(-50%,-50%) rotate(0) scale(1)',opacity:1},{transform:`translate(calc(-50% + ${Math.cos(a)*r}px),calc(-50% + ${Math.sin(a)*r-40}px)) rotate(${200+i*20}deg) scale(.2)`,opacity:0}],{duration:800+(i%5)*80,easing:'cubic-bezier(.1,.8,.3,1)',fill:'both'}).onfinish=()=>sp.remove()}});
+    // 2 — the flame leaps up, spins a full turn
+    at(980,()=>{SND.whoosh();A(fw,[{transform:'scaleY(.35) scaleX(1.25) translateY(40px)'},{transform:'translateY(-150px) rotate(180deg) scale(.9)',offset:.55},{transform:'translateY(-170px) rotate(360deg) scale(1)'}],{duration:560,easing:'cubic-bezier(.2,.8,.3,1)'});embers(8)});
+    // 3 — and slams down onto the ground: shock arc, screen shake, heavy haptic, thud
+    at(1540,()=>{A(fw,[{transform:'translateY(-170px) rotate(360deg)'},{transform:'translateY(6px) rotate(360deg) scaleY(.78) scaleX(1.18)',offset:.55},{transform:'translateY(-8px) rotate(360deg) scaleY(1.06) scaleX(.96)',offset:.8},{transform:'rotate(360deg)'}],{duration:420,easing:'cubic-bezier(.55,0,.6,1)'})});
+    at(1770,()=>{SND.slam();hap('streakLand');setTimeout(()=>hap('heavy'),60);
+      A(arc,[{opacity:.9,transform:'translate(-50%,0) scale(.4)'},{opacity:0,transform:'translate(-50%,0) scale(1.5)'}],{duration:700,easing:'ease-out'});
+      A(root,[{transform:'translateY(0)'},{transform:'translateY(7px)'},{transform:'translateY(-4px)'},{transform:'translateY(2px)'},{transform:'none'}],{duration:340,fill:'none'});
+      A($('.sc-sh',R),[{transform:'translateX(-50%) scale(1.5)',opacity:.6},{transform:'translateX(-50%) scale(1)',opacity:.35}],{duration:420});
+      embers(14);root.classList.add('lit')});
+    // 4 — the number rolls up and turns orange
+    at(1860,()=>{cols.forEach((c,i)=>{if(from[i]===to[i])return;const f0=from[i]===' '?0:+from[i];c.parentNode.classList.remove('blank');
+        c.animate([{transform:`translateY(${-f0*10}%)`},{transform:`translateY(${-to[i]*10}%)`}],{duration:700,delay:i*90,easing:'cubic-bezier(.3,1.5,.45,1)',fill:'forwards'});setTimeout(()=>SND.count(i),i*90+300)});
+      A(num,[{transform:'scale(1)'},{transform:'scale(1.16)',offset:.45},{transform:'scale(1)'}],{duration:620,delay:200,fill:'none'});hap('streakRoll')});
+    A($('.sc-lb',R),[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:400,delay:2100});
+    // 5 — this week fills in with the gradient, one day after another
+    A($('.sc-wk',R),[{opacity:0,transform:'translateY(18px)'},{opacity:1,transform:'none'}],{duration:400,delay:2300});
+    const cap=$('.sc-cap',R),dots=$$('.sc-dot.on',R);
+    if(cap&&dots.length)A(cap,[{clipPath:'inset(0 100% 0 0 round 99px)'},{clipPath:'inset(0 0 0 0 round 99px)'}],{duration:220*Math.max(1,dots.length),delay:2550,easing:'cubic-bezier(.5,0,.3,1)'});
+    dots.forEach((d,i)=>{A(d,[{transform:'scale(.3)',opacity:0},{transform:'scale(1.3)',opacity:1,offset:.6},{transform:'scale(1)',opacity:1}],{duration:360,delay:2550+i*220});at(2550+i*220,()=>{SND.day(i);hap('tick')})});
+    const td=$('.sc-dot.t',R);if(td)at(2600+dots.length*220,()=>{A(td,[{transform:'scale(1)'},{transform:'scale(1.45)',offset:.4},{transform:'scale(1)'}],{duration:520,easing:'ease-out',fill:'none'});SND.win();hap('celebrate');embers(10)});
+    A($('.sc-msg',R),[{opacity:0},{opacity:1}],{duration:420,delay:2800+dots.length*220});
+    A($('.sc-bt',R),[{opacity:0,transform:'translateY(40px)'},{opacity:1,transform:'none'}],{duration:480,delay:2900+dots.length*220});
+    at(3100+dots.length*220,()=>{root.classList.add('done');const t=setInterval(()=>{if(!R||!R.isConnected||SCREENS[CUR].t!=='Streak celebration'){clearInterval(t);return}embers(2)},420)});
+  };
+  const k=IDX('Streak celebration');if(k>=0){SCREENS[k].html=html;SCREENS[k].play=play}
+}
+
+/* ==== v110: Friend Streaks banner — your friends' characters hanging out around a small animated flame ==== */
+{
+  const FL='<svg viewBox="0 0 120 140" aria-hidden="true"><defs><linearGradient id="bfa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5a36"/><stop offset="1" stop-color="#ff2b3b"/></linearGradient><linearGradient id="bfb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23f"/><stop offset="1" stop-color="#ff8a2a"/></linearGradient></defs><path d="M60 6c6 18 20 24 30 38 12 17 14 30 12 44-3 26-22 44-42 44S21 114 18 88c-2-17 3-30 13-42 3 9 9 14 15 15-3-21 2-40 14-55z" fill="url(#bfa)"/><path class="bf2" d="M60 34c5 12 16 18 22 30 8 15 7 30 1 42-6 12-15 18-23 18s-18-6-23-18c-5-11-5-23 1-33 2 6 6 9 10 10-1-17 4-34 12-49z" fill="url(#bfb)"/><path d="M41 58c4-10 10-16 15-20-2 10-1 17 2 23-7-2-13-2-17-3z" fill="#fff3d6" opacity=".6"/><path d="M60 72c6 10 14 15 14 26a14 14 0 01-28 0c0-11 8-16 14-26z" fill="#fff"/></svg>';
+  const SAY=['Let\u2019s study!','Streak buddies!','You got this!','Focus time!','High five!','One more day!','Keep it lit!','Quiz me?','Nice work!','Together!'];
+  // people with their own avatar character only (no photos, no letters)
+  const crew=()=>{const out=[];
+    if(typeof D.avatar==='string'&&D.avatar)out.push({id:'me',name:D.first||'You',code:D.avatar,me:1});
+    (D.friends||[]).forEach(f=>{if(typeof f.avatar==='string'&&f.avatar)out.push({id:f.id,name:f.name||'Friend',code:f.avatar,streak:f.streak||0})});
+    return out.slice(0,6)};
+  // seats around the fire: left/right alternating, back row smaller
+  const SEATS=[{x:22,s:1,b:0,f:1},{x:78,s:1,b:0,f:-1},{x:8,s:.84,b:16,f:1},{x:92,s:.84,b:16,f:-1},{x:34,s:.72,b:34,f:1},{x:66,s:.72,b:34,f:-1}];
+  const html=()=>{const L=crew();
+    const ppl=L.length?L:[{dflt:1,chr:1},{dflt:1,chr:10}];
+    const figs=ppl.map((p,i)=>{const st=SEATS[i];const svg=p.dflt?avatarSvg(Object.assign(avDecode(''),{chr:p.chr}),{view:'full',style:'width:100%;height:100%;display:block'}):avatarSvg(avDecode(p.code),{view:'full',style:'width:100%;height:100%;display:block'});
+      return `<div class="bn-p${p.me?' me':''}" style="--x:${st.x}%;--s:${st.s};--b:${st.b}px;--f:${st.f};--i:${i};z-index:${10-Math.floor(i/2)}"${p.dflt||p.me?'':` data-fid="${esc(p.id)}" role="button" aria-label="Open ${esc(p.name)}'s profile"`}><span class="bn-say" data-say></span><span class="bn-body">${svg}</span>${p.dflt?'':`<span class="bn-nm">${esc(String(p.name).split(' ')[0])}${p.me?'':''}</span>`}<i class="bn-sh"></i></div>`}).join('');
+    return `<div class="bn-wrap"><div class="bn-sky"><i></i><i></i><i></i><i></i><i></i><i></i></div>${figs}<div class="bn-fire" data-bnfire><span class="bn-glow"></span><span class="bn-fl">${FL}</span><span class="bn-emb"></span><i class="bn-fsh"></i></div></div>`};
+  const play=()=>{const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const box=R.querySelector('.svban');if(!box)return;box.innerHTML=html();
+    const ppl=[...box.querySelectorAll('.bn-p')],fire=box.querySelector('.bn-fire'),fl=box.querySelector('.bn-fl'),emb=box.querySelector('.bn-emb');
+    if(reduce)return;
+    ppl.forEach((p,i)=>p.animate([{opacity:0,transform:`translateX(-50%) translateY(40px) scale(calc(var(--s)*.8))`},{opacity:1,transform:'translateX(-50%) translateY(0) scale(var(--s))'}],{duration:520,delay:120+i*110,easing:'cubic-bezier(.3,1.4,.5,1)',fill:'backwards'}));
+    fire.animate([{opacity:0,transform:'translateX(-50%) scale(.3)'},{opacity:1,transform:'translateX(-50%) scale(1)'}],{duration:500,delay:80,easing:'cubic-bezier(.3,1.5,.5,1)',fill:'backwards'});
+    const run=RUN;const alive=()=>run===RUN&&box.isConnected;
+    const sparks=n=>{for(let k=0;k<n;k++){const e=document.createElement('i'),c=['#ffd23f','#ff8a2a','#fff3d6','#ff4a3b'][k%4],x=(Math.random()-.5)*60,y=-40-Math.random()*70,s=2+Math.random()*4;e.style.cssText=`width:${s}px;height:${s}px;background:${c}`;emb.appendChild(e);
+      e.animate([{transform:'translate(-50%,0)',opacity:1},{transform:`translate(calc(-50% + ${x}px),${y}px)`,opacity:0}],{duration:800+Math.random()*700,easing:'ease-out'}).onfinish=()=>e.remove()}};
+    const tE=setInterval(()=>{if(!alive()){clearInterval(tE);return}sparks(2)},260);
+    // every few seconds the flame jumps, spins and lands with a bump (like the celebration)
+    const hop=()=>{if(!alive())return;fl.animate([{transform:'none'},{transform:'scaleY(.7) scaleX(1.15) translateY(6px)',offset:.15},{transform:'translateY(-46px) rotate(180deg)',offset:.5},{transform:'translateY(-52px) rotate(360deg)',offset:.62},{transform:'translateY(3px) rotate(360deg) scaleY(.8) scaleX(1.15)',offset:.82},{transform:'rotate(360deg)'}],{duration:1100,easing:'cubic-bezier(.3,.7,.3,1)'});
+      setTimeout(()=>{if(!alive())return;sparks(10);box.animate([{transform:'none'},{transform:'translateY(3px)'},{transform:'none'}],{duration:220});ppl.forEach((p,i)=>p.querySelector('.bn-body').animate([{transform:'none'},{transform:'translateY(-14px)'},{transform:'none'}],{duration:420,delay:i*40,easing:'cubic-bezier(.3,1.4,.5,1)'}))},900)};
+    setTimeout(hop,900);const tH=setInterval(()=>{if(!alive()){clearInterval(tH);return}hop()},5200);
+    // friends chat: speech bubbles take turns
+    let n=0;const talk=()=>{if(!alive()||!ppl.length)return;const p=ppl[n%ppl.length],b=p.querySelector('[data-say]');n++;b.textContent=SAY[(n*7+p.style.getPropertyValue('--i')*3)%SAY.length];
+      b.animate([{opacity:0,transform:'translateX(-50%) translateY(8px) scale(.6)'},{opacity:1,transform:'translateX(-50%) scale(1)',offset:.15},{opacity:1,transform:'translateX(-50%) scale(1)',offset:.85},{opacity:0,transform:'translateX(-50%) translateY(-4px) scale(.9)'}],{duration:2200,easing:'ease-out'});
+      p.querySelector('.bn-body').animate([{transform:'none'},{transform:'rotate(calc(var(--f)*-4deg)) translateY(-4px)'},{transform:'none'}],{duration:600})};
+    setTimeout(talk,1300);const tT=setInterval(()=>{if(!alive()){clearInterval(tT);return}talk()},2600);
+    fire.onclick=e=>{e.stopPropagation();hap('streakLand');hop()};
+  };
+  const k=IDX('Streak friends');if(k>=0){const op=SCREENS[k].play;SCREENS[k].play=function(){op.call(this);play()}}
 }
 const RUN_DEAD=()=>!host.isConnected;
 function back(){
