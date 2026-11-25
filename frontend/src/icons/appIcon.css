@@ -1,0 +1,18 @@
+/* Settings > App icon */
+.aic-row{display:flex;align-items:center;gap:12px}
+.aic-row img{width:30px;height:30px;border-radius:9px;flex:none}
+.aic-row small{margin-left:auto;margin-right:6px;font-weight:600;opacity:.65;font-size:12.5px}
+.aic{display:flex;flex-direction:column;gap:14px}
+.aic-hero{display:flex;align-items:center;gap:16px;padding:16px;border-radius:22px;background:var(--card,#232831)}
+.aic-hero img{width:76px;height:76px;border-radius:20px;box-shadow:0 6px 16px rgba(0,0,0,.22);flex:none}
+.aic-hero b{display:block;font:700 19px var(--display,inherit)}.aic-hero small{display:block;margin-top:3px;font:600 13px var(--body,inherit);opacity:.7}
+.aic-note{padding:12px 14px;border-radius:16px;background:rgba(232,168,58,.16);font:600 13px/1.45 var(--body,inherit)}
+.aic h4{margin:6px 2px 0}
+.aic-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px}
+.aic-t{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border:2px solid transparent;border-radius:18px;background:var(--card,#232831);color:inherit;font:700 12px var(--body,inherit);cursor:pointer}
+.aic-t img{width:56px;height:56px;border-radius:15px}
+.aic-t.on{border-color:var(--mv,#c9b8c3)}
+.aic-t:focus-visible{outline:3px solid var(--mv,#c9b8c3);outline-offset:2px}
+.aic-help{margin:0 2px;font:600 12.5px/1.5 var(--body,inherit);opacity:.7}
+.aic-reset{height:48px;border:0;border-radius:16px;background:var(--card,#232831);color:inherit;font:800 14px var(--body,inherit);cursor:pointer}
+.aic-ok{background:rgba(63,191,143,.16)}

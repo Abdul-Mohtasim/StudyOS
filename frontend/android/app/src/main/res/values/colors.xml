@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="splash_bg">#DEDCDD</color>
+    <color name="splash_bg">#ef5f0c</color>
+    <color name="splash_bg_ember">#ef5f0c</color>
+    <color name="splash_bg_midnight">#0d1114</color>
+    <color name="splash_bg_ocean">#2563d9</color>
+    <color name="splash_bg_forest">#1c9656</color>
+    <color name="splash_bg_sunset">#e0405a</color>
+    <color name="splash_bg_mono">#6b6b6b</color>
 </resources>

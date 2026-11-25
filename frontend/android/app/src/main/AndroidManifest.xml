@@ -3,9 +3,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_flame_default"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_flame_default_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
@@ -16,13 +16,141 @@
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
             android:exported="true">
+            <!-- The launcher entry lives on the Icon_* aliases below (dynamic app icon). -->
+        </activity>
 
+        <!-- Dynamic app icon: one alias per icon, all opening MainActivity. Exactly one is enabled at a time
+             (StudyIconPlugin). The default alias is enabled in the manifest so a fresh install always has an icon. -->
+        <activity-alias
+            android:name=".Icon_flame_default"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_flame_default"
+            android:roundIcon="@mipmap/ic_flame_default_round"
+            android:label="@string/app_name"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-        </activity>
+        </activity-alias>
+        <activity-alias
+            android:name=".Icon_flame_focused"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_flame_focused"
+            android:roundIcon="@mipmap/ic_flame_focused_round"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".Icon_flame_celebrating"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_flame_celebrating"
+            android:roundIcon="@mipmap/ic_flame_celebrating_round"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".Icon_flame_sleepy"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_flame_sleepy"
+            android:roundIcon="@mipmap/ic_flame_sleepy_round"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".Icon_flame_away"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_flame_away"
+            android:roundIcon="@mipmap/ic_flame_away_round"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".Icon_flame_welcome"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_flame_welcome"
+            android:roundIcon="@mipmap/ic_flame_welcome_round"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".Icon_flame_streak"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_flame_streak"
+            android:roundIcon="@mipmap/ic_flame_streak_round"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".Icon_flame_goal_complete"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_flame_goal_complete"
+            android:roundIcon="@mipmap/ic_flame_goal_complete_round"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".Icon_flame_resting"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_flame_resting"
+            android:roundIcon="@mipmap/ic_flame_resting_round"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".Icon_flame_motivated"
+            android:targetActivity=".MainActivity"
+            android:icon="@mipmap/ic_flame_motivated"
+            android:roundIcon="@mipmap/ic_flame_motivated_round"
+            android:label="@string/app_name"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <!-- Study reminders: fired by AlarmManager, restored after a restart -->
         <receiver android:name=".ReminderReceiver" android:exported="false" />

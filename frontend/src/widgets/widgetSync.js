@@ -4,6 +4,7 @@
 import { useEffect, useRef } from "react";
 import { Capacitor, registerPlugin } from "@capacitor/core";
 import { newMilestone } from "./moodEngine.js";
+import { appIconEvents } from "../icons/appIcon.js";
 
 const W = Capacitor.isNativePlatform() ? registerPlugin("StudyWidget") : null;
 const call = (name, arg) => { try { W?.[name](arg)?.catch?.(() => {}); } catch { /* old build without the plugin */ } };
@@ -85,6 +86,7 @@ export function useWidgetSync(p) {
       if (hit) {
         try { localStorage.setItem(store, String(hit)); } catch { /* ignore */ }
         call("celebrate", { milestone: hit });
+        appIconEvents.streak(hit);
       }
     }
     prevStreak.current = streak;

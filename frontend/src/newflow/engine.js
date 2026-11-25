@@ -1,5 +1,5 @@
 /* eslint-disable */
-// StudyOS new-user flow (app only). Intro with Zip, placement exam, streak, gems, profile.
+// StudyOS new-user flow (app only). Intro with the flame guide, placement exam, streak, gems, profile.
 // Ported from the approved design file StudyOS_Final_Design_v14.html.
 import { haptic } from "../haptics";
 import { translate as tr } from "../i18n";
@@ -110,7 +110,7 @@ const EXOPTS=EXD.map(MON).concat(['Not sure yet']);
 const isoOf=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const CALIC='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;flex:none"><rect x="3.500" y="5" width="17" height="15.500" rx="3"/><path d="M3.500 10h17M8 3v4M16 3v4"/></svg>';
 const IPG=[
-{k:'say',m:0,at:0,say:"Hi there! I'm Zip!"},
+{k:'say',m:0,at:0,say:"Hi there! I'm Flame!"},
 {k:'say',m:1,at:4,say:'Just 8 quick questions before we plan your first day!'},
 {k:'name',m:3,at:8.5,say:'First, what should I call you?',id:'name'},
 {k:'list',m:4,at:12.5,say:'What are you studying for?',id:'why',opts:[['School exams','Class 9 to 12'],['College','Degree courses'],['Entrance exams','Competitive tests'],['Self learning','At my own pace']]},
@@ -596,7 +596,7 @@ function gmPlay(){
 }
 /* ----- save progress ----- */
 function spHtml(){
- return nx(`<div class="xt">${BKB()}</div><div style="position:absolute;left:0;right:0;top:225px;text-align:center"><div class="xbub nob xtl" id="spb" style="display:inline-block;margin:0 34px;font-size:19px;line-height:1.5;text-align:left">Don't lose your progress! Let's create a profile.</div><div style="height:28px"></div><img id="spz" src="${MASC[0]}" style="width:160px;height:160px;object-fit:contain" alt="Zip"></div><div class="xbar">${btn('Continue','go')}</div>`);
+ return nx(`<div class="xt">${BKB()}</div><div style="position:absolute;left:0;right:0;top:225px;text-align:center"><div class="xbub nob xtl" id="spb" style="display:inline-block;margin:0 34px;font-size:19px;line-height:1.5;text-align:left">Don't lose your progress! Let's create a profile.</div><div style="height:28px"></div>${znHtml(160,'spz').replace('data-fm="idle"','data-fm="write"').replace('zn|160|spz','zn|160|spz|write')}</div><div class="xbar">${btn('Continue','go')}</div>`);
 }
 function spPlay(){
  S.mute=false;
@@ -671,7 +671,7 @@ function scPlay(){
  S.mute=false;const sc=calcScore();X.score=sc;const my=RUN;
  const say=sc>=110?`You're starting strong at Score ${sc}!`:sc>=70?`Based on your exam, you start at Score ${sc}!`:`Your exam shows you start at Score ${sc}. Let's grow it together!`;
  U.tok++;typeIn($('#scb',R),tr(say).replace(String(sc),'<b style="color:#fff">'+sc+'</b>'),U.tok,$('.zn',R));at(900,()=>znSet($('.zn',R),sc>=110?'success':sc>=70?'greet':'explain'));
- const m=$('.ipm img',R);fx(m,[{transform:'translateY(16px) scale(.8)',opacity:.4},{transform:'translateY(-6px) scale(1.05)',opacity:1,offset:.6},{transform:'none',opacity:1}],{duration:520});
+ const m=$('.ipm .zn',R);fx(m,[{transform:'translateY(16px) scale(.8)',opacity:.4},{transform:'translateY(-6px) scale(1.05)',opacity:1,offset:.6},{transform:'none',opacity:1}],{duration:520});
  fx($('#scb',R),[{opacity:0,transform:'scale(.7)'},{opacity:1,transform:'none'}],{duration:420,delay:120});
  fx($('.scw',R),[{opacity:0,transform:'scale(.6) rotate(-25deg)'},{opacity:1,transform:'scale(1.04) rotate(3deg)',offset:.7},{opacity:1,transform:'none'}],{duration:760,delay:200,easing:'cubic-bezier(.2,.9,.3,1)'});
  $$('.sc-chips>div',R).forEach((el,i)=>fx(el,[{opacity:0,transform:'translateY(24px) scale(.9)'},{opacity:1,transform:'none'}],{duration:460,delay:1500+i*120}));

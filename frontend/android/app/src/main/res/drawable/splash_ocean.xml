@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Start screen before Android 12: theme colour + the flame face -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape android:shape="rectangle"><solid android:color="#2563d9" /></shape></item>
+    <item android:drawable="@drawable/splash_face_ocean" android:gravity="center" android:width="288dp" android:height="288dp" />
+</layer-list>

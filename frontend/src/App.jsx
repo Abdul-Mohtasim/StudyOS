@@ -115,6 +115,7 @@ import Onboarding from "./Onboarding";
 import NewUserFlow from "./newflow/NewUserFlow";
 import DesignShell from "./design/DesignShell";
 import { useWidgetSync, widgetTaskDone, widgetTheme } from "./widgets/widgetSync";
+import { startAppIcon, appIconEvents, setAppIconUser, setSplashTheme } from "./icons/appIcon.js";
 import { NativeFlashcards, NativeGrades, NativeNotes } from "./NativePages";
 import qrcode from "qrcode-generator";
 import { Share } from "@capacitor/share";
@@ -3015,6 +3016,18 @@ useEffect(() => {
   const widgetDoneOn = (key) => tasks.filter((t) => t.completed && t.completedAt && getLocalDateKey(new Date(t.completedAt)) === key).length;
   const widgetDoneToday = widgetDoneOn(todayKey);
   const widgetPending = tasks.filter((t) => !t.completed && (!t.dueDate || daysUntil(t.dueDate) <= 0));
+  // Dynamic app icon: one controller, fed by the same real data the widgets use.
+  useEffect(() => { startAppIcon(); }, []);
+  // each account has its own icon settings; signed out = default
+  const iconUid = authToken && student && !student.guest ? String(student.id || student._id || "") : "";
+  useEffect(() => { setAppIconUser(iconUid); }, [iconUid]);
+  useEffect(() => { setSplashTheme(settingsTheme, activePalette); }, [settingsTheme, activePalette]);
+  useEffect(() => {
+    appIconEvents.goal(Math.round(todayFocusMinutes), dailyGoalMinutes);
+  }, [todayFocusMinutes, dailyGoalMinutes]);
+  useEffect(() => {
+    appIconEvents.studied(sessionDateKeys.has(todayKey) || widgetDoneToday > 0, sessionDateKeys.has(widgetDayKey(1)) || widgetDoneOn(widgetDayKey(1)) > 0);
+  });
   useWidgetSync({
     signedIn: Boolean(authToken) && !student?.guest,
     ready: Boolean(authToken) && firstLoadDoneRef.current,
@@ -3532,7 +3545,7 @@ const visibleTasks = sortTasks(
         )
       );
 
-      if (!task.completed) { haptic.success(); widgetTaskDone(); }
+      if (!task.completed) { haptic.success(); widgetTaskDone(); appIconEvents.taskDone(id); }
       setNotice("");
     } catch (error) {
       console.error("Updating StudyOS task:", error);
@@ -5059,6 +5072,7 @@ async function undoDeleteTask() {
         const saved = normalizeFocusSession(data.session);
         setFocusSessions((current) => [saved, ...current.filter((x) => x.id !== saved.id)]);
         widgetTaskDone();
+        appIconEvents.focusDone(saved.id);
         setTotalFocusMinutes((current) => current + saved.durationMinutes);
         setTotalFocusSessionCount((current) => current + 1);
         haptic.success();

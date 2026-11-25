@@ -28,6 +28,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(StudyHapticsPlugin.class);
         registerPlugin(StudyNotifyPlugin.class);
         registerPlugin(StudyWidgetPlugin.class);
+        registerPlugin(StudyIconPlugin.class);
         super.onCreate(savedInstanceState);
         remember(getIntent());
     }
