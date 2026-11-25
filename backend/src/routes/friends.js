@@ -458,6 +458,150 @@ router.post("/request", async (req, res) => {
   }
 });
 
+
+// ---------- Find friends: search by name, suggestions, streak invites ----------
+const escRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+async function relationsOf(me, ids) {
+  const rel = new Map();
+  if (!ids.length) return rel;
+  const links = await Friendship.find({ $or: [{ requester: me, recipient: { $in: ids } }, { recipient: me, requester: { $in: ids } }] }).lean();
+  for (const row of links) {
+    const mine = String(row.requester) === String(me);
+    rel.set(String(mine ? row.recipient : row.requester), row.status === "accepted" ? "friends" : mine ? "sent" : "incoming");
+  }
+  return rel;
+}
+async function avatarsOf(ids) {
+  if (!ids.length) return new Map();
+  const rows = await StudentSettings.find({ student: { $in: ids } }).select("student prefs.avatar").lean();
+  return new Map(rows.map((s) => [String(s.student), s.prefs && typeof s.prefs.avatar === "string" ? s.prefs.avatar.slice(0, 200) : ""]));
+}
+async function friendIdsOf(who) {
+  const rows = await Friendship.find({ status: "accepted", $or: [{ requester: who }, { recipient: who }] }).select("requester recipient").lean();
+  return rows.map((f) => String(String(f.requester) === String(who) ? f.recipient : f.requester));
+}
+
+// GET /api/friends/search?q=  -> people on StudyOS by name or @username
+router.get("/search", async (req, res) => {
+  try {
+    const me = req.student._id;
+    const q = String(req.query.q || "").trim().replace(/^@/, "").slice(0, 40);
+    if (q.length < 2) return res.json({ results: [] });
+    const hidden = await blockedIds(me);
+    const rx = new RegExp(escRe(q), "i");
+    const word = new RegExp("(^|\\s)" + escRe(q), "i");
+    const found = await Student.find({ _id: { $nin: [me, ...hidden] }, $or: [{ name: rx }, { displayName: rx }] })
+      .select("name displayName picture gems createdAt").limit(60).lean();
+    // usernames are made from the display name, so also match "abdulmohtasim38"-style searches
+    const ql = q.toLowerCase().replace(/[^a-z0-9]/g, "");
+    let list = found;
+    if (ql.length >= 3 && found.length < 60) {
+      const more = await Student.find({ _id: { $nin: [me, ...hidden, ...found.map((s) => s._id)] } })
+        .select("name displayName picture gems createdAt").sort({ createdAt: -1 }).limit(400).lean();
+      list = found.concat(more.filter((s) => handleOf(s).includes(ql)).slice(0, 20));
+    }
+    const score = (s) => { const n = String(s.displayName || s.name || ""); return (n.toLowerCase() === q.toLowerCase() ? 3 : 0) + (word.test(n) ? 2 : 0) + (n.toLowerCase().startsWith(q.toLowerCase()) ? 1 : 0); };
+    list.sort((a, b) => score(b) - score(a));
+    list = list.slice(0, 30);
+    const ids = list.map((s) => s._id);
+    const [rel, av, myFriends] = await Promise.all([relationsOf(me, ids), avatarsOf(ids), friendIdsOf(me)]);
+    const mineSet = new Set(myFriends);
+    const results = await Promise.all(list.map(async (s) => {
+      const theirs = await friendIdsOf(s._id);
+      const both = theirs.filter((id) => mineSet.has(id));
+      let via = "";
+      if (both.length) { const p = await Student.findById(both[0]).select("name displayName").lean(); via = p ? (p.displayName || p.name) : ""; }
+      return { id: String(s._id), name: s.displayName || s.name, username: handleOf(s), picture: s.picture || "", avatar: av.get(String(s._id)) || "", relation: rel.get(String(s._id)) || "none", mutualCount: both.length, via };
+    }));
+    res.json({ results });
+  } catch (error) {
+    req.log?.error?.(error);
+    res.status(500).json({ error: "Could not search right now." });
+  }
+});
+
+// GET /api/friends/suggestions -> friends of your friends first, then new people
+router.get("/suggestions", async (req, res) => {
+  try {
+    const me = req.student._id;
+    const hidden = (await blockedIds(me)).map(String);
+    const links = await Friendship.find({ $or: [{ requester: me }, { recipient: me }] }).select("requester recipient").lean();
+    const taken = new Set([String(me), ...hidden, ...links.map((l) => String(String(l.requester) === String(me) ? l.recipient : l.requester))]);
+    const mine = await friendIdsOf(me);
+    const count = new Map();
+    const via = new Map();
+    if (mine.length) {
+      const rows = await Friendship.find({ status: "accepted", $or: [{ requester: { $in: mine } }, { recipient: { $in: mine } }] }).select("requester recipient").limit(3000).lean();
+      const mineSet = new Set(mine);
+      for (const r of rows) {
+        const a = String(r.requester), b = String(r.recipient);
+        const [friend, other] = mineSet.has(a) ? [a, b] : [b, a];
+        if (taken.has(other)) continue;
+        count.set(other, (count.get(other) || 0) + 1);
+        if (!via.has(other)) via.set(other, friend);
+      }
+    }
+    let ids = [...count.keys()].sort((x, y) => count.get(y) - count.get(x)).slice(0, 30);
+    if (ids.length < 30) {
+      const fresh = await Student.find({ _id: { $nin: [...taken, ...ids].filter((x) => mongoose.isValidObjectId(x)) } })
+        .select("_id").sort({ createdAt: -1 }).limit(30 - ids.length).lean();
+      ids = ids.concat(fresh.map((s) => String(s._id)));
+    }
+    const [people, av] = await Promise.all([
+      Student.find({ _id: { $in: ids } }).select("name displayName picture createdAt").lean(),
+      avatarsOf(ids),
+    ]);
+    const viaIds = [...new Set(ids.map((i) => via.get(i)).filter(Boolean))];
+    const viaPeople = viaIds.length ? await Student.find({ _id: { $in: viaIds } }).select("name displayName").lean() : [];
+    const viaName = new Map(viaPeople.map((p) => [String(p._id), p.displayName || p.name]));
+    const byId = new Map(people.map((p) => [String(p._id), p]));
+    res.json({
+      suggestions: ids.map((i) => byId.get(i)).filter(Boolean).map((s) => {
+        const id = String(s._id), n = count.get(id) || 0;
+        return { id, name: s.displayName || s.name, username: handleOf(s), picture: s.picture || "", avatar: av.get(id) || "", mutualCount: n, via: n ? viaName.get(via.get(id)) || "" : "", relation: "none" };
+      }),
+    });
+  } catch (error) {
+    req.log?.error?.(error);
+    res.status(500).json({ error: "Could not load suggestions right now." });
+  }
+});
+
+// Friend Streak invites: up to 3 a day. GET shows who you invited today; POST sends one.
+const STREAK_INVITES_PER_DAY = 3;
+const todayStart = () => { const d = new Date(); d.setUTCHours(0, 0, 0, 0); return d; };
+async function invitedToday(me) {
+  const rows = await Notification.find({ type: "streak", from: me, createdAt: { $gte: todayStart() }, title: /Friend Streak/ }).select("student").lean();
+  return [...new Set(rows.map((r) => String(r.student)))];
+}
+router.get("/streak-invites", async (req, res) => {
+  try {
+    const sent = await invitedToday(req.student._id);
+    res.json({ invited: sent, remaining: Math.max(0, STREAK_INVITES_PER_DAY - sent.length), perDay: STREAK_INVITES_PER_DAY });
+  } catch (error) {
+    req.log?.error?.(error);
+    res.status(500).json({ error: "Could not load your invites." });
+  }
+});
+router.post("/:userId/streak-invite", async (req, res) => {
+  try {
+    const me = req.student._id;
+    const other = req.params.userId;
+    if (!mongoose.isValidObjectId(other)) return res.status(400).json({ message: "Invalid person." });
+    const link = await Friendship.findOne({ status: "accepted", $or: [{ requester: me, recipient: other }, { requester: other, recipient: me }] }).lean();
+    if (!link) return res.status(403).json({ message: "You can only invite your friends." });
+    if (await isBlocked(me, other)) return res.status(403).json({ message: "You cannot invite this person." });
+    const sent = await invitedToday(me);
+    if (sent.includes(String(other))) return res.json({ ok: true, already: true, remaining: Math.max(0, STREAK_INVITES_PER_DAY - sent.length) });
+    if (sent.length >= STREAK_INVITES_PER_DAY) return res.status(429).json({ message: "No invites left today. Try again tomorrow." });
+    await Notification.create({ student: other, type: "streak", from: me, title: `${displayOf(req.student)} invited you to a Friend Streak`.slice(0, 120), body: "Study on the same day to keep your Friend Streak going." });
+    res.json({ ok: true, remaining: Math.max(0, STREAK_INVITES_PER_DAY - sent.length - 1) });
+  } catch (error) {
+    req.log?.error?.(error);
+    res.status(500).json({ message: "Could not send the invite." });
+  }
+});
+
 // POST /api/friends/respond  { userId, accept }  -> answer a request someone sent me
 router.post("/respond", async (req, res) => {
   try {

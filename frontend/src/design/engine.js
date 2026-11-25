@@ -56,7 +56,7 @@ const AVU=()=>hasAv()?avatarSvg(avDecode(D.avatar),{view:'full',bg:true,style:'w
 
 /* ---------- icons ---------- */
 const FLAME_IC='<svg viewBox="0 0 24 24"><path d="M12 2c1 3.5 5 5.6 5 10.2A5 5 0 0 1 12 17.5a5 5 0 0 1-5-5.3c0-2 1-3.4 2.2-4.7.2 1.6 1 2.4 1.8 2.6C10.7 7.3 11 4.6 12 2z" fill="#ff7a45"/><path d="M12 22a4 4 0 0 1-4-4c0-1.8 1.6-3 4-5 2.4 2 4 3.2 4 5a4 4 0 0 1-4 4z" fill="#ffb347"/></svg>';
-const CUBE='<svg viewBox="40 0 385 466"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>';
+const CUBE='<svg viewBox="40 0 385 466" shape-rendering="geometricPrecision" preserveAspectRatio="xMidYMid meet"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>';
 const BOLT='<svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="#e8a83a"/></svg>';
 const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const SHARE='<svg viewBox="0 0 24 24" fill="none" stroke="#ebe8ea" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>';
@@ -213,7 +213,7 @@ ${[['1','R','Rohan',520],['2','M','Meera',475],['3','A','Aisha (You)',430],['4',
 <b style="display:block;font:700 20px var(--display);margin-top:18px">Study groups</b>
 <div class="card rw" style="justify-content:flex-start;gap:12px;border-radius:22px"><span class="ib" style="width:42px;height:42px">${ICO.ppl.replace('class="ic"','class="ic" style="width:22px;height:22px;color:#1b1e25"')}</span><div><div style="font:700 15px var(--body)">Class 12 Physics</div><div class="mut" style="font:600 13px var(--body)">8 members · 3 shared decks</div></div></div>
 <div class="btn2" style="margin-top:14px;border-radius:24px">Invite a friend</div></div>`)),
-pg('Search','Notes, cards and tasks','Recent searches and suggestions rise in.','Light tap on arrival.',()=>wrap(`<div class="pg" style="padding-top:40px"><div style="display:flex;align-items:center;gap:14px"><span style="color:var(--ink)">${ICO.back}</span><div class="card rw" style="flex:1;margin:0;height:46px;border-radius:23px;padding:0 14px;justify-content:flex-start;gap:10px"><span style="color:var(--ink);display:flex">${ICO.search.replace('class="ic"','class="ic" style="width:20px;height:20px"')}</span><span class="mut" style="font:600 15px var(--body);flex:1">Search notes, cards, tasks</span><span style="color:var(--ink);display:flex">${ICO.mic.replace('class="ic"','class="ic" style="width:20px;height:20px"')}</span></div></div>
+pg('Search','Notes, cards and tasks','Recent searches and suggestions rise in.','Light tap on arrival.',()=>wrap(`<div class="pg" style="padding-top:40px"><div style="display:flex;align-items:center;gap:14px"><span style="color:var(--ink)">${ICO.back}</span><div class="card rw dz-srch" style="flex:1;margin:0;height:46px;border-radius:23px;padding:0 14px;justify-content:flex-start;gap:10px"><span style="color:var(--ink);display:flex">${ICO.search.replace('class="ic"','class="ic" style="width:20px;height:20px"')}</span><span class="mut" style="font:600 15px var(--body);flex:1">Search notes, cards, tasks</span><span style="color:var(--ink);display:flex">${ICO.mic.replace('class="ic"','class="ic" style="width:20px;height:20px"')}</span></div></div>
 <div class="chips" style="margin-top:14px"><span class="chip on">All</span><span class="chip">Notes</span><span class="chip">Cards</span><span class="chip">Tasks</span><span class="chip">This week</span><span class="chip">Pinned</span></div>
 <div class="rw" style="margin-top:18px"><b style="font:700 20px var(--display)">Recent</b><span class="mut" style="font:700 13px var(--body)">Clear</span></div>
 ${['cell organelles','newton laws','chapter 5 maths'].map(t=>`<div class="rw" style="height:54px"><div style="display:flex;align-items:center;gap:12px;font:700 16px var(--body)"><span style="display:flex">${ICO.clk.replace('class="ic"','class="ic" style="width:20px;height:20px"')}</span>${t}</div><span style="color:#4b5d6d;display:flex">${ICO.x.replace('class="ic"','class="ic" style="width:18px;height:18px"')}</span></div>`).join('')}
@@ -736,11 +736,12 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
        .replace('<b>8</b><span>Followers</span>','<b>'+fr.length+'</b><span>Followers</span>')
        .replace(/\d+ tasks<\/div>/,(D.tasksDone||0)+' tasks</div>')
        .replace('42 hours',(D.hours||0)+' hours')
+       .replace(/<svg viewBox="0 0 32 32"><path d="M19 2L6 18h8l-3 12 15-17h-9z"[^]*?<\/svg>1,240 XP/,CUBE+'1,240 XP')
        .replace('1,240 XP',(D.gems||0).toLocaleString()+' gems');
     const a=h.indexOf('<div class="sec">Friend streaks</div>');
     const z=h.indexOf('</div></div><div class="pfbar"');
     if(a>0&&z>a){
-      const list=fr.slice(0,5).map(f=>`<div data-fid="${esc(f.id)}" role="button" aria-label="Open ${esc(f.name)}'s profile" style="cursor:pointer"><span class="fa pf-fa${DZ.fxChr&&DZ.fxChr(f.id,f.avatar,'face')?'':' np'}" style="--c:${colOf(f.name)}">${DZ.pfFace?DZ.pfFace(f.id,f.avatar,f.picture):''}</span><span class="pf-fn">${esc(String(f.name||'Friend').split(' ')[0])}</span><div class="cnt"><span style="width:16px;height:16px;display:block" aria-hidden="true">${FLAME_IC}</span><span aria-label="${f.streak||0} day streak">${f.streak||0}</span></div></div>`).join('');
+      const list=fr.slice(0,5).map(f=>`<div data-fid="${esc(f.id)}" role="button" aria-label="Open ${esc(f.name)}'s profile" style="cursor:pointer"><span class="pf-fa${DZ.fxChr&&DZ.fxChr(f.id,f.avatar,'face')?'':' nopic'}" style="--c:${colOf(f.name)}">${DZ.pfFace?DZ.pfFace(f.id,f.avatar,f.picture):''}</span><span class="pf-fn">${esc(String(f.name||'Friend').split(' ')[0])}</span><div class="cnt"><span style="width:16px;height:16px;display:block" aria-hidden="true">${FLAME_IC}</span><span aria-label="${f.streak||0} day streak">${f.streak||0}</span></div></div>`).join('');
       h=h.slice(0,a)+'<div class="sec">Friend streaks</div>'+((D.incoming||[]).length?`<div class="chip" data-reqs style="margin-bottom:12px;background:#c9b8c3;color:#1b1e25">${(D.incoming||[]).length} friend ${(D.incoming||[]).length===1?'request':'requests'} · View</div>`:'')+(fr.length?`<div class="fs" style="gap:14px;justify-content:flex-start">${list}</div>`:`<div style="font:700 14px var(--body);color:#8b98a2">Add friends to see them here.</div>`)+h.slice(z);
     }
     return h;
@@ -1212,26 +1213,103 @@ replace('Upload file',{
       if(ok){hap('success');toast('Imported as a note');toQuick()}else{$('[data-pt]',R).textContent='Tap to choose a file';toast('Could not save. Try again.')}};fi.click()}}}
 });
 
-/* Search: tasks, notes, subjects */
-let SQ='',SFROM='Home';
+/* Search v106: suggestions, recent searches, filters, quick actions, highlighted matches */
+let SQ='',SFROM='Home',SF='All',SSEL=-1;
+const SRK='studyos_recent_search';
+const sRecent=()=>{try{const a=JSON.parse(localStorage.getItem(SRK)||'[]');return Array.isArray(a)?a.filter(x=>typeof x==='string').slice(0,8):[]}catch(_){return []}};
+const sRemember=q=>{q=String(q||'').trim();if(q.length<2)return;const a=[q,...sRecent().filter(x=>x.toLowerCase()!==q.toLowerCase())].slice(0,8);try{localStorage.setItem(SRK,JSON.stringify(a))}catch(_){}};
+const sForget=q=>{try{localStorage.setItem(SRK,JSON.stringify(q==null?[]:sRecent().filter(x=>x!==q)))}catch(_){}};
+const sNorm=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
+// score: exact > starts with > word starts with > contains > all letters in order (typo friendly)
+const sScore=(text,q)=>{const t=sNorm(text);if(!q||!t)return 0;if(t===q)return 100;if(t.startsWith(q))return 80;if(t.split(/[\s\-_.]+/).some(w=>w.startsWith(q)))return 65;if(t.includes(q))return 50;
+  let i=0;for(const ch of t){if(ch===q[i])i++;if(i===q.length)break}return i===q.length&&q.length>2?20:0};
+const sMark=(text,q)=>{const s=String(text||'');if(!q)return esc(s);const t=sNorm(s),k=t.indexOf(q);if(k<0)return esc(s);return esc(s.slice(0,k))+'<mark>'+esc(s.slice(k,k+q.length))+'</mark>'+esc(s.slice(k+q.length))};
+const SICO={
+ task:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>',
+ note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h5"/></svg>',
+ subject:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5z"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20v3H6.5"/></svg>',
+ friend:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.4 6.5-5.4s5.9 1.8 6.5 5.4M16 4.8a3.2 3.2 0 010 6.2M18.5 14.8c1.8.7 2.8 2.3 3 5.2"/></svg>',
+ page:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+ clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+ x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+ fire:'<svg viewBox="0 0 24 24"><path d="M12 2c1 3.5 5 5.6 5 10.2A5 5 0 0112 17.5a5 5 0 01-5-5.3c0-2 1-3.4 2.2-4.7.2 1.6 1 2.4 1.8 2.6C10.7 7.3 11 4.6 12 2z" fill="#ff7a45"/><path d="M12 22a4 4 0 01-4-4c0-1.8 1.6-3 4-5 2.4 2 4 3.2 4 5a4 4 0 01-4 4z" fill="#ffb347"/></svg>'
+};
+// App pages you can jump to by typing their name
+const SPAGES=[['Tasks','Your to-do list','task'],['Focus','Start a focus timer','clock'],['Study','Reports, exams and tools','subject'],['Weekly report','Minutes studied this week','page'],['Exam mode','Countdown and daily target','page'],['Badges','Your achievements','page'],['Friends','Leaderboard and requests','friend'],['My subjects','Progress for each subject','subject'],['Planner','Plan your week','page'],['Gem Shop','Themes, freezes and more','page'],['Streak','Your streak calendar','page'],['Settings','Theme, sound and account','page'],['Edit profile','Name, picture and avatar','page']];
+const sData=()=>{
+  const q=sNorm(SQ.trim());
+  const T=(D.tasks||[]).map(x=>({k:'task',id:x.id,t:x.title,s:x.subject,m:x.meta||'',done:x.done,sc:Math.max(sScore(x.title,q),sScore(x.subject,q)*.6)}));
+  const N=(D.notes||[]).map(x=>({k:'note',id:x.id,t:x.title,s:x.subject,sc:Math.max(sScore(x.title,q),sScore(x.subject,q)*.6)}));
+  const S2=(D.subjects||[]).map(n=>({k:'subject',t:n,sc:sScore(n,q)}));
+  const F=(D.friends||[]).map(f=>({k:'friend',id:f.id,t:f.name,f,sc:sScore(f.name,q)}));
+  const P=SPAGES.map(([t,s,ic])=>({k:'page',t,s,ic,sc:Math.max(sScore(t,q),sScore(s,q)*.5)}));
+  const keep=a=>a.filter(x=>x.sc>0).sort((a,b)=>b.sc-a.sc);
+  return {q,T:keep(T),N:keep(N),S:keep(S2),F:keep(F),P:keep(P)};
+};
+const sRow=(x,q,i)=>{
+  const ic=x.k==='page'?SICO[x.ic]||SICO.page:x.k==='friend'?`<span class="sx-fa">${DZ.pfFace?DZ.pfFace(x.id,x.f.avatar,x.f.picture):''}</span>`:SICO[x.k];
+  const sub=x.k==='task'?`${esc(x.s||'Personal')}${x.m?' · '+esc(x.m):''}`:x.k==='note'?esc(x.s||'Personal')+' · Note':x.k==='subject'?'Subject':x.k==='friend'?`${(x.f.gems||0).toLocaleString()} gems${x.f.streak?' · '+x.f.streak+' day streak':''}`:esc(x.s||'');
+  return `<button type="button" class="sx-r${i===SSEL?' sel':''}${x.done?' done':''}" data-sx="${x.k}" data-id="${esc(x.id||x.t)}" style="--k:${i}"><span class="sx-i sx-${x.k}">${ic}</span><span class="sx-t"><b>${sMark(x.t,q)}</b><small>${sub}</small></span>${x.k==='task'?`<span class="sx-tag${x.done?' ok':''}">${x.done?'Done':'Open'}</span>`:`<span class="sx-go">${SICO.page}</span>`}</button>`;
+};
+const sTabs=c=>`<div class="sx-tabs" role="tablist">${[['All',c.all],['Tasks',c.T],['Notes',c.N],['Subjects',c.S],['Friends',c.F]].map(([n,v])=>`<button type="button" role="tab" class="sx-tab${SF===n?' on':''}" data-sf="${n}" aria-selected="${SF===n}">${n}${v?`<i>${v}</i>`:''}</button>`).join('')}</div>`;
 const searchRes=()=>{
-  const q=SQ.trim().toLowerCase();
-  if(!q)return `<div class="mut" style="font:600 14px var(--body);margin-top:18px">Search your tasks, notes and subjects.</div>`;
-  const has=s=>String(s||'').toLowerCase().includes(q);
-  const t=(D.tasks||[]).filter(x=>has(x.title)||has(x.subject)).slice(0,20);
-  const n=(D.notes||[]).filter(x=>has(x.title)||has(x.subject)).slice(0,20);
-  const s=(D.subjects||[]).filter(has).slice(0,10);
-  const sec=(h,items)=>items.length?`<div class="sec" style="margin-top:16px">${h}</div>${items.join('')}`:'';
-  const row=(k,title,sub)=>`<div class="trow" data-sk="${k}" style="height:auto;min-height:54px;margin-top:8px"><div style="flex:1"><div class="tt">${esc(title)}</div>${sub?`<div class="meta"><span class="mt">${esc(sub)}</span></div>`:''}</div></div>`;
-  const out=sec('Tasks',t.map(x=>row('task',x.title,x.subject)))+sec('Notes',n.map(x=>row('note',x.title,x.subject)))+sec('Subjects',s.map(x=>row('subject',x,'')));
-  return out||`<div class="mut" style="font:700 14px var(--body);margin-top:18px">No results for “${esc(SQ.trim())}”.</div>`;
+  const r=sData(),q=r.q;
+  if(!q){
+    const rec=sRecent(),open=(D.tasks||[]).filter(t=>!t.done).slice(0,3),subs=(D.subjects||[]).slice(0,8);
+    const tips=['math','due today','notes','friends','focus','shop'];
+    return `${rec.length?`<div class="sx-sec">Recent searches<button type="button" class="sx-clr" data-sclear>Clear</button></div><div class="sx-rec">${rec.map(x=>`<span class="sx-rc"><button type="button" data-srec="${esc(x)}">${SICO.clock}<span>${esc(x)}</span></button><button type="button" class="sx-rx" data-srm="${esc(x)}" aria-label="Remove ${esc(x)}">${SICO.x}</button></span>`).join('')}</div>`:''}
+<div class="sx-sec">Quick actions</div><div class="sx-qa"><button type="button" data-sqa="Add task">${SICO.plus}<span>New task</span></button><button type="button" data-sqa="Add note">${SICO.note}<span>New note</span></button><button type="button" data-sqa="Focus">${SICO.clock}<span>Focus</span></button><button type="button" data-sqa="Friends">${SICO.friend}<span>Friends</span></button></div>
+${subs.length?`<div class="sx-sec">Your subjects</div><div class="sx-chips">${subs.map(s=>`<button type="button" class="sx-chip" data-stry="${esc(s)}">${esc(s)}</button>`).join('')}</div>`:''}
+${open.length?`<div class="sx-sec">Open tasks</div><div class="sx-list">${open.map((t,i)=>sRow({k:'task',id:t.id,t:t.title,s:t.subject,m:t.meta,done:t.done},'',i)).join('')}</div>`:''}
+<div class="sx-sec">Try searching</div><div class="sx-chips">${tips.map(s=>`<button type="button" class="sx-chip ghost" data-stry="${s}">${s}</button>`).join('')}</div>`;
+  }
+  // smart words: "done", "open", "today", "overdue"
+  let T=r.T;const all=(D.tasks||[]);
+  if(/^(done|completed|finished)$/.test(q))T=all.filter(t=>t.done).map(x=>({k:'task',id:x.id,t:x.title,s:x.subject,m:x.meta,done:true,sc:1}));
+  else if(/^(open|todo|to do|pending)$/.test(q))T=all.filter(t=>!t.done).map(x=>({k:'task',id:x.id,t:x.title,s:x.subject,m:x.meta,done:false,sc:1}));
+  else if(/today/.test(q))T=all.filter(t=>t.when==='today'||t.when==='overdue').map(x=>({k:'task',id:x.id,t:x.title,s:x.subject,m:x.meta,done:x.done,sc:1}));
+  else if(/overdue|late/.test(q))T=all.filter(t=>t.when==='overdue').map(x=>({k:'task',id:x.id,t:x.title,s:x.subject,m:x.meta,done:x.done,sc:1}));
+  const c={T:T.length,N:r.N.length,S:r.S.length,F:r.F.length};c.all=c.T+c.N+c.S+c.F;
+  let i=0;const sec=(h,items,lim)=>items.length?`<div class="sx-sec">${h}<span class="sx-n">${items.length}</span></div><div class="sx-list">${items.slice(0,lim).map(x=>sRow(x,q,i++)).join('')}</div>`:'';
+  const pages=SF==='All'?r.P.slice(0,3):[];
+  let body='';
+  if(SF==='All')body=(pages.length?`<div class="sx-sec">Go to</div><div class="sx-list">${pages.map(x=>sRow(x,q,i++)).join('')}</div>`:'')+sec('Tasks',T,5)+sec('Notes',r.N,5)+sec('Subjects',r.S,5)+sec('Friends',r.F,5);
+  else body=sec(SF,SF==='Tasks'?T:SF==='Notes'?r.N:SF==='Subjects'?r.S:r.F,50);
+  if(!body)body=`<div class="sx-empty"><div class="sx-ei">${ICO.search.replace('class="ic"','class="ic" style="width:34px;height:34px"')}</div><b>No results for “${esc(SQ.trim())}”</b><p>Check the spelling or try a shorter word.</p><button type="button" class="sx-make" data-smake>${SICO.plus}<span>Create task “${esc(SQ.trim().slice(0,40))}”</span></button></div>`;
+  return sTabs(c)+body;
 };
 replace('Search',{
-  html:()=>wrapD(`<div class="pg" style="padding-top:40px"><div style="display:flex;align-items:center;gap:14px"><span data-sback style="color:var(--ink)">${ICO.back}</span><div class="card rw" style="flex:1;margin:0;height:46px;border-radius:23px;padding:0 14px;justify-content:flex-start;gap:10px"><span style="color:var(--ink);display:flex">${ICO.search.replace('class="ic"','class="ic" style="width:20px;height:20px"')}</span><input data-sq value="${esc(SQ)}" maxlength="60" placeholder="Search tasks, notes, subjects" style="flex:1;min-width:0;border:0;outline:0;background:transparent;font:600 15px var(--body);color:var(--ink)"></div></div><div data-sres>${searchRes()}</div></div>`),
-  play(){S.mute=false;enter();const inp=$('[data-sq]',R);inp.oninput=()=>{SQ=inp.value;$('[data-sres]',R).innerHTML=searchRes()};
-    R.onclick=e=>{
-      if(e.target.closest('[data-sback]')){hap('light');go(SFROM);return}
-      const r=e.target.closest('[data-sk]');if(r){hap('light');if(r.dataset.sk==='task')go('Tasks');else if(CB.open)CB.open('subjects')}}}
+  html:()=>wrapD(`<div class="pg sx" style="padding-top:40px"><div class="sx-top"><button type="button" class="sx-bk" data-sback aria-label="Back">${ICO.back}</button><div class="card rw dz-srch sx-box"><span class="sx-si">${ICO.search.replace('class="ic"','class="ic" style="width:20px;height:20px"')}</span><input data-sq type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(SQ)}" maxlength="60" placeholder="Search tasks, notes, subjects, friends" aria-label="Search"><button type="button" class="sx-cl${SQ?'':' hide'}" data-scl aria-label="Clear">${SICO.x}</button></div></div><div class="sx-res" data-sres aria-live="polite">${searchRes()}</div></div>`),
+  play(){S.mute=false;enter();SSEL=-1;
+    const inp=$('[data-sq]',R),res=()=>$('[data-sres]',R),cl=()=>$('[data-scl]',R);
+    let tmr=0;
+    const draw=()=>{const r=res();if(!r)return;r.innerHTML=searchRes();const c=cl();if(c)c.classList.toggle('hide',!SQ);
+      if(!SOFT)$$('.sx-r,.sx-chip,.sx-qa button,.sx-rc',r).forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:180,delay:Math.min(i,12)*18,easing:'ease-out',fill:'backwards'}))};
+    const setQ=v=>{SQ=v;inp.value=v;SSEL=-1;draw()};
+    if(inp){setTimeout(()=>{try{inp.focus();const n=inp.value.length;inp.setSelectionRange(n,n)}catch(_){}},180);
+      inp.oninput=()=>{SQ=inp.value;SSEL=-1;clearTimeout(tmr);tmr=setTimeout(draw,90)};
+      inp.onkeydown=e=>{const rows=$$('.sx-r',R);
+        if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!rows.length)return;SSEL=(SSEL+(e.key==='ArrowDown'?1:-1)+rows.length)%rows.length;rows.forEach((r,i)=>r.classList.toggle('sel',i===SSEL));rows[SSEL].scrollIntoView({block:'nearest'});return}
+        if(e.key==='Enter'){e.preventDefault();sRemember(SQ);const r=rows[SSEL>=0?SSEL:0];if(r)r.click();else{try{inp.blur()}catch(_){}}return}
+        if(e.key==='Escape'){if(SQ)setQ('');else{hap('light');go(SFROM)}}};}
+    const openRow=r=>{const k=r.dataset.sx,id=r.dataset.id;sRemember(SQ);hap('light');
+      if(k==='task'){if(DZ.editTask!==undefined){DZ.editTask=id;go('Add task')}else go('Tasks');return}
+      if(k==='friend'){if(DZ.openFriend)DZ.openFriend(id,'Search');return}
+      if(k==='page'){const n=r.querySelector('.sx-t b').textContent;if(IDX(n)>=0)go(n);return}
+      if(k==='subject'){setQ(id);SF='All';return}
+      if(CB.open)CB.open('subjects')};
+    R.onclick=async e=>{const t=e.target;
+      if(t.closest('[data-sback]')){hap('light');go(SFROM);return}
+      if(t.closest('[data-scl]')){hap('light');setQ('');inp&&inp.focus();return}
+      const tab=t.closest('[data-sf]');if(tab){SF=tab.dataset.sf;hap('tick');draw();return}
+      const rm=t.closest('[data-srm]');if(rm){e.stopPropagation();sForget(rm.dataset.srm);hap('light');draw();return}
+      if(t.closest('[data-sclear]')){sForget(null);hap('light');draw();return}
+      const rc=t.closest('[data-srec]');if(rc){hap('tick');setQ(rc.dataset.srec);return}
+      const tr=t.closest('[data-stry]');if(tr){hap('tick');setQ(tr.dataset.stry);return}
+      const qa=t.closest('[data-sqa]');if(qa){hap('light');const n=qa.dataset.sqa;if(n==='Add task')DZ.editTask=null;go(n);return}
+      if(t.closest('[data-smake]')){const title=SQ.trim().slice(0,120);if(!title)return;hap('press');const ok=CB.addTask?await CB.addTask({title,subject:(D.subjects||[])[0]||'Personal',priority:'medium',dueDate:new Date().toISOString().slice(0,10)}):false;if(ok){hap('success');toast('Task added');sRemember(title);setQ('')}else toast('Could not add the task.');return}
+      const r=t.closest('[data-sx]');if(r)openRow(r)}}
 });
 /* ---- My subjects: every subject with its completion, opened from the Subjects count on Profile ---- */
 {
@@ -1344,7 +1422,7 @@ DZ.openAvatar=()=>{AVC=avDecode(D.avatar);AV0=avEncode(AVC);AVT='face';go('Edit 
 /* ---- Gem Shop (purchases are checked and stored on the server) ---- */
 {
 const SHI={
- gem:'<svg viewBox="40 0 385 466"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>',
+ gem:'<svg viewBox="40 0 385 466" shape-rendering="geometricPrecision" preserveAspectRatio="xMidYMid meet"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>',
  freeze:'<svg viewBox="0 0 64 64"><path d="M32 3 55 11v19c0 15-9.500 25-23 31C18.500 55 9 45 9 30V11z" fill="#f59a3f"/><path d="M32 3 55 11v19c0 15-9.500 25-23 31z" fill="#e8812a"/><path d="M32 19l4.300 8.700 9.600 1.400-7 6.800 1.700 9.600L32 40.800l-8.600 4.500 1.700-9.600-7-6.800 9.600-1.400z" fill="#fff0d2"/></svg>',
  bolt:'<svg viewBox="0 0 64 64"><path d="M38 3 12 35h15l-4 26 29-35H36z" fill="#a95cf2"/><path d="M38 3 36 26h16L23 61l4-26z" fill="#c28dff"/></svg>',
  gift:'<svg viewBox="0 0 64 64"><path d="M32 25C24 25 16 21 19 14c3-6 11-1 13 11z" fill="#5fd49b"/><path d="M32 25c8 0 16-4 13-11-3-6-11-1-13 11z" fill="#5fd49b"/><rect x="9" y="25" width="46" height="12" rx="4" fill="#5fd49b"/><rect x="12" y="35" width="40" height="25" rx="4" fill="#38b878"/><rect x="28" y="25" width="8" height="35" fill="#2a9d65"/></svg>',
@@ -2135,7 +2213,7 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
   };
   const play=()=>{
     const sc=R.querySelector('[data-fpscroll]'),bar=R.querySelector('.fp-bar');
-    if(sc&&bar){const hero=sc.querySelector('.fp-hero');const sw=()=>bar.classList.toggle('sc',sc.scrollTop>=(hero?hero.offsetHeight:260)-bar.offsetHeight);sc.addEventListener('scroll',sw,{passive:true});sw()}
+    if(sc&&bar){const hero=sc.querySelector('.fp-hero');const sw=()=>bar.classList.toggle('sc',sc.scrollTop>12);sc.addEventListener('scroll',sw,{passive:true});sw()}
     R.onclick=async e=>{
       const t=e.target;
       if(t.closest('[data-fpsx]')){hap('light');sheet(null);return}
@@ -2162,7 +2240,7 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
       if(t.closest('[data-fpback]')){back();return}
       if(t.closest('[data-fpreport]')){hap('light');sheet('report');return}
       if(t.closest('[data-fpblock]')){hap('light');sheet('block');return}
-      if(t.closest('[data-fpqr]')){hap('medium');const d=FP.data||{},l=(D.friends||[]).find(f=>f.id===FP.id)||{};const nm=d.name||l.name||'Friend';DZ.fsData={id:FP.id,name:nm,pic:d.picture||l.picture||'',handle:handleOf(nm,d),col:fpCol(nm),avatar:d.avatar||''};go('Friend share');return}
+      if(t.closest('[data-fpqr]')){hap('medium');const d=FP.data||{},l=(D.friends||[]).find(f=>f.id===FP.id)||{};const nm=d.name||l.name||'Friend';DZ.fsBack='';DZ.fsData={id:FP.id,name:nm,pic:d.picture||l.picture||'',handle:handleOf(nm,d),col:fpCol(nm),avatar:d.avatar||''};go('Friend share');return}
       if(t.closest('[data-fpretry]')){hap('light');FP.err='';FP.data=null;go('Friend profile',true);load();return}
       if(t.closest('[data-fpgift]')){
         if(FP.busy)return;
@@ -2225,13 +2303,13 @@ ${q?`<svg x="420" y="410" width="136" height="136" viewBox="${q.vb}">${q.body}</
   };
   const fsPlay=()=>{
     const f=DZ.fsData||{name:'Friend',handle:'friend'};
-    const text=`Meet ${f.name} (@${f.handle}) on StudyOS. Study together: ${D.inviteUrl||'https://studyos.app'}`;
+    const text=f.id==='me'?`Follow me on StudyOS (@${f.handle}) and let's keep a study streak together: ${D.inviteUrl||'https://studyos.app'}`:`Meet ${f.name} (@${f.handle}) on StudyOS. Study together: ${D.inviteUrl||'https://studyos.app'}`;
     R.querySelector('.fs-sheet').animate([{transform:'translateY(100%)'},{transform:'none'}],{duration:230,easing:'cubic-bezier(.22,.9,.28,1)',fill:'backwards'});
     R.querySelector('.fs-card').animate([{transform:'translateY(-14px) scale(.96)',opacity:0},{transform:'none',opacity:1}],{duration:230,easing:'cubic-bezier(.22,.9,.28,1)',fill:'backwards'});
     const sys=()=>{try{if(CB.share)CB.share(text);else if(navigator.share)navigator.share({text}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(text).then(()=>toast('Link copied')).catch(()=>toast('Could not copy'));else toast('Sharing is not available here.')}catch(_){toast('Could not open sharing.')}};
     R.onclick=e=>{
       const t=e.target;
-      if(t.closest('[data-fsx]')){hap('light');go('Friend profile');return}
+      if(t.closest('[data-fsx]')){hap('light');go(DZ.fsBack||'Friend profile');return}
       if(t.closest('[data-fsw]')){hap('medium');try{window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank')}catch(_){sys()}return}
       if(t.closest('[data-fsm]')){hap('medium');try{window.location.href='sms:?body='+encodeURIComponent(text)}catch(_){sys()}return}
       if(t.closest('[data-fsi]')||t.closest('[data-fso]')){hap('medium');sys();return}
@@ -2616,7 +2694,7 @@ SCREENS.push({t:'Streak friends',d:'Your friends and their streaks',spec:{m:'An 
   DZ.fxChr=(id,code,view)=>{const c=fxCode(id,code);if(!c)return '';try{return avatarSvg(avDecode(c),{view:view||'full'})}catch(_){return ''}};
   DZ.fxNoPic='<svg class="fx-none" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="var(--chip,#2a323a)"/><circle cx="32" cy="25" r="11" fill="var(--mut,#9aa6b0)"/><path d="M12 54c2.500-10 10.500-15 20-15s17.500 5 20 15a30 30 0 0 1-40 0z" fill="var(--mut,#9aa6b0)"/></svg>';
   // Face for any person: avatar character > profile photo > default person icon.
-  DZ.pfFace=(id,code,pic)=>{const a=DZ.fxChr(id,code,'face');if(a)return a;let p=pic;if(!p){const f=id==='me'?null:(D.friends||[]).find(x=>String(x.id)===String(id));p=f&&f.picture}
+  DZ.pfFace=(id,code,pic)=>{const a=DZ.fxChr(id,code,'face');if(a)return a;let p=pic||(id==='me'?D.picture:'');if(!p){const f=id==='me'?null:(D.friends||[]).find(x=>String(x.id)===String(id));p=f&&f.picture}
     return p?`<img src="${esc(p)}" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML=DZ_NOPIC()">`:DZ.fxNoPic};
   window.DZ_NOPIC=()=>DZ.fxNoPic;
   DZ.fxCol=colOf;
@@ -2624,16 +2702,16 @@ SCREENS.push({t:'Streak friends',d:'Your friends and their streaks',spec:{m:'An 
   const PL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
   const XX='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   const CHV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
-  const GEM='<svg viewBox="0 0 24 24"><path d="M7 3h10l4 6-9 12L3 9z" fill="#e35d7a"/><path d="M7 3l5 6 5-6M3 9h18M12 9v12" fill="none" stroke="#ffb3c2" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+  const GEM=CUBE;
   const FLM='<svg viewBox="0 0 24 24"><path d="M12 2c1 3.500 5 5.600 5 10.200A5 5 0 0 1 12 17.500a5 5 0 0 1-5-5.300c0-2 1-3.400 2.200-4.700.2 1.600 1 2.400 1.800 2.600C10.700 7.300 11 4.600 12 2z" fill="#ff7a45"/><path d="M12 22a4 4 0 0 1-4-4c0-1.800 1.600-3 4-5 2.400 2 4 3.200 4 5a4 4 0 0 1-4 4z" fill="#ffb347"/></svg>';
   const CRN='<svg viewBox="0 0 24 24"><path d="M3 8l4.500 3.500L12 5l4.500 6.500L21 8l-2 11H5z" fill="#ffcc4d" stroke="#c9952a" stroke-width="1.2" stroke-linejoin="round"/></svg>';
-  const face=(r,cls)=>{const id=r.me?'me':r.id,has=!!DZ.fxChr(id,r.me?D.avatar:'','face');return `<span class="fx-av${cls?' '+cls:''}${has?'':' np'}" style="--c:${colOf(r.n)}">${DZ.pfFace(id,r.me?D.avatar:'',r.pic||'')}</span>`};
+  const face=(r,cls)=>{const id=r.me?'me':r.id,has=!!DZ.fxChr(id,r.me?D.avatar:'','face');return `<span class="fx-av${cls?' '+cls:''}${has?'':' nopic'}" style="--c:${colOf(r.n)}">${DZ.pfFace(id,r.me?D.avatar:'',r.pic||'')}</span>`};
   const frHtml=()=>{
     const fr=(D.friends||[]);
     const rows=[...fr.map(f=>({n:f.name||'Friend',m:f.gems||0,id:f.id,st:f.streak||0,pic:f.picture||''})),{n:(D.first||'You'),m:D.gems||0,me:1,st:D.streak||0}].sort((a,b)=>b.m-a.m);
     const rank=rows.findIndex(r=>r.me)+1;
     const inc=(D.incoming||[]);
-    const pod=rows.length>=2?[rows[1],rows[0],rows[2]].map((r,i)=>r?`<div class="fx-pd p${[2,1,3][i]}${r.me?' me':''}"${r.me?'':` data-fid="${esc(r.id)}" role="button" aria-label="Open ${esc(r.n)}'s profile"`} style="--k:${i}">${[2,1,3][i]===1?`<i class="fx-crown">${CRN}</i>`:''}${face(r,'lg')}<b>${esc(String(r.n).split(' ')[0])}${r.me?' (You)':''}</b><small><i>${GEM}</i>${r.m.toLocaleString()}</small><div class="fx-st"><span>${[2,1,3][i]}</span></div></div>`:'<div class="fx-pd empty"></div>').join(''):'';
+    const pod=rows.length>=2?[rows[1],rows[0],rows[2]].map((r,i)=>r?`<div class="fx-pd p${[2,1,3][i]}${r.me?' me':''}"${r.me?'':` data-fid="${esc(r.id)}" role="button" aria-label="Open ${esc(r.n)}'s profile"`} style="--k:${i}">${[2,1,3][i]===1?`<i class="fx-crown">${CRN}</i>`:''}${face(r,'lg')}<b>${esc(String(r.n).split(' ')[0])}${r.me?' (You)':''}</b><small><i>${GEM}</i>${r.m.toLocaleString()}</small><div class="fx-st"><span class="fx-rn">${[2,1,3][i]}</span></div></div>`:'<div class="fx-pd empty"></div>').join(''):'';
     const list=rows.map((r,i)=>`<div class="fx-row${r.me?' me':''}"${r.me?'':` data-fid="${esc(r.id)}" role="button" aria-label="Open ${esc(r.n)}'s profile"`} style="--k:${i}"><span class="fx-rk${i<3?' t'+(i+1):''}">${i+1}</span>${face(r)}<span class="fx-nm"><b>${esc(r.n)}${r.me?' <em>You</em>':''}</b><small>${r.st?`<i>${FLM}</i>${r.st} day streak`:'Study friend'}</small></span><span class="fx-gm"><i>${GEM}</i>${r.m.toLocaleString()}</span>${r.me?'':`<span class="fx-chev">${CHV}</span>`}</div>`).join('');
     const req=inc.map(u=>`<div class="fx-req" data-req="${esc(u.id)}">${face({n:u.name||'?',id:u.id,pic:u.picture||''})}<span class="fx-nm"><b>${esc(u.name||'Someone')}</b><small>Wants to be your study friend</small></span><span class="fx-rb"><button type="button" class="fx-ok" data-acc aria-label="Accept">Accept</button><button type="button" class="fx-no" data-dec aria-label="Decline">${XX}</button></span></div>`).join('');
     return `<div class="scr n nd fx3"><div class="fx-pg">
@@ -2665,6 +2743,134 @@ ${fr.length?`<div class="fx-sec">Leaderboard · gems</div><div class="fx-pod">${
   };
   const k=IDX('Friends');if(k>=0){SCREENS[k].html=frHtml;SCREENS[k].play=frPlay}
 }
+
+/* ==== v107: Find friends (contacts, search, suggestions, share link) + Friend Streak invites ==== */
+{
+  const FF={sugg:null,loadingS:false,errS:'',sent:{},hide:{},contacts:null,cLoading:false,cErr:'',q:'',res:null,sLoading:false,sErr:'',inv:null,invLoading:false};
+  try{FF.hide=JSON.parse(localStorage.getItem('studyos_sugg_hide')||'{}')||{}}catch(_){FF.hide={}}
+  const saveHide=()=>{try{localStorage.setItem('studyos_sugg_hide',JSON.stringify(FF.hide))}catch(_){}};
+  const BK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4M10 6l-6 6 6 6"/></svg>';
+  const XX='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const ADDU='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="8" r="4"/><path d="M1.5 20.5c.6-4 3.700-6.300 7.500-6.300s6.900 2.300 7.500 6.300z"/><path d="M19 7v8M15 11h8" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" fill="none"/></svg>';
+  const OKU='<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="8" r="4"/><path d="M1.5 20.5c.6-4 3.700-6.300 7.500-6.300s6.900 2.300 7.500 6.300z"/><path d="M15.500 11.500l2.300 2.300 4.200-4.800" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>';
+  const BOOK='<svg viewBox="0 0 48 48"><rect x="9" y="5" width="30" height="38" rx="4" fill="#ffb020"/><rect x="9" y="5" width="7" height="38" rx="3" fill="#e08a00"/><circle cx="27.500" cy="20" r="5" fill="#fff4dc"/><path d="M19.500 33c.9-4.300 4.200-6.500 8-6.500s7.100 2.200 8 6.500z" fill="#fff4dc"/><rect x="38" y="10" width="4" height="7" rx="1.500" fill="#e08a00"/><rect x="38" y="20" width="4" height="7" rx="1.500" fill="#e08a00"/><rect x="38" y="30" width="4" height="7" rx="1.500" fill="#e08a00"/></svg>';
+  const MAG='<svg viewBox="0 0 48 48"><circle cx="20" cy="20" r="12" fill="none" stroke="#1cb0f6" stroke-width="5.500"/><path d="M29.500 29.500l11 11" stroke="#1cb0f6" stroke-width="6" stroke-linecap="round"/><path d="M14 16a7 7 0 0 1 6-4" stroke="#bfeaff" stroke-width="3" stroke-linecap="round" fill="none"/></svg>';
+  const LNK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.500 4.500 0 0 0 6.400 0l3-3a4.500 4.500 0 0 0-6.400-6.400l-1 1"/><path d="M14 10a4.500 4.500 0 0 0-6.400 0l-3 3a4.500 4.500 0 0 0 6.400 6.400l1-1"/></svg>';
+  const face=(p)=>`<span class="ff-av" style="--c:${DZ.fxCol?DZ.fxCol(p.name||'?'):'#c9b8c3'}">${DZ.pfFace?DZ.pfFace(p.id,p.avatar,p.picture):''}</span>`;
+  const via=p=>p.via?`Followed by ${esc(String(p.via).split(' ')[0])}${p.mutualCount>1?' and '+(p.mutualCount-1)+' other'+(p.mutualCount>2?'s':''):''}`:(p.mutualCount?`${p.mutualCount} friends in common`:'New on StudyOS');
+  const rel=p=>FF.sent[p.id]||p.relation||'none';
+  const isFriend=id=>(D.friends||[]).some(f=>String(f.id)===String(id));
+  const loadSugg=async(force)=>{if(FF.loadingS||(FF.sugg&&!force))return;FF.loadingS=true;FF.errS='';
+    let r=null;try{r=CB.friendSuggestions?await CB.friendSuggestions():null}catch(_){r=null}
+    FF.loadingS=false;if(r&&r.ok)FF.sugg=r.suggestions;else{FF.sugg=FF.sugg||[];FF.errS=(r&&r.message)||'Could not load suggestions.'}
+    const t=SCREENS[CUR]&&SCREENS[CUR].t;if(/^(Find friends|Friend suggestions|Search friends|Contacts on StudyOS)$/.test(t))go(t,true)};
+  const suggList=()=>(FF.sugg||[]).filter(p=>!FF.hide[p.id]&&!isFriend(p.id));
+  const head=(title,big)=>`<div class="ff-hd${big?' big':''}"><button type="button" class="ff-bk" data-ffback aria-label="Back">${BK}</button>${big?'':`<h1>${title}</h1>`}<span></span></div>${big?`<h1 class="ff-h1">${title}</h1>`:''}`;
+  const followBtn=(p,small)=>{const r=rel(p);const on=r==='sent'||r==='friends'||isFriend(p.id);
+    return small?`<button type="button" class="ff-add${on?' on':''}" data-fffollow="${esc(p.id)}" aria-label="${on?'Request sent':'Add '+esc(p.name)}"${on?' disabled':''}>${on?OKU:ADDU}</button>`
+      :`<button type="button" class="ff-fol${on?' on':''}" data-fffollow="${esc(p.id)}"${on?' disabled':''}>${r==='friends'||isFriend(p.id)?'FRIENDS':r==='sent'?'REQUESTED':r==='incoming'?'ACCEPT':'ADD FRIEND'}</button>`};
+  const card=(p,i)=>`<div class="ff-card" style="--k:${i}" data-ffopen="${esc(p.id)}"><button type="button" class="ff-x" data-ffhide="${esc(p.id)}" aria-label="Hide">${XX}</button>${face(p)}<b>${esc(p.name)}</b><small>${via(p)}</small>${followBtn(p)}</div>`;
+  const row=(p,i,withX)=>`<div class="ff-row" style="--k:${i}">${face(p)}<span class="ff-nm"><b>${esc(p.name)}</b><small>${p.username&&!p.via&&!p.mutualCount?'@'+esc(p.username):via(p)}</small></span>${followBtn(p,true)}${withX?`<button type="button" class="ff-rx" data-ffhide="${esc(p.id)}" aria-label="Hide">${XX}</button>`:''}</div>`;
+  const dots='<div class="ff-dots" role="status" aria-label="Loading"><i></i><i></i><i></i></div>';
+  const suggBlock=(lim)=>{const L=suggList();
+    if(FF.sugg===null||FF.loadingS&&!L.length)return `<div class="ff-sec">Friend suggestions</div>${dots}`;
+    if(!L.length)return FF.errS?`<div class="ff-sec">Friend suggestions</div><p class="ff-note">${esc(FF.errS)}</p>`:'';
+    return `<div class="ff-sec">Friend suggestions<button type="button" class="ff-all" data-ffall>VIEW ALL</button></div><div class="ff-scroll">${L.slice(0,lim||12).map(card).join('')}</div>`};
+  const scr=(body,cls)=>`<div class="scr n nd fx3 ff ${cls||''}"><div class="ff-pg">${body}</div></div>`;
+
+  // 1) Find your friends
+  const hub=()=>scr(`${head('Find your friends',true)}
+<div class="ff-opts"><button type="button" class="ff-opt" data-ffgo="contacts"><i>${BOOK}</i><span>Choose from contacts</span></button>
+<button type="button" class="ff-opt" data-ffgo="search"><i>${MAG}</i><span>Search by name</span></button>
+<button type="button" class="ff-opt" data-ffgo="share"><i class="ff-me">${DZ.pfFace?DZ.pfFace('me',D.avatar,''):''}<em>${LNK}</em></i><span>Share follow link</span></button></div>
+${suggBlock(12)}`);
+  // 2) Contacts on StudyOS
+  const contacts=()=>{const L=FF.contacts||[];
+    let body;
+    if(FF.cLoading)body=dots;
+    else if(FF.cErr)body=`<div class="ff-empty"><i>${BOOK}</i><b>${FF.cErr==='denied'?'Allow access to contacts':'Could not check contacts'}</b><p>${FF.cErr==='denied'?'StudyOS needs permission to see which of your contacts already study here. Contacts are only compared, never saved.':esc(FF.cErr)}</p><button type="button" class="ff-btn" data-ffretry>TRY AGAIN</button></div>`;
+    else if(!L.length)body=`<div class="ff-empty"><i>${BOOK}</i><b>None of your contacts are on StudyOS yet</b><p>Invite them and you both get 10 gems.</p><button type="button" class="ff-btn" data-ffinvite>INVITE FRIENDS</button></div>`;
+    else{const left=L.filter(p=>rel(p)==='none'&&!isFriend(p.id));
+      body=`<div class="ff-sec big">${L.length} ${L.length===1?'contact':'contacts'}${left.length?'<button type="button" class="ff-all" data-fffollowall>ADD ALL</button>':''}</div><div class="ff-list">${L.map((p,i)=>row(p,i)).join('')}</div>`}
+    return scr(`${head('Contacts on StudyOS')}${body}${FF.cLoading?'':suggBlock(12)}`)};
+  // 3) Search for friends
+  const search=()=>{
+    let body;const q=FF.q.trim();
+    if(!q)body=`${FF.sugg===null?dots:`<div class="ff-sec">Friend suggestions</div><div class="ff-list">${suggList().slice(0,20).map((p,i)=>row(p,i,true)).join('')||'<p class="ff-note">Type a name or @username.</p>'}</div>`}`;
+    else if(q.length<2)body='<p class="ff-note">Keep typing…</p>';
+    else if(FF.sLoading&&!FF.res)body=dots;
+    else if(FF.sErr)body=`<p class="ff-note">${esc(FF.sErr)}</p>`;
+    else if(FF.res&&!FF.res.length)body=`<div class="ff-empty"><i>${MAG}</i><b>No one found for “${esc(q)}”</b><p>Check the spelling, or invite them to StudyOS.</p><button type="button" class="ff-btn" data-ffinvite>INVITE A FRIEND</button></div>`;
+    else body=`<div class="ff-list">${(FF.res||[]).map((p,i)=>row(p,i)).join('')}</div>`;
+    return scr(`${head('Search for friends')}<label class="ff-in"><span>${MAG}</span><input data-ffq type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="40" placeholder="Name or username" value="${esc(FF.q)}"></label><div data-ffres>${body}</div>`)};
+  // 4) All suggestions
+  const all=()=>scr(`${head('Friend suggestions')}${FF.sugg===null?dots:`<div class="ff-list">${suggList().map((p,i)=>row(p,i,true)).join('')||'<p class="ff-note">No more suggestions right now.</p>'}</div>`}`);
+
+  const follow=async(btn)=>{const id=btn.dataset.fffollow;if(btn.disabled)return;btn.disabled=true;hap('press');
+    FF.sent[id]='sent';btn.classList.add('on');btn.innerHTML=btn.classList.contains('ff-add')?OKU:'REQUESTED';
+    let r=null;try{r=CB.sendRequest?await CB.sendRequest(id):null}catch(_){r=null}
+    if(r&&r.ok){FF.sent[id]=r.status==='friends'?'friends':'sent';hap('success');toast(r.status==='friends'?'You are now friends!':'Friend request sent')}
+    else{delete FF.sent[id];btn.disabled=false;btn.classList.remove('on');btn.innerHTML=btn.classList.contains('ff-add')?ADDU:'ADD FRIEND';toast((r&&r.error)||'Could not send the request.')}};
+  const loadContacts=async()=>{FF.cLoading=true;FF.cErr='';go('Contacts on StudyOS',true);
+    let r=null;try{r=CB.findContacts?await CB.findContacts():null}catch(_){r=null}
+    FF.cLoading=false;if(r&&r.ok)FF.contacts=r.matches||[];else FF.cErr=r&&r.denied?'denied':((r&&r.error)||'Could not read your contacts.');
+    if(SCREENS[CUR]&&SCREENS[CUR].t==='Contacts on StudyOS')go('Contacts on StudyOS',true)};
+  let sT=0,sTok=0;
+  const runSearch=()=>{clearTimeout(sT);const q=FF.q.trim();if(q.length<2){FF.res=null;FF.sErr='';paintRes();return}
+    FF.sLoading=true;paintRes();const tok=++sTok;
+    sT=setTimeout(async()=>{let r=null;try{r=CB.searchUsers?await CB.searchUsers(q):null}catch(_){r=null}
+      if(tok!==sTok)return;FF.sLoading=false;if(r&&r.ok){FF.res=r.results;FF.sErr=''}else{FF.res=[];FF.sErr=(r&&r.message)||'Could not search right now.'}paintRes()},280)};
+  const paintRes=()=>{const box=R&&R.querySelector('[data-ffres]');if(!box)return;const tmp=document.createElement('div');tmp.innerHTML=search();const nb=tmp.querySelector('[data-ffres]');if(nb)box.innerHTML=nb.innerHTML};
+  const anim=()=>{if(SOFT)return;$$('.ff-opt,.ff-card,.ff-row',R).forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:260,delay:Math.min(i,14)*35,easing:'cubic-bezier(.2,.9,.3,1)',fill:'backwards'}))};
+  const common=e=>{const t=e.target;
+    if(t.closest('[data-ffback]')){back();return true}
+    const h=t.closest('[data-ffhide]');if(h){e.stopPropagation();FF.hide[h.dataset.ffhide]=1;saveHide();hap('light');const el=h.closest('.ff-card,.ff-row');if(el){el.animate([{opacity:1,transform:'none'},{opacity:0,transform:'scale(.9)'}],{duration:180,fill:'forwards'});setTimeout(()=>go(SCREENS[CUR].t,true),170)}return true}
+    const f=t.closest('[data-fffollow]');if(f){e.stopPropagation();follow(f);return true}
+    if(t.closest('[data-ffall]')){hap('light');go('Friend suggestions');return true}
+    if(t.closest('[data-ffinvite]')){hap('light');if(CB.invite)CB.invite();return true}
+    const o=t.closest('[data-ffopen]');if(o&&isFriend(o.dataset.ffopen)){DZ.openFriend&&DZ.openFriend(o.dataset.ffopen,SCREENS[CUR].t);return true}
+    return false};
+  const reg=(t,html,play)=>{const k=IDX(t);if(k>=0)SCREENS.splice(k,1);SCREENS.push({t,d:t,g:'Friends pages',spec:{m:'',h:'',s:''},html,play})};
+  reg('Find friends',hub,()=>{enter();anim();loadSugg();R.onclick=e=>{if(common(e))return;const g=e.target.closest('[data-ffgo]');if(!g)return;hap('light');
+    if(g.dataset.ffgo==='contacts'){go('Contacts on StudyOS');if(!FF.contacts)loadContacts()}else if(g.dataset.ffgo==='search'){go('Search friends')}else{DZ.fsBack='Find friends';DZ.fsData={id:'me',name:D.fullName||D.first||'Me',pic:D.picture||'',handle:D.username||'student',col:DZ.fxCol?DZ.fxCol(D.first||'Me'):'#c9b8c3',avatar:D.avatar||''};go('Friend share')}}});
+  reg('Contacts on StudyOS',contacts,()=>{enter();anim();loadSugg();R.onclick=async e=>{if(common(e))return;
+    if(e.target.closest('[data-ffretry]')){hap('light');loadContacts();return}
+    const fa=e.target.closest('[data-fffollowall]');if(fa){fa.disabled=true;hap('press');const L=(FF.contacts||[]).filter(p=>rel(p)==='none'&&!isFriend(p.id));let n=0;for(const p of L){FF.sent[p.id]='sent';try{const r=CB.sendRequest?await CB.sendRequest(p.id):null;if(r&&r.ok)n++;else delete FF.sent[p.id]}catch(_){delete FF.sent[p.id]}}hap('success');toast(n?`Sent ${n} friend ${n===1?'request':'requests'}`:'Could not send requests.');go('Contacts on StudyOS',true)}}});
+  reg('Search friends',search,()=>{enter();loadSugg();const inp=R.querySelector('[data-ffq]');
+    if(inp){setTimeout(()=>{try{inp.focus()}catch(_){}},200);inp.oninput=()=>{FF.q=inp.value;runSearch()};inp.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();try{inp.blur()}catch(_){}}}}
+    R.onclick=e=>{common(e)}});
+  reg('Friend suggestions',all,()=>{enter();anim();loadSugg();R.onclick=e=>{common(e)}});
+  DZ.openFindFriends=()=>{FF.q='';FF.res=null;go('Find friends')};
+
+  // 5) Invite friends to start new Friend Streaks
+  const loadInv=async()=>{if(FF.invLoading)return;FF.invLoading=true;let r=null;try{r=CB.streakInvites?await CB.streakInvites():null}catch(_){r=null}
+    FF.invLoading=false;FF.inv=r&&r.ok?r:{invited:[],remaining:3,perDay:3,err:true};if(SCREENS[CUR]&&SCREENS[CUR].t==='Streak invite')go('Streak invite',true)};
+  const inv=()=>{const fr=(D.friends||[]),I=FF.inv,left=I?I.remaining:null,done=new Set((I&&I.invited)||[]);
+    const list=fr.length?`<div class="ff-list ff-inv">${fr.map((f,i)=>{const on=done.has(String(f.id));return `<div class="ff-row" style="--k:${i}">${face({id:f.id,name:f.name,avatar:f.avatar,picture:f.picture})}<span class="ff-nm"><b>${esc(f.name)}</b>${f.streak?`<small>${f.streak} day streak</small>`:''}</span><button type="button" class="ff-invb${on?' on':''}" data-ffinv="${esc(f.id)}"${on||left===0?' disabled':''}>${on?'INVITED':'INVITE'}</button></div>`}).join('')}</div>`
+      :`<div class="ff-empty"><i>${ADDU}</i><b>No friends yet</b><p>Add friends first, then invite them to a Friend Streak.</p><button type="button" class="ff-btn" data-ffadd>FIND FRIENDS</button></div>`;
+    return scr(`<div class="ff-hd"><button type="button" class="ff-bk" data-ffback aria-label="Close">${XX}</button><span></span><span></span></div><h1 class="ff-h1 sm">Invite friends to start new Friend Streaks!</h1><p class="ff-left">${I===null?'Checking your invites…':left+' '+(left===1?'invite':'invites')+' remaining'}</p>${list}`,'ff-invp')};
+  reg('Streak invite',inv,()=>{enter();anim();if(!FF.inv)loadInv();R.onclick=async e=>{if(common(e))return;
+    if(e.target.closest('[data-ffadd]')){hap('light');go('Find friends');return}
+    const b=e.target.closest('[data-ffinv]');if(!b||b.disabled)return;b.disabled=true;b.textContent='…';hap('press');
+    let r=null;try{r=CB.streakInvite?await CB.streakInvite(b.dataset.ffinv):null}catch(_){r=null}
+    if(r&&r.ok){FF.inv=FF.inv||{invited:[],remaining:3};FF.inv.invited=[...(FF.inv.invited||[]),b.dataset.ffinv];FF.inv.remaining=r.remaining;toast('Friend Streak invite sent!');go('Streak invite',true)}
+    else{b.disabled=false;b.textContent='INVITE';toast((r&&r.message)||'Could not send the invite.')}}});
+  DZ.openStreakInvite=()=>{FF.inv=null;go('Streak invite')};
+
+  // Profile: ADD FRIENDS opens Find friends; a dashed "+" circle after Friend streaks opens the invite page
+  {const k=IDX('Profile');if(k>=0){const ph=SCREENS[k].html,pp=SCREENS[k].play;
+    SCREENS[k].html=()=>{let h=ph();const a=h.indexOf('<div class="sec">Friend streaks</div>');
+      if(a>0){const plus=`<div class="pf-add" data-ffstreak role="button" aria-label="Invite friends to a Friend Streak"><span class="pf-plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></span><span class="pf-fn">Invite</span></div>`;
+        const fs=h.indexOf('<div class="fs"',a);
+        if(fs>0){const end=h.indexOf('</div></div></div>',fs);const close=(()=>{let d=0,i=fs;const re=/<div\b|<\/div>/g;re.lastIndex=fs;let m;while((m=re.exec(h))){d+=m[0]==='</div>'?-1:1;if(d===0)return m.index}return -1})();
+          if(close>0)h=h.slice(0,close)+plus+h.slice(close)}
+        else{const t=h.indexOf('Add friends to see them here.</div>',a);if(t>0){const e2=t+'Add friends to see them here.</div>'.length;h=h.slice(0,e2)+`<div class="fs" style="gap:14px;justify-content:flex-start">${plus}</div>`+h.slice(e2)}}}
+      return h};
+    SCREENS[k].play=()=>{pp();const old=R.onclick;R.onclick=e=>{
+      if(e.target.closest('[data-ffstreak]')){hap('light');DZ.openStreakInvite();return}
+      if(e.target.closest('[data-friends]')){hap('light');DZ.openFindFriends();return}
+      if(old)old(e)}}}}
+}
 const RUN_DEAD=()=>!host.isConnected;
 function back(){
   const t=SCREENS[CUR]&&SCREENS[CUR].t;if(!t)return false;
@@ -2680,9 +2886,11 @@ function back(){
   else if(t==='Edit avatar')to='Edit profile';
   else if(['Weekly report','Badges','Exam mode'].includes(t))to='Study';
   else if(['Friends','Edit profile','Settings'].includes(t))to='Profile';
-  else if(t==='Friend share')to='Friend profile';
+  else if(t==='Friend share')to=DZ.fsBack||'Friend profile';
   else if(t==='Friend profile')to=(DZ.fpFrom&&DZ.fpFrom!=='Friend profile')?DZ.fpFrom:'Profile';
   else if(t==='Search')to=DZ.searchFrom||'Home';
+  else if(t==='Find friends'||t==='Streak invite')to='Profile';
+  else if(['Contacts on StudyOS','Search friends','Friend suggestions'].includes(t))to='Find friends';
   else if(t==='Gem Shop'){if(DZ.closeSheet&&DZ.closeSheet())return true;to=DZ.shopFrom||'Home'}
   else if(t==='Gift gems')to='Gem Shop';
   else if(t==='Streak'||t==='Streak friends')to=DZ.streakFrom||'Home';

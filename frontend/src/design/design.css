@@ -2433,3 +2433,182 @@ html[data-theme="dark"] .dz .dz-undo{background:#ebe8ea;color:#1b1e25}
 .dz .fx3 .fx-sum b{font-size:clamp(17px,5vw,22px)!important;max-width:100%}
 .dz .fx3 .fx-sum small{font-size:clamp(10.5px,3vw,12px)!important;white-space:nowrap}
 @media (max-width:340px){.dz .fx3 .fx-bds{grid-template-columns:repeat(3,minmax(0,1fr))!important}.dz .fx3 .fp-3.fx-3s b i{display:none}}
+
+
+/* ==================== v103: friends podium, pictures in place, centred profile photo ==================== */
+/* podium: picture, name and gems centred above each step; the rank number centred on the step */
+.dz .fx3 .fx-pod{align-items:end!important}
+.dz .fx3 .fx-pd{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:flex-end;text-align:center;position:relative}
+.dz .fx3 .fx-pd>.fx-av{position:relative!important;inset:auto!important;margin:0 auto 4px}
+.dz .fx3 .fx-pd b,.dz .fx3 .fx-pd small{justify-content:center;text-align:center;width:100%}
+.dz .fx3 .fx-st{display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;width:100%}
+.dz .fx3 .fx-st .fx-rn{position:static!important;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--rc);color:#1b1e25;font:700 18px/1 var(--display);box-shadow:0 3px 0 color-mix(in srgb,var(--rc) 60%,#000),0 0 0 3px color-mix(in srgb,var(--rc) 30%,transparent);animation:fxRn .5s cubic-bezier(.3,1.6,.5,1) both .55s}
+.dz .fx3 .fx-pd.p1 .fx-st .fx-rn{width:40px;height:40px;font-size:21px}
+.dz .fx3 .fx-pd.p1 .fx-st{height:76px!important}.dz .fx3 .fx-pd.p2 .fx-st{height:56px!important}.dz .fx3 .fx-pd.p3 .fx-st{height:42px!important}
+@keyframes fxRn{from{transform:scale(0) rotate(-30deg)}to{transform:none}}
+.dz .fx3 .fx-av.nopic,.dz .pf-fa.nopic{background:var(--chip,#2a323a)!important}
+/* leaderboard rank numbers: a small centred circle */
+.dz .fx3 .fx-rk{display:grid!important;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--fx-soft);font-size:14px!important}
+.dz .fx3 .fx-rk.t1{background:color-mix(in srgb,#ffcc4d 30%,transparent)}.dz .fx3 .fx-rk.t2{background:color-mix(in srgb,#c3ccd4 35%,transparent)}.dz .fx3 .fx-rk.t3{background:color-mix(in srgb,#d99a5b 30%,transparent)}
+/* own Profile → Friend streaks: picture sits in the list, centred */
+.dz .pf-fa{position:relative!important;inset:auto!important}
+.dz .pf .fs [data-fid]{position:relative;display:flex!important;flex-direction:column;align-items:center;text-align:center}
+.dz .pf .fs [data-fid] .cnt{display:flex;align-items:center;justify-content:center;gap:4px}
+/* friend profile: photo / icon centred in the grey header, with a ring in the theme colour */
+.dz .fx3 .fp-hero.fx-hero{align-items:center!important;padding-top:calc(56px + env(safe-area-inset-top,0px))}
+.dz .fx3 .fp-hero.fx-hero:has(.fp-chr){align-items:flex-end!important}
+.dz .fx3 .fp-hero .fp-av{margin:0 auto!important;width:clamp(140px,44vw,200px)!important;height:clamp(140px,44vw,200px)!important;border:0!important;padding:0;box-shadow:0 0 0 5px var(--pg),0 0 0 9px color-mix(in srgb,var(--mv) 70%,transparent),0 18px 36px -14px rgba(0,0,0,.45)!important;animation:fpAvIn .5s cubic-bezier(.2,.9,.3,1.2) both}
+.dz .fx3 .fp-hero .fp-av img,.dz .fx3 .fp-hero .fp-av .fp-img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 22%!important;border-radius:50%}
+@keyframes fpAvIn{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
+/* round photos everywhere (Google sign-in pictures fill the circle) */
+.dz .fx3 .fx-av img,.dz .pf-fa img,.dz .fx3 .fp-pa img{object-fit:cover;object-position:center 22%}
+/* friend profile top stats: straight dividers */
+.dz .fx3 .fp-3.fx-3s>div{border-radius:0!important}
+
+
+/* v104: the gem icon is drawn sharp at every size (no blur from scaling or filters) */
+.dz svg[viewBox="40 0 385 466"]{shape-rendering:geometricPrecision;image-rendering:auto;filter:none!important;transform:translateZ(0);backface-visibility:hidden;overflow:visible}
+
+
+/* v105: friend profile top bar — like your own Profile: clear at the top, solid with a border as soon as you scroll */
+.dz .fp-bar{transition:background-color .22s ease,border-color .22s ease,box-shadow .22s ease!important;border-bottom:1.5px solid transparent!important}
+.dz .fp-bar h1,.dz .fp-bar .fp-bk{transition:color .22s ease}
+.dz .fp-bar.sc{background:#181b22!important;border-bottom-color:#2d353d!important;box-shadow:0 6px 16px -12px rgba(0,0,0,.55)!important}
+.dz .fp-bar.sc h1,.dz .fp-bar.sc .fp-bk{color:#f4f2f3!important}
+.dz .fx3 .fp-bar.sc,.dz .scr.nd.lt .fp-bar.sc{background:var(--pg)!important;border-bottom:1.5px solid color-mix(in srgb,var(--ink) 16%,transparent)!important}
+.dz .fx3 .fp-bar.sc h1,.dz .fx3 .fp-bar.sc .fp-bk,.dz .scr.nd.lt .fp-bar.sc h1,.dz .scr.nd.lt .fp-bar.sc .fp-bk{color:var(--ink)!important}
+
+
+/* ==================== v106: Search page ==================== */
+.dz .sx{padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))!important}
+.dz .sx-top{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:10px;padding:4px 0 10px;background:linear-gradient(var(--pg) 80%,transparent)}
+.dz .sx-bk{flex:none;width:42px;height:42px;border:0;border-radius:14px;background:transparent;color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.dz .sx-bk svg{width:24px;height:24px}
+.dz .sx-box{flex:1;min-width:0;margin:0!important;height:50px;border-radius:25px!important;padding:0 6px 0 16px!important;display:flex;align-items:center;gap:10px;background:var(--card)!important;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ink) 10%,transparent)}
+.dz .sx-si{display:flex;color:var(--mut);flex:none}
+.dz .sx-box input{flex:1;min-width:0;height:100%;border:0!important;outline:0;background:transparent!important;font:700 16px var(--body);color:var(--ink)!important;-webkit-appearance:none;appearance:none}
+.dz .sx-box input::-webkit-search-cancel-button{display:none}
+.dz .sx-cl{flex:none;width:34px;height:34px;border:0;border-radius:50%;background:var(--chip);color:var(--ink);display:grid;place-items:center;cursor:pointer;transition:opacity .15s,transform .15s}
+.dz .sx-cl svg{width:14px;height:14px}.dz .sx-cl.hide{opacity:0;transform:scale(.6);pointer-events:none}
+.dz .sx-sec{display:flex;align-items:center;gap:8px;margin:18px 2px 8px;font:800 12px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.dz .sx-n{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--chip);color:var(--ink);display:grid;place-items:center;font-size:11px;letter-spacing:0}
+.dz .sx-clr{margin-left:auto;border:0;background:none;color:var(--mv);font:800 12px var(--body);letter-spacing:.04em;cursor:pointer;padding:4px 2px}
+.dz .sx-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:2px -2px 0;padding:2px}
+.dz .sx-tabs::-webkit-scrollbar{display:none}
+.dz .sx-tab{flex:none;display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border:0;border-radius:18px;background:var(--card);color:var(--ink);font:800 13.5px var(--body);cursor:pointer;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ink) 10%,transparent)}
+.dz .sx-tab i{font-style:normal;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--chip);font-size:11px;display:grid;place-items:center}
+.dz .sx-tab.on{background:var(--mv);color:#1b1e25;box-shadow:none}.dz .sx-tab.on i{background:rgba(255,255,255,.45)}
+.dz .sx-list{display:grid;gap:8px}
+.dz .sx-r{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:8px 12px 8px 8px;border:0;border-radius:18px;background:var(--card);color:var(--ink);text-align:left;cursor:pointer;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ink) 8%,transparent);transition:transform .1s,box-shadow .15s}
+.dz .sx-r:active{transform:scale(.985)}
+.dz .sx-r.sel{box-shadow:inset 0 0 0 2px var(--mv)}
+.dz .sx-i{flex:none;width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,var(--mv) 22%,transparent);color:var(--ink)}
+.dz .sx-i svg{width:21px;height:21px}
+.dz .sx-note{background:color-mix(in srgb,#7fa8ff 22%,transparent)}.dz .sx-subject{background:color-mix(in srgb,#6fcf97 22%,transparent)}.dz .sx-page{background:color-mix(in srgb,#e8a83a 22%,transparent)}
+.dz .sx-friend{background:none}
+.dz .sx-fa{width:42px;height:42px;border-radius:50%;overflow:hidden;display:block;background:var(--chip)}
+.dz .sx-fa svg,.dz .sx-fa img{width:100%;height:100%;display:block;object-fit:cover}
+.dz .sx-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.dz .sx-t b{font:800 15px var(--body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz .sx-t small{font:600 12.5px var(--body);color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz .sx-t mark{background:color-mix(in srgb,var(--mv) 45%,transparent);color:inherit;border-radius:4px;padding:0 1px}
+.dz .sx-r.done .sx-t b{text-decoration:line-through;opacity:.6}
+.dz .sx-tag{flex:none;font:800 11px var(--body);letter-spacing:.04em;padding:4px 9px;border-radius:999px;background:var(--chip);color:var(--mut)}
+.dz .sx-tag.ok{background:rgba(111,207,151,.18);color:#3f9a62}
+.dz .sx-go{flex:none;width:18px;height:18px;color:var(--mut)}.dz .sx-go svg{width:100%;height:100%}
+.dz .sx-rec{display:flex;flex-wrap:wrap;gap:8px}
+.dz .sx-rc{display:inline-flex;align-items:center;max-width:100%;height:38px;border-radius:19px;background:var(--card);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ink) 10%,transparent)}
+.dz .sx-rc>button{border:0;background:none;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:6px;height:100%}
+.dz .sx-rc>button:first-child{padding:0 4px 0 12px;font:700 13.5px var(--body);min-width:0}
+.dz .sx-rc>button:first-child span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.dz .sx-rc svg{width:15px;height:15px;color:var(--mut);flex:none}
+.dz .sx-rx{padding:0 10px 0 4px}.dz .sx-rx svg{width:12px;height:12px}
+.dz .sx-qa{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.dz .sx-qa button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border:0;border-radius:18px;background:var(--card);color:var(--ink);font:800 12px var(--body);cursor:pointer;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ink) 8%,transparent);min-width:0}
+.dz .sx-qa button svg{width:22px;height:22px;padding:8px;box-sizing:content-box;border-radius:12px;background:color-mix(in srgb,var(--mv) 25%,transparent)}
+.dz .sx-qa button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz .sx-chips{display:flex;flex-wrap:wrap;gap:8px}
+.dz .sx-chip{height:36px;padding:0 14px;border:0;border-radius:18px;background:color-mix(in srgb,var(--mv) 25%,var(--card));color:var(--ink);font:800 13.5px var(--body);cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz .sx-chip.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ink) 14%,transparent);color:var(--mut)}
+.dz .sx-empty{margin-top:30px;text-align:center;padding:0 12px}
+.dz .sx-ei{width:76px;height:76px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;background:var(--card);color:var(--mut)}
+.dz .sx-empty b{display:block;font:700 18px var(--display);color:var(--ink);overflow-wrap:anywhere}
+.dz .sx-empty p{margin:6px 0 16px;font:600 14px var(--body);color:var(--mut)}
+.dz .sx-make{display:inline-flex;align-items:center;gap:8px;max-width:100%;height:46px;padding:0 18px;border:0;border-radius:16px;background:var(--mv);color:#1b1e25;font:800 14px var(--body);cursor:pointer}
+.dz .sx-make svg{width:18px;height:18px;flex:none}.dz .sx-make span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:340px){.dz .sx-qa{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* ==================== v107: Find friends, contacts, search, suggestions, Friend Streak invites ==================== */
+.dz .ff .ff-pg{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;padding:calc(8px + env(safe-area-inset-top,0px)) clamp(14px,4.5vw,22px) calc(40px + env(safe-area-inset-bottom,0px));scrollbar-width:none}
+.dz .ff .ff-pg::-webkit-scrollbar{display:none}
+@media (min-width:600px){.dz .ff .ff-pg{max-width:620px;left:50%;transform:translateX(-50%);width:100%}}
+.dz .ff-hd{position:sticky;top:0;z-index:3;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:6px;min-height:52px;margin:0 -4px;padding:0 4px;background:var(--pg);border-bottom:1.5px solid color-mix(in srgb,var(--ink) 10%,transparent)}
+.dz .ff-hd.big{border-bottom:0}
+.dz .ff-hd h1{margin:0;text-align:center;font:700 clamp(16px,4.6vw,18px) var(--body);color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dz .ff-bk{width:44px;height:44px;border:0;background:none;color:var(--mut);display:grid;place-items:center;cursor:pointer;border-radius:12px}
+.dz .ff-bk svg{width:24px;height:24px}
+.dz .ff-h1{margin:6px 2px 18px;font:800 clamp(24px,7vw,30px)/1.15 var(--display);color:var(--ink)}
+.dz .ff-h1.sm{font-size:clamp(21px,6vw,26px);margin:8px 2px 6px}
+.dz .ff-left{margin:0 2px 16px;font:700 14px var(--body);color:var(--mut)}
+.dz .ff-opts{display:grid;gap:12px}
+.dz .ff-opt{display:flex;align-items:center;gap:16px;width:100%;min-height:64px;padding:10px 16px;border:2px solid color-mix(in srgb,var(--ink) 14%,transparent);border-bottom-width:4px;border-radius:18px;background:transparent;color:var(--ink);font:800 clamp(15px,4.4vw,17px) var(--body);text-align:left;cursor:pointer;transition:transform .08s}
+.dz .ff-opt:active{transform:translateY(2px);border-bottom-width:2px}
+.dz .ff-opt i{flex:none;width:38px;height:38px;display:grid;place-items:center;position:relative}
+.dz .ff-opt i svg{width:100%;height:100%}
+.dz .ff-me{border-radius:50%;overflow:visible!important}
+.dz .ff-me>svg,.dz .ff-me>img{border-radius:50%;width:38px!important;height:38px!important;object-fit:cover;display:block}
+.dz .ff-me em{position:absolute;right:-6px;bottom:-6px;width:20px;height:20px;border-radius:50%;background:var(--pg);color:var(--ink);display:grid;place-items:center;box-shadow:0 0 0 2px var(--pg)}
+.dz .ff-me em svg{width:13px!important;height:13px!important}
+.dz .ff-sec{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:26px 2px 12px;font:800 clamp(18px,5.2vw,21px) var(--display);color:var(--ink)}
+.dz .ff-sec.big{margin-top:16px}
+.dz .ff-all{border:0;background:none;color:#1cb0f6;font:800 13.5px var(--body);letter-spacing:.06em;cursor:pointer;padding:6px 2px;flex:none}
+.dz .ff-scroll{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 calc(-1*clamp(14px,4.5vw,22px));padding:2px clamp(14px,4.5vw,22px) 8px;scrollbar-width:none}
+.dz .ff-scroll::-webkit-scrollbar{display:none}
+.dz .ff-card{position:relative;flex:none;width:clamp(138px,40vw,160px);scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;gap:4px;padding:18px 10px 12px;border:2px solid color-mix(in srgb,var(--ink) 14%,transparent);border-radius:18px;text-align:center}
+.dz .ff-card .ff-av{width:clamp(58px,17vw,68px);height:clamp(58px,17vw,68px);margin-bottom:6px}
+.dz .ff-card b{max-width:100%;font:800 15px var(--body);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz .ff-card small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em;font:600 12.5px/1.3 var(--body);color:var(--mut)}
+.dz .ff-x{position:absolute;right:6px;top:6px;width:30px;height:30px;border:0;background:none;color:var(--mut);display:grid;place-items:center;cursor:pointer}
+.dz .ff-x svg,.dz .ff-rx svg{width:16px;height:16px}
+.dz .ff-fol{width:100%;height:38px;margin-top:6px;border:0;border-radius:12px;background:#1cb0f6;color:#fff;font:800 12.5px var(--body);letter-spacing:.05em;box-shadow:0 3px 0 #1899d6;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dz .ff-fol:active{transform:translateY(2px);box-shadow:0 1px 0 #1899d6}
+.dz .ff-fol.on{background:transparent;color:var(--mut);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--ink) 14%,transparent)}
+.dz .ff-av{flex:none;width:46px;height:46px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--chip)}
+.dz .ff-av svg,.dz .ff-av img{width:100%;height:100%;display:block;object-fit:cover;object-position:center 22%}
+.dz .ff-list{display:grid;border:2px solid color-mix(in srgb,var(--ink) 14%,transparent);border-radius:18px;overflow:hidden}
+.dz .ff-row{display:flex;align-items:center;gap:12px;min-height:66px;padding:8px 12px}
+.dz .ff-row+.ff-row{border-top:2px solid color-mix(in srgb,var(--ink) 10%,transparent)}
+.dz .ff-nm{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.dz .ff-nm b{font:800 15.5px var(--body);color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz .ff-nm small{font:600 12.5px var(--body);color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dz .ff-add{flex:none;width:46px;height:40px;border:0;border-radius:12px;background:#1cb0f6;color:#fff;display:grid;place-items:center;box-shadow:0 3px 0 #1899d6;cursor:pointer}
+.dz .ff-add svg{width:24px;height:24px}
+.dz .ff-add:active{transform:translateY(2px);box-shadow:0 1px 0 #1899d6}
+.dz .ff-add.on{background:transparent;color:#58cc02;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--ink) 14%,transparent)}
+.dz .ff-rx{flex:none;width:32px;height:32px;border:0;background:none;color:var(--mut);display:grid;place-items:center;cursor:pointer}
+.dz .ff-invb{flex:none;height:36px;padding:0 14px;border:0;border-radius:12px;background:#1cb0f6;color:#fff;font:800 12.5px var(--body);letter-spacing:.05em;box-shadow:0 3px 0 #1899d6;cursor:pointer}
+.dz .ff-invb.on,.dz .ff-invb:disabled{background:transparent;color:var(--mut);box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--ink) 14%,transparent)}
+.dz .ff-in{position:sticky;top:54px;z-index:2;display:flex;align-items:center;gap:10px;height:52px;margin:12px 0 18px;padding:0 14px;border:2px solid color-mix(in srgb,var(--ink) 16%,transparent);border-radius:14px;background:var(--card)}
+.dz .ff-in:focus-within{border-color:#1cb0f6;box-shadow:0 0 0 3px rgba(28,176,246,.2)}
+.dz .ff-in span{flex:none;width:22px;height:22px}.dz .ff-in span svg{width:100%;height:100%}
+.dz .ff-in input{flex:1;min-width:0;height:100%;border:0!important;outline:0;background:transparent!important;box-shadow:none!important;font:700 16px var(--body);color:var(--ink)!important;-webkit-appearance:none;appearance:none}
+.dz .ff-in input::-webkit-search-cancel-button{display:none}
+.dz .ff-note{margin:12px 4px;font:600 14px/1.5 var(--body);color:var(--mut)}
+.dz .ff-empty{margin-top:26px;padding:24px 18px;border:2px solid color-mix(in srgb,var(--ink) 14%,transparent);border-radius:20px;text-align:center}
+.dz .ff-empty i{display:block;width:52px;height:52px;margin:0 auto 10px;color:var(--mut)}
+.dz .ff-empty i svg{width:100%;height:100%}
+.dz .ff-empty b{display:block;font:800 17px var(--display);color:var(--ink);overflow-wrap:anywhere}
+.dz .ff-empty p{margin:6px auto 14px;max-width:320px;font:600 13.5px/1.5 var(--body);color:var(--mut)}
+.dz .ff-btn{height:46px;padding:0 20px;border:0;border-radius:14px;background:#1cb0f6;color:#fff;font:800 13.5px var(--body);letter-spacing:.05em;box-shadow:0 4px 0 #1899d6;cursor:pointer}
+.dz .ff-dots{display:flex;justify-content:center;gap:10px;padding:36px 0}
+.dz .ff-dots i{width:12px;height:12px;border-radius:50%;background:var(--mut);opacity:.35;animation:ffDot 1s ease-in-out infinite}
+.dz .ff-dots i:nth-child(2){animation-delay:.15s}.dz .ff-dots i:nth-child(3){animation-delay:.3s}
+@keyframes ffDot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:.9;transform:translateY(-4px)}}
+/* Profile → Friend streaks: dashed "+" circle */
+.dz .pf-add{display:flex;flex-direction:column;align-items:center;cursor:pointer;width:clamp(60px,18vw,74px)}
+.dz .pf-plus{width:clamp(52px,15vw,62px);height:clamp(52px,15vw,62px);border-radius:50%;border:2.5px dashed color-mix(in srgb,var(--ink) 35%,transparent);color:var(--mut);display:grid;place-items:center;transition:transform .12s,border-color .15s}
+.dz .pf-plus svg{width:24px;height:24px}
+.dz .pf-add:active .pf-plus{transform:scale(.92);border-color:var(--mv)}
+@media (max-width:340px){.dz .ff-card{width:130px}.dz .ff-add{width:40px}}
+@media (prefers-reduced-motion:reduce){.dz .ff-dots i{animation:none}}

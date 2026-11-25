@@ -25,3 +25,20 @@ input:not([type="checkbox"],[type="radio"],[type="range"],[type="button"],[type=
   border-color:var(--in-focus)!important;box-shadow:0 0 0 3px var(--in-ring);outline:none}
 select option{background:var(--in-bg);color:var(--in-ink)}
 input[type="range"],input[type="checkbox"],input[type="radio"]{accent-color:var(--in-focus)}
+
+
+/* v105: one theme-coloured focus border for EVERY input field (no maroon ring from older styles) */
+html{--in-ring:rgba(154,134,176,.28)}
+html :is(input:not([type="checkbox"],[type="radio"],[type="range"],[type="button"],[type="submit"],[type="file"],[type="color"],[type="hidden"]),select,textarea):focus,
+html :is(input:not([type="checkbox"],[type="radio"],[type="range"],[type="button"],[type="submit"],[type="file"],[type="color"],[type="hidden"]),select,textarea):focus-visible,
+html .study-app :is(input,select,textarea):focus,html .study-app :is(input,select,textarea):focus-visible,
+html .dz :is(input,select,textarea):focus,html .dz :is(input,select,textarea):focus-visible,
+html .np :is(input,select,textarea):focus,html .np :is(input,select,textarea):focus-visible{
+  outline:none!important;outline-offset:0!important;border-color:var(--in-focus)!important;
+  box-shadow:0 0 0 3px var(--in-ring)!important}
+/* search boxes whose input sits inside a rounded pill: ring the pill, not the inner text box */
+html :is(.srch,.search-box,.notes-search,.dz-srch):focus-within{border-color:var(--in-focus)!important;box-shadow:0 0 0 3px var(--in-ring)!important;outline:none!important}
+html .dz-srch input{background:transparent!important;border:0!important}
+html :is(.srch,.search-box,.notes-search,.dz-srch) input:focus,html :is(.srch,.search-box,.notes-search,.dz-srch) input:focus-visible{box-shadow:none!important;border-color:transparent!important}
+/* the older red/maroon ring colour now follows the theme too */
+html .study-app{--ring:var(--in-ring)}

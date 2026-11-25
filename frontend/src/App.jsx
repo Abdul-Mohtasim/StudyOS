@@ -4668,6 +4668,7 @@ async function undoDeleteTask() {
       palette: activePalette,
       showcase: typeof accountPrefs.showcase === "string" ? accountPrefs.showcase : "",
       avatar: typeof accountPrefs.avatar === "string" ? accountPrefs.avatar : "",
+      picture: typeof student?.picture === "string" ? student.picture : "",
       inviteUrl: INVITE_URL,
       supportEmail: (import.meta.env.VITE_SUPPORT_EMAIL || "").trim(),
       guest: Boolean(student?.guest),
@@ -5012,6 +5013,32 @@ async function undoDeleteTask() {
     },
     signOut: () => handleLogout(),
     invite: () => inviteForFlow(),
+    // Find friends pages
+    findContacts: () => findContactsForFlow(),
+    sendRequest: (id) => sendRequestForFlow(id),
+    searchUsers: async (q) => {
+      if (!authToken) return { ok: false, results: [] };
+      const { ok, data, status } = await nativeApi(`/api/friends/search?q=${encodeURIComponent(String(q || "").slice(0, 40))}`, "GET", null, authToken);
+      if (ok) return { ok: true, results: Array.isArray(data.results) ? data.results : [] };
+      return { ok: false, results: [], message: status === 0 ? "No connection. Try again." : status === 404 ? "Search is not on your server yet. Deploy the latest backend." : (data.message || data.error || "Could not search right now.") };
+    },
+    friendSuggestions: async () => {
+      if (!authToken) return { ok: false, suggestions: [] };
+      const { ok, data, status } = await nativeApi("/api/friends/suggestions", "GET", null, authToken);
+      if (ok) return { ok: true, suggestions: Array.isArray(data.suggestions) ? data.suggestions : [] };
+      return { ok: false, suggestions: [], message: status === 0 ? "No connection." : status === 404 ? "Suggestions are not on your server yet. Deploy the latest backend." : "Could not load suggestions." };
+    },
+    streakInvites: async () => {
+      if (!authToken) return { ok: false, invited: [], remaining: 0 };
+      const { ok, data } = await nativeApi("/api/friends/streak-invites", "GET", null, authToken);
+      return ok ? { ok: true, invited: data.invited || [], remaining: Number(data.remaining) || 0, perDay: Number(data.perDay) || 3 } : { ok: false, invited: [], remaining: 0 };
+    },
+    streakInvite: async (id) => {
+      if (!authToken) return { ok: false, message: "Sign in first." };
+      const { ok, data, status } = await nativeApi(`/api/friends/${encodeURIComponent(id)}/streak-invite`, "POST", {}, authToken);
+      if (ok) { haptic.success(); return { ok: true, remaining: Number(data.remaining) || 0 }; }
+      return { ok: false, message: status === 0 ? "No connection. Try again." : status === 404 ? "Streak invites are not on your server yet. Deploy the latest backend." : (data.message || "Could not send the invite.") };
+    },
     addFriend: (email) => addFriendByEmail(email),
     respond: (id, accept) => respondToFriend(id, accept),
     open: (key) => goTab(key),

@@ -344,7 +344,7 @@ function newExam(){
 }
 newExam();
 const BKB=(a='back')=>`<button class="xi bk" data-a="${a}" type="button" aria-label="Back">${IC.back}Back</button>`;
-const GEM=w=>`<svg viewBox="40 0 385 466" style="width:${w*385/466}px;height:${w}px;display:block"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>`;
+const GEM=w=>`<svg viewBox="40 0 385 466" shape-rendering="geometricPrecision" style="width:${w*385/466}px;height:${w}px;display:block"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>`;
 const FLAME=(w,h)=>FLM('#f0243a','#ff9a3a',w,h);
 const dots='<div class="xdots"><i></i><i></i><i></i></div>';
 const MZ=()=>znHtml(92);
