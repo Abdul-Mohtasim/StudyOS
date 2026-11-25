@@ -740,7 +740,7 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
     const a=h.indexOf('<div class="sec">Friend streaks</div>');
     const z=h.indexOf('</div></div><div class="pfbar"');
     if(a>0&&z>a){
-      const list=fr.slice(0,5).map(f=>`<div data-fid="${esc(f.id)}" role="button" aria-label="Open ${esc(f.name)}'s profile" style="cursor:pointer"><svg class="fa" viewBox="0 0 52 52"><circle cx="26" cy="26" r="26" fill="${colOf(f.name)}"/><text x="26" y="36" text-anchor="middle" font-size="30" font-weight="700" fill="#2a1d1d" font-family="Space Grotesk,Inter,Arial,sans-serif">${esc((f.name||'?').charAt(0).toUpperCase())}</text></svg><div class="cnt"><span style="width:16px;height:16px;display:block" aria-hidden="true">${FLAME_IC}</span><span aria-label="${f.streak||0} day streak">${f.streak||0}</span></div></div>`).join('');
+      const list=fr.slice(0,5).map(f=>`<div data-fid="${esc(f.id)}" role="button" aria-label="Open ${esc(f.name)}'s profile" style="cursor:pointer"><span class="fa pf-fa${DZ.fxChr&&DZ.fxChr(f.id,f.avatar,'face')?'':' np'}" style="--c:${colOf(f.name)}">${DZ.pfFace?DZ.pfFace(f.id,f.avatar,f.picture):''}</span><span class="pf-fn">${esc(String(f.name||'Friend').split(' ')[0])}</span><div class="cnt"><span style="width:16px;height:16px;display:block" aria-hidden="true">${FLAME_IC}</span><span aria-label="${f.streak||0} day streak">${f.streak||0}</span></div></div>`).join('');
       h=h.slice(0,a)+'<div class="sec">Friend streaks</div>'+((D.incoming||[]).length?`<div class="chip" data-reqs style="margin-bottom:12px;background:#c9b8c3;color:#1b1e25">${(D.incoming||[]).length} friend ${(D.incoming||[]).length===1?'request':'requests'} · View</div>`:'')+(fr.length?`<div class="fs" style="gap:14px;justify-content:flex-start">${list}</div>`:`<div style="font:700 14px var(--body);color:#8b98a2">Add friends to see them here.</div>`)+h.slice(z);
     }
     return h;
@@ -2017,7 +2017,7 @@ host.addEventListener('click',e=>{
     return `<svg class="fp-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Minutes studied in the last 7 days">${g}${line(me,'#8b98a2',2.5)}${line(fr,'#4fc3f7',3)}${lab}</svg>`;
   }
 
-  const avatar=(name,pic)=>pic?`<img class="fp-img" src="${esc(pic)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${esc((name||'?').charAt(0).toUpperCase())}'}))">`:`<span>${esc((name||'?').charAt(0).toUpperCase())}</span>`;
+  const avatar=(name,pic)=>(!pic&&DZ.fxNoPic)?DZ.fxNoPic:pic?`<img class="fp-img" src="${esc(pic)}" alt="" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${esc((name||'?').charAt(0).toUpperCase())}'}))">`:`<span>${esc((name||'?').charAt(0).toUpperCase())}</span>`;
 
   const BACK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4M10 6l-6 6 6 6"/></svg>';
   const QRI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><path d="M14 14h3v3h-3zM19 14h2M14 19h2M18 18h3v3h-3z" stroke-linecap="round"/></svg>';
@@ -2044,11 +2044,26 @@ host.addEventListener('click',e=>{
   // "Followed by" row: friends you both have.
   const mutualRow=(d,name,col,pic)=>{
     const m=Array.isArray(d.mutual)?d.mutual.filter(x=>x&&x.name):[],more=Math.max(0,(Number(d.mutualCount)||m.length)-m.length);
-    if(!m.length)return `<div class="fp-tog"><span class="fp-pp"><span class="fp-pa" style="background:${col}">${pic?`<img src="${esc(pic)}" alt="" referrerpolicy="no-referrer">`:esc(name.charAt(0).toUpperCase())}</span><span class="fp-pa me">${myInitial()}</span></span><span>You and <b>${esc(first(name))}</b> are study friends</span></div>`;
-    const faces=m.slice(0,3).map(x=>{const a=fpChr(x.avatar,'face');return `<span class="fp-pa" style="background:${fpCol(x.name)}">${a||(x.picture?`<img src="${esc(x.picture)}" alt="" referrerpolicy="no-referrer">`:esc(String(x.name).charAt(0).toUpperCase()))}</span>`}).join('');
+    if(!m.length){const fa=DZ.pfFace?DZ.pfFace(FP.id,d.avatar,pic):esc(name.charAt(0).toUpperCase()),me=DZ.pfFace?DZ.pfFace('me',D.avatar,''):myInitial();
+      return `<div class="fp-tog"><span class="fp-pp"><span class="fp-pa" style="background:${col}">${fa}</span><span class="fp-pa me" style="background:${DZ.fxCol?DZ.fxCol(D.first||'You'):'#4fc3f7'}">${me}</span></span><span>You and <b>${esc(first(name))}</b> are study friends</span></div>`}
+    const faces=m.slice(0,3).map(x=>{const a=DZ.fxChr?DZ.fxChr(x.id,x.avatar,'face'):fpChr(x.avatar,'face');return `<span class="fp-pa" style="background:${fpCol(x.name)}">${a||(x.picture?`<img src="${esc(x.picture)}" alt="" referrerpolicy="no-referrer">`:(DZ.fxNoPic||esc(String(x.name).charAt(0).toUpperCase())))}</span>`}).join('');
     const names=m.slice(0,3).map(x=>`<b>${esc(first(x.name))}</b>`);
     const list=names.length===1?names[0]:names.slice(0,-1).join(', ')+(more?', '+names[names.length-1]:' and '+names[names.length-1]);
     return `<div class="fp-tog"><span class="fp-pp">${faces}</span><span>Followed by ${list}${more?` and <b>${more} other${more===1?'':'s'}</b>`:''}</span></div>`;
+  };
+  // The same badges as the Badges page, worked out from the friend's numbers. Unlocked first.
+  const fxBadges=d=>{
+    if(!DZ.badgeArt)return '';
+    const t=d.tasksDone||0,s=d.streak||0,h=d.hours||0,n=d.notesCount||0,ss=d.sessions||0;
+    const L=(label,key,cur,need)=>[label,cur>=need,key,cur,need];
+    const all=[L('First task','first-task',t,1),L('10 tasks','10-tasks',t,10),L('50 tasks','50-tasks',t,50),L('100 tasks','100-tasks',t,100),
+      L('3 day streak','3-day-streak',s,3),L('7 day streak','7-day-streak',s,7),L('14 day streak','14-day-streak',s,14),L('30 day streak','30-day-streak',s,30),L('100 day streak','100-day-streak',s,100),
+      L('First session','first-session',ss,1),L('10 sessions','10-sessions',ss,10),L('5 hours','5-hours',h,5),L('20 hours','20-hours',h,20),L('50 hours','50-hours',h,50),
+      L('First note','first-note',n,1),L('10 notes','10-notes',n,10)];
+    const on=all.filter(b=>b[1]),off=all.filter(b=>!b[1]);
+    const pick=(on.length?on.slice(-8).reverse():[]).concat(off).slice(0,on.length>4?8:4);
+    const one=b=>`<div class="badge${b[1]?'':' lk'}"><div class="bimg">${DZ.badgeArt(b[2])}${b[1]?'':`<i class="lkc">${DZ.LOCKI||''}</i>`}</div><span>${b[0]}</span></div>`;
+    return pick.map(one).join('');
   };
   const myInitial=()=>esc(String(D.fullName||D.name||'Y').trim().charAt(0).toUpperCase()||'Y');
   const handleOf=(name,d)=>d&&d.username?d.username:String(name||'friend').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,18)||'friend';
@@ -2065,13 +2080,14 @@ host.addEventListener('click',e=>{
     const d=FP.data||{};
     const name=d.name||list.name||'Friend',pic=d.picture||list.picture||'';
     const col=fpCol(name),ready=!!FP.data;
-    const chr=fpChr(d.avatar,'full');
+    if(d.avatar)DZ.avCache[FP.id]=d.avatar;
+    const chr=(DZ.fxChr?DZ.fxChr(FP.id,d.avatar,'full'):fpChr(d.avatar,'full'));
     const price=(D.shop&&D.shop.prices&&D.shop.prices.gift)||25;
     const sk=t=>ready?t:'<i class="fp-sk"></i>';
     const body=FP.err&&!ready
       ?`<div class="fp-err"><p>${esc(FP.err)}</p><button type="button" class="fp-btn" data-fpretry>TRY AGAIN</button></div>`
       :`<div class="fp-handle">@${esc(handleOf(name,d)).toUpperCase()}${d.joinedYear?' · JOINED '+esc(d.joinedYear):''}</div>
-<div class="fp-3"><div><b>${sk(num(d.streak))}</b><small>Day streak</small></div><div><b>${sk(num(d.friendsCount))}</b><small>Friends</small></div><div><b>${sk(num(d.gems!=null?d.gems:list.gems))}</b><small>Gems</small></div></div>
+<div class="fp-3 fx-3s"><div><b><i>${FLAME}</i>${sk(num(d.streak))}</b><small>Day streak</small></div><div><b><i>${PPL}</i>${sk(num(d.friendsCount))}</b><small>Friends</small></div><div><b><i>${CUBE}</i>${sk(num(d.gems!=null?d.gems:list.gems))}</b><small>Gems</small></div></div>
 ${mutualRow(d,name,col,pic)}
 <div class="fp-act2"><button type="button" class="fp-fb" data-fpnone aria-label="You are friends">${PFR}<span>FRIENDS</span></button><button type="button" class="fp-qb" data-fpqr aria-label="Share ${esc(first(name))}'s profile">${QRI}</button></div>
 <button type="button" class="fp-gf${FP.gift?' armed':''}${FP.busy?' busy':''}" data-fpgift aria-label="Send ${price} gems to ${esc(name)}"><span class="fp-gi">${CUBE}</span>${FP.busy?'SENDING…':(FP.gift?'CONFIRM '+price+' GEMS':'GIFT '+price+' GEMS')}</button>
@@ -2087,11 +2103,11 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
   <div><span class="fp-ico">${CLK}</span><b>${sk(num(d.hours)+' hours')}</b></div>
   <div><span class="fp-ico">${TSK}</span><b>${sk(num(d.tasksDone)+(d.tasksDone===1?' task':' tasks'))}</b></div></div>
 <div class="fp-sec">ACHIEVEMENTS</div>
-<div class="fp-bds">${ready?['streak','hours','tasks','sessions'].map(k=>badge(k,k==='streak'?(d.streak||0):k==='hours'?(d.hours||0):k==='tasks'?(d.tasksDone||0):(d.sessions||0))).join(''):'<i class="fp-sk" style="width:100%;height:84px;border-radius:16px"></i>'}</div>
+<div class="fp-bds fx-bds">${ready?fxBadges(d):'<i class="fp-sk" style="width:100%;height:84px;border-radius:16px"></i>'}</div>
 <button type="button" class="fp-rm${FP.rm?' armed':''}" data-fprm>${FP.rm?'TAP AGAIN TO REMOVE '+esc(first(name)).toUpperCase():'REMOVE FRIEND'}</button>
 <div class="fp-dgs"><button type="button" class="fp-dg" data-fpreport>${FLG}<span>REPORT USER</span></button><button type="button" class="fp-dg" data-fpblock>${NOP}<span>BLOCK USER</span></button></div>`;
-    return `<div class="scr n nd" style="--pg:#131f24"><div class="fp" data-fpscroll>
-<div class="fp-hero${chr?' has-chr':''}">${chr?`<div class="fp-chr" aria-hidden="true">${chr}</div>`:`<div class="fp-av" style="--c:${col}">${avatar(name,pic)}</div>`}</div>
+    return `<div class="scr n nd fx3" style="--pg:#181b22"><div class="fp" data-fpscroll>
+<div class="fp-hero has-chr fx-hero"><i class="fx-hb1"></i><i class="fx-hb2"></i>${chr?`<div class="fp-chr" aria-hidden="true">${chr}</div>`:`<div class="fp-av" style="--c:${col}">${avatar(name,pic)}</div>`}</div>
 <div class="fp-body">${body}</div></div>
 <div class="fp-bar"><button type="button" class="fp-bk" data-fpback aria-label="Back">${BACK}</button><h1>${esc(name)}</h1><span class="fp-bsp"></span></div>${sheetHtml(name)}</div>`;
   };
@@ -2180,9 +2196,9 @@ ${ready?chart(d.week||[],d.meWeek||[]):'<div class="fp-chart fp-sk" style="heigh
   const IMR='<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#e8ebf0"/><g fill="#2b2f36"><circle cx="14.500" cy="24" r="3"/><circle cx="24" cy="24" r="3"/><circle cx="33.500" cy="24" r="3"/></g></svg>';
   const FSLOGO='<svg width="28" height="28" viewBox="0 0 48 48"><path d="M24 8L4 18l20 10 20-10z" fill="#c9b8c3"/><path d="M12 24v9c0 4 6 8 12 8s12-4 12-8v-9l-12 6z" fill="#9d8c98"/><path d="M42 20v14" stroke="#c9b8c3" stroke-width="3" stroke-linecap="round"/></svg>';
   const fsHtml=()=>{const f=DZ.fsData||{name:'Friend',handle:'friend',col:'#c9b8c3',pic:''};
-    const ch=fpChr(f.avatar,'full');
-    const av=ch?`<div class="fs-chr">${ch}</div>`:f.pic?`<img src="${esc(f.pic)}" alt="" referrerpolicy="no-referrer">`:`<span>${esc((f.name||'?').charAt(0).toUpperCase())}</span>`;
-    return `<div class="scr n nd" style="--pg:#131f24"><div class="fs-dim" data-fsx></div><div class="fs-card"><div class="fs-pic${ch?' chr':''}" style="--c:${f.col}">${av}</div><div class="fs-row"><div class="fs-who"><b>${esc(f.name)}</b><small>${esc(f.handle)}</small><div class="fs-logo">${FSLOGO}<span>StudyOS</span></div></div><div class="fs-qr">${fsQr()}</div></div></div><div class="fs-sheet"><button type="button" class="fs-x" data-fsx aria-label="Close">${X}</button><div class="fs-opts"><button type="button" data-fsi><i>${IIG}</i><span>Instagram</span></button><button type="button" data-fsw><i>${IWA}</i><span>WhatsApp</span></button><button type="button" data-fsm><i>${IMS}</i><span>Messages</span></button><button type="button" data-fss><i><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#e8ebf0"/><g fill="none" stroke="#2b2f36" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"><path d="M24 13v15M18 22.500l6 6 6-6"/><path d="M14 30v3.500a2.500 2.500 0 0 0 2.500 2.500h15a2.500 2.500 0 0 0 2.500-2.500V30"/></g></svg></i><span>Save</span></button><button type="button" data-fso><i>${IMR}</i><span>More</span></button></div></div></div>`};
+    const ch=DZ.fxChr?DZ.fxChr(f.id,f.avatar,'full'):fpChr(f.avatar,'full');
+    const av=ch?`<div class="fs-chr">${ch}</div>`:f.pic?`<img src="${esc(f.pic)}" alt="" referrerpolicy="no-referrer">`:`<span class="fs-np">${DZ.fxNoPic||esc((f.name||'?').charAt(0).toUpperCase())}</span>`;
+    return `<div class="scr n nd fx3" style="--pg:#181b22"><div class="fs-dim" data-fsx></div><div class="fs-card"><div class="fs-pic${ch?' chr':''}" style="--c:${f.col}">${av}</div><div class="fs-row"><div class="fs-who"><b>${esc(f.name)}</b><small>${esc(f.handle)}</small><div class="fs-logo">${FSLOGO}<span>StudyOS</span></div></div><div class="fs-qr">${fsQr()}</div></div></div><div class="fs-sheet"><button type="button" class="fs-x" data-fsx aria-label="Close">${X}</button><div class="fs-opts"><button type="button" data-fsi><i>${IIG}</i><span>Instagram</span></button><button type="button" data-fsw><i>${IWA}</i><span>WhatsApp</span></button><button type="button" data-fsm><i>${IMS}</i><span>Messages</span></button><button type="button" data-fss><i><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="24" fill="#e8ebf0"/><g fill="none" stroke="#2b2f36" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"><path d="M24 13v15M18 22.500l6 6 6-6"/><path d="M14 30v3.500a2.500 2.500 0 0 0 2.500 2.500h15a2.500 2.500 0 0 0 2.500-2.500V30"/></g></svg></i><span>Save</span></button><button type="button" data-fso><i>${IMR}</i><span>More</span></button></div></div></div>`};
   // Save: draws the card (picture, name, handle, StudyOS, QR code) into a PNG and saves or shares it.
   const fsSave=async()=>{
     const f=DZ.fsData||{name:'Friend',handle:'friend',col:'#c9b8c3'};
@@ -2582,6 +2598,72 @@ SCREENS.push({t:'Streak friends',d:'Your friends and their streaks',spec:{m:'An 
         if(old)old(e)};
     };
   }
+}
+
+/* ==== v101: Friends list, friend profile and share card redesign (theme colours, responsive) ==== */
+{
+  const fxHash=s=>{let h=2166136261;for(const ch of String(s||'x')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)>>>0}return h>>>0};
+  const fxCount=k=>{const d=AVD&&AVD[k];return d?((d.c||d.o||[]).length):0};
+  // A friendly character made from the person's id, used until they make their own avatar.
+  const fxGen=seed=>{let h=fxHash(seed)||1;const nx=n=>{h=(Math.imul(h,1103515245)+12345)>>>0;return n?(h>>>8)%n:0};
+    const v={};(AVK||[]).forEach(k=>{v[k]=nx(fxCount(k))});
+    v.chr=0;v.body=0;if(fxCount('beard'))v.beard=nx(3)===0?nx(fxCount('beard')):0;if(fxCount('glasses'))v.glasses=nx(3)===0?nx(fxCount('glasses')):0;if(fxCount('hat'))v.hat=nx(2)===0?nx(fxCount('hat')):0;
+    return v};
+  DZ.avCache=DZ.avCache||{};
+  // Avatar code for a person: given code, then their friend list entry, then the last profile we loaded.
+  const fxCode=(id,code)=>{if(typeof code==='string'&&code)return code;if(id==='me')return D.avatar||'';const f=(D.friends||[]).find(x=>String(x.id)===String(id))||(D.incoming||[]).find(x=>String(x.id)===String(id));return (f&&f.avatar)||DZ.avCache[id]||''};
+  // Their own avatar character, or '' when they have not made one (no made-up characters).
+  DZ.fxChr=(id,code,view)=>{const c=fxCode(id,code);if(!c)return '';try{return avatarSvg(avDecode(c),{view:view||'full'})}catch(_){return ''}};
+  DZ.fxNoPic='<svg class="fx-none" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="var(--chip,#2a323a)"/><circle cx="32" cy="25" r="11" fill="var(--mut,#9aa6b0)"/><path d="M12 54c2.500-10 10.500-15 20-15s17.500 5 20 15a30 30 0 0 1-40 0z" fill="var(--mut,#9aa6b0)"/></svg>';
+  // Face for any person: avatar character > profile photo > default person icon.
+  DZ.pfFace=(id,code,pic)=>{const a=DZ.fxChr(id,code,'face');if(a)return a;let p=pic;if(!p){const f=id==='me'?null:(D.friends||[]).find(x=>String(x.id)===String(id));p=f&&f.picture}
+    return p?`<img src="${esc(p)}" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML=DZ_NOPIC()">`:DZ.fxNoPic};
+  window.DZ_NOPIC=()=>DZ.fxNoPic;
+  DZ.fxCol=colOf;
+  const BK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4M10 6l-6 6 6 6"/></svg>';
+  const PL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+  const XX='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const CHV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+  const GEM='<svg viewBox="0 0 24 24"><path d="M7 3h10l4 6-9 12L3 9z" fill="#e35d7a"/><path d="M7 3l5 6 5-6M3 9h18M12 9v12" fill="none" stroke="#ffb3c2" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+  const FLM='<svg viewBox="0 0 24 24"><path d="M12 2c1 3.500 5 5.600 5 10.200A5 5 0 0 1 12 17.500a5 5 0 0 1-5-5.300c0-2 1-3.400 2.200-4.700.2 1.600 1 2.400 1.800 2.600C10.700 7.300 11 4.600 12 2z" fill="#ff7a45"/><path d="M12 22a4 4 0 0 1-4-4c0-1.800 1.600-3 4-5 2.400 2 4 3.200 4 5a4 4 0 0 1-4 4z" fill="#ffb347"/></svg>';
+  const CRN='<svg viewBox="0 0 24 24"><path d="M3 8l4.500 3.500L12 5l4.500 6.500L21 8l-2 11H5z" fill="#ffcc4d" stroke="#c9952a" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+  const face=(r,cls)=>{const id=r.me?'me':r.id,has=!!DZ.fxChr(id,r.me?D.avatar:'','face');return `<span class="fx-av${cls?' '+cls:''}${has?'':' np'}" style="--c:${colOf(r.n)}">${DZ.pfFace(id,r.me?D.avatar:'',r.pic||'')}</span>`};
+  const frHtml=()=>{
+    const fr=(D.friends||[]);
+    const rows=[...fr.map(f=>({n:f.name||'Friend',m:f.gems||0,id:f.id,st:f.streak||0,pic:f.picture||''})),{n:(D.first||'You'),m:D.gems||0,me:1,st:D.streak||0}].sort((a,b)=>b.m-a.m);
+    const rank=rows.findIndex(r=>r.me)+1;
+    const inc=(D.incoming||[]);
+    const pod=rows.length>=2?[rows[1],rows[0],rows[2]].map((r,i)=>r?`<div class="fx-pd p${[2,1,3][i]}${r.me?' me':''}"${r.me?'':` data-fid="${esc(r.id)}" role="button" aria-label="Open ${esc(r.n)}'s profile"`} style="--k:${i}">${[2,1,3][i]===1?`<i class="fx-crown">${CRN}</i>`:''}${face(r,'lg')}<b>${esc(String(r.n).split(' ')[0])}${r.me?' (You)':''}</b><small><i>${GEM}</i>${r.m.toLocaleString()}</small><div class="fx-st"><span>${[2,1,3][i]}</span></div></div>`:'<div class="fx-pd empty"></div>').join(''):'';
+    const list=rows.map((r,i)=>`<div class="fx-row${r.me?' me':''}"${r.me?'':` data-fid="${esc(r.id)}" role="button" aria-label="Open ${esc(r.n)}'s profile"`} style="--k:${i}"><span class="fx-rk${i<3?' t'+(i+1):''}">${i+1}</span>${face(r)}<span class="fx-nm"><b>${esc(r.n)}${r.me?' <em>You</em>':''}</b><small>${r.st?`<i>${FLM}</i>${r.st} day streak`:'Study friend'}</small></span><span class="fx-gm"><i>${GEM}</i>${r.m.toLocaleString()}</span>${r.me?'':`<span class="fx-chev">${CHV}</span>`}</div>`).join('');
+    const req=inc.map(u=>`<div class="fx-req" data-req="${esc(u.id)}">${face({n:u.name||'?',id:u.id,pic:u.picture||''})}<span class="fx-nm"><b>${esc(u.name||'Someone')}</b><small>Wants to be your study friend</small></span><span class="fx-rb"><button type="button" class="fx-ok" data-acc aria-label="Accept">Accept</button><button type="button" class="fx-no" data-dec aria-label="Decline">${XX}</button></span></div>`).join('');
+    return `<div class="scr n nd fx3"><div class="fx-pg">
+<div class="fx-hd"><button type="button" class="fx-ib" data-frback aria-label="Back">${BK}</button><h1>Friends</h1><button type="button" class="fx-ib${FADD?' on':''}" data-fradd aria-label="${FADD?'Close':'Add a friend'}">${FADD?XX:PL}</button></div>
+<div class="fx-sum"><div><b>${fr.length}</b><small>${fr.length===1?'Friend':'Friends'}</small></div><div><b>#${rank}</b><small>Your rank</small></div><div><b>${(D.gems||0).toLocaleString()}</b><small>Your gems</small></div></div>
+${FADD?`<div class="fx-add"><label for="fxmail">Add a friend by email</label><div class="fx-addr"><input id="fxmail" class="dz-in" data-femail type="email" inputmode="email" autocomplete="off" placeholder="friend@email.com"><button type="button" data-send>Send</button></div>${FMSG?`<p role="status">${esc(FMSG)}</p>`:''}</div>`:''}
+${req?`<div class="fx-sec">Requests <span>${inc.length}</span></div>${req}`:''}
+${fr.length?`<div class="fx-sec">Leaderboard · gems</div><div class="fx-pod">${pod}</div><div class="fx-list">${list}</div>`:`<div class="fx-empty"><div class="fx-ei">${face({n:D.first||'You',me:1},'lg')}<span>${PL}</span></div><b>No friends yet</b><p>Invite a friend and you both earn 10 gems. Study together and climb the leaderboard.</p></div>`}
+<button type="button" class="fx-inv" data-invite>Invite a friend</button>
+</div></div>`;
+  };
+  const frPlay=()=>{
+    enter();hap('light');
+    if(!SOFT){$$('.fx-pd',R).forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(26px) scale(.9)'},{opacity:1,transform:'none'}],{duration:460,delay:120+i*90,easing:'cubic-bezier(.2,.9,.3,1.2)',fill:'backwards'}));
+      $$('.fx-pd .fx-st',R).forEach((el,i)=>el.animate([{transform:'scaleY(0)'},{transform:'none'}],{duration:520,delay:260+i*90,easing:'cubic-bezier(.2,.9,.3,1)',fill:'backwards'}));
+      $$('.fx-row,.fx-req',R).forEach((el,i)=>el.animate([{opacity:0,transform:'translateX(18px)'},{opacity:1,transform:'none'}],{duration:360,delay:200+i*45,easing:'cubic-bezier(.2,.9,.3,1)',fill:'backwards'}))}
+    R.onclick=async e=>{
+      if(e.target.closest('[data-frback]')){hap('light');go('Profile');return}
+      if(e.target.closest('[data-fradd]')){hap('light');FADD=!FADD;FMSG='';go('Friends');if(FADD){const i=$('[data-femail]',R);if(i)setTimeout(()=>i.focus(),60)}return}
+      const rq=e.target.closest('[data-req]');
+      if(rq&&e.target.closest('[data-acc]')){hap('success');rq.classList.add('done');if(CB.respond)CB.respond(rq.dataset.req,true);return}
+      if(rq&&e.target.closest('[data-dec]')){hap('tick');rq.classList.add('done');if(CB.respond)CB.respond(rq.dataset.req,false);return}
+      const fpr=e.target.closest('[data-fid]');if(fpr&&!rq){DZ.openFriend(fpr.dataset.fid,'Friends');return}
+      if(e.target.closest('[data-invite]')){hap('light');if(CB.invite)CB.invite();return}
+      const send=e.target.closest('[data-send]');
+      if(send){const v=($('[data-femail]',R).value||'').trim();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){FMSG='Enter your friend\'s email address.';hap('buzz');go('Friends');return}send.textContent='…';send.disabled=true;const r=CB.addFriend?await CB.addFriend(v):{message:''};FMSG=(r&&r.message)||'Request sent.';go('Friends');return}
+    };
+    const inp=$('[data-femail]',R);if(inp)inp.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();const b=$('[data-send]',R);if(b)b.click()}});
+  };
+  const k=IDX('Friends');if(k>=0){SCREENS[k].html=frHtml;SCREENS[k].play=frPlay}
 }
 const RUN_DEAD=()=>!host.isConnected;
 function back(){

@@ -4737,8 +4737,8 @@ async function undoDeleteTask() {
           dueDate: t.dueDate ? String(t.dueDate).slice(0, 10) : "",
         };
       }),
-      friends: (social?.friends || []).map((u) => ({ id: u.id, name: u.name, gems: u.gems || 0, picture: u.picture || "", streak: u.streak || 0 })),
-      incoming: (social?.incoming || []).map((u) => ({ id: u.id, name: u.name })),
+      friends: (social?.friends || []).map((u) => ({ id: u.id, name: u.name, gems: u.gems || 0, picture: u.picture || "", streak: u.streak || 0, avatar: typeof u.avatar === "string" ? u.avatar : "" })),
+      incoming: (social?.incoming || []).map((u) => ({ id: u.id, name: u.name, picture: u.picture || "", avatar: typeof u.avatar === "string" ? u.avatar : "" })),
       prefs: accountPrefs,
       plans: weeklyPlan.slice(0, 100).map((x) => ({ id: x.id, title: x.title, subject: x.subject, day: x.day, done: x.completed })),
       notes: subjectNotes.slice(0, 200).map((n) => ({ id: n.id, title: n.title || "Untitled", subject: n.subject || "" })),

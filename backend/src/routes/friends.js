@@ -10,6 +10,7 @@ const Report = require("../models/Report");
 const FocusSession = require("../models/FocusSession");
 const Task = require("../models/Task");
 const StudentSettings = require("../models/StudentSettings");
+const Note = require("../models/Note");
 const requireAuth = require("../middleware/auth");
 const { award } = require("../services/gems");
 
@@ -169,6 +170,18 @@ router.get("/", async (req, res) => {
       req.log?.error?.(error); // the list still works without streaks
     }
 
+    // Avatar characters (made in Edit avatar) for friends and requests.
+    try {
+      const people = [...friends, ...incoming, ...outgoing];
+      if (people.length) {
+        const rowsS = await StudentSettings.find({ student: { $in: people.map((u) => u.id) } }).select("student prefs.avatar").lean();
+        const av = new Map(rowsS.map((s) => [String(s.student), s.prefs && typeof s.prefs.avatar === "string" ? s.prefs.avatar.slice(0, 200) : ""]));
+        for (const u of people) u.avatar = av.get(u.id) || "";
+      }
+    } catch (error) {
+      req.log?.error?.(error);
+    }
+
     // `following` is kept so older app versions still show their friends.
     res.json({ friends, incoming, outgoing, following: friends, followers: [], leaderboard });
   } catch (error) {
@@ -246,6 +259,8 @@ router.get("/:userId/profile", async (req, res) => {
       studyNumbers(me),
       Friendship.countDocuments({ status: "accepted", $or: [{ requester: other }, { recipient: other }] }),
     ]);
+    let notesCount = 0;
+    try { notesCount = await Note.countDocuments({ student: other }); } catch { /* optional */ }
 
     // Their avatar character and the friends you both have ("Followed by ...").
     let avatar = "";
@@ -285,6 +300,7 @@ router.get("/:userId/profile", async (req, res) => {
       week: weekOf(theirs.minutesByDay),
       meWeek: weekOf(mine.minutesByDay),
       avatar,
+      notesCount,
       mutual,
       mutualCount,
     });
