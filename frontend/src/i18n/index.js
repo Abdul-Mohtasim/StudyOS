@@ -5,18 +5,23 @@ import { ROWS2 } from "./rows2";
 import { ROWS3 } from "./rows3";
 import { ROWS4 } from "./rows4";
 import { ROWS5 } from "./rows5";
+import { ROWS6 } from "./rows6";
+import { DENL } from "./rowsDeNl";
 
 export const LANGS = [
-  { code: "en", native: "English", rtl: false },
-  { code: "hi", native: "हिन्दी", rtl: false },
-  { code: "ur", native: "اردو", rtl: true },
-  { code: "ar", native: "العربية", rtl: true },
-  { code: "es", native: "Español", rtl: false },
-  { code: "fr", native: "Français", rtl: false },
+  { code: "en", native: "English", name: "English", short: "EN", hello: "Hello!", rtl: false },
+  { code: "hi", native: "हिन्दी", name: "Hindi", short: "HI", hello: "नमस्ते!", rtl: false },
+  { code: "ur", native: "اردو", name: "Urdu", short: "UR", hello: "السلام علیکم!", rtl: true },
+  { code: "ar", native: "العربية", name: "Arabic", short: "AR", hello: "مرحبًا!", rtl: true },
+  { code: "es", native: "Español", name: "Spanish", short: "ES", hello: "¡Hola!", rtl: false },
+  { code: "fr", native: "Français", name: "French", short: "FR", hello: "Bonjour !", rtl: false },
+  { code: "de", native: "Deutsch", name: "German", short: "DE", hello: "Hallo!", rtl: false },
+  { code: "nl", native: "Nederlands", name: "Dutch", short: "NL", hello: "Hallo!", rtl: false },
 ];
 
-const COLUMN = { hi: 1, ur: 2, ar: 3, es: 4, fr: 5 };
-const ALL = [...ROWS1, ...ROWS2, ...ROWS3, ...ROWS4, ...ROWS5];
+const COLUMN = { hi: 1, ur: 2, ar: 3, es: 4, fr: 5, de: 6, nl: 7 };
+// Older rows have 6 columns; their German and Dutch live in DENL ({ English: [German, Dutch] }).
+const ALL = [...ROWS1, ...ROWS2, ...ROWS3, ...ROWS4, ...ROWS5, ...ROWS6];
 const KEY = "studyos-lang";
 const ATTRS = ["placeholder", "aria-label", "title"];
 const SKIP = "script,style,textarea,input,select,[data-notr],.tt:not([data-tr])";
@@ -38,7 +43,7 @@ function build(code) {
   if (!col) return;
   for (const row of ALL) {
     const en = row[0];
-    const out = row[col];
+    const out = row[col] || (col >= 6 && DENL[en] ? DENL[en][col - 6] : "");
     if (!out) continue;
     if (/\{\d\}/.test(en)) {
       const order = [];
@@ -60,9 +65,15 @@ function translateCore(text) {
     const m = t.re.exec(text);
     if (!m) continue;
     const parts = [];
+    let ok = true;
     t.order.forEach((n, i) => {
-      parts[n] = translateCore(m[i + 1].trim());
+      const raw = m[i + 1].trim();
+      const tr = translateCore(raw);
+      // a gap filled with English words that have no translation means this template does not fit
+      if (tr === raw && /(^|\s)[a-z]{3,}(\s|$)/.test(raw)) ok = false;
+      parts[n] = tr;
     });
+    if (!ok) continue;
     return t.out.replace(/\{(\d)\}/g, (_x, n) => (parts[n] === undefined ? "" : parts[n]));
   }
   if (text.includes(" · ")) {

@@ -2,6 +2,7 @@
 
 const Student = require("../models/Student");
 const Friendship = require("../models/Friendship");
+const FocusSession = require("../models/FocusSession");
 const { forgetStudent } = require("../middleware/auth");
 
 // Everything the Gem Shop sells. Prices and limits live here only, never in the app.
@@ -75,10 +76,14 @@ function view(doc) {
     doubleUntil: until > Date.now() ? until : 0,
     protectedDays: Array.isArray(doc.protectedDays) ? doc.protectedDays : [],
     owned,
+    chestAt: {
+      early: doc.chestAt && doc.chestAt.early ? new Date(doc.chestAt.early).getTime() : 0,
+      night: doc.chestAt && doc.chestAt.night ? new Date(doc.chestAt.night).getTime() : 0,
+    },
   };
 }
 
-const FIELDS = "gems shopFreezes doubleGemsUntil protectedDays shopOwned";
+const FIELDS = "gems shopFreezes doubleGemsUntil protectedDays shopOwned chestAt";
 
 async function state(studentId) {
   const doc = await Student.findById(studentId).select(FIELDS).lean();
@@ -208,4 +213,57 @@ async function gift(studentId, toId) {
   return { ok: true, state: view(taken) };
 }
 
-module.exports = { ITEMS, GIFT_AMOUNT, isItem, prices, packs, live, state, buy, protect, gift };
+
+// ---- Special Offers: Early Bird Chest and Night Owl Chest ----
+// A chest is earned by a focus session (the app checks the time of day, the server checks that the session
+// really exists). Night Owl opens 3 hours after its session. Each chest can be opened once per earned session
+// and never twice within 10 hours, so tapping twice or replaying a request cannot pay twice.
+// Every chest pays gems; sometimes it adds a Streak Freeze or a Double Gems boost on top.
+const CHEST = {
+  early: { gems: [20, 40], freezeChance: 0.18, boostChance: 0.3, boostHours: 1, waitMs: 0 },
+  night: { gems: [25, 50], freezeChance: 0.2, boostChance: 0.35, boostHours: 2, waitMs: 3 * 3600 * 1000 },
+};
+const CHEST_COOLDOWN_MS = 10 * 3600 * 1000;
+const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+
+async function openChest(studentId, kind) {
+  if (kind !== "early" && kind !== "night") return { ok: false, status: 400, message: "Unknown chest." };
+  const def = CHEST[kind];
+  const now = Date.now();
+  const doc = await Student.findById(studentId).select(FIELDS).lean();
+  if (!doc) return { ok: false, status: 404, message: "Account not found." };
+  const last = doc.chestAt && doc.chestAt[kind] ? new Date(doc.chestAt[kind]).getTime() : 0;
+  if (now - last < CHEST_COOLDOWN_MS) return { ok: false, status: 409, message: "You already opened this chest. A new one comes after your next session.", state: view(doc) };
+
+  // A focus session finished after the last opening, in the last 36 hours (and 3+ hours ago for Night Owl).
+  const from = new Date(Math.max(last, now - 36 * 3600 * 1000));
+  const to = new Date(now - def.waitMs + 5 * 60 * 1000);
+  const session = await FocusSession.findOne({ student: studentId, completedAt: { $gt: from, $lte: to } }).select("_id").lean();
+  if (!session) return { ok: false, status: 409, message: kind === "night" ? "This chest is not ready yet." : "Do a focus session first to unlock this chest.", state: view(doc) };
+
+  // Claim first (one atomic update), pay after. If two taps arrive together only one wins.
+  const claimed = await Student.findOneAndUpdate(
+    { _id: studentId, $or: [{ [`chestAt.${kind}`]: null }, { [`chestAt.${kind}`]: { $exists: false } }, { [`chestAt.${kind}`]: { $lte: new Date(now - CHEST_COOLDOWN_MS) } }] },
+    { $set: { [`chestAt.${kind}`]: new Date(now) } },
+    { new: true }
+  ).select("_id").lean();
+  if (!claimed) return { ok: false, status: 409, message: "This chest was just opened.", state: await state(studentId) };
+
+  const reward = { gems: rand(def.gems[0], def.gems[1]), freeze: 0, doubleMin: 0 };
+  const inc = {};
+  const set = {};
+  const roll = Math.random();
+  const canFreeze = (doc.shopFreezes || 0) < 2;
+  const boosting = doc.doubleGemsUntil && new Date(doc.doubleGemsUntil).getTime() > now;
+  if (roll < def.freezeChance && canFreeze) { reward.freeze = 1; inc.shopFreezes = 1; }
+  else if (roll < def.freezeChance + def.boostChance && !boosting) { reward.doubleMin = def.boostHours * 60; set.doubleGemsUntil = new Date(now + def.boostHours * 3600 * 1000); }
+  else reward.gems += rand(10, 20); // nothing extra to add: a few more gems instead
+  inc.gems = reward.gems;
+  const update = { $inc: inc };
+  if (Object.keys(set).length) update.$set = set;
+  const done = await Student.findOneAndUpdate({ _id: studentId }, update, { new: true }).select(FIELDS).lean();
+  forgetStudent(studentId);
+  return { ok: true, reward, state: view(done) };
+}
+
+module.exports = { ITEMS, GIFT_AMOUNT, isItem, prices, packs, live, state, buy, protect, gift, openChest };

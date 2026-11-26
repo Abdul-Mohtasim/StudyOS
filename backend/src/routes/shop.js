@@ -62,4 +62,17 @@ router.post("/gift", async (req, res) => {
   }
 });
 
+// POST /api/shop/chest { kind: "early" | "night" } -> opens a Special Offers chest
+//   -> { reward: { gems, freeze, doubleMin }, gems, freezes, doubleUntil, chestAt, ... }
+router.post("/chest", async (req, res) => {
+  try {
+    const result = await shop.openChest(req.student._id, String(req.body?.kind || ""));
+    if (result.ok) return res.json({ ...result.state, reward: result.reward });
+    res.status(result.status || 400).json({ message: result.message, ...(result.state || {}) });
+  } catch (error) {
+    req.log?.error?.(error);
+    res.status(500).json({ message: "Could not open the chest." });
+  }
+});
+
 module.exports = router;

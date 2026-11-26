@@ -74,6 +74,7 @@ export function setSplashTheme(theme, palette) {
   const key = ["ocean", "forest", "sunset", "mono"].includes(p) ? p : theme === "dark" ? "midnight" : "ember";
   if (key === lastSplash) return;
   lastSplash = key;
+  try { localStorage.setItem("studyos-splash", key); } catch (_) {}
   SVC.setSplashTheme(key);
 }
 /* event reports (called from the existing widget events, so there is one source) */

@@ -18929,3 +18929,12 @@ html[data-theme="light"][data-palette="mono"]{--bg:#e6e6e6;--surface:#f5f5f5;--s
 .undo-toast-button:focus-visible { outline: 3px solid #ffffff; outline-offset: 2px; }
 [data-theme="dark"] .undo-toast, .dark .undo-toast { background: #ebe8ea; color: #1b1e25; }
 [data-theme="dark"] .undo-toast-button, .dark .undo-toast-button { background: #1b1e25; color: #ffffff; }
+
+
+/* streak flame (new art): gentle sway while the streak is lit */
+.sf-svg .fl-all{transform-box:fill-box;transform-origin:50% 94%}
+.sf-wrap:not(.sf-off) .sf-svg .fl-in{transform-box:fill-box;transform-origin:50% 100%;animation:fiInner 1.8s ease-in-out infinite}
+.sf-wrap:not(.sf-off) .sf-svg .fl-all{animation:fiSway 2.6s ease-in-out infinite}
+@keyframes fiInner{0%,100%{transform:scale(1,1)}50%{transform:scale(1.03,1.06)}}
+@keyframes fiSway{0%,100%{transform:rotate(0) scale(1,1)}30%{transform:rotate(-1.4deg) scale(1.01,.99)}65%{transform:rotate(1.2deg) scale(.99,1.02)}}
+@media (prefers-reduced-motion:reduce){.sf-wrap .sf-svg .fl-in,.sf-wrap .sf-svg .fl-all{animation:none!important}}

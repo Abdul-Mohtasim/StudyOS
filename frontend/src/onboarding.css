@@ -100,10 +100,67 @@
 .ob-screen{position:relative}
 .ob-lang{position:absolute;top:max(14px,env(safe-area-inset-top,0px));right:16px;z-index:5;display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border:0;border-radius:18px;background:rgba(27,30,37,.08);color:#1b1e25;font:600 13px/1 system-ui,sans-serif;cursor:pointer}
 .ob-lang:active{transform:scale(.96)}
-.ob-lsheet{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;background:rgba(10,12,16,.45)}
-.ob-lcard{width:100%;max-width:480px;background:#f4f2f3;color:#1b1e25;border-radius:22px 22px 0 0;padding:10px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:oblup .22s ease-out}
-.ob-lgrab{width:40px;height:4px;border-radius:2px;background:#c9c6c8;margin:2px auto 12px}
-.ob-lcard h3{margin:0 0 10px;font:700 17px/1.2 system-ui,sans-serif}
-.ob-lopt{display:flex;align-items:center;justify-content:space-between;width:100%;height:50px;margin-top:8px;padding:0 16px;border:2px solid #dcd9db;border-radius:14px;background:#fff;color:#1b1e25;font:600 16px/1 system-ui,sans-serif;cursor:pointer}
-.ob-lopt.on{border-color:#1b1e25;background:#ece8eb}
-@keyframes oblup{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+
+
+/* ===== intro icons + equal boxes (v127) ===== */
+.ob{--ob-icon:clamp(34px,10cqw,54px);--ob-icon-s:clamp(30px,8.6cqw,46px);--ob-card-h:clamp(76px,22cqw,116px);--ob-cell-h:clamp(56px,16.5cqw,86px)}
+.ob-screen{--ob-icon:clamp(34px,10cqw,54px);--ob-icon-s:clamp(30px,8.6cqw,46px);--ob-card-h:clamp(76px,22cqw,116px);--ob-cell-h:clamp(56px,16.5cqw,86px)}
+.oi{display:block;flex:none;overflow:visible;width:var(--ob-icon);height:var(--ob-icon)}
+.ob-ico{flex:none;width:var(--ob-icon);height:var(--ob-icon);border-radius:0;background:none;border:0;display:grid;place-items:center}
+.ob-ico svg.oi{width:var(--ob-icon);height:var(--ob-icon)}
+.ob-ico svg:not(.oi){width:6cqw;height:6cqw}
+/* subject icons are a little smaller */
+.ob-cell .ob-ico{width:var(--ob-icon-s);height:var(--ob-icon-s)}
+.ob-cell .ob-ico svg.oi{width:var(--ob-icon-s);height:var(--ob-icon-s)}
+
+/* every card and cell on a page has the same width and height; icon and text are centred together */
+.ob-list{display:grid;grid-template-columns:100%;grid-auto-rows:1fr;gap:3cqw}
+.ob-list>.ob-card{width:100%;min-height:var(--ob-card-h);height:100%;align-items:center;padding:3.2cqw 4cqw;gap:3.6cqw}
+.ob-card>div:nth-child(2){flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.ob-card h3{margin-bottom:.8cqw}
+.ob-card.ob-pad p{max-width:56cqw}
+.ob-list>.ob-dark{padding:3.2cqw 4cqw}
+.ob-dark .ob-ring{width:min(17cqw,calc(var(--ob-card-h) - 6cqw));height:min(17cqw,calc(var(--ob-card-h) - 6cqw));font-size:4.2cqw}
+.ob-dark .ob-ring::before{inset:1.4cqw}
+.ob-compact .ob-card{padding:3.2cqw 4cqw}
+.ob-grid{grid-auto-rows:1fr}
+.ob-grid>.ob-cell{width:100%;height:100%;min-height:var(--ob-cell-h);align-items:center;padding:2.4cqw 3.4cqw;gap:3cqw}
+.ob-cell{line-height:1.2}
+
+/* logo: the mascot app icon */
+.ob-logo{align-items:center;gap:3cqw}
+.ob-logo b{display:block;flex:none;width:clamp(40px,12cqw,60px);height:clamp(40px,12cqw,60px);border-radius:22%;background:none;overflow:hidden;box-shadow:0 1.2cqw 3cqw rgba(24,27,34,.18)}
+.ob-logo b .ob-appicon{display:block;width:100%;height:100%;object-fit:cover}
+
+
+/* ===== intro pages (v129): phone-shaped frame, centred on wide screens ===== */
+.ob.ix-wrap{background:#0d0a10;align-items:flex-start}
+.ix-frame{position:relative;width:min(100vw,calc(100dvh * .56),560px);height:100dvh;margin:0 auto;overflow:hidden}
+
+/* ===== language button and popup (v131) ===== */
+.ix-frame .ix-lang{position:absolute;top:calc(env(safe-area-inset-top,0px) + 8px);right:14px;height:32px;padding:0 10px 0 11px;gap:6px;z-index:6;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(40,20,10,.14);color:#4A2412;font:600 12.5px/1 'Nunito',system-ui,sans-serif;border-radius:16px}
+.ix-frame .ix-lang .ix-chev{opacity:.7}
+.ob-lsheet{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px));background:rgba(22,12,8,.52);animation:oblf .22s ease-out both}
+.ob-lsheet.out{animation:oblfo .24s ease-in both;pointer-events:none}
+.ob-lcard{width:min(100%,380px);max-height:min(78dvh,640px);display:flex;flex-direction:column;overflow:hidden;border-radius:26px;color:#2B1A12;
+  background:linear-gradient(180deg,rgba(255,252,249,.96),rgba(248,242,237,.94));border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 24px 60px rgba(30,15,8,.42),inset 0 1px 0 #fff;animation:oblc .34s cubic-bezier(.22,.9,.3,1) both}
+.ob-lsheet.out .ob-lcard{animation:oblco .24s ease-in both}
+.ob-lhead{flex:none;display:flex;align-items:center;justify-content:space-between;padding:16px 14px 8px 20px}
+.ob-lcard h3{margin:0;font:700 18px/1.2 'Fredoka','Nunito',system-ui,sans-serif;letter-spacing:-.005em}
+.ob-lx{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:rgba(74,36,18,.08);color:#4A2412;cursor:pointer;transition:background .15s}
+.ob-lx:active{background:rgba(74,36,18,.16)}
+.ob-llist{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:rgba(74,36,18,.25) transparent;
+  padding:6px 14px 30px;display:flex;flex-direction:column;gap:8px;
+  -webkit-mask-image:linear-gradient(#000 calc(100% - 26px),transparent);mask-image:linear-gradient(#000 calc(100% - 26px),transparent)}
+.ob-lopt{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:52px;padding:0 16px;border:2px solid rgba(74,36,18,.12);border-radius:16px;background:#fff;color:#2B1A12;
+  font:600 16px/1.2 'Nunito',system-ui,sans-serif;cursor:pointer;text-align:start;transition:border-color .2s,background-color .2s,transform .12s}
+.ob-lopt:active{transform:scale(.985)}
+.ob-lopt:focus-visible{outline:2px solid #D2561A;outline-offset:2px}
+.ob-lopt.on{border-color:#D2561A;background:#FFF0E2;color:#8A3410}
+.ob-lopt .ob-lck{flex:none;color:#D2561A}
+@keyframes oblf{from{opacity:0}to{opacity:1}}
+@keyframes oblfo{from{opacity:1}to{opacity:0}}
+@keyframes oblc{from{opacity:0;transform:translateY(18px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes oblco{from{opacity:1;transform:none}to{opacity:0;transform:translateY(10px) scale(.96)}}
+@media (prefers-reduced-motion:reduce){.ob-lsheet,.ob-lcard{animation-duration:.01s}}

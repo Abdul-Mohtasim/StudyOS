@@ -1,4 +1,6 @@
 import { Capacitor } from "@capacitor/core";
+import { Flame } from "./design/FlameIcon.jsx";
+import { flameInner, FLAME_PAL } from "./design/flameicon.js";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 import { haptic, isHapticsEnabled, setHapticsEnabled } from "./haptics";
 import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
@@ -21,7 +23,6 @@ import {
   Plus,
   Check,
   Clock3,
-  Flame,
   Menu,
   X,
   Play,
@@ -116,6 +117,12 @@ import NewUserFlow from "./newflow/NewUserFlow";
 import DesignShell from "./design/DesignShell";
 import { useWidgetSync, widgetTaskDone, widgetTheme } from "./widgets/widgetSync";
 import { startAppIcon, appIconEvents, setAppIconUser, setSplashTheme } from "./icons/appIcon.js";
+
+// Last known profile of the signed-in account, so the loading screen shows the real picture,
+// avatar, streak and gems straight away instead of the default character.
+const PCACHE_KEY = "studyos-profile-cache";
+const PCACHE = (() => { try { return JSON.parse(localStorage.getItem(PCACHE_KEY) || "null") || {}; } catch { return {}; } })();
+if (PCACHE.picture && typeof Image !== "undefined") { try { const im = new Image(); im.decoding = "async"; im.src = PCACHE.picture; } catch { /* warm-up only */ } }
 import { NativeFlashcards, NativeGrades, NativeNotes } from "./NativePages";
 import qrcode from "qrcode-generator";
 import { Share } from "@capacitor/share";
@@ -595,48 +602,24 @@ function StreakFlame({ streak = 0, size = 48, rich = false }) {
           ))}
         </span>
       )}
-      <svg className="sf-svg" viewBox="0 0 64 80" focusable="false">
-        <defs>
-          <linearGradient id={`sfo${id}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="var(--sf-o1)" />
-            <stop offset="1" stopColor="var(--sf-o2)" />
-          </linearGradient>
-          <linearGradient id={`sfm${id}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="var(--sf-m1)" />
-            <stop offset="1" stopColor="var(--sf-m2)" />
-          </linearGradient>
-          <linearGradient id={`sfc${id}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="var(--sf-c1)" />
-            <stop offset="1" stopColor="var(--sf-c2)" />
-          </linearGradient>
-        </defs>
-
-        <g className="sf-flame">
-          <path className="sf-outer" fill={`url(#sfo${id})`} d={buildFlamePath(FLAME_OUTER[0])}>
-            {morph && (
-              <animate attributeName="d" dur="2.4s" repeatCount="indefinite" values={outerValues} />
-            )}
-          </path>
-          <path className="sf-mid" fill={`url(#sfm${id})`} d={buildFlamePath(FLAME_MID[0])}>
-            {morph && (
-              <animate attributeName="d" dur="1.7s" repeatCount="indefinite" values={midValues} />
-            )}
-          </path>
-          <path
-            className="sf-core"
-            fill={`url(#sfc${id})`}
-            d="M32 46C34 51 38 54 38 60C38 66 35 69 32 69C29 69 26 66 26 60C26 55 29 52 32 46Z"
-          />
-          <ellipse className="sf-shine" cx="19" cy="52" rx="2.4" ry="6" transform="rotate(14 19 52)" />
-        </g>
-
+      <svg className="sf-svg" viewBox="0 0 100 120" focusable="false">
+        <g
+          className="fi-wrap"
+          dangerouslySetInnerHTML={{
+            __html: flameInner(
+              tier === "off" ? FLAME_PAL.grey : tier === "blue" ? FLAME_PAL.blue : FLAME_PAL.red,
+              `sfi${id}`,
+              { cls: true },
+            ),
+          }}
+        />
         {embers.map((ember, index) => (
           <circle
             key={index}
             className="sf-ember"
-            cx={ember.x}
-            cy="64"
-            r={ember.r}
+            cx={ember.x * 1.5}
+            cy="96"
+            r={ember.r * 1.5}
             style={{
               "--dx": `${ember.dx}px`,
               animationDelay: `${ember.delay}s`,
@@ -2312,7 +2295,7 @@ useEffect(() => {
       const st = backState.current;
       if (!st.hasStudent) {
         if (st.showAuthScreen) { setShowAuthScreen(false); setAuthError(""); }
-        else if (!st.newUserFlowOpen) CapApp.minimizeApp();
+        else if (!st.newUserFlowOpen) { if (!(window.__introBack && window.__introBack())) CapApp.minimizeApp(); }
         return;
       }
       if (["subjects", "flashcards", "grades"].includes(st.activeSection)) { goTab("study"); return; }
@@ -2370,6 +2353,8 @@ useEffect(() => {
       packs: data.packs && typeof data.packs === "object" ? data.packs : prev?.packs || null,
       // Which items are finished. Missing on an older server: the shop then treats only the old items as live.
       live: data.live && typeof data.live === "object" ? data.live : prev?.live || null,
+      // When each Special Offers chest was last opened (milliseconds, 0 = never).
+      chestAt: data.chestAt && typeof data.chestAt === "object" ? { early: Number(data.chestAt.early) || 0, night: Number(data.chestAt.night) || 0 } : prev?.chestAt || { early: 0, night: 0 },
     };
   }
 
@@ -2400,10 +2385,10 @@ useEffect(() => {
     widgets: "Widget Pack unlocked!",
     frames: "Avatar Frames unlocked!",
     badges: "Badge Showcase unlocked!",
-    theme_ocean: "Ocean theme unlocked!",
-    theme_forest: "Forest theme unlocked!",
-    theme_sunset: "Sunset theme unlocked!",
-    theme_mono: "Mono theme unlocked!",
+    theme_ocean: "Ocean theme unlocked! Find it in Settings > Appearance.",
+    theme_forest: "Forest theme unlocked! Find it in Settings > Appearance.",
+    theme_sunset: "Sunset theme unlocked! Find it in Settings > Appearance.",
+    theme_mono: "Mono theme unlocked! Find it in Settings > Appearance.",
   };
 
   // extra.date is only used by Streak Repair: the missed day to bring back.
@@ -2421,6 +2406,25 @@ useEffect(() => {
     if (data.message) return { ok: false, message: data.message };
     if (status === 0) return { ok: false, message: "Could not reach the server. Check your connection and try again." };
     return { ok: false, message: `The shop server answered with an error (code ${status}). The backend may need to be redeployed.` };
+  }
+
+  // Opens the Early Bird or Night Owl chest. The server decides the reward.
+  async function chestOpen(kind) {
+    const token = localStorage.getItem("studyos_auth_token") || authToken;
+    if (!token) return { ok: false, message: "Create your profile to open chests." };
+    let result = await nativeApi("/api/shop/chest", "POST", { kind }, token);
+    if (!result.ok && [0, 502, 503, 504].includes(result.status)) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      result = await nativeApi("/api/shop/chest", "POST", { kind }, token);
+    }
+    const { ok, data, status } = result;
+    if (Number.isFinite(data.gems)) setGemsServer(data.gems);
+    if (data.freezes !== undefined) setShopServer((prev) => shopFrom(data, prev));
+    if (ok && data.reward) return { ok: true, reward: data.reward };
+    if (data.message) return { ok: false, message: data.message };
+    if (status === 0) return { ok: false, message: "No internet connection. Check it and try again." };
+    if (status === 404) return { ok: false, message: "Chests are not on your server yet. Deploy the latest backend." };
+    return { ok: false, message: `The server could not open the chest (code ${status}). Please try again.` };
   }
 
   async function shopGift(userId) {
@@ -3021,7 +3025,22 @@ useEffect(() => {
   // each account has its own icon settings; signed out = default
   const iconUid = authToken && student && !student.guest ? String(student.id || student._id || "") : "";
   useEffect(() => { setAppIconUser(iconUid); }, [iconUid]);
+  const myUid = student ? String(student.id || student._id || "") : "";
+  const useCache = Boolean(authToken) && Boolean(PCACHE.uid) && (!myUid || myUid === PCACHE.uid);
+  const stillLoading = Boolean(authToken) && !firstLoadDoneRef.current;
   useEffect(() => { setSplashTheme(settingsTheme, activePalette); }, [settingsTheme, activePalette]);
+  // keep the profile cache fresh once real data is in; forget it when signed out
+  useEffect(() => {
+    try {
+      if (!authToken) { if (PCACHE.uid) { localStorage.removeItem(PCACHE_KEY); Object.keys(PCACHE).forEach((k) => delete PCACHE[k]); } return; }
+      if (!myUid || student?.guest || !firstLoadDoneRef.current) return;
+      const next = { uid: myUid, picture: typeof student?.picture === "string" ? student.picture : "", avatar: typeof accountPrefs.avatar === "string" ? accountPrefs.avatar : PCACHE.uid === myUid ? PCACHE.avatar || "" : "", streak: studyStreak, gems: gemsServer ?? 0 };
+      if (JSON.stringify(next) !== JSON.stringify({ uid: PCACHE.uid, picture: PCACHE.picture, avatar: PCACHE.avatar, streak: PCACHE.streak, gems: PCACHE.gems })) {
+        Object.assign(PCACHE, next);
+        localStorage.setItem(PCACHE_KEY, JSON.stringify(next));
+      }
+    } catch { /* storage unavailable */ }
+  });
   useEffect(() => {
     appIconEvents.goal(Math.round(todayFocusMinutes), dailyGoalMinutes);
   }, [todayFocusMinutes, dailyGoalMinutes]);
@@ -4680,8 +4699,8 @@ async function undoDeleteTask() {
       theme: settingsTheme,
       palette: activePalette,
       showcase: typeof accountPrefs.showcase === "string" ? accountPrefs.showcase : "",
-      avatar: typeof accountPrefs.avatar === "string" ? accountPrefs.avatar : "",
-      picture: typeof student?.picture === "string" ? student.picture : "",
+      avatar: typeof accountPrefs.avatar === "string" ? accountPrefs.avatar : useCache ? PCACHE.avatar || "" : "",
+      picture: typeof student?.picture === "string" && student.picture ? student.picture : useCache ? PCACHE.picture || "" : "",
       inviteUrl: INVITE_URL,
       supportEmail: (import.meta.env.VITE_SUPPORT_EMAIL || "").trim(),
       guest: Boolean(student?.guest),
@@ -4692,11 +4711,11 @@ async function undoDeleteTask() {
       username: student?.username || (student?.email ? student.email.split("@")[0] : ""),
       joinedYear: Number.isFinite(joined) ? joined : new Date().getFullYear(),
       score: Math.round(todayFocusMinutes),
-      streak: studyStreak,
+      streak: stillLoading && useCache ? PCACHE.streak || 0 : studyStreak,
       streakPop,
       streakDays: Array.from(sessionDateKeys).sort().slice(-800),
       bestStreak,
-      gems: gemsServer ?? 0,
+      gems: gemsServer ?? (useCache ? PCACHE.gems || 0 : 0),
       shop: shopServer,
       shopStatus: shopStatus.state,
       shopCode: shopStatus.code,
@@ -4732,6 +4751,8 @@ async function undoDeleteTask() {
       subjects: subjects.map((x) => x.name),
       subjectCount: subjects.length,
       sessionsCount: focusSessions.length,
+      // Times of the latest finished focus sessions (for the Early Bird and Night Owl chests).
+      sessionTimes: focusSessions.slice(0, 40).map((x) => x.completedAt).filter(Boolean),
       flashcardCount: Array.isArray(flashcards?.cards) ? flashcards.cards.length : 0,
       gradeCount: Array.isArray(gradeTracker?.grades) ? gradeTracker.grades.length : 0,
       tasksDone: tasks.filter((t) => t.completed).length,
@@ -4876,6 +4897,7 @@ async function undoDeleteTask() {
   const designActions = IS_NATIVE ? {
     shopBuy,
     shopGift,
+    chestOpen,
     friendProfile,
     removeFriend,
     blockFriend,

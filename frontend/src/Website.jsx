@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Flame } from "./design/FlameIcon.jsx";
 import {
   FileText,
   Pencil,
@@ -14,7 +15,6 @@ import {
   Plus,
   Check,
   Clock3,
-  Flame,
   Menu,
   X,
   Play,

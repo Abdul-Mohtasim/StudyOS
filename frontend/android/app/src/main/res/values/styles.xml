@@ -20,44 +20,44 @@
          with SplashScreen.setSplashScreenTheme (Android 13+), see StudyIconPlugin.setSplashTheme. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_bg</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
         <item name="android:background">@drawable/splash</item>
     </style>
 
     <style name="Splash.Ember" parent="AppTheme.NoActionBarLaunch">
         <item name="windowSplashScreenBackground">@color/splash_bg_ember</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_face_ember</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
         <item name="android:background">@drawable/splash_ember</item>
     </style>
 
     <style name="Splash.Midnight" parent="AppTheme.NoActionBarLaunch">
         <item name="windowSplashScreenBackground">@color/splash_bg_midnight</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_face_midnight</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
         <item name="android:background">@drawable/splash_midnight</item>
     </style>
 
     <style name="Splash.Ocean" parent="AppTheme.NoActionBarLaunch">
         <item name="windowSplashScreenBackground">@color/splash_bg_ocean</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_face_ocean</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
         <item name="android:background">@drawable/splash_ocean</item>
     </style>
 
     <style name="Splash.Forest" parent="AppTheme.NoActionBarLaunch">
         <item name="windowSplashScreenBackground">@color/splash_bg_forest</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_face_forest</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
         <item name="android:background">@drawable/splash_forest</item>
     </style>
 
     <style name="Splash.Sunset" parent="AppTheme.NoActionBarLaunch">
         <item name="windowSplashScreenBackground">@color/splash_bg_sunset</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_face_sunset</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
         <item name="android:background">@drawable/splash_sunset</item>
     </style>
 
     <style name="Splash.Mono" parent="AppTheme.NoActionBarLaunch">
         <item name="windowSplashScreenBackground">@color/splash_bg_mono</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_face_mono</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
         <item name="android:background">@drawable/splash_mono</item>
     </style>
 </resources>

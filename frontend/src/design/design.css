@@ -697,8 +697,8 @@
 .dz .sh2-back{width:42px;height:42px;border:0;padding:0;border-radius:50%;background:var(--card);color:var(--ink);display:grid;place-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .dz .sh2-back svg{width:20px;height:20px;display:block}
 .dz .sh2-bal{display:flex;align-items:center;gap:8px;height:42px;padding:0 16px 0 12px;border-radius:21px;background:var(--card);color:var(--ink);font:700 15px var(--display);font-variant-numeric:tabular-nums}
-.dz .sh2-bal .sh-gi{width:17px;height:21px}
-.dz .sh2-bal .sh-gi svg{width:17px;height:21px}
+.dz .sh2-bal .sh-gi{width:14px;height:18px}
+.dz .sh2-bal .sh-gi svg{width:14px;height:18px}
 .dz .sh2-title{margin:16px 0 0;font:700 34px/1.1 var(--display);color:var(--ink)}
 .dz .sh2-sub{margin:6px 0 0;font:600 14px/1.4 var(--body);color:var(--mut)}
 .dz .sh2 .sh-hero{margin-top:16px}
@@ -758,8 +758,8 @@
 .dz .sh-t p{margin:3px 0 0;font:600 13px/1.4 var(--body);color:var(--mut)}
 .dz .sh-st{display:inline-block;margin-top:6px;font:700 12px var(--body);color:var(--mut)}
 .dz .sh-st.on{color:#2f9f6f}
-.dz .sh-gi{display:inline-flex;width:14px;height:17px}
-.dz .sh-gi svg{width:14px;height:17px;display:block}
+.dz .sh-gi{display:inline-flex;width:12px;height:15px}
+.dz .sh-gi svg{width:12px;height:15px;display:block}
 .dz .sh-btn{flex:none;min-width:84px;height:46px;border:0;border-radius:23px;background:#1b1e25;color:#fff;box-shadow:0 4px 0 #000;display:flex;align-items:center;justify-content:center;gap:6px;font:700 15px var(--display);padding:0 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .08s,box-shadow .08s}
 .dz .sh-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
 .dz .nd .sh-btn{background:#ebe8ea;color:#0d1114;box-shadow:0 4px 0 #8b949c}
@@ -1174,7 +1174,7 @@ html[data-palette="mono"] .dz .scr.n:not(.nd) .qsh .qsb button.prm{background:#1
 .dz .pv-note{margin:12px 6px 0;text-align:center;font:600 12px/1.4 var(--body);color:var(--mut);animation:pv-rise .4s ease-out 1.6s both}
 .dz .pv-cost{display:flex;justify-content:center;align-items:center;gap:6px;margin:0 0 10px;font:700 12.5px var(--body);color:var(--mut);animation:pv-rise .4s ease-out .5s both}
 .dz .pv-cost b{font:700 14px var(--display);color:var(--ink)}
-.dz .pv-cost .sh-gi{width:14px;height:18px}.dz .pv-cost .sh-gi svg{width:14px;height:18px}
+.dz .pv-cost .sh-gi{width:12px;height:15px}.dz .pv-cost .sh-gi svg{width:12px;height:15px}
 .dz .sh2-sp.pv .sh2-go:not(.off):not(.busy){animation:pv-pulse 2.4s ease-in-out 1.4s infinite}
 @keyframes pv-in{from{opacity:0;transform:translateY(46px) scale(.82) rotate(-2deg);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
 @keyframes pv-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
@@ -1372,7 +1372,7 @@ html[data-theme="dark"] .dz .smy-b i{background:var(--in-focus,var(--mv))}
 .dz .svcap.ice{background:linear-gradient(180deg,#9fdcff,#4fb3e8);box-shadow:inset 0 -3px 0 rgba(20,90,140,.22)}
 .dz .svrow span.on:has(~ i){color:#3a1405}
 .dz .svgb{display:flex;align-items:center;gap:8px;padding:6px 0}
-.dz .svgi{flex:none;width:34px;height:34px;border-radius:11px;background:linear-gradient(#ffb02e,#ff6a3d);display:grid;place-items:center}
+.dz .svgi{flex:none;width:34px;height:34px;border-radius:11px;background:transparent;display:grid;place-items:center}
 .dz .svtr{flex:1;height:22px;border-radius:12px;background:var(--chip);overflow:hidden;position:relative}
 .dz .svtr i{display:block;height:100%;border-radius:12px;background:linear-gradient(#ffc24d,#ff8a2a);position:relative;transform-origin:left center}
 .dz .svtr i::after{content:"";position:absolute;left:8px;right:8px;top:4px;height:5px;border-radius:3px;background:rgba(255,255,255,.4)}
@@ -2697,7 +2697,7 @@ html[data-theme="dark"] .dz .dz-undo{background:#ebe8ea;color:#1b1e25}
 .dz .sc-fl{position:absolute;inset:0;width:100%;height:100%;transition:opacity .2s}
 .dz .sc-fl.grey .f1{fill:#3f4c56}.dz .sc-fl.grey .f2{fill:#566470}.dz .sc-fl.grey .f3{opacity:0}.dz .sc-fl.grey .f4{fill:#2c363e}
 .dz .scx.done .sc-fw .sc-fl:not(.grey){animation:scFlick 1.6s ease-in-out infinite;transform-origin:50% 95%}
-.dz .scx.done .sc-fw .f2{animation:scInner 1.1s ease-in-out infinite;transform-origin:50% 90%;transform-box:fill-box}
+.dz .scx.done .sc-fw .f2,.dz .scx.done .sc-fw .fl-in{animation:scInner 1.1s ease-in-out infinite;transform-origin:50% 90%;transform-box:fill-box}
 @keyframes scFlick{0%,100%{transform:scale(1,1) rotate(0)}25%{transform:scale(1.02,.98) rotate(-1.5deg)}50%{transform:scale(.98,1.04) rotate(1deg)}75%{transform:scale(1.01,.99) rotate(-.5deg)}}
 @keyframes scInner{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.06) translateY(-2px)}}
 .dz .sc-sh{position:absolute;left:50%;bottom:-6px;width:56%;height:22px;border-radius:50%;background:#000;opacity:.35;transform:translateX(-50%);filter:blur(2px);z-index:1}
@@ -2736,7 +2736,7 @@ html[data-theme="dark"] .dz .dz-undo{background:#ebe8ea;color:#1b1e25}
 .dz .sc-go{flex:1;min-width:0;height:52px;border:0;border-radius:16px;background:#1cb0f6;color:#fff;font:800 clamp(14px,4vw,16px) var(--body);letter-spacing:.06em;box-shadow:0 4px 0 #1899d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 14px}
 .dz .sc-go:active{transform:translateY(3px);box-shadow:0 1px 0 #1899d6}
 @media (max-height:660px){.dz .sc-stage{height:150px;margin-top:4px}.dz .sc-num{font-size:72px}}
-@media (prefers-reduced-motion:reduce){.dz .scx.done .sc-fl,.dz .scx.done .f2{animation:none}}
+@media (prefers-reduced-motion:reduce){.dz .scx.done .sc-fl,.dz .scx.done .f2,.dz .scx.done .fl-in{animation:none}}
 
 /* ==================== v109: Streak hub (Personal + Friends) like the reference ==================== */
 .dz .svchip{background:linear-gradient(110deg,#ffe680 0%,#ffd84a 40%,#fff2b0 50%,#ffd84a 60%,#ffe680 100%)!important;background-size:220% 100%!important;color:#b87800!important;border-radius:8px!important;padding:6px 10px!important;animation:svShine 3s linear infinite}
@@ -2836,3 +2836,93 @@ html[data-theme="dark"] .dz .dz-undo{background:#ebe8ea;color:#1b1e25}
 .dz .bn-hand,.dz .bn-react{width:clamp(24px,7vw,30px);height:clamp(24px,7vw,30px);font-size:0!important;filter:drop-shadow(0 3px 0 rgba(120,40,0,.25))}
 .dz .bn-hand svg,.dz .bn-react svg{width:100%;height:100%;display:block}
 .dz .bn-react{margin-left:0;top:-14px}
+
+
+/* ==================== v133 ==================== */
+/* Friends banner: the new streak flame keeps its own proportions and the inner flame flickers */
+.dz .bn-fire{aspect-ratio:100/120!important}
+.dz .bn-fl .fl-in{animation:scInner 1.1s ease-in-out infinite;transform-origin:50% 90%;transform-box:fill-box}
+@media (prefers-reduced-motion:reduce){.dz .bn-fl .fl-in{animation:none}}
+
+/* Profile: Achievements header with the arrow, most recent badges, NEW pills */
+.dz .pf .ach-h{display:flex;align-items:center;justify-content:space-between;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.dz .pf .ach-h .ach-ch{display:grid;place-items:center;width:30px;height:30px;margin-right:-6px;color:var(--mut);border-radius:50%;transition:transform .18s ease,background-color .18s ease}
+.dz .pf .ach-h .ach-ch svg{width:22px;height:22px;display:block}
+.dz .pf .ach-h:active .ach-ch{transform:translateX(3px);background:var(--chip)}
+.dz .pf .ach-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:8px;cursor:pointer}
+.dz .pf .ach-grid .badge{position:relative;padding-top:6px}
+.dz .pf .ach-new{position:absolute;top:0;right:4px;z-index:2;padding:3px 7px 2px;border-radius:7px;background:#ea4a4a;color:#fff;font:800 10.5px/1 var(--body);letter-spacing:.04em;box-shadow:0 2px 0 rgba(0,0,0,.25);animation:ach-pop .5s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes ach-pop{0%{transform:scale(.4) rotate(-8deg);opacity:0}100%{transform:none;opacity:1}}
+
+/* Profile: friend suggestions (shows under Add friends) */
+.dz .pf .psg{margin-top:2px;transform-origin:50% 0}
+.dz .pf .psg.a{animation:psg-in .42s cubic-bezier(.22,1,.36,1) both}
+@keyframes psg-in{0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+.dz .pf .psg .ff-scroll{margin:0 -2px;padding:4px 2px 10px}
+.dz .pf .psg .ff-card.gone{animation:psg-out .2s ease forwards;pointer-events:none}
+@keyframes psg-out{to{opacity:0;transform:scale(.9)}}
+.dz .pf .psg .ff-card.psg-d{animation:psg-in .3s ease both}
+@media (prefers-reduced-motion:reduce){.dz .pf .psg.a,.dz .pf .ach-new,.dz .pf .psg .ff-card.psg-d{animation:none}}
+
+
+/* ==================== v134: shop icons, no boxes or borders ==================== */
+.dz .sh2-pi::before,.dz .sh2-ico::before,.dz .sh2-big::before{display:none!important}
+.dz .sh2-pi,.dz .sh2-ico{border:0;box-shadow:none;background:none}
+.dz .sh2-pi svg{width:40px;height:40px;display:block}
+.dz .sh2-ico svg{width:42px;height:42px;display:block}
+.dz .sh2-big:not(.sh2-bigth){border:0;box-shadow:none;background:none}
+.dz .sh2-big:not(.sh2-bigth) svg{width:92px;height:92px;display:block}
+.dz .sh-ei{width:34px;height:34px}
+.dz .sh-ei svg{width:32px;height:32px}
+
+
+/* ==================== v136: Special Offers chests ==================== */
+.dz .ch-sec{margin-top:22px}
+.dz .ch-card{display:flex;align-items:center;gap:14px;margin-top:12px;padding:16px 16px 16px 12px;border:2px solid color-mix(in srgb,var(--ink) 16%,transparent);border-radius:22px}
+.dz .ch-ic{flex:none;width:80px;height:80px;display:grid;place-items:center}
+.dz .ch-ic img{width:66px;height:auto;display:block;-webkit-user-drag:none;user-select:none}
+.dz .ch-tx{min-width:0;flex:1}
+.dz .ch-n{display:block;font:700 18px/1.2 var(--display);color:var(--ink)}
+.dz .ch-card p{margin:5px 0 0;font:600 14.5px/1.4 var(--body);color:var(--mut)}
+.dz .ch-card p b{color:var(--ink);font-weight:800}
+.dz .ch-card p b.ch-t{color:#1cb0f6}
+.dz .ch-lk{display:block;margin-top:10px;font:800 13px var(--body);letter-spacing:.06em;color:var(--mut)}
+.dz .ch-go{margin-top:12px;height:40px;padding:0 24px;border:0;border-radius:14px;background:#1cb0f6;color:#fff;font:800 13px var(--body);letter-spacing:.06em;box-shadow:0 3px 0 #1899d6;cursor:pointer;-webkit-tap-highlight-color:transparent;animation:ch-pulse 2s ease-in-out infinite}
+.dz .ch-go:active{transform:translateY(2px);box-shadow:0 1px 0 #1899d6;animation:none}
+.dz .ch-card.open .ch-ic img{animation:ch-bob 1.6s ease-in-out infinite}
+@keyframes ch-pulse{0%,100%{filter:none}50%{filter:brightness(1.12)}}
+@keyframes ch-bob{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-3px) rotate(-4deg)}60%{transform:translateY(0) rotate(3deg)}}
+
+/* chest opening: one soft blur behind, chest in the middle */
+.dz .cho{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .26s ease;-webkit-tap-highlight-color:transparent;overflow:hidden;color:#fff}
+.dz .cho.on{opacity:1}
+.dz .cho-bg{position:absolute;inset:0;background:rgba(6,10,14,.58);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
+.dz .cho-in{position:relative;width:min(92vw,380px);display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 6px}
+.dz .cho-t{font:700 25px var(--display);text-shadow:0 2px 14px rgba(0,0,0,.45)}
+.dz .cho-s{margin-top:4px;font:700 14px var(--body);opacity:.85;min-height:20px}
+.dz .cho-stage{position:relative;width:min(62vw,240px);aspect-ratio:200/190;margin:22px 0 6px}
+.dz .cho-ch{position:relative;width:100%;height:100%;display:block;overflow:visible;z-index:2}
+.dz .cho-rays{position:absolute;left:50%;top:46%;width:230%;aspect-ratio:1;translate:-50% -50%;opacity:0;pointer-events:none;background:repeating-conic-gradient(from 0deg,rgba(255,236,150,.6) 0 7deg,rgba(255,236,150,0) 7deg 18deg);-webkit-mask:radial-gradient(circle,#000 6%,transparent 60%);mask:radial-gradient(circle,#000 6%,transparent 60%);animation:cho-spin 16s linear infinite}
+.dz .cho.night .cho-rays{background:repeating-conic-gradient(from 0deg,rgba(170,205,255,.6) 0 7deg,rgba(170,205,255,0) 7deg 18deg)}
+.dz .cho-glow{position:absolute;left:50%;top:46%;width:140%;aspect-ratio:1;translate:-50% -50%;border-radius:50%;opacity:0;pointer-events:none;background:radial-gradient(circle,rgba(255,236,160,.9),rgba(255,200,80,0) 62%)}
+.dz .cho.night .cho-glow{background:radial-gradient(circle,rgba(190,215,255,.9),rgba(110,160,255,0) 62%)}
+@keyframes cho-spin{to{rotate:360deg}}
+.dz .cho.early{--s:#ffc233;--sd:#e69a00;--p:#f58a6c;--pd:#d9684c;--l:#ffd21f;--ld:#c77a00;--in:#5a2a1a;--fl:#fff3b0}
+.dz .cho.night{--s:#5b8ef0;--sd:#3f6fd1;--p:#3a68c4;--pd:#2a4f9f;--l:#bcd3ff;--ld:#3f5f9a;--in:#14264d;--fl:#dbe8ff}
+.dz .cho .c-p{fill:var(--p)}.dz .cho .c-pd{fill:var(--pd)}.dz .cho .c-s{fill:var(--s)}.dz .cho .c-sd{fill:var(--sd)}
+.dz .cho .c-l{fill:var(--l);stroke:var(--l)}.dz .cho .c-ld{fill:var(--ld)}.dz .cho .c-in{fill:var(--in)}
+.dz .cho .cho-flash{fill:var(--fl);opacity:0}
+.dz .cho-p{position:absolute;left:50%;top:46%;width:10px;height:10px;border-radius:3px;pointer-events:none;z-index:3}
+.dz .cho-p.st{width:12px;height:12px;border-radius:50%}
+.dz .cho-rw{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:30px;margin-top:6px}
+.dz .cho-r{width:104px;padding:12px 8px 11px;border-radius:20px;background:rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;gap:3px}
+.dz .cho-ri{width:46px;height:46px;display:grid;place-items:center}
+.dz .cho-ri svg{width:42px;height:42px;display:block}
+.dz .cho-r b{font:800 22px var(--display);font-variant-numeric:tabular-nums}
+.dz .cho-r small{font:700 12px/1.2 var(--body);opacity:.85}
+.dz .cho-tip{flex:0 0 100%;margin:8px 8px 0;font:600 13.5px/1.4 var(--body);opacity:.85}
+.dz .cho-btn{margin-top:20px;width:min(78vw,280px);height:52px;border:0;border-radius:26px;background:#1cb0f6;color:#fff;font:800 15px var(--body);letter-spacing:.06em;box-shadow:0 4px 0 #1899d6;opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .3s,transform .3s;cursor:pointer}
+.dz .cho-btn.on{opacity:1;pointer-events:auto;transform:none}
+.dz .cho-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #1899d6}
+@media (max-height:640px){.dz .cho-stage{width:min(46vw,180px);margin:12px 0 2px}.dz .cho-r{width:92px;padding:9px 6px}.dz .cho-btn{margin-top:12px}}
+@media (prefers-reduced-motion:reduce){.dz .cho-rays{animation:none}.dz .ch-go,.dz .ch-card.open .ch-ic img{animation:none}}

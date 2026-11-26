@@ -1,11 +1,12 @@
+import { FLM, flameSvg } from './flameicon.js';
 // Helpers copied from StudyOS_Final_Design_v14 so markup matches the design exactly.
-const CUBE='<svg viewBox="40 0 385 466" shape-rendering="geometricPrecision" preserveAspectRatio="xMidYMid meet"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>';
+const CUBE='<svg viewBox="6 -41 453 548" shape-rendering="geometricPrecision" preserveAspectRatio="xMidYMid meet"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>';
 const BOLT='<svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="#e8a83a"/></svg>';
 const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const SHARE='<svg viewBox="0 0 24 24" fill="none" stroke="#ebe8ea" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M5 13v6a2 2 0 002 2h10a2 2 0 002-2v-6"/></svg>';
 const FO='M50 3C54 22 90 38 90 78c0 24-18 40-40 40S10 102 10 78c0-18 9-28 17-38 3 10 9 15 15 15-3-20 0-38 8-52z';
 const FI='M50 66c7 10 14 18 14 27 0 9-6 15-14 15s-14-6-14-15c0-9 7-17 14-27z';
-const flameSvg=(o,i)=>`<svg viewBox="0 0 100 120"><path d="${FO}" fill="${o}"/><path d="${FI}" fill="${i}"/></svg>`;
+
 const hexPts='50,2 96,28 96,84 50,110 4,84 4,28';
 
 const ic=(d,x='')=>`<svg class="ic" viewBox="0 0 24 24" ${x}>${d}</svg>`;
@@ -29,7 +30,6 @@ const ICO={
  card:ic('<rect x="8" y="3" width="13" height="13" rx="2.500"/><path d="M5 7.500v10a2.500 2.500 0 002.500 2.500H17v-2H7.500a.5.5 0 01-.5-.5v-10z"/>','fill="#1b1e25"'),
  bolt:'',
 };
-const FLM=(c,h,w=20,hh=24)=>`<svg viewBox="0 0 100 120" style="width:${w}px;height:${hh}px;display:block"><path d="${FO}" fill="${c}"/><path d="${FI}" fill="${h}"/></svg>`;
 const NAVI={
  home:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-5v-6h-2v6H6v-9H3z"/></svg>',
  tasks:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="currentColor"/><path d="M7.5 12.500l3 3 6-6.500" fill="none" stroke="var(--cut)" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -38,7 +38,7 @@ const NAVI={
  profile:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7.500" r="4.500"/><path d="M3.500 21c0-4.500 3.800-7 8.500-7s8.500 2.500 8.500 7z"/></svg>'
 };
 const nav=a=>`<div class="nav">${[['home','Home'],['tasks','Tasks'],['focus','Focus'],['study','Study'],['profile','Profile']].map(([k,l])=>`<div class="nv${k===a?' on':''}" data-k="${k}">${NAVI[k]}${l}</div>`).join('')}</div>`;
-const tb=(sc=78,st=6,gm='1,240')=>`<div class="tb"><div style="width:24px;height:24px;display:block"><svg viewBox="0 0 24 24"><path d="M12 1L19.5 4.5L23 12L19.5 19.5L12 23L4.5 19.5L1 12L4.5 4.5Z" fill="#3aa0ff"/><path d="M12 1L19.5 4.5L23 12L12 12Z" fill="#6cbcff"/><path d="M12 12L23 12L19.5 19.5L12 23Z" fill="#2b86e6"/><path d="M12 12L12 23L4.5 19.5L1 12Z" fill="#1f6fcc"/><path d="M12 6.2L17.8 12L12 17.8L6.2 12Z" fill="#eaf5ff"/><path d="M12 9.2L14.8 12L12 14.8L9.2 12Z" fill="#2b86e6"/></svg></div><span>${sc}</span>${FLM('currentColor','var(--pg)',20,24)}<span>${st}</span><div style="width:22px;height:22px">${CUBE}</div><span>${gm}</span><div class="sp"></div>${ICO.search}</div>`;
+const tb=(sc=78,st=6,gm='1,240')=>`<div class="tb"><div style="width:24px;height:24px;display:block"><svg viewBox="0 0 24 24"><path d="M12 1L19.5 4.5L23 12L19.5 19.5L12 23L4.5 19.5L1 12L4.5 4.5Z" fill="#3aa0ff"/><path d="M12 1L19.5 4.5L23 12L12 12Z" fill="#6cbcff"/><path d="M12 12L23 12L19.5 19.5L12 23Z" fill="#2b86e6"/><path d="M12 12L12 23L4.5 19.5L1 12Z" fill="#1f6fcc"/><path d="M12 6.2L17.8 12L12 17.8L6.2 12Z" fill="#eaf5ff"/><path d="M12 9.2L14.8 12L12 14.8L9.2 12Z" fill="#2b86e6"/></svg></div><span>${sc}</span>${FLM(Number(st)>0?'currentColor':'#5a666f','var(--pg)',24,28)}<span${Number(st)>0?' style="color:#ff4b5c"':''}>${st}</span><div style="width:22px;height:22px">${CUBE}</div><span>${gm}</span><div class="sp"></div>${ICO.search}</div>`;
 const ring=(sz,sw,pct,col,tr)=>{const r=(sz-sw)/2,c=2*Math.PI*r;return `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${tr}" stroke-width="${sw}"/><circle class="rp" data-c="${c}" data-p="${pct}" cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${c} ${c}" stroke-dashoffset="${c*(1-pct)}"/></svg>`};
 const hdr=(l,r)=>`<div class="hd"><span style="width:24px">${l||''}</span><b>%T%</b><span style="width:24px">${r||''}</span></div>`;
 const head=(t,l,r)=>hdr(l,r).replace('%T%',t);

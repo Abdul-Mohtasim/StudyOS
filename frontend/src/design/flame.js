@@ -9,6 +9,7 @@
    f.milestone();                     bigger, brighter, particle explosion and shock rings
    f.destroy();
 */
+import { flameInner, FLAME_PAL } from './flameicon.js';
 let UID = 0;
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const mix = (a, b, t) => { const A = hex(a), B = hex(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
@@ -38,16 +39,10 @@ export function createFlame(host, opt = {}) {
   const reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   host.classList.add('flh');
   host.innerHTML = `<div class="fl-g1"></div><div class="fl-g2"></div>
-<svg class="fl-svg" viewBox="0 0 200 240" aria-hidden="true"><defs>
-<radialGradient id="${id}o" cx="50%" cy="78%" r="62%"><stop offset="0" stop-color="${COL.outer[0][0]}"/><stop offset=".55" stop-color="${COL.outer[1][0]}"/><stop offset="1" stop-color="${COL.outer[2][0]}"/></radialGradient>
-<linearGradient id="${id}m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${COL.mid[0][0]}"/><stop offset="1" stop-color="${COL.mid[1][0]}"/></linearGradient>
-<linearGradient id="${id}c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${COL.core[0][0]}"/><stop offset="1" stop-color="${COL.core[1][0]}"/></linearGradient></defs>
-<ellipse class="fl-sh" cx="100" cy="230" rx="60" ry="8" fill="#000" opacity=".24"/>
-<g class="fl-all"><path class="fl-tl" fill="url(#${id}o)"/><path class="fl-tr" fill="url(#${id}o)"/><path class="fl-o" fill="url(#${id}o)"/><path class="fl-m" fill="url(#${id}m)"/><path class="fl-c" fill="url(#${id}c)"/>
-<path class="fl-gl" fill="#fff" opacity=".42"/><ellipse class="fl-gd" cx="76" cy="146" rx="4.500" ry="6" fill="#fff" opacity=".55"/></g></svg>
+<svg class="fl-svg" viewBox="0 0 100 120" aria-hidden="true">${flameInner(FLAME_PAL.red, id, { shadow: true, cls: true })}</svg>
 <canvas class="fl-cv" aria-hidden="true"></canvas>`;
   const q = (c) => host.querySelector(c);
-  const el = { g1: q('.fl-g1'), g2: q('.fl-g2'), svg: q('.fl-svg'), sh: q('.fl-sh'), all: q('.fl-all'), tl: q('.fl-tl'), tr: q('.fl-tr'), o: q('.fl-o'), m: q('.fl-m'), c: q('.fl-c'), gl: q('.fl-gl'), gd: q('.fl-gd'), cv: q('.fl-cv') };
+  const el = { g1: q('.fl-g1'), g2: q('.fl-g2'), svg: q('.fl-svg'), sh: q('.fl-sh'), all: q('.fl-all'), inn: q('.fl-in'), cv: q('.fl-cv') };
   const stops = {
     o: [...host.querySelectorAll(`#${id}o stop`)], m: [...host.querySelectorAll(`#${id}m stop`)], c: [...host.querySelectorAll(`#${id}c stop`)]
   };
@@ -88,26 +83,16 @@ export function createFlame(host, opt = {}) {
 
   const draw = () => {
     const f = Math.max(.001, 1 - S.mute * .85);
-    const o = { w: 54 + 3.500 * nz(0, t, 1.7, 2.9, 4.1), h: (208 + 14 * nz(1, t, 1.3, 2.2, 3.7)) * S.energy, tx: 14 * nz(2, t, .9, 1.7, 2.6) * f, lean: 8 * nz(3, t, 1.5, 2.4, 3.3) * f };
-    const m = { w: 35 + 2.500 * nz(4, t, 2.1, 3.1, 4.3), h: (138 + 14 * nz(5, t, 1.6, 2.7, 3.9)) * S.energy, tx: o.tx * .55 + 6 * nz(6, t, 1.2, 2.2, 3.4) * f, lean: 5 * nz(7, t, 1.8, 2.5, 3.6) * f };
-    const c = { w: 19 + 2 * nz(8, t, 2.4, 3.6, 4.8), h: (78 + 9 * nz(9, t, 1.9, 3.2, 4.4)) * S.energy, tx: o.tx * .3 + 3 * nz(10, t, 1.4, 2.6, 3.8) * f, lean: 3 * nz(11, t, 2, 2.9, 4) * f };
-    el.o.setAttribute('d', body(o.w, o.h, o.tx, o.lean));
-    el.m.setAttribute('d', body(m.w, m.h, m.tx, m.lean, .3));
-    el.c.setAttribute('d', body(c.w, c.h, c.tx, c.lean, .42));
-    el.m.setAttribute('transform', 'translate(0 -5)'); el.c.setAttribute('transform', 'translate(0 -9)');
-    const wl = 12 * nz(12, t, 2.3, 3.4, 5) * f, wr = 10 * nz(13, t, 2.0, 3.0, 4.6) * f;
-    el.tl.setAttribute('d', tongue(-1, 196, (84 + 16 * nz(14, t, 1.6, 2.8, 4)) * S.energy, wl, 15));
-    el.tr.setAttribute('d', tongue(1, 200, (62 + 12 * nz(15, t, 1.9, 3.1, 4.5)) * S.energy, wr, 13));
-    const sx = S.scale - S.vel * .014, sy = S.scale + S.vel * .02, rot = 2.2 * nz(12, t * .8, 1, 1.9, 3) * f;
-    el.all.setAttribute('transform', `translate(100 226) rotate(${rot.toFixed(2)}) scale(${sx.toFixed(3)} ${sy.toFixed(3)}) translate(-100 -226)`);
-    el.gl.setAttribute('d', `M${66 + o.tx * .35} 160C${64 + o.tx * .35} 128 ${78 + o.tx * .35} 108 ${96 + o.tx * .5} 98C${84 + o.tx * .4} 114 ${78 + o.tx * .3} 132 ${80 + o.tx * .3} 158Z`);
-    el.gd.setAttribute('cx', 76 + o.tx * .3);
-    el.sh.setAttribute('rx', (58 + (S.scale - 1) * 40).toFixed(1)); el.sh.setAttribute('opacity', (.24 * (.4 + f * .6)).toFixed(3));
+    const sway = 1.6 * nz(2, t, .9, 1.7, 2.6) * f, rise = (1 + .035 * nz(1, t, 1.3, 2.2, 3.7)) * S.energy;
+    const sx = S.scale - S.vel * .014, sy = S.scale + S.vel * .02, rot = 1.6 * nz(12, t * .8, 1, 1.9, 3) * f + sway * .4;
+    el.all.setAttribute('transform', `translate(50 111) rotate(${rot.toFixed(2)}) scale(${sx.toFixed(3)} ${(sy * Math.min(1.04, rise)).toFixed(3)}) translate(-50 -111)`);
+    if (el.inn) el.inn.setAttribute('transform', `translate(50 100) rotate(${(sway * 1.2).toFixed(2)}) scale(${(1 + .018 * nz(8, t, 2.4, 3.6, 4.8) * f).toFixed(3)} ${(1 + .05 * nz(9, t, 1.9, 3.2, 4.4) * f).toFixed(3)}) translate(-50 -100)`);
+    if (el.sh) { el.sh.setAttribute('rx', (37 + (S.scale - 1) * 24).toFixed(1)); el.sh.setAttribute('opacity', (.5 * (.4 + f * .6)).toFixed(3)); }
     const g = Math.max(0, S.glow * (.86 + .14 * nz(10, t, 1.1, 2, 3)) + S.boost);
     el.g1.style.opacity = Math.min(1, .62 * g).toFixed(3); el.g1.style.transform = `scale(${(.9 + g * .16).toFixed(3)})`;
     el.g2.style.opacity = Math.min(1, .7 * g).toFixed(3); el.g2.style.transform = `scale(${(.9 + g * .12).toFixed(3)})`;
-    el.svg.style.filter = S.bright > .02 ? `brightness(${(1 + S.bright * .34).toFixed(3)}) saturate(${(1 + S.bright * .2).toFixed(3)})` : '';
-    if (Math.abs(S.mute - S.lastMute) > .004) { setStops(S.mute); S.lastMute = S.mute; }
+    el.svg.style.filter = `drop-shadow(0 8px 22px rgba(255,106,61,${(.4 * (1 - S.mute)).toFixed(2)})) grayscale(${S.mute.toFixed(2)})` + (S.bright > .02 ? ` brightness(${(1 + S.bright * .34).toFixed(3)}) saturate(${(1 + S.bright * .2).toFixed(3)})` : '');
+    S.lastMute = S.mute;
     // particles
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, CW, CH); ctx.globalCompositeOperation = 'lighter';
     for (const r of rings) { const k = r.life / r.max; ctx.globalAlpha = (1 - k) * .55 * r.a; ctx.lineWidth = 4 * (1 - k) + 1; ctx.strokeStyle = '#ffb02e'; ctx.beginPath(); ctx.arc(BX, BY - H * .4, 20 + k * r.r, 0, 6.283); ctx.stroke(); }

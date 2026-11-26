@@ -5,6 +5,8 @@
 // off-screen or hidden-tab mascots pause, and reduced motion shows a single still pose.
 import "./flame_rig.js";
 import "./flame_actions.js";
+import "./flame_poses.js";
+import { SvgPatcher, Governor, PoseCache } from "./svgpatch.js";
 import "./mascot.css";
 
 const G = typeof window !== "undefined" ? window : globalThis;
@@ -49,7 +51,14 @@ const io = typeof IntersectionObserver !== "undefined"
   ? new IntersectionObserver((es) => es.forEach((e) => { const m = e.target._fm; if (m) m.vis = e.isIntersecting; if (e.isIntersecting) kick(); }), { rootMargin: "80px" })
   : null;
 
-function draw(m) { const s = m.sim.svg().replace(/viewBox="[^"]*"/, VB); m.svg = s; m.el.innerHTML = s; }
+// Draw without recreating anything: the SVG elements stay in the page and only the attributes that changed since
+// the last frame are written (see svgpatch.js). A frame identical to the last one is skipped completely.
+function draw(m) {
+  const s = m.sim.svg().replace(/viewBox="[^"]*"/, VB);
+  if (s === m.svg && m.patch) return;
+  m.svg = s;
+  (m.patch || (m.patch = new SvgPatcher(m.el))).update(s);
+}
 function mount(el) {
   if (el._fm) return el._fm;
   syncPalette();
@@ -59,7 +68,7 @@ function mount(el) {
     // same mascot after a redraw: move it to the new element and keep animating from where it was
     if (io && prev.el) io.unobserve(prev.el);
     clearTimeout(prev.gone);
-    prev.el = el; el._fm = prev; prev.vis = true; prev.seen = performance.now();
+    prev.el = el; prev.patch = null; el._fm = prev; prev.vis = true; prev.seen = performance.now();
     LIVE.add(prev); el.innerHTML = prev.svg || ""; if (io) io.observe(el); kick();
     return prev;
   }
@@ -77,22 +86,40 @@ function mount(el) {
   return m;
 }
 function kick() { if (!raf && !reduced()) { last = 0; raf = requestAnimationFrame(loop); } }
+// Adaptive frame rate: starts from the device (memory, cores, screen size) and follows the measured cost of
+// drawing, so small or busy phones step down to 45, 30 or 20 fps and recover when there is headroom.
+const GOV = new Governor();
+export function mascotPerf() { return { fps: GOV.fps, tier: GOV.tier, floor: GOV.floor, ms: GOV.ema, live: LIVE.size, poseHits: POSES.hits, poseMisses: POSES.misses }; }
 function loop(now) {
   raf = 0;
   const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60; last = now;
   if (typeof document !== "undefined" && document.hidden) { raf = requestAnimationFrame(loop); return; }
-  let any = false;
+  const t0 = performance.now(); let any = false, drew = false;
   for (const m of LIVE) {
     if (!m.el.isConnected) { LIVE.delete(m); if (io) io.unobserve(m.el); continue; }
     m.seen = now;
     if (!m.vis) continue;
     any = true; m.acc += dt;
-    if (m.small && m.acc < 1 / 30) continue;
+    const a = ACT[m.sim.action], cap = Math.min(GOV.fps, m.small ? 30 : 60, (a && a.fps) || 60);   // slow actions (dozing) need fewer frames
+    if (m.acc < (1 / cap) * 0.92) continue;
     let r = m.acc; m.acc = 0;
     while (r > 0) { const s = Math.min(r, 1 / 60); m.sim.step(s); r -= s; }
-    draw(m);
+    draw(m); drew = true;
   }
+  if (drew) GOV.sample(performance.now() - t0);
   if (any || LIVE.size) raf = requestAnimationFrame(loop);
+}
+
+// A pose is rendered once and its SVG string is kept. Static uses (reduced motion, exported files, first paint)
+// read it from here and never run the simulation again.
+const POSES = new PoseCache();
+export function poseSvg(action, pal = "ember", steps = 150) {
+  return POSES.get(action + "|" + pal + "|" + steps, () => {
+    const sim = RIG.Sim(ACT, ACT[action] ? action : "idle"); sim.opts({ noEmb: true });
+    for (let i = 0; i < steps; i++) sim.step(1 / 60);
+    RIG.setPalette(pal); const out = sim.svg().replace(/<ellipse[^>]*cy="197"[^>]*\/>/, ""); RIG.setPalette(curPal || "ember");
+    return out;
+  });
 }
 
 // length of one pass through an action, in ms

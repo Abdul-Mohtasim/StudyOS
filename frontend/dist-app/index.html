@@ -5,47 +5,45 @@
     <link rel="icon" type="image/svg+xml"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-8 -8 144 144'%3E%3Crect x='-8' y='-8' width='144' height='144' rx='32' fill='%23181b22'/%3E%3Cg fill='%23dedcdd' transform='translate(0 -5)'%3E%3Cpath d='M64 24L124 54L64 84L4 54Z'/%3E%3Cpath d='M28 74L64 92L100 74V96C100 106 84 114 64 114C44 114 28 106 28 96Z'/%3E%3Cpath d='M112 60V97' stroke='%23dedcdd' stroke-width='4' stroke-linecap='round' fill='none'/%3E%3Ccircle cx='112' cy='101' r='5'/%3E%3C/g%3E%3C/svg%3E" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#dedcdd" />
+    <meta name="theme-color" content="#ef5f0c" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <script>
-      // Mark the Android app early so the launch splash shows before anything else.
+      // Mark the Android app early so the launch screen shows before anything else,
+      // and pick its colours from the theme saved by the app (same colours as the Android start screen).
       try {
         if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
-          document.documentElement.classList.add("native-app");
+          document.documentElement.classList.add("native-app", "booting");
         }
+        var bt = localStorage.getItem("studyos-splash");
+        if (!bt) bt = (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "midnight" : "ember";
+        document.documentElement.setAttribute("data-boot", bt);
       } catch (e) {}
     </script>
-    <style>#boot-splash{display:none}html.native-app #boot-splash{z-index:2147483000;color:#181b22;background:#dedcdd;justify-content:center;align-items:center;transition:opacity .5s;display:flex;position:fixed;inset:0}#boot-splash svg{width:150px;height:auto;animation:.6s cubic-bezier(.2,.8,.2,1) both boot-in;transform:translateZ(0)}#boot-splash.hide{opacity:0;pointer-events:none}@keyframes boot-in{0%{opacity:0;transform:scale(.9)translateZ(0)}to{opacity:1;transform:scale(1)translateZ(0)}}@media (prefers-color-scheme:dark){html.native-app #boot-splash{color:#dedcdd;background:#181b22}}</style>
+    <link rel="preload" href="/fonts/fredoka.woff2" as="font" type="font/woff2" crossorigin />
+    <style>@font-face{font-family:StudyOS Wordmark;src:url(/fonts/fredoka.woff2)format("woff2");font-weight:300 700;font-display:block}#boot-splash{display:none}html.native-app #boot-splash{z-index:2147483000;background:var(--boot-bg,#ef5f0c);color:var(--boot-ink,#fff);justify-content:center;align-items:center;transition:opacity .45s;display:flex;position:fixed;inset:0}html[data-boot=ember]{--boot-bg:#ef5f0c;--boot-ink:#fff;--boot-mask:#ff8a2e}html[data-boot=midnight]{--boot-bg:#0d1114;--boot-ink:#ebe8ea;--boot-mask:#272c35}html[data-boot=ocean]{--boot-bg:#2563d9;--boot-ink:#fff;--boot-mask:#4e8cf2}html[data-boot=forest]{--boot-bg:#1c9656;--boot-ink:#fff;--boot-mask:#3cbd73}html[data-boot=sunset]{--boot-bg:#e0405a;--boot-ink:#fff;--boot-mask:#ff6d7d}html[data-boot=mono]{--boot-bg:#6b6b6b;--boot-ink:#fff;--boot-mask:#8e8e8e}html.native-app.booting,html.native-app.booting body{background:var(--boot-bg,#ef5f0c)}html.native-app #static-site{display:none!important}#boot-splash .bf,#boot-splash .bw{position:absolute;top:50%;left:50%}#boot-splash .bf{width:min(49vw,34vh,300px);height:auto;animation:.42s cubic-bezier(.2,.8,.2,1) both boot-face;transform:translate(-50%,-50%)translateZ(0)}#boot-splash.out .bf{opacity:0;transition:opacity .22s ease-in,transform .22s ease-in;transform:translate(-50%,-50%)scale(.94)}#boot-splash.w .bf{display:none}#boot-splash .bw{letter-spacing:-.01em;white-space:nowrap;opacity:0;-webkit-font-smoothing:antialiased;font-family:StudyOS Wordmark,Fredoka,system-ui,sans-serif;font-size:min(13.2vw,9vh,64px);font-weight:700;line-height:1;transform:translate(-50%,-56%)scale(.94)}#boot-splash.w .bw{opacity:1;transition:opacity .3s,transform .38s cubic-bezier(.2,.8,.2,1);transform:translate(-50%,-56%)scale(1)}@keyframes boot-face{0%{opacity:0;transform:translate(-50%,-50%)scale(.9)}to{opacity:1;transform:translate(-50%,-50%)scale(1)}}@media (prefers-reduced-motion:reduce){#boot-splash .bf{animation:none}}#boot-splash.hide{opacity:0;pointer-events:none}</style>
     <title>Study OS</title>
     <link rel="preconnect" href="https://accounts.google.com" crossorigin />
     <link rel="dns-prefetch" href="https://accounts.google.com" />
 
     
-<script
-  id="google-identity-services"
-  src="https://accounts.google.com/gsi/client"
-  async
-  defer
-></script>
+<!-- Google sign-in script is loaded on demand by the sign-in code, not on every start. -->
 
 
-    <script type="module" crossorigin src="/assets/index-B_-9Nt93.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DOSILhil.css">
+    <script type="module" crossorigin src="/assets/index-Dkw7XPhg.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Cnaoo75W.css">
   </head>
   <body>
     <div id="root">
-      <main style="font-family:system-ui,sans-serif;max-width:640px;margin:48px auto;padding:0 16px">
+      <main id="static-site" style="font-family:system-ui,sans-serif;max-width:640px;margin:48px auto;padding:0 16px">
         <h1>StudyOS</h1>
         <p>StudyOS is a study planner with tasks, notes, a planner and a focus timer.</p>
         <p><a href="/privacy.html">Privacy Policy</a></p>
       </main>
     </div>
-    <noscript><p><a href="/privacy.html">Privacy Policy</a></p></noscript>
-    <div id="boot-splash" aria-hidden="true">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="4 19 120 90"><g fill="currentColor" transform="translate(0 -5)"><path d="M64 24L124 54L64 84L4 54Z"/><path d="M28 74L64 92L100 74V96C100 106 84 114 64 114C44 114 28 106 28 96Z"/><path d="M112 60V97" stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="112" cy="101" r="5"/></g></svg>
-    </div>
+    <noscript><p id="static-site"><a href="/privacy.html">Privacy Policy</a></p></noscript>
+    <div id="boot-splash" aria-hidden="true"><svg class="bf" viewBox="48 70 192 132" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M144 116C134 106 120 102 110 100C108 94 106 90 104 84C100 92 96 98 92 100C90 92 88 82 84 72C74 86 62 100 56 116C50 132 50 150 54 164C62 188 82 200 104 200C122 200 134 194 144 188C154 194 166 200 184 200C206 200 226 188 234 164C238 150 238 132 232 116C226 100 214 86 204 72C200 82 198 92 196 100C192 98 188 92 184 84C182 90 180 94 178 100C168 102 154 106 144 116Z" fill="var(--boot-mask)"/><rect x="75" y="110" width="54" height="72" rx="26" fill="#fff"/><rect x="159" y="110" width="54" height="72" rx="26" fill="#fff"/><ellipse cx="109" cy="148" rx="15" ry="21" fill="#4a4a52"/><ellipse cx="104" cy="138" rx="5.5" ry="7" fill="#fff"/><ellipse cx="179" cy="148" rx="15" ry="21" fill="#4a4a52"/><ellipse cx="174" cy="138" rx="5.5" ry="7" fill="#fff"/><circle cx="144" cy="178" r="14" fill="#ff8a1a"/><path d="M127 172C127 162 161 162 161 172C161 176 154 178 144 178C134 178 127 176 127 172Z" fill="#ffc83d"/><ellipse cx="144" cy="167" rx="8" ry="3" fill="#ffe58a"/></svg><span class="bw">StudyOS</span></div>
   </body>
 </html>

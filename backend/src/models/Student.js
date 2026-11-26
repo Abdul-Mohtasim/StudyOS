@@ -53,6 +53,11 @@ const studentSchema = new mongoose.Schema(
     doubleGemsUntil: { type: Date, default: null }, // Double Gems boost end time
     protectedDays: { type: [String], default: [] }, // YYYY-MM-DD days a Streak Freeze or Streak Repair covered
     shopOwned: { type: [String], default: [] }, // premium items bought once and kept (keys in services/shop.js)
+    // When each Special Offer chest was last opened (Early Bird and Night Owl), see services/shop.js.
+    chestAt: {
+      early: { type: Date, default: null },
+      night: { type: Date, default: null },
+    },
 
     // Email addresses from Google sign-in count as verified (see services/accountEmails.js).
     emailVerified: {

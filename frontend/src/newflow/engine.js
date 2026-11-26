@@ -8,6 +8,7 @@ import introUrl from "./assets/intro.mp3";
 import clip0Url from "./assets/clip0.mp3";
 import lessonUrl from "./assets/lesson.mp3";
 import "./flow.css";
+import { FLM, flameInner, palOf } from "../design/flameicon.js";
 import { znHtml, znInit, znStopAll, znSet, znTalk, znFace } from "./zuno";
 
 export function mountNewUserFlow(host, opts = {}) {
@@ -83,7 +84,6 @@ function burst(x,y,n,o={}){
     a.onfinish=()=>el.remove();
   }
 }
-const FLM=(c,h,w=20,hh=24)=>`<svg viewBox="0 0 100 120" style="width:${w}px;height:${hh}px;display:block"><path d="${FO}" fill="${c}"/><path d="${FI}" fill="${h}"/></svg>`;
 const ring=(sz,sw,pct,col,tr)=>{const r=(sz-sw)/2,c=2*Math.PI*r;return `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${tr}" stroke-width="${sw}"/><circle class="rp" data-c="${c}" data-p="${pct}" cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${c} ${c}" stroke-dashoffset="${c*(1-pct)}"/></svg>`};
 
 const SP={'Lesson complete':{r:-4,f:0,a:'bob'},'Starting score':{r:5,f:1,a:'sway'},'Streak: day 1':{r:0,f:0,a:'bob'},'Streak goal':{r:-5,f:1,a:'sway'},'Gems reward':{r:4,f:0,a:'bob'},'Save progress':{r:-6,f:0,a:'sway'},'Create profile':{r:0,f:1,a:'bob'},'Find friends':{r:5,f:0,a:'sway'},'Profile created':{r:0,f:0,a:'bob'}};
@@ -344,7 +344,7 @@ function newExam(){
 }
 newExam();
 const BKB=(a='back')=>`<button class="xi bk" data-a="${a}" type="button" aria-label="Back">${IC.back}Back</button>`;
-const GEM=w=>`<svg viewBox="40 0 385 466" shape-rendering="geometricPrecision" style="width:${w*385/466}px;height:${w}px;display:block"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>`;
+const GEM=w=>`<svg viewBox="6 -41 453 548" shape-rendering="geometricPrecision" style="width:${w*385/466}px;height:${w}px;display:block"><path d="M175 5L275 35L395 130L415 335L385 425L215 462L50 250Z" fill="#ff4a6d"/><path d="M275 35L205 205L210 232L285 350L412 335L275 35Z" fill="#ff617f"/><path d="M275 35L395 130L415 335L412 335Z" fill="#f993ac"/><path d="M50 250L210 232L285 350L215 462Z" fill="#ff335f"/><path d="M285 350L412 335L385 425L215 462Z" fill="#ff4a6d"/></svg>`;
 const FLAME=(w,h)=>FLM('#f0243a','#ff9a3a',w,h);
 const dots='<div class="xdots"><i></i><i></i><i></i></div>';
 const MZ=()=>znHtml(92);
@@ -543,7 +543,7 @@ function sdPlay(){
 /* ================= 4. STREAK GOAL ================= */
 const GOALS=[[3,'Casual','3 days a week'],[7,'Regular','Every day for a week'],[14,'Serious','Two weeks, no breaks'],[30,'Intense','A full month of study']];
 const GC={3:{c:'#ffc42e',h:'#fff1a8',s:'#ffc42e',d:'#c4952a',g:'255,196,46'},7:{c:'url(#gf7)',h:'#ff9ac0',s:'#ff4f86',d:'#b8315c',g:'244,63,110'},14:{c:'#ff6fc0',h:'#ffc8ea',s:'#ff6fc0',d:'#b8448c',g:'255,111,192'},30:{c:'#ff8a1f',h:'#ffd27a',s:'#ff8a1f',d:'#c25f0a',g:'255,138,31'}};
-const FLC=(n,w,h)=>{const o=GC[n];let t=FLM(o.c,o.h,w,h);if(n===7)t=t.replace('<path','<defs><linearGradient id="gf7" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7ab0"/><stop offset=".5" stop-color="#ff4f86"/><stop offset="1" stop-color="#f0334f"/></linearGradient></defs><path');return t};
+const FLC=(n,w,h)=>{const o=GC[n];return `<svg viewBox="0 0 100 120" style="width:${w}px;height:${h}px;display:block" aria-hidden="true">${flameInner(palOf(o.s),null,{shadow:w>=60})}</svg>`};
 function sgHtml(){
  return nx(`<div class="xt">${BKB()}</div><div class="xgl2" id="gg"></div>
  <div class="xflw" id="gfw">${[3,7,14,30].map(n=>`<div class="gfl" data-n="${n}" style="opacity:${n===X.goal?1:0}">${FLC(n,130,156)}</div>`).join('')}</div>
