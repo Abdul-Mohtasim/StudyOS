@@ -6,10 +6,14 @@ const Friendship = require("../models/Friendship");
 const FocusSession = require("../models/FocusSession");
 const Task = require("../models/Task");
 const StudentSettings = require("../models/StudentSettings");
+const Note = require("../models/Note");
+const Flashcard = require("../models/Flashcard");
+const Grade = require("../models/Grade");
+const PlannerTask = require("../models/PlannerTask");
 const Block = require("../models/Block");
 
 // Weekly League. You compete with your friends for 7 days at a time.
-//   XP = minutes of focus + 10 for every finished task, counted inside the 7 day round.
+//   XP comes from studying (see RULES below): focus minutes, tasks, notes, flashcards, grades, study days and daily goals.
 //   When a round ends, finishing in the top 3 (with at least MIN_XP) moves you up one trophy.
 //   Otherwise you stay on the same trophy and a fresh 7 day round starts. You are never moved down.
 //   Anyone under DEMOTION_XP is shown in the red "Demotion zone" (a warning only).
@@ -35,31 +39,81 @@ async function groupOf(me) {
   return [String(me), ...ids.slice(0, MAX_PEOPLE - 1)];
 }
 
-// XP, tasks and subjects of each person inside [from, to).
+// ---- How XP is earned (all counted by the server, so nobody can fake it) ----
+// Every source has a daily cap, so one busy day can not decide a whole week.
+const RULES = {
+  focus: { xp: 1 },                  // per minute of focus
+  tasks: { xp: 10, cap: 10 },        // per finished task, up to 10 a day
+  planner: { xp: 5, cap: 7 },        // per finished study-plan task, up to 7 a day
+  notes: { xp: 5, cap: 5 },          // per note written, up to 5 a day
+  cards: { xp: 2, cap: 10 },         // per flashcard made, up to 10 a day
+  review: { xp: 1, cap: 30 },        // per flashcard reviewed, up to 30 a day
+  grades: { xp: 5, cap: 3 },         // per grade logged, up to 3 a day
+  days: { xp: 10 },                  // every day you study or finish a task
+  goal: { xp: 20 },                  // every day you reach your daily focus goal
+};
+const dayOf = (f) => ({ $dateToString: { format: "%Y-%m-%d", date: "$" + f } });
+// How many documents of a kind each person made on each day inside the round.
+function perDay(Model, ids, field, extra, from, to) {
+  return Model.aggregate([
+    { $match: { student: { $in: ids }, ...extra, [field]: { $gte: from, $lt: to } } },
+    { $group: { _id: { s: "$student", d: dayOf(field) }, n: { $sum: 1 } } },
+  ]);
+}
+
+// XP, tasks, subjects and where the XP came from, for each person inside [from, to).
 async function scoresFor(ids, from, to) {
   const oids = ids.map((i) => new mongoose.Types.ObjectId(i));
-  const [sess, tasks] = await Promise.all([
+  const [sess, tasks, planner, notes, cardsNew, review, grades, settings] = await Promise.all([
     FocusSession.aggregate([
       { $match: { student: { $in: oids }, completedAt: { $gte: from, $lt: to } } },
-      { $group: { _id: "$student", minutes: { $sum: "$durationMinutes" }, subjects: { $addToSet: "$subject" } } },
+      { $group: { _id: { s: "$student", d: dayOf("completedAt") }, minutes: { $sum: "$durationMinutes" }, subjects: { $addToSet: "$subject" } } },
     ]),
-    Task.aggregate([
-      { $match: { student: { $in: oids }, completed: true, deletedAt: null, completedAt: { $gte: from, $lt: to } } },
-      { $group: { _id: "$student", n: { $sum: 1 } } },
-    ]),
+    perDay(Task, oids, "completedAt", { completed: true, deletedAt: null }, from, to),
+    perDay(PlannerTask, oids, "updatedAt", { completed: true }, from, to).catch(() => []),
+    perDay(Note, oids, "createdAt", {}, from, to).catch(() => []),
+    perDay(Flashcard, oids, "createdAt", {}, from, to).catch(() => []),
+    perDay(Flashcard, oids, "lastReviewedAt", {}, from, to).catch(() => []),
+    perDay(Grade, oids, "createdAt", {}, from, to).catch(() => []),
+    StudentSettings.find({ student: { $in: oids } }).select("student dailyGoalMinutes").lean().catch(() => []),
   ]);
-  const out = new Map(ids.map((i) => [i, { minutes: 0, tasks: 0, subjects: 0, xp: 0 }]));
-  for (const s of sess) {
-    const o = out.get(String(s._id));
+  const goalOf = new Map(settings.map((x) => [String(x.student), x.dailyGoalMinutes || 120]));
+  const out = new Map(ids.map((i) => [i, {
+    minutes: 0, tasks: 0, subjects: 0, xp: 0, _sub: new Set(), _days: new Set(),
+    b: { focus: 0, tasks: 0, planner: 0, notes: 0, cards: 0, review: 0, grades: 0, days: 0, goal: 0 },
+  }]));
+  for (const r of sess) {
+    const o = out.get(String(r._id.s));
     if (!o) continue;
-    o.minutes = s.minutes || 0;
-    o.subjects = (s.subjects || []).filter((x) => typeof x === "string" && x.trim()).length;
+    const m = r.minutes || 0;
+    o.minutes += m;
+    o.b.focus += m * RULES.focus.xp;
+    (r.subjects || []).forEach((x) => { if (typeof x === "string" && x.trim()) o._sub.add(x.trim().toLowerCase()); });
+    o._days.add(r._id.d);
+    if (m >= (goalOf.get(String(r._id.s)) || 120)) o.b.goal += RULES.goal.xp;
   }
-  for (const t of tasks) {
-    const o = out.get(String(t._id));
-    if (o) o.tasks = t.n || 0;
+  const add = (rows, key, countIt) => {
+    for (const r of rows) {
+      const o = out.get(String(r._id.s));
+      if (!o) continue;
+      const rule = RULES[key];
+      o.b[key] += Math.min(r.n, rule.cap) * rule.xp;
+      if (countIt) { o.tasks += r.n; o._days.add(r._id.d); }
+    }
+  };
+  add(tasks, "tasks", true);
+  add(planner, "planner");
+  add(notes, "notes");
+  add(cardsNew, "cards");
+  add(review, "review");
+  add(grades, "grades");
+  for (const o of out.values()) {
+    o.subjects = o._sub.size;
+    o.b.days = o._days.size * RULES.days.xp;
+    o.xp = Math.round(Object.values(o.b).reduce((x, y) => x + y, 0));
+    delete o._sub;
+    delete o._days;
   }
-  for (const o of out.values()) o.xp = Math.round(o.minutes + o.tasks * 10);
   return out;
 }
 
@@ -128,7 +182,7 @@ async function view(me) {
     .filter((i) => by.has(i))
     .map((i) => {
       const p = by.get(i), s = sc.get(i);
-      return { id: i, name: p.displayName || p.name || "Student", picture: p.picture || "", avatar: av.get(i) || "", xp: s.xp, tasks: s.tasks, subjects: s.subjects, gems: p.gems || 0, me: i === String(me) };
+      return { id: i, name: p.displayName || p.name || "Student", picture: p.picture || "", avatar: av.get(i) || "", xp: s.xp, tasks: s.tasks, subjects: s.subjects, gems: p.gems || 0, me: i === String(me), ...(i === String(me) ? { b: s.b } : {}) };
     })
     .sort((a, b) => b.xp - a.xp || b.tasks - a.tasks || (a.id < b.id ? -1 : 1));
   return {
@@ -140,9 +194,10 @@ async function view(me) {
     top: TOP,
     minXp: MIN_XP,
     demotionXp: DEMOTION_XP,
+    rules: RULES,
     last: st.last && now - st.last.at < 3 * DAY ? st.last : null,
     rows,
   };
 }
 
-module.exports = { view, sync, ROUND_MS, TOP, MIN_XP, DEMOTION_XP, TIERS };
+module.exports = { view, sync, ROUND_MS, TOP, MIN_XP, DEMOTION_XP, TIERS, RULES };

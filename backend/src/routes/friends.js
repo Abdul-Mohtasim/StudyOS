@@ -447,8 +447,8 @@ router.post("/request", async (req, res) => {
     await Notification.create({
       student: target._id,
       type: "friend_request",
-      title: `${displayOf(req.student)} wants to study with you`,
-      body: "Accept to become friends and earn gems.",
+      title: `${displayOf(req.student)} wants to follow you`,
+      body: "Accept or decline this request. If you accept, you both become friends and earn gems.",
       from: me,
     });
     res.json({ status: "sent", message: "Request sent.", user: publicUser(target) });

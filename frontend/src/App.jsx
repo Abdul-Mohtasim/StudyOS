@@ -241,7 +241,7 @@ async function notifyFriendRequest(name, key) {
       await LocalNotifications.createChannel({
         id: "studyos-friends",
         name: "Friend requests",
-        description: "Tells you when someone wants to study with you",
+        description: "Tells you when someone wants to follow you",
         importance: 4,
         sound: "studyos_notify.mp3",
         vibration: true,
@@ -254,8 +254,8 @@ async function notifyFriendRequest(name, key) {
     await LocalNotifications.schedule({
       notifications: [{
         id: 100000 + id,
-        title: `${name} wants to study with you`,
-        body: "Open StudyOS to accept the friend request.",
+        title: `${name} wants to follow you`,
+        body: "Open StudyOS to accept or decline.",
         channelId: "studyos-friends",
         smallIcon: "ic_stat_studyos",
         schedule: { at: new Date(Date.now() + 400), allowWhileIdle: true },
@@ -4793,6 +4793,8 @@ async function undoDeleteTask() {
       }),
       friends: (social?.friends || []).map((u) => ({ id: u.id, name: u.name, gems: u.gems || 0, picture: u.picture || "", streak: u.streak || 0, avatar: typeof u.avatar === "string" ? u.avatar : "" })),
       incoming: (social?.incoming || []).map((u) => ({ id: u.id, name: u.name, picture: u.picture || "", avatar: typeof u.avatar === "string" ? u.avatar : "" })),
+      // People you asked to follow who have not accepted yet (they count in Following, not in Followers).
+      outgoing: (social?.outgoing || []).map((u) => u.id),
       prefs: accountPrefs,
       plans: weeklyPlan.slice(0, 100).map((x) => ({ id: x.id, title: x.title, subject: x.subject, day: x.day, done: x.completed })),
       notes: subjectNotes.slice(0, 200).map((n) => ({ id: n.id, title: n.title || "Untitled", subject: n.subject || "" })),
