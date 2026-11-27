@@ -58,6 +58,12 @@ const studentSchema = new mongoose.Schema(
       early: { type: Date, default: null },
       night: { type: Date, default: null },
     },
+    // Weekly League: which trophy (0 Bronze ... 9 Diamond) and when the current 7 day round began.
+    league: {
+      tier: { type: Number, default: 0, min: 0, max: 9 },
+      start: { type: Date, default: null },
+      last: { type: mongoose.Schema.Types.Mixed, default: null },
+    },
 
     // Email addresses from Google sign-in count as verified (see services/accountEmails.js).
     emailVerified: {

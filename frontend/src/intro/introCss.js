@@ -113,7 +113,7 @@ export const INTRO_CSS = `.ix{position:absolute;inset:0;overflow:hidden;backgrou
 .ix .ix-mw{opacity:1}
 .ix .ix-lf{opacity:0}}
 .ix .ix-brand{flex:none;display:flex;align-items:center;justify-content:flex-start;gap:2.8cqw}
-.ix .ix-appicon{display:block;flex:none;width:15cqw;height:auto;aspect-ratio:190/136;border:0;outline:0;box-shadow:none;background:none;overflow:visible}
+.ix .ix-appicon{display:block;flex:none;width:12cqw;height:auto;aspect-ratio:1/1;object-fit:contain;border:0;outline:0;box-shadow:none;background:none;overflow:visible;-webkit-user-drag:none;user-select:none}
 .ix .ix-brand span{font:700 clamp(19.8px,6cqw,31.2px)/1 'Fredoka','Nunito',system-ui,sans-serif;color:var(--ink);letter-spacing:-.01em}
 .ix .ix-brand em{font-style:normal;color:var(--acc)}
 .ix .ix-p1 .ix-trow{justify-content:center;margin-top:clamp(3cqw,1.6cqh,5cqw)}

@@ -2427,6 +2427,23 @@ useEffect(() => {
     return { ok: false, message: `The server could not open the chest (code ${status}). Please try again.` };
   }
 
+  // Weekly League: your trophy and everyone's XP, gems, tasks and subjects for the current 7 day round.
+  async function leagueLoad() {
+    const token = localStorage.getItem("studyos_auth_token") || authToken;
+    if (!token) return { ok: false, message: "Create your profile to join the league." };
+    let result = await nativeApi("/api/league", "GET", null, token);
+    if (!result.ok && [0, 502, 503, 504].includes(result.status)) {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      result = await nativeApi("/api/league", "GET", null, token);
+    }
+    const { ok, data, status } = result;
+    if (ok && data && Array.isArray(data.rows)) return { ok: true, data };
+    if (data && data.message) return { ok: false, message: data.message };
+    if (status === 0) return { ok: false, message: "No internet connection. Check it and try again." };
+    if (status === 404) return { ok: false, message: "The league is not on your server yet. Deploy the latest backend." };
+    return { ok: false, message: "Could not load the league. Try again." };
+  }
+
   async function shopGift(userId) {
     const token = localStorage.getItem("studyos_auth_token") || authToken;
     if (!token) return { ok: false, message: "Create your profile to gift gems." };
@@ -4714,6 +4731,8 @@ async function undoDeleteTask() {
       streak: stillLoading && useCache ? PCACHE.streak || 0 : studyStreak,
       streakPop,
       streakDays: Array.from(sessionDateKeys).sort().slice(-800),
+      // True while older focus sessions can still be loaded (the streak calendar asks for them when you go back a month).
+      streakMore: focusSessionsHasMore,
       bestStreak,
       gems: gemsServer ?? (useCache ? PCACHE.gems || 0 : 0),
       shop: shopServer,
@@ -4898,6 +4917,8 @@ async function undoDeleteTask() {
     shopBuy,
     shopGift,
     chestOpen,
+    leagueLoad,
+    loadOlderSessions: () => loadMoreFocusSessions(),
     friendProfile,
     removeFriend,
     blockFriend,

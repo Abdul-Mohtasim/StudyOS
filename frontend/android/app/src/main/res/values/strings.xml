@@ -8,4 +8,9 @@
     <string name="widget_tasks_info_desc">Your tasks for today</string>
     <string name="widget_focus_info_desc">One tap to start a focus session</string>
     <string name="widget_week_info_desc">Study time for the last 7 days</string>
+    <!-- Kept so an old widget_*_info.xml left in a project folder can never break the build. -->
+    <string name="widget_big_info_desc">Big study widget</string>
+    <string name="widget_goalring_info_desc">Daily goal ring</string>
+    <string name="widget_goalweek_info_desc">Goal week</string>
+    <string name="widget_read_info_desc">Reading widget</string>
 </resources>

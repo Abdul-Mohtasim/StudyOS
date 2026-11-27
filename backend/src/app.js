@@ -22,6 +22,7 @@ const cronRoutes = require("./routes/cron");
 const friendRoutes = require("./routes/friends");
 const gemRoutes = require("./routes/gems");
 const shopRoutes = require("./routes/shop");
+const leagueRoutes = require("./routes/league");
 const notificationRoutes = require("./routes/notifications");
 const supportRoutes = require("./routes/support");
 const { helpPage, feedbackPage } = require("./pages/helpPages");
@@ -148,6 +149,7 @@ app.use("/api/cron", cronRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/gems", gemRoutes);
 app.use("/api/shop", shopRoutes);
+app.use("/api/league", leagueRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 // Public Help Center and Feedback pages (the app opens these in the phone's browser).

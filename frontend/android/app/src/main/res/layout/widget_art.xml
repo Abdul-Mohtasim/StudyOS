@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One picture per widget (WidgetArt draws it). The three character widgets flip through a few frames. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:forceDarkAllowed="false" tools:targetApi="q"
+    android:id="@+id/root" android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <ImageView android:id="@+id/art_img" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:scaleType="fitCenter" />
+
+    <ViewFlipper android:id="@+id/art_flip" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:autoStart="true" android:flipInterval="180" android:visibility="gone">
+        <ImageView android:id="@+id/a0" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" />
+        <ImageView android:id="@+id/a1" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" />
+        <ImageView android:id="@+id/a2" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" />
+        <ImageView android:id="@+id/a3" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" />
+        <ImageView android:id="@+id/a4" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" />
+        <ImageView android:id="@+id/a5" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" />
+    </ViewFlipper>
+</FrameLayout>

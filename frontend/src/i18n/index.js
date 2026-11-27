@@ -6,6 +6,8 @@ import { ROWS3 } from "./rows3";
 import { ROWS4 } from "./rows4";
 import { ROWS5 } from "./rows5";
 import { ROWS6 } from "./rows6";
+import { ROWS7 } from "./rows7";
+import { ROWS8 } from "./rows8";
 import { DENL } from "./rowsDeNl";
 
 export const LANGS = [
@@ -21,7 +23,7 @@ export const LANGS = [
 
 const COLUMN = { hi: 1, ur: 2, ar: 3, es: 4, fr: 5, de: 6, nl: 7 };
 // Older rows have 6 columns; their German and Dutch live in DENL ({ English: [German, Dutch] }).
-const ALL = [...ROWS1, ...ROWS2, ...ROWS3, ...ROWS4, ...ROWS5, ...ROWS6];
+const ALL = [...ROWS1, ...ROWS2, ...ROWS3, ...ROWS4, ...ROWS5, ...ROWS6, ...ROWS7, ...ROWS8];
 const KEY = "studyos-lang";
 const ATTRS = ["placeholder", "aria-label", "title"];
 const SKIP = "script,style,textarea,input,select,[data-notr],.tt:not([data-tr])";
