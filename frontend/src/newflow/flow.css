@@ -461,3 +461,23 @@ html[data-palette="mono"] .nuf{--mauve:#bdbdbd}
 @keyframes scTw{0%,100%{opacity:.15}50%{opacity:.9}}
 @media (max-height:680px){.nuf .scx .scb2{top:128px}.nuf .scx .sc-nx{display:none}}
 @media (prefers-reduced-motion:reduce){.nuf .scx .sc-halo,.nuf .scx .sc-cap,.nuf .scx .scw.done .sc-sp i{animation:none}}
+
+/* ===== v150: "Recommended for you" tag on the daily-goal options ===== */
+.nuf .ipo .iprec{flex:none;margin-right:8px;padding:4px 9px;border-radius:8px;background:rgba(232,168,58,.18);color:#e8a83a;font:800 10.5px var(--body);font-style:normal;letter-spacing:.02em;white-space:nowrap}
+
+/* ===== v150: Study space ready - the redesigned final loading page, right before sign-in ===== */
+.nuf .ip.sready .ipbody{display:flex;align-items:center;justify-content:center}
+.nuf .ip.sready .ipld3{width:100%;max-width:340px}
+.nuf .ip.sready .ipor{width:clamp(72px,11vh,100px);height:clamp(72px,11vh,100px);margin-bottom:6px}
+.nuf .ip.sready .ipor em{position:absolute;inset:0;display:grid;place-items:center;font:800 15px var(--display,inherit);color:var(--ink,#ebe8ea)}
+.nuf .ip.sready .ipor.done span{animation-play-state:paused;border-top-color:#58cc02}
+.nuf .ip.sready .ipor.done b{background:#58cc02;box-shadow:0 0 26px #58cc02}
+.nuf .ip.sready .ipsteps{max-width:320px}
+.nuf .ip.sready .ipsteps li{opacity:1;animation:none;color:#6f7b86}
+.nuf .ip.sready .ipsteps li i{animation:none;color:transparent;transition:background-color .25s ease,border-color .25s ease,transform .25s ease}
+.nuf .ip.sready .ipsteps li span{animation:none;transition:color .25s ease}
+.nuf .ip.sready .ipsteps li span b{color:inherit;font-weight:800}
+.nuf .ip.sready .ipsteps li.on i{background:var(--mauve);border-color:var(--mauve);color:#1a1418;transform:scale(1.08)}
+.nuf .ip.sready .ipsteps li.on span{color:#ebe8ea}
+.nuf .ip.sready .ipsteps li.on span b{color:#e8a83a}
+.nuf .ip.sready .ipbar i{transition:width .5s cubic-bezier(.3,.8,.3,1)}

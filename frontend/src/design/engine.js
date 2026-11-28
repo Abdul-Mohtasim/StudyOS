@@ -3560,7 +3560,7 @@ ${suggBlock(12)}`);
   {const k=IDX('Profile');if(k>=0){const ph=SCREENS[k].html,pp=SCREENS[k].play;
     SCREENS[k].html=()=>{let h=ph();const a=h.search(/<div class="sec[^"]*">(<span>)?Friend streaks/);
       if(a>0){const plus=`<div class="pf-add" data-ffstreak role="button" aria-label="Invite friends to a Friend Streak"><span class="pf-plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></span><span class="pf-fn">Invite</span></div>`;
-        const fs=h.indexOf('<div class="fs"',a);
+        const reFs=/<div class="fs[" ]/g;reFs.lastIndex=a;const mFs=reFs.exec(h);const fs=mFs?mFs.index:-1;
         if(fs>0){const end=h.indexOf('</div></div></div>',fs);const close=(()=>{let d=0,i=fs;const re=/<div\b|<\/div>/g;re.lastIndex=fs;let m;while((m=re.exec(h))){d+=m[0]==='</div>'?-1:1;if(d===0)return m.index}return -1})();
           if(close>0){const open=h.indexOf('>',fs)+1;h=h.slice(0,open)+plus+h.slice(open)}}
         else{const t=h.indexOf('Add friends to see them here.</div>',a);if(t>0){const e2=t+'Add friends to see them here.</div>'.length;h=h.slice(0,e2)+`<div class="fs fsx">${plus}</div>`+h.slice(e2)}}}

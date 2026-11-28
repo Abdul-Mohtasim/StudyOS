@@ -114,7 +114,6 @@ const IPG=[
 {k:'say',m:1,at:4,say:'Just 8 quick questions before we plan your first day!'},
 {k:'name',m:3,at:8.5,say:'First, what should I call you?',id:'name'},
 {k:'list',m:4,at:12.5,say:'What are you studying for?',id:'why',opts:[['School exams','Class 9 to 12'],['College','Degree courses'],['Entrance exams','Competitive tests'],['Self learning','At my own pace']]},
-{k:'load',m:2,at:18.5,say:'Getting your study space ready...'},
 {k:'list',m:5,at:21.5,say:'How did you hear about StudyOS?',id:'heard',opts:[['Friends or family'],['Instagram or TikTok'],['YouTube'],['Google search'],['App store'],['School or teacher'],['Other']]},
 {k:'multi',m:1,at:31,say:'Which subjects do you study?',id:'subj',opts:[['Mathematics'],['Physics'],['Chemistry'],['Biology'],['English'],['Computer Science'],['History'],['Other']]},
 {k:'say',m:0,at:38.5,say:"Great, we'll plan every one of them!"},
@@ -135,7 +134,11 @@ function iCTA(){const b=iq('[data-a=cta]'),p=IPG[U.i];b.disabled=!iOK();b.textCo
 const GI=(c,svg)=>`<i style="background:${c}"><svg width="26" height="26" viewBox="0 0 24 24" fill="#fff">${svg}</svg></i>`;
 function iBody(p){
   const s=U.sel[U.i]||[];
-  if(p.k==='list'||p.k==='multi')return '<div class="ipl">'+p.opts.map((o,j)=>{const d=o[1]||'';return `<button class="ipo${s.includes(j)?' on':''}" type="button" data-a="opt" data-j="${j}"><span class="ipx">${o[0]}${d&&!p.right?`<small>${d}</small>`:''}</span>${p.right&&d?`<em>${d}</em>`:''}${p.k==='multi'?'<i class="ipc"></i>':''}</button>`}).join('')+'</div>';
+  if(p.k==='list'||p.k==='multi'){
+    // "What are you studying for?" quietly sets which daily-goal pace fits best; it only highlights a suggestion, you can still pick any option.
+    const rec=p.id==='goal'&&!s.length?[1,2,3,0][(U.sel[IPG.findIndex(x=>x.id==='why')]||[3])[0]]:-1;
+    return '<div class="ipl">'+p.opts.map((o,j)=>{const d=o[1]||'';return `<button class="ipo${s.includes(j)?' on':''}" type="button" data-a="opt" data-j="${j}"><span class="ipx">${o[0]}${d&&!p.right?`<small>${d}</small>`:''}</span>${j===rec?'<i class="iprec">Recommended for you</i>':''}${p.right&&d?`<em>${d}</em>`:''}${p.k==='multi'?'<i class="ipc"></i>':''}</button>`}).join('')+'</div>';
+  }
   if(p.k==='chips')return '<div class="ipch">'+p.opts.map((o,j)=>`<button class="ipo chip${s.includes(j)?' on':''}" type="button" data-a="opt" data-j="${j}">${o}</button>`).join('')+(p.date?`<button class="ipo chip cal${s.includes(99)?' on':''}" type="button" data-a="cal" data-j="99" style="display:inline-flex;align-items:center">${CALIC}${U.examDate?MON(new Date(U.examDate+'T12:00:00')):'Pick a date'}</button><input class="ipdate" type="date" min="${isoOf(new Date())}" value="${U.examDate||''}" tabindex="-1" aria-hidden="true">`:'')+'</div>';
   if(p.k==='name')return `<input class="ipi" placeholder="Your first name" maxlength="20" autocomplete="off" value="${U.name.replace(/"/g,'')}">`;
   if(p.k==='load')return '<div class="ipld ipld2"><div class="ipor" aria-hidden="true"><span></span><span></span><span></span><b></b></div>'
@@ -148,7 +151,7 @@ function iBody(p){
   return '';
 }
 const POSE=[{r:0,f:0,a:'bob'},{r:-6,f:0,a:'sway'},{r:6,f:1,a:'bob'},{r:-4,f:0,a:'sway'},{r:0,f:0,a:'load'},{r:5,f:1,a:'sway'},{r:-6,f:0,a:'bob'},{r:0,f:1,a:'sway'},{r:6,f:0,a:'bob'},{r:-5,f:1,a:'sway'},{r:0,f:0,a:'bob'},{r:-6,f:1,a:'sway'},{r:5,f:0,a:'bob'},{r:0,f:0,a:'bob'},{r:-4,f:1,a:'sway'},{r:0,f:0,a:'bob'},{r:6,f:0,a:'sway'},{r:0,f:1,a:'bob'}];
-const BIG=p=>p.k==='load'||(p.k==='say'&&p.at<=4);
+const BIG=p=>p.k==='load'||p.k==='say'||p.k==='remind'||p.k==='ready';
 function sayOf(p){
  if(p.id==='week'){const gk=IPG.findIndex(x=>x.id==='goal'),j=(U.sel[gk]||[1])[0],mins=[30,60,90,120][j]||60,h=mins*7/60,t=(Math.round(h*10)/10).toString().replace(/\.0$/,'')+(h===1?' hour':' hours');return {say:"That's "+t+" in your first week!",hl:t}}
  return {say:p.say,hl:p.hl}}
@@ -604,8 +607,60 @@ function spPlay(){
  fx($('#spb'),[{opacity:0,transform:'scale(.6)'},{opacity:1,transform:'scale(1.05)',offset:.7},{opacity:1,transform:'none'}],{duration:480,delay:300});
  fx($('.xbar',R),[{opacity:0,transform:'translateY(40px)'},{opacity:1,transform:'none'}],{duration:420,delay:600});
  at(250,()=>hap('medium'));at(650,()=>hap('light'));
- R.onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;if(b.dataset.a==='back'){hap('light');go(IDX('Gems reward'))}else{hap('heavy');go(IDX('Create profile'))}};
+ R.onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;if(b.dataset.a==='back'){hap('light');go(IDX('Gems reward'))}else{hap('heavy');go(IDX('Study space ready'))}};
 }
+
+/* ================= STUDY SPACE READY: the very last page, right before sign-in ================= */
+// Turns the student's own answers into the checklist, so this page is never generic: it names their
+// subjects, their daily goal and their study time, and only the steps that really apply are shown.
+function srSteps(){
+  const why=iData('why')||'your goals',subj=iData('subj'),goal=iData('goal'),time=iData('time');
+  const steps=[['Saving your answers',1]];
+  steps.push([`Setting up StudyOS for <b>${why}</b>`,1]);
+  steps.push([subj?`Adding your subjects: <b>${subj}</b>`:'You can add subjects any time',!!subj]);
+  steps.push([goal?`Planning your daily goal: <b>${goal}</b>`:'Planning a daily goal',!!goal]);
+  steps.push([time?`Turning on reminders for the <b>${time.toLowerCase()}</b>`:'Turning on reminders',!!time]);
+  return steps;
+}
+function srHtml(){
+  const steps=srSteps();
+  return '<div class="scr ip big ld sready"><div class="ipm"><div class="ipz">'+znHtml(92)+'</div><div class="ibub"></div></div>'
+    +'<div class="ipbody"><div class="ipld2 ipld3">'
+    +'<div class="ipor" id="sror"><span></span><span></span><span></span><b></b><em id="srpc">0%</em></div>'
+    +'<ul class="ipsteps" id="srsteps">'+steps.map(([t],k)=>`<li style="--k:${k}"><i><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4 10-10"/></svg></i><span>${t}</span></li>`).join('')+'</ul>'
+    +'<div class="ipbar" id="srbar"><i><em>0%</em></i></div><div class="ipcap" id="srcap">GETTING YOUR STUDY SPACE READY<span class="ipdots"><b>.</b><b>.</b><b>.</b></span></div>'
+    +'</div></div></div>';
+}
+function srPlay(){
+  S.mute=false;znInit(R);
+  const z=$('.ipm .zn',R),bub=$('.ibub',R);
+  fx($('.ipz',R),[{opacity:0,transform:'translateY(40px) scale(.6)'},{opacity:1,transform:'translateY(-10px) scale(1.06)',offset:.6},{opacity:1,transform:'none'}],{duration:560});
+  const html="Give me a moment, I'm getting everything ready for you!";
+  bub.innerHTML=html;fx(bub,[{opacity:0,transform:'scale(.8)'},{opacity:1,transform:'scale(1.03)',offset:.6},{opacity:1,transform:'none'}],{duration:400,delay:260});
+  at(120,()=>hap('medium'));at(140,()=>znSet(z,'think'));
+  fx($('.ipld3',R),[{opacity:0,transform:'translateY(18px)'},{opacity:1,transform:'none'}],{duration:420,delay:200});
+  const steps=srSteps(),n=steps.length,bar=$('#srbar i',R),pc=$('#srpc',R),cap=$('#srcap',R),ring=$('#sror',R);
+  const tok=++U.tok;
+  const setPct=p=>{if(bar){bar.style.width=p+'%';bar.querySelector('em').textContent=p+'%'}if(pc)pc.textContent=p+'%'};
+  const step=i=>{
+    if(U.tok!==tok)return;
+    const li=$$('#srsteps li',R)[i];
+    if(li){li.classList.add('on');hap('tick');sfx.tick(i)}
+    setPct(Math.round(((i+1)/n)*100));
+    if(i<n-1)at(650,()=>step(i+1));
+    else at(520,()=>{
+      if(U.tok!==tok)return;
+      hap('success');sfx.chime&&sfx.chime();znSet(z,'success');
+      if(ring)ring.classList.add('done');
+      if(cap)cap.innerHTML='YOUR STUDY SPACE IS READY!';
+      bub.innerHTML="You're all set. Let's save your profile!";
+      at(1100,()=>{if(U.tok===tok)go(IDX('Create profile'))});
+    });
+  };
+  at(750,()=>step(0));
+  R.onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;if(b.dataset.a==='back'){hap('light');go(IDX('Save progress'))}};
+}
+
 
 /* ================= 5. CREATE PROFILE ================= */
 function cpRender(){
@@ -755,7 +810,8 @@ const S1=[
  {t:'Streak: day 1',d:'Grey flame lights up, 0 to 1 day',next:'Streak goal',spec:{m:'The grey flame squashes, turns red and leaps with embers. The number 1 pops in, the flame slams back down with a shockwave, the week strip rises and Monday gets its first tick.',h:'Medium on squash, hard on ignite, success on the number, heavy thud on the slam, heavy on the tick.',s:'One streak sound only (the supplied ignite clip).'},html:sdHtml,play:sdPlay},
  {t:'Streak goal',d:'Pick 3, 7, 14 or 30 days',next:'Gems reward',spec:{m:'The streak flame changes colour with the goal you tap: yellow for 3 days, pink with a touch of red for 7, pink for 14 and orange for 30. It squashes, stretches and bounces on every change with embers in the new colour.',h:'Heavy thump on every goal change, hard on commit.',s:'No tap sounds.'},html:sgHtml,play:sgPlay},
  {t:'Gems reward',d:'20 gems fly into the counter, then disappear',next:'Save progress',spec:{m:'Zip and the flame in your goal colour pop up, the bubble says Here are 20 gems to start you off, and eight gems burst out and fly into the counter in the top right, which counts to 20 and then fades away.',h:'Light tap for every gem that lands, success when the count finishes, heavy as the counter leaves.',s:'A soft gem ping for each gem.'},html:gmHtml,play:gmPlay},
- {t:'Save progress',d:"Don't lose your progress, create a profile",next:'Create profile',spec:{m:'Zip bounces up with a pencil, the bubble pops and the Continue button slides in.',h:'Medium on arrival, heavy on Continue.',s:'No tap sounds.'},html:spHtml,play:spPlay},
+ {t:'Save progress',d:"Don't lose your progress, create a profile",next:'Study space ready',spec:{m:'Zip bounces up with a pencil, the bubble pops and the Continue button slides in.',h:'Medium on arrival, heavy on Continue.',s:'No tap sounds.'},html:spHtml,play:spPlay},
+ {t:'Study space ready',d:'Builds the study space from what you answered, right before sign-in',next:'Create profile',spec:{m:'A big flame mascot, a progress ring and a checklist that names your own answers (subjects, goal, reminder time). Finishes on a cheer, then moves on by itself.',h:'A light tick per finished step, success at 100%.',s:'A soft chime per step, a chime on completion.'},html:srHtml,play:srPlay},
  {t:'Create profile',d:'Age, sign-up option, email, password, name',next:'Find friends',spec:{m:'Five single-question steps slide in from the right with a progress bar. Google opens an account chooser, email goes through email and password with live rules, and Create profile shows loading dots.',h:'Light tick while typing, medium on Continue, heavy on account pick, success when the profile is created.',s:'Check chime per step, whoosh while creating, sparkle when done.'},html:cpHtml,play:cpPlay},
  {t:'Find friends',d:'Contacts permission, add friends',next:'Profile created',spec:{m:'Zip asks to sync contacts. An iOS-style permission dialog scales in, loading dots follow and a contact list appears with checkboxes and an Add button that counts.',h:'Medium on sync, heavy on Allow, medium on each checkbox.',s:'Ticks, check chime and sparkle when contacts load.'},html:ffHtml,play:ffPlay},
  {t:'Profile created',d:'Profile created, confetti',next:'Finish',spec:{m:'Zip bounces up, the speech bubble pops with the welcome line and confetti bursts from three points.',h:'Hard on arrival, success with the confetti, heavy on the side bursts.',s:'Fanfare with the supplied sound clip.'},html:wcHtml,play:wcPlay},
