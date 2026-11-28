@@ -58,6 +58,8 @@ const studentSchema = new mongoose.Schema(
       early: { type: Date, default: null },
       night: { type: Date, default: null },
     },
+    // XP boosts won in chests: while one is running, focus minutes and finished tasks give mult x XP in the league.
+    xpBoosts: [{ _id: false, from: Date, until: Date, mult: Number }],
     // Weekly League: which trophy (0 Bronze ... 9 Diamond) and when the current 7 day round began.
     league: {
       tier: { type: Number, default: 0, min: 0, max: 9 },

@@ -164,7 +164,8 @@ router.get("/", async (req, res) => {
         for (const r of sessionDays) add(String(r._id.s), r._id.d);
         for (const r of taskDays) add(String(r._id.s), r._id.d);
         for (const c of covered) for (const day of c.protectedDays || []) add(String(c._id), day);
-        for (const u of friends) u.streak = streakOf(dayMap.get(u.id) || new Set(), []);
+        const todayK = new Date().toISOString().slice(0, 10);
+        for (const u of friends) { const ds = dayMap.get(u.id) || new Set(); u.streak = streakOf(ds, []); u.today = ds.has(todayK); }
       }
     } catch (error) {
       req.log?.error?.(error); // the list still works without streaks
@@ -310,6 +311,41 @@ router.get("/:userId/profile", async (req, res) => {
   }
 });
 
+
+// POST /api/friends/nudge { ids: [friend ids] } -> a notification "X nudged you" for each friend (once a day per friend)
+router.post("/nudge", async (req, res) => {
+  try {
+    const me = req.student._id;
+    const raw = Array.isArray(req.body?.ids) ? req.body.ids : [];
+    const ids = [...new Set(raw.filter((x) => typeof x === "string" && mongoose.isValidObjectId(x)))].slice(0, 10);
+    if (!ids.length) return res.status(400).json({ message: "Pick a friend to nudge." });
+    const links = await Friendship.find({
+      status: "accepted",
+      $or: [{ requester: me, recipient: { $in: ids } }, { recipient: me, requester: { $in: ids } }],
+    }).select("requester recipient").lean();
+    const friendIds = new Set(links.map((l) => String(String(l.requester) === String(me) ? l.recipient : l.requester)));
+    const hidden = new Set((await blockedIds(me)).map(String));
+    const start = new Date(); start.setUTCHours(0, 0, 0, 0);
+    const already = await Notification.find({ from: me, type: "streak", title: /nudged you/, createdAt: { $gte: start } }).select("student").lean();
+    const done = new Set(already.map((n) => String(n.student)));
+    const sent = [];
+    for (const id of ids) {
+      if (!friendIds.has(id) || hidden.has(id) || done.has(id)) continue;
+      await Notification.create({
+        student: id,
+        type: "streak",
+        title: `${displayOf(req.student)} nudged you`,
+        body: "Study today to keep your streak alive.",
+        from: me,
+      });
+      sent.push(id);
+    }
+    res.json({ sent, skipped: ids.length - sent.length });
+  } catch (error) {
+    req.log?.error?.(error);
+    res.status(500).json({ message: "Could not send the nudge right now." });
+  }
+});
 
 // POST /api/friends/:userId/block -> removes the friendship and stops requests both ways.
 router.post("/:userId/block", async (req, res) => {

@@ -76,6 +76,12 @@ function view(doc) {
     doubleUntil: until > Date.now() ? until : 0,
     protectedDays: Array.isArray(doc.protectedDays) ? doc.protectedDays : [],
     owned,
+    xpBoost: (() => {
+      const now = Date.now();
+      const live = (Array.isArray(doc.xpBoosts) ? doc.xpBoosts : []).filter((b) => b && b.until && new Date(b.until).getTime() > now);
+      live.sort((a, b) => (b.mult || 1) - (a.mult || 1));
+      return live.length ? { mult: live[0].mult || 2, until: new Date(live[0].until).getTime() } : null;
+    })(),
     chestAt: {
       early: doc.chestAt && doc.chestAt.early ? new Date(doc.chestAt.early).getTime() : 0,
       night: doc.chestAt && doc.chestAt.night ? new Date(doc.chestAt.night).getTime() : 0,
@@ -83,7 +89,7 @@ function view(doc) {
   };
 }
 
-const FIELDS = "gems shopFreezes doubleGemsUntil protectedDays shopOwned chestAt";
+const FIELDS = "gems shopFreezes doubleGemsUntil protectedDays shopOwned chestAt xpBoosts";
 
 async function state(studentId) {
   const doc = await Student.findById(studentId).select(FIELDS).lean();
@@ -218,13 +224,17 @@ async function gift(studentId, toId) {
 // A chest is earned by a focus session (the app checks the time of day, the server checks that the session
 // really exists). Night Owl opens 3 hours after its session. Each chest can be opened once per earned session
 // and never twice within 10 hours, so tapping twice or replaying a request cannot pay twice.
-// Every chest pays gems; sometimes it adds a Streak Freeze or a Double Gems boost on top.
+// Every opening gives ONE prize, picked by the server: an XP boost (x2 or x3 for 10 to 45 minutes), gems,
+// a Streak Freeze or a Double Gems boost. A prize that would be useless right now (a freeze when you hold two,
+// Double Gems while it is running) is swapped for gems.
 const CHEST = {
-  early: { gems: [20, 40], freezeChance: 0.18, boostChance: 0.3, boostHours: 1, waitMs: 0 },
-  night: { gems: [25, 50], freezeChance: 0.2, boostChance: 0.35, boostHours: 2, waitMs: 3 * 3600 * 1000 },
+  early: { waitMs: 0, gems: [25, 60], w: { xp: 36, gems: 34, freeze: 12, double: 18 }, x3: 0.3, boostHours: [1, 2] },
+  night: { waitMs: 3 * 3600 * 1000, gems: [30, 70], w: { xp: 40, gems: 28, freeze: 14, double: 18 }, x3: 0.45, boostHours: [1, 2, 3] },
 };
+const XP_MINUTES = [10, 15, 20, 25, 30, 45];
 const CHEST_COOLDOWN_MS = 10 * 3600 * 1000;
 const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+const pickOf = (list) => list[Math.floor(Math.random() * list.length)];
 
 async function openChest(studentId, kind) {
   if (kind !== "early" && kind !== "night") return { ok: false, status: 400, message: "Unknown chest." };
@@ -249,18 +259,49 @@ async function openChest(studentId, kind) {
   ).select("_id").lean();
   if (!claimed) return { ok: false, status: 409, message: "This chest was just opened.", state: await state(studentId) };
 
-  const reward = { gems: rand(def.gems[0], def.gems[1]), freeze: 0, doubleMin: 0 };
-  const inc = {};
-  const set = {};
-  const roll = Math.random();
   const canFreeze = (doc.shopFreezes || 0) < 2;
   const boosting = doc.doubleGemsUntil && new Date(doc.doubleGemsUntil).getTime() > now;
-  if (roll < def.freezeChance && canFreeze) { reward.freeze = 1; inc.shopFreezes = 1; }
-  else if (roll < def.freezeChance + def.boostChance && !boosting) { reward.doubleMin = def.boostHours * 60; set.doubleGemsUntil = new Date(now + def.boostHours * 3600 * 1000); }
-  else reward.gems += rand(10, 20); // nothing extra to add: a few more gems instead
-  inc.gems = reward.gems;
-  const update = { $inc: inc };
-  if (Object.keys(set).length) update.$set = set;
+  const w = { ...def.w };
+  if (!canFreeze) { w.gems += w.freeze; w.freeze = 0; }
+  if (boosting) { w.gems += w.double; w.double = 0; }
+  let roll = Math.random() * (w.xp + w.gems + w.freeze + w.double), prize = "gems";
+  for (const k of ["xp", "gems", "freeze", "double"]) { if (roll < w[k]) { prize = k; break; } roll -= w[k]; }
+
+  const reward = { kind: prize, gems: 0, freeze: 0, doubleMin: 0, mult: 0, minutes: 0 };
+  const update = {};
+  if (prize === "xp") {
+    reward.mult = Math.random() < def.x3 ? 3 : 2;
+    reward.minutes = pickOf(XP_MINUTES);
+    const until = new Date(now + reward.minutes * 60000);
+    // keep one running boost at a time: a better one replaces it, an equal or weaker one only runs longer
+    const live = (Array.isArray(doc.xpBoosts) ? doc.xpBoosts : []).filter((b) => b && b.until && new Date(b.until).getTime() > now);
+    const keep = (Array.isArray(doc.xpBoosts) ? doc.xpBoosts : []).filter((b) => b && b.until && new Date(b.until).getTime() > now - 8 * 86400000);
+    if (live.length) {
+      const cur = live.sort((a, b) => (b.mult || 1) - (a.mult || 1))[0];
+      const curUntil = new Date(cur.until).getTime();
+      if (reward.mult > (cur.mult || 1)) {
+        const next = keep.map((b) => (b === cur || String(b.until) === String(cur.until) ? { from: b.from, until: new Date(now), mult: b.mult } : b));
+        next.push({ from: new Date(now), until: new Date(Math.max(curUntil, until.getTime())), mult: reward.mult });
+        update.$set = { xpBoosts: next.slice(-12) };
+      } else {
+        const next = keep.map((b) => (String(b.until) === String(cur.until) ? { from: b.from, until: new Date(Math.max(curUntil, until.getTime())), mult: b.mult } : b));
+        reward.mult = cur.mult || 2;
+        update.$set = { xpBoosts: next.slice(-12) };
+      }
+    } else {
+      update.$set = { xpBoosts: keep.concat([{ from: new Date(now), until, mult: reward.mult }]).slice(-12) };
+    }
+  } else if (prize === "freeze") {
+    reward.freeze = 1;
+    update.$inc = { shopFreezes: 1 };
+  } else if (prize === "double") {
+    const hours = pickOf(def.boostHours);
+    reward.doubleMin = hours * 60;
+    update.$set = { doubleGemsUntil: new Date(now + hours * 3600 * 1000) };
+  } else {
+    reward.gems = rand(def.gems[0], def.gems[1]);
+    update.$inc = { gems: reward.gems };
+  }
   const done = await Student.findOneAndUpdate({ _id: studentId }, update, { new: true }).select(FIELDS).lean();
   forgetStudent(studentId);
   return { ok: true, reward, state: view(done) };

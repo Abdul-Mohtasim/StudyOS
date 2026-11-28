@@ -5,7 +5,7 @@ const store={get(k){try{return localStorage.getItem(k)}catch(_){return null}},se
 
 export function createPolish(host,stage){
   let vt=null,pending=null;
-  const K=()=>(host.clientWidth||360)/360;
+  const K=()=>host.__dzK||(host.clientWidth||360)/360;
 
   /* Origin-aware: remember where the finger landed so menus and sheets can grow from there (stage pixels). */
   function onDown(e){

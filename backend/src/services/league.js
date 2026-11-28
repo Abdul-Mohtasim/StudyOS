@@ -50,6 +50,7 @@ const RULES = {
   review: { xp: 1, cap: 30 },        // per flashcard reviewed, up to 30 a day
   grades: { xp: 5, cap: 3 },         // per grade logged, up to 3 a day
   days: { xp: 10 },                  // every day you study or finish a task
+  boost: { xp: 1 },                  // extra XP from a chest XP boost (focus minutes and finished tasks count x2 or x3 while it runs)
   goal: { xp: 20 },                  // every day you reach your daily focus goal
 };
 const dayOf = (f) => ({ $dateToString: { format: "%Y-%m-%d", date: "$" + f } });
@@ -80,7 +81,7 @@ async function scoresFor(ids, from, to) {
   const goalOf = new Map(settings.map((x) => [String(x.student), x.dailyGoalMinutes || 120]));
   const out = new Map(ids.map((i) => [i, {
     minutes: 0, tasks: 0, subjects: 0, xp: 0, _sub: new Set(), _days: new Set(),
-    b: { focus: 0, tasks: 0, planner: 0, notes: 0, cards: 0, review: 0, grades: 0, days: 0, goal: 0 },
+    b: { focus: 0, tasks: 0, planner: 0, notes: 0, cards: 0, review: 0, grades: 0, days: 0, goal: 0, boost: 0 },
   }]));
   for (const r of sess) {
     const o = out.get(String(r._id.s));
@@ -107,6 +108,25 @@ async function scoresFor(ids, from, to) {
   add(cardsNew, "cards");
   add(review, "review");
   add(grades, "grades");
+  // XP boosts won in chests: while one runs, the minutes and tasks finished inside its window count again (mult - 1) times.
+  try {
+    const boosted = await Student.find({ _id: { $in: oids }, "xpBoosts.0": { $exists: true } }).select("xpBoosts").lean();
+    for (const st of boosted) {
+      const o = out.get(String(st._id));
+      if (!o) continue;
+      for (const bw of st.xpBoosts || []) {
+        const f = Math.max(new Date(bw.from).getTime(), from.getTime());
+        const u = Math.min(new Date(bw.until).getTime(), to.getTime());
+        if (!(u > f) || !(bw.mult > 1)) continue;
+        const win = { $gte: new Date(f), $lt: new Date(u) };
+        const [mins, tcount] = await Promise.all([
+          FocusSession.aggregate([{ $match: { student: st._id, completedAt: win } }, { $group: { _id: null, m: { $sum: "$durationMinutes" } } }]),
+          Task.countDocuments({ student: st._id, completed: true, deletedAt: null, completedAt: win }),
+        ]);
+        o.b.boost += Math.round(((mins[0] && mins[0].m) || 0) * RULES.focus.xp * (bw.mult - 1) + tcount * RULES.tasks.xp * (bw.mult - 1));
+      }
+    }
+  } catch (e) { /* boosts are a bonus: the league still works without them */ }
   for (const o of out.values()) {
     o.subjects = o._sub.size;
     o.b.days = o._days.size * RULES.days.xp;

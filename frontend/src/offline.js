@@ -230,6 +230,12 @@ export function readCachedMe(token) {
   return data && data.student ? data : null;
 }
 
+// The saved copy of one API answer (for example "/api/tasks"), so the app can show it before the network answers.
+export function readCachedApi(token, path) {
+  const uid = uidFromToken(token || "");
+  return uid ? readCache(uid, path) : null;
+}
+
 // What this phone is holding for the signed-in student (for the Storage and Sync pages).
 export function getOfflineInfo() {
   let uid = null;

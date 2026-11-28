@@ -9,6 +9,13 @@ import { createPolish } from './polish.js';
 import { createFlame } from './flame.js';
 import { FLM, flameSvg, FLAME_PAL, flameInner, flameIconHtml } from './flameicon.js';
 import { TROPHIES, NAV_LEAGUE } from './trophies.js';
+import { createStreakFire } from './streakfire.js';
+import { createChestFx } from './chestfx.js';
+import { playSfx, preloadSfx } from './sfx.js';
+import chestGreyUrl from './assets/chest_grey.png';
+import potionUrl from './assets/potion.png';
+import { streakSoundReady, playStreakSound, preloadStreakSound } from './streakfiresound.js';
+import { fileToReal } from './streakpose.js';
 import { playStreakClip } from './streaksound.js';
 import { avatarSvg, avDecode, avEncode, avBg, CH_BG, AVD, AVK, ZIP_CHR, TABS as AVTABS } from './avatar.js'; import { mascotHtml } from '../mascot'; import { appIconRowHtml, appIconPageBody, bindAppIconPage, appIconSupported } from '../icons/appIconUI.js';
 import { LANGS, setLanguage, getLanguage, translate as tr, englishText as en0 } from "../i18n";
@@ -51,6 +58,11 @@ const HOMEI=()=>IDX('Home');
 const D=opts.data||{};   // live data from the app (see App.jsx)
 const CB=opts.actions||{};
 /* the avatar the student made (empty until they save one) */
+/* the streak flame is red only while today's streak is kept (a task or a focus session finished today) */
+const stkOn=()=>(D.streak||0)>0&&D.streakToday!==false;
+/* "+10 XP", or "+30 XP (x3)" while a chest XP boost is running */
+const xpBoostNow=()=>{const b=D.shop&&D.shop.xpBoost;return b&&b.until>Date.now()?b.mult||1:1};
+const xpToast=n=>{const m=xpBoostNow();return '+'+(n*m)+' XP'+(m>1?' (x'+m+')':'')};
 const hasAv=()=>typeof D.avatar==='string'&&D.avatar!=='';
 const chOn=()=>hasAv()&&avDecode(D.avatar).chr>0;
 const avPb=v=>v.chr>0?CH_BG:avBg(v);
@@ -121,9 +133,9 @@ const NAVI={
  more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><circle cx="7.500" cy="12" r="1.700" fill="var(--cut)"/><circle cx="12" cy="12" r="1.700" fill="var(--cut)"/><circle cx="16.500" cy="12" r="1.700" fill="var(--cut)"/></svg>'
 };
 // The last tab is "More". It opens a small menu with Shop and Profile, so the Profile page lights up "More" too.
-const nav=a=>`<div class="nav"><i class="lamp" aria-hidden="true"></i>${[['home','Home'],['tasks','Tasks'],['focus','Focus'],['study','Study'],['league','League'],['more','More']].map(([k,l])=>`<div class="nv${k===a||(k==='more'&&a==='profile')?' on':''}" data-k="${k}"${k==='more'?' role="button" aria-haspopup="menu" aria-label="More: Shop and Profile"':''}>${k==='league'?`<img class="nvi" src="${NAV_LEAGUE}" alt="" draggable="false">`:NAVI[k]}${l}</div>`).join('')}</div>`;
+const nav=a=>`<div class="nav"><i class="lamp" aria-hidden="true"></i>${[['home','Home'],['tasks','Tasks'],['focus','Focus'],['study','Study'],['league','League'],['more','More']].map(([k,l])=>`<div class="nv${k===a||(k==='more'&&a==='profile')?' on':''}" data-k="${k}"${k==='more'?' role="button" aria-haspopup="menu" aria-label="More: Shop and Profile"':''}>${k==='league'?`<img class="nvi" src="${NAV_LEAGUE}" alt="" draggable="false" decoding="async">`:NAVI[k]}${l}</div>`).join('')}</div>`;
 const AVH=()=>avatarSvg(hasAv()?avDecode(D.avatar):Object.assign(avDecode(''),{chr:ZIP_CHR}),{view:'head',bg:true,style:'width:100%;height:100%;display:block'});
-const tb=()=>`<div class="tb"><div class="tbp" data-pfgo role="button" aria-label="Open my profile">${AVH()}</div><div data-stkopen role="button" aria-label="Open my streak" style="display:flex;align-items:center;gap:7px;cursor:pointer">${FLM((D.streak||0)>0?'currentColor':'#5a666f','var(--pg)',24,28)}<span${(D.streak||0)>0?' style="color:#ff4b5c"':''}>${D.streak||0}</span></div><div data-shopgo role="button" aria-label="Open the Gem Shop" style="display:flex;align-items:center;gap:7px;cursor:pointer"><div style="width:22px;height:22px">${CUBE}</div><span>${(D.gems||0).toLocaleString()}</span></div><div class="sp"></div>${ICO.search}</div>`;
+const tb=()=>`<div class="tb"><div class="tbp" data-pfgo role="button" aria-label="Open my profile">${AVH()}</div><div data-stkopen role="button" aria-label="Open my streak" style="display:flex;align-items:center;gap:7px;cursor:pointer">${FLM(stkOn()?'currentColor':'#5a666f','var(--pg)',24,28)}<span${stkOn()?' style="color:#ff4b5c"':''}>${D.streak||0}</span></div><div data-shopgo role="button" aria-label="Open the Gem Shop" style="display:flex;align-items:center;gap:7px;cursor:pointer"><div style="width:22px;height:22px">${CUBE}</div><span>${(D.gems||0).toLocaleString()}</span></div><div class="sp"></div>${ICO.search}</div>`;
 const ring=(sz,sw,pct,col,tr)=>{const r=(sz-sw)/2,c=2*Math.PI*r;return `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${tr}" stroke-width="${sw}"/><circle class="rp" data-c="${c}" data-p="${pct}" cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${c} ${c}" stroke-dashoffset="${c*(1-pct)}"/></svg>`};
 const hdr=(l,r)=>`<div class="hd"><span style="width:24px">${l||''}</span><b>%T%</b><span style="width:24px">${r||''}</span></div>`;
 const head=(t,l,r)=>hdr(l,r).replace('%T%',t);
@@ -357,7 +369,7 @@ const AVA=avatarSvg(Object.assign(avDecode(''),{chr:ZIP_CHR}),{view:'full',cls:'
 const SB='<svg class="sb" viewBox="0 0 48 48"><path d="M24 14c-5-4-12-4-18-2v24c6-2 13-2 18 2 5-4 12-4 18-2V12c-6-2-13-2-18 2z" fill="#cfc4f5" stroke="#6a58d0" stroke-width="3" stroke-linejoin="round"/><path d="M24 14v24" stroke="#6a58d0" stroke-width="3"/></svg>';
 const PC=`<svg class="pc" viewBox="0 0 132 100"><circle cx="86" cy="44" r="34" fill="#4b6672"/><path d="M62 100c0-22 10-34 26-34s26 12 26 34z" fill="#a99be2" stroke="#1b1e25" stroke-width="3" stroke-linejoin="round"/><circle cx="88" cy="42" r="19" fill="#fffaf5" stroke="#1b1e25" stroke-width="3"/><path d="M69 40c-2-17 12-24 22-23 11 1 19 9 17 23-9-3-18-9-23-14-5 6-10 11-16 14z" fill="#1b1e25"/><circle cx="82" cy="44" r="2.200" fill="#1b1e25"/><circle cx="96" cy="44" r="2.200" fill="#1b1e25"/><path d="M85 51q4 4 8 0" fill="none" stroke="#1b1e25" stroke-width="2" stroke-linecap="round"/><path d="M63 16l7 14 14-4-5 14" fill="none" stroke="#f2a62c" stroke-width="0"/><path d="M70 18L88 4l20 14z" fill="#f2a62c" stroke="#1b1e25" stroke-width="3" stroke-linejoin="round"/><circle cx="88" cy="4" r="4" fill="#f2a62c" stroke="#1b1e25" stroke-width="2.500"/></svg>`;
 
-const profHtml=()=>`<div class="scr n nd" style="--pg:#181b22"><div class="pf${chOn()?' pfc':''}"><div class="pfs" data-sc><div class="hero">${myAva()}<div class="edit" data-edit><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-5L16 4l4 4L9 19z"/></svg></div></div><div class="body"><div class="hdl">@aisha_rahman · Joined 2026</div><div class="pfst"><div data-subj role="button" aria-label="My subjects" style="cursor:pointer"><b>${SB}<span class="plus2">+2</span></b><span>Subjects</span></div><div><b>12</b><span>Following</span></div><div><b>8</b><span>Followers</span></div></div><div class="acts"><button class="btnl" type="button" data-friends>${UADD}ADD FRIENDS</button><button class="btnl sq" type="button" data-qr aria-label="Share QR code">${QRI}</button></div>${DZ.showcaseHtml?DZ.showcaseHtml():''}<div class="sec">Overview</div><div class="pfov"><div>${flameIconHtml(30,(+U.streak||0)>0?'red':'grey')}${U.streak} days</div><div><svg viewBox="0 0 32 32"><rect x="3" y="3" width="26" height="26" rx="8" fill="#6a58d0"/><path d="M10 16.500l4 4 8-9" fill="none" stroke="#fff" stroke-width="3.400" stroke-linecap="round" stroke-linejoin="round"/></svg>${18+(U.done?1:0)} tasks</div><div><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#35a2f0"/><circle cx="16" cy="16" r="9.500" fill="#fff"/><path d="M16 9.500V16l4.500 3" fill="none" stroke="#1f6fc2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>42 hours</div><div><svg viewBox="0 0 32 32"><path d="M19 2L6 18h8l-3 12 15-17h-9z" fill="#ffc800" stroke="#e8a900" stroke-width="1.500" stroke-linejoin="round"/></svg>1,240 XP</div></div><div class="sec">Friend streaks</div><div class="fs"><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc1"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc1)"><rect width="52" height="52" fill="#fff0f6"/><circle cx="9" cy="14" r="9" fill="#ff8ab8"/><circle cx="22" cy="6" r="8" fill="#ffc83d"/><circle cx="38" cy="8" r="9" fill="#7ad04a"/><rect x="36" y="4" width="14" height="10" rx="2" fill="#7a4a2e"/><circle cx="8" cy="30" r="8" fill="#6bd16a"/><circle cx="26" cy="32" r="14" fill="#f7b79b"/><rect x="11" y="26" width="30" height="10" rx="5" fill="#26303a"/><circle cx="43" cy="38" r="6" fill="#ff8ab8"/><path d="M18 44q8 6 16 0" fill="none" stroke="#c0392b" stroke-width="2.500"/></g></svg><div class="cnt"><svg viewBox="0 0 24 20"><path d="M9 2c3 3 6 5 6 9a6 6 0 01-12 0c0-3 2-4 3-6 1 1 2 2 3 2z" fill="#5d6a74"/><path d="M17 5c2 2 4 4 4 7a4.500 4.500 0 01-8.500 2c2-1 3-3 3-5z" fill="#4a5560"/></svg>132</div></div><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc2"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc2)"><rect width="52" height="52" fill="#2f6fd6"/><path d="M4 18l8-6 4 8zM48 18l-8-6-4 8z" fill="#1b4fae"/><ellipse cx="26" cy="32" rx="16" ry="14" fill="#f2a24a"/><circle cx="17" cy="14" r="7" fill="#7ad04a" stroke="#26303a" stroke-width="2"/><circle cx="35" cy="14" r="7" fill="#7ad04a" stroke="#26303a" stroke-width="2"/><circle cx="17" cy="14" r="2.500" fill="#26303a"/><circle cx="35" cy="14" r="2.500" fill="#26303a"/><path d="M14 34h24l-3 8h-18z" fill="#fff"/><path d="M18 24q8 4 16 0" fill="none" stroke="#26303a" stroke-width="2.500" stroke-linecap="round"/></g></svg><div class="cnt"><svg viewBox="0 0 24 20"><path d="M9 2c3 3 6 5 6 9a6 6 0 01-12 0c0-3 2-4 3-6 1 1 2 2 3 2z" fill="#5d6a74"/><path d="M17 5c2 2 4 4 4 7a4.500 4.500 0 01-8.500 2c2-1 3-3 3-5z" fill="#4a5560"/></svg>47</div></div><div><svg class="fa" viewBox="0 0 52 52"><circle cx="26" cy="26" r="26" fill="#e85a5a"/><text x="26" y="36" text-anchor="middle" font-size="30" font-weight="700" fill="#2a1d1d" font-family="Space Grotesk,Inter,Arial,sans-serif">A</text></svg><svg class="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a3139" stroke="#181b22" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8b98a2" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="#8b98a2" stroke-width="2" stroke-linecap="round"/></svg></div><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc4"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc4)"><rect width="52" height="52" fill="#b43f86"/><circle cx="26" cy="28" r="20" fill="#7a3a22"/><circle cx="26" cy="30" r="14" fill="#f8d2c0"/><path d="M12 24c4-10 24-10 28 0-6-3-9-5-14-5s-9 2-14 5z" fill="#7a3a22"/><circle cx="20" cy="30" r="2" fill="#26303a"/><circle cx="32" cy="30" r="2" fill="#26303a"/><circle cx="17" cy="35" r="3" fill="#f08a8a"/><circle cx="35" cy="35" r="3" fill="#f08a8a"/><path d="M22 38q4 3 8 0" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/></g></svg><svg class="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a3139" stroke="#181b22" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8b98a2" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="#8b98a2" stroke-width="2" stroke-linecap="round"/></svg></div><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc5"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc5)"><rect width="52" height="52" fill="#efe0fb"/><path d="M8 52c0-14 8-20 18-20s18 6 18 20z" fill="#b3345a"/><circle cx="26" cy="26" r="13" fill="#f9d6c4"/><path d="M12 28c-2-16 10-20 16-18 8 2 14 8 12 20-2-6-4-10-6-12-8 4-16 6-22 10z" fill="#1d1a22"/><circle cx="21" cy="28" r="2" fill="#26303a"/><circle cx="31" cy="28" r="2" fill="#26303a"/><path d="M23 34q3 3 6 0" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/></g></svg><svg class="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a3139" stroke="#181b22" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8b98a2" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="#8b98a2" stroke-width="2" stroke-linecap="round"/></svg></div></div><div class="sec">Monthly badges<span style="display:flex"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="bd"><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#8b5ae0"/><circle cx="50" cy="50" r="40" fill="#6a3fc4"/><path d="M50 40C40 34 28 34 20 38v30c8-4 20-4 30 2z" fill="#fff"/><path d="M50 40c10-6 22-6 30-2v30c-8-4-20-4-30 2z" fill="#e6dcff"/><path d="M50 40v30" stroke="#9b7fe6" stroke-width="2.500"/><path d="M26 46h18M26 53h18M26 60h14M56 46h18M56 53h18M56 60h14" stroke="#b8a3f0" stroke-width="2.500" stroke-linecap="round"/><path d="M50 10l3.500 7.500 8 1-6 5.500 1.800 8L50 28l-7.300 4 1.800-8-6-5.500 8-1z" fill="#ffd23f" stroke="#e0a41a" stroke-width="1.500" stroke-linejoin="round" transform="translate(0 6) scale(1)"/></svg><span class="lb">August</span></div><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#28b0ae"/><circle cx="50" cy="50" r="40" fill="#1f8f8d"/><g transform="rotate(40 50 50)"><rect x="41" y="18" width="18" height="46" fill="#ffd23f"/><rect x="41" y="18" width="6" height="46" fill="#ffe680"/><rect x="41" y="26" width="18" height="6" fill="#c9d1d8"/><rect x="41" y="14" width="18" height="12" rx="4" fill="#ff8fab"/><path d="M41 64h18l-9 17z" fill="#f3d2a8"/><path d="M46.500 74h7l-3.500 7z" fill="#2d2d2d"/></g><path d="M22 70l12 0M26 78h12" stroke="#7fe0dd" stroke-width="3" stroke-linecap="round"/><path d="M70 24l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff"/></svg><span class="lb">September</span></div><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#f6c431"/><circle cx="50" cy="50" r="40" fill="#fff3c4"/><path d="M50 22L14 40l36 17 36-17z" fill="#2d3340"/><path d="M30 52v13c0 7 9 11 20 11s20-4 20-11V52l-20 9z" fill="#434c5e"/><path d="M82 42v22" stroke="#e0a41a" stroke-width="3" stroke-linecap="round"/><circle cx="82" cy="68" r="4.500" fill="#ffb020"/><circle cx="50" cy="40" r="3" fill="#ffd23f"/></svg><span class="lb">October</span></div><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#353b42"/><circle cx="50" cy="50" r="40" fill="#2a2f35"/><circle cx="50" cy="50" r="43.500" fill="none" stroke="#c9b8c3" stroke-width="5" stroke-linecap="round" stroke-dasharray="197 274" transform="rotate(-90 50 50)"/><rect x="29" y="24" width="42" height="52" rx="8" fill="#454b53"/><path d="M36 38l4 4 7-8M36 52l4 4 7-8M54 40h10M54 54h10M36 66h8M54 66h10" fill="none" stroke="#6b737c" stroke-width="3.200" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="lb">18 of 25</span></div></div><div class="sec">Achievements<span style="display:flex"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="bd"><div><span class=nw>NEW</span><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 14v34c0 20-16 34-38 42C28 86 12 72 12 52V18z" fill="#3fa56a" stroke="#2c8050" stroke-width="3" stroke-linejoin="round"/><path d="M50 16L22 29l28 13 28-13z" fill="#fff"/><path d="M32 38v10c0 5 8 8 18 8s18-3 18-8V38l-18 8z" fill="#d8f0e0"/><path d="M76 31v14" stroke="#ffd23f" stroke-width="3" stroke-linecap="round"/><circle cx="76" cy="48" r="3.500" fill="#ffd23f"/><text x="50" y="93" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" stroke="#2c8050" stroke-width="5" paint-order="stroke" stroke-linejoin="round" font-family="Space Grotesk,Inter,Arial,sans-serif">300</text></svg><span class="lb">Graduate</span></div><div><span class=nw>NEW</span><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 22v44L50 96 12 70V26z" fill="#7a4fd0" stroke="#5b3fb5" stroke-width="3" stroke-linejoin="round"/><path d="M50 14l28 16v36L50 86 22 66V30z" fill="#9468e8"/><path d="M34 26h32v16a16 16 0 01-32 0z" fill="#ffd23f" stroke="#e0a41a" stroke-width="2"/><path d="M34 30h-8c0 10 4 15 10 16M66 30h8c0 10-4 15-10 16" fill="none" stroke="#e0a41a" stroke-width="3.200" stroke-linecap="round"/><rect x="45" y="56" width="10" height="9" fill="#e0a41a"/><rect x="36" y="65" width="28" height="7" rx="3" fill="#ffd23f" stroke="#e0a41a" stroke-width="2"/><path d="M50 31l2.500 5 5.500.8-4 3.800 1 5.400-5-2.700-5 2.700 1-5.400-4-3.800 5.500-.8z" fill="#fff"/></svg><span class="lb">Class Topper</span></div><div><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 14v34c0 20-16 34-38 42C28 86 12 72 12 52V18z" fill="#a8dcf0" stroke="#6bb6d6" stroke-width="3" stroke-linejoin="round"/><circle cx="50" cy="38" r="17" fill="#ffe27a" stroke="#f0b429" stroke-width="3"/><path d="M42 50h16v8a4 4 0 01-4 4h-8a4 4 0 01-4-4z" fill="#b8c2cc" stroke="#8d99a6" stroke-width="2"/><path d="M44 34q6-5 12 0M50 30v14" fill="none" stroke="#f0b429" stroke-width="2.500" stroke-linecap="round"/><path d="M50 12v-5M28 22l-4-4M72 22l4-4M22 40h-5M78 40h5" stroke="#fff" stroke-width="3.500" stroke-linecap="round"/><text x="50" y="93" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" stroke="#4aa3c9" stroke-width="5" paint-order="stroke" stroke-linejoin="round" font-family="Space Grotesk,Inter,Arial,sans-serif">100</text></svg><span class="lb">Brainiac</span></div><div><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 14v34c0 20-16 34-38 42C28 86 12 72 12 52V18z" fill="#ffb020" stroke="#e08a00" stroke-width="3" stroke-linejoin="round"/><rect x="44" y="12" width="12" height="7" rx="2" fill="#7a3a00"/><circle cx="50" cy="40" r="18" fill="#fff" stroke="#c0392b" stroke-width="3.500"/><path d="M50 40V28M50 40l9 6" fill="none" stroke="#c0392b" stroke-width="3.500" stroke-linecap="round"/><circle cx="50" cy="40" r="2.500" fill="#c0392b"/><path d="M50 24v3M66 40h-3M34 40h3" stroke="#e8a090" stroke-width="2.500" stroke-linecap="round"/><path d="M66 24l5-5" stroke="#7a3a00" stroke-width="4" stroke-linecap="round"/><text x="50" y="93" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" stroke="#d97a00" stroke-width="5" paint-order="stroke" stroke-linejoin="round" font-family="Space Grotesk,Inter,Arial,sans-serif">25</text></svg><span class="lb">Deep Focus</span></div></div></div></div><div class="pfbar" data-bar><button class="pfx" type="button" data-pfx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button><div class="hname">Aisha Rahman</div><button class="gear" type="button" data-gear aria-label="Settings">${GEAR}</button></div><div class="navh">${nav('profile')}</div></div></div>`;
+const profHtml=()=>`<div class="scr n nd" style="--pg:#181b22"><div class="pf${chOn()?' pfc':''}"><div class="pfs" data-sc><div class="hero">${myAva()}<div class="edit" data-edit><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1-5L16 4l4 4L9 19z"/></svg></div></div><div class="body"><div class="hdl">@aisha_rahman · Joined 2026</div><div class="pfst"><div data-subj role="button" aria-label="My subjects" style="cursor:pointer"><b>${SB}<span class="plus2">+2</span></b><span>Subjects</span></div><div><b>12</b><span>Following</span></div><div><b>8</b><span>Followers</span></div></div><div class="acts"><button class="btnl" type="button" data-friends>${UADD}ADD FRIENDS</button><button class="btnl sq" type="button" data-qr aria-label="Share QR code">${QRI}</button></div>${DZ.showcaseHtml?DZ.showcaseHtml():''}<div class="sec">Overview</div><div class="pfov"><div>${flameIconHtml(30,(+U.streak||0)>0&&D.streakToday!==false?'red':'grey')}${U.streak} days</div><div><svg viewBox="0 0 32 32"><rect x="3" y="3" width="26" height="26" rx="8" fill="#6a58d0"/><path d="M10 16.500l4 4 8-9" fill="none" stroke="#fff" stroke-width="3.400" stroke-linecap="round" stroke-linejoin="round"/></svg>${18+(U.done?1:0)} tasks</div><div><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="13" fill="#35a2f0"/><circle cx="16" cy="16" r="9.500" fill="#fff"/><path d="M16 9.500V16l4.500 3" fill="none" stroke="#1f6fc2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>42 hours</div><div><svg viewBox="0 0 32 32"><path d="M19 2L6 18h8l-3 12 15-17h-9z" fill="#ffc800" stroke="#e8a900" stroke-width="1.500" stroke-linejoin="round"/></svg>1,240 XP</div></div><div class="sec">Friend streaks</div><div class="fs"><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc1"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc1)"><rect width="52" height="52" fill="#fff0f6"/><circle cx="9" cy="14" r="9" fill="#ff8ab8"/><circle cx="22" cy="6" r="8" fill="#ffc83d"/><circle cx="38" cy="8" r="9" fill="#7ad04a"/><rect x="36" y="4" width="14" height="10" rx="2" fill="#7a4a2e"/><circle cx="8" cy="30" r="8" fill="#6bd16a"/><circle cx="26" cy="32" r="14" fill="#f7b79b"/><rect x="11" y="26" width="30" height="10" rx="5" fill="#26303a"/><circle cx="43" cy="38" r="6" fill="#ff8ab8"/><path d="M18 44q8 6 16 0" fill="none" stroke="#c0392b" stroke-width="2.500"/></g></svg><div class="cnt"><svg viewBox="0 0 24 20"><path d="M9 2c3 3 6 5 6 9a6 6 0 01-12 0c0-3 2-4 3-6 1 1 2 2 3 2z" fill="#5d6a74"/><path d="M17 5c2 2 4 4 4 7a4.500 4.500 0 01-8.500 2c2-1 3-3 3-5z" fill="#4a5560"/></svg>132</div></div><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc2"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc2)"><rect width="52" height="52" fill="#2f6fd6"/><path d="M4 18l8-6 4 8zM48 18l-8-6-4 8z" fill="#1b4fae"/><ellipse cx="26" cy="32" rx="16" ry="14" fill="#f2a24a"/><circle cx="17" cy="14" r="7" fill="#7ad04a" stroke="#26303a" stroke-width="2"/><circle cx="35" cy="14" r="7" fill="#7ad04a" stroke="#26303a" stroke-width="2"/><circle cx="17" cy="14" r="2.500" fill="#26303a"/><circle cx="35" cy="14" r="2.500" fill="#26303a"/><path d="M14 34h24l-3 8h-18z" fill="#fff"/><path d="M18 24q8 4 16 0" fill="none" stroke="#26303a" stroke-width="2.500" stroke-linecap="round"/></g></svg><div class="cnt"><svg viewBox="0 0 24 20"><path d="M9 2c3 3 6 5 6 9a6 6 0 01-12 0c0-3 2-4 3-6 1 1 2 2 3 2z" fill="#5d6a74"/><path d="M17 5c2 2 4 4 4 7a4.500 4.500 0 01-8.500 2c2-1 3-3 3-5z" fill="#4a5560"/></svg>47</div></div><div><svg class="fa" viewBox="0 0 52 52"><circle cx="26" cy="26" r="26" fill="#e85a5a"/><text x="26" y="36" text-anchor="middle" font-size="30" font-weight="700" fill="#2a1d1d" font-family="Space Grotesk,Inter,Arial,sans-serif">A</text></svg><svg class="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a3139" stroke="#181b22" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8b98a2" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="#8b98a2" stroke-width="2" stroke-linecap="round"/></svg></div><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc4"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc4)"><rect width="52" height="52" fill="#b43f86"/><circle cx="26" cy="28" r="20" fill="#7a3a22"/><circle cx="26" cy="30" r="14" fill="#f8d2c0"/><path d="M12 24c4-10 24-10 28 0-6-3-9-5-14-5s-9 2-14 5z" fill="#7a3a22"/><circle cx="20" cy="30" r="2" fill="#26303a"/><circle cx="32" cy="30" r="2" fill="#26303a"/><circle cx="17" cy="35" r="3" fill="#f08a8a"/><circle cx="35" cy="35" r="3" fill="#f08a8a"/><path d="M22 38q4 3 8 0" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/></g></svg><svg class="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a3139" stroke="#181b22" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8b98a2" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="#8b98a2" stroke-width="2" stroke-linecap="round"/></svg></div><div><svg class="fa" viewBox="0 0 52 52"><defs><clipPath id="fc5"><circle cx="26" cy="26" r="26"/></clipPath></defs><g clip-path="url(#fc5)"><rect width="52" height="52" fill="#efe0fb"/><path d="M8 52c0-14 8-20 18-20s18 6 18 20z" fill="#b3345a"/><circle cx="26" cy="26" r="13" fill="#f9d6c4"/><path d="M12 28c-2-16 10-20 16-18 8 2 14 8 12 20-2-6-4-10-6-12-8 4-16 6-22 10z" fill="#1d1a22"/><circle cx="21" cy="28" r="2" fill="#26303a"/><circle cx="31" cy="28" r="2" fill="#26303a"/><path d="M23 34q3 3 6 0" fill="none" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/></g></svg><svg class="ck" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#2a3139" stroke="#181b22" stroke-width="2"/><circle cx="12" cy="12" r="7" fill="none" stroke="#8b98a2" stroke-width="2"/><path d="M12 8v4l3 2" fill="none" stroke="#8b98a2" stroke-width="2" stroke-linecap="round"/></svg></div></div><div class="sec">Monthly badges<span style="display:flex"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="bd"><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#8b5ae0"/><circle cx="50" cy="50" r="40" fill="#6a3fc4"/><path d="M50 40C40 34 28 34 20 38v30c8-4 20-4 30 2z" fill="#fff"/><path d="M50 40c10-6 22-6 30-2v30c-8-4-20-4-30 2z" fill="#e6dcff"/><path d="M50 40v30" stroke="#9b7fe6" stroke-width="2.500"/><path d="M26 46h18M26 53h18M26 60h14M56 46h18M56 53h18M56 60h14" stroke="#b8a3f0" stroke-width="2.500" stroke-linecap="round"/><path d="M50 10l3.500 7.500 8 1-6 5.500 1.800 8L50 28l-7.300 4 1.800-8-6-5.500 8-1z" fill="#ffd23f" stroke="#e0a41a" stroke-width="1.500" stroke-linejoin="round" transform="translate(0 6) scale(1)"/></svg><span class="lb">August</span></div><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#28b0ae"/><circle cx="50" cy="50" r="40" fill="#1f8f8d"/><g transform="rotate(40 50 50)"><rect x="41" y="18" width="18" height="46" fill="#ffd23f"/><rect x="41" y="18" width="6" height="46" fill="#ffe680"/><rect x="41" y="26" width="18" height="6" fill="#c9d1d8"/><rect x="41" y="14" width="18" height="12" rx="4" fill="#ff8fab"/><path d="M41 64h18l-9 17z" fill="#f3d2a8"/><path d="M46.500 74h7l-3.500 7z" fill="#2d2d2d"/></g><path d="M22 70l12 0M26 78h12" stroke="#7fe0dd" stroke-width="3" stroke-linecap="round"/><path d="M70 24l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff"/></svg><span class="lb">September</span></div><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#f6c431"/><circle cx="50" cy="50" r="40" fill="#fff3c4"/><path d="M50 22L14 40l36 17 36-17z" fill="#2d3340"/><path d="M30 52v13c0 7 9 11 20 11s20-4 20-11V52l-20 9z" fill="#434c5e"/><path d="M82 42v22" stroke="#e0a41a" stroke-width="3" stroke-linecap="round"/><circle cx="82" cy="68" r="4.500" fill="#ffb020"/><circle cx="50" cy="40" r="3" fill="#ffd23f"/></svg><span class="lb">October</span></div><div><svg class="b" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#353b42"/><circle cx="50" cy="50" r="40" fill="#2a2f35"/><circle cx="50" cy="50" r="43.500" fill="none" stroke="#c9b8c3" stroke-width="5" stroke-linecap="round" stroke-dasharray="197 274" transform="rotate(-90 50 50)"/><rect x="29" y="24" width="42" height="52" rx="8" fill="#454b53"/><path d="M36 38l4 4 7-8M36 52l4 4 7-8M54 40h10M54 54h10M36 66h8M54 66h10" fill="none" stroke="#6b737c" stroke-width="3.200" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="lb">18 of 25</span></div></div><div class="sec">Achievements<span style="display:flex"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div><div class="bd"><div><span class=nw>NEW</span><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 14v34c0 20-16 34-38 42C28 86 12 72 12 52V18z" fill="#3fa56a" stroke="#2c8050" stroke-width="3" stroke-linejoin="round"/><path d="M50 16L22 29l28 13 28-13z" fill="#fff"/><path d="M32 38v10c0 5 8 8 18 8s18-3 18-8V38l-18 8z" fill="#d8f0e0"/><path d="M76 31v14" stroke="#ffd23f" stroke-width="3" stroke-linecap="round"/><circle cx="76" cy="48" r="3.500" fill="#ffd23f"/><text x="50" y="93" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" stroke="#2c8050" stroke-width="5" paint-order="stroke" stroke-linejoin="round" font-family="Space Grotesk,Inter,Arial,sans-serif">300</text></svg><span class="lb">Graduate</span></div><div><span class=nw>NEW</span><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 22v44L50 96 12 70V26z" fill="#7a4fd0" stroke="#5b3fb5" stroke-width="3" stroke-linejoin="round"/><path d="M50 14l28 16v36L50 86 22 66V30z" fill="#9468e8"/><path d="M34 26h32v16a16 16 0 01-32 0z" fill="#ffd23f" stroke="#e0a41a" stroke-width="2"/><path d="M34 30h-8c0 10 4 15 10 16M66 30h8c0 10-4 15-10 16" fill="none" stroke="#e0a41a" stroke-width="3.200" stroke-linecap="round"/><rect x="45" y="56" width="10" height="9" fill="#e0a41a"/><rect x="36" y="65" width="28" height="7" rx="3" fill="#ffd23f" stroke="#e0a41a" stroke-width="2"/><path d="M50 31l2.500 5 5.500.8-4 3.800 1 5.400-5-2.700-5 2.700 1-5.400-4-3.800 5.500-.8z" fill="#fff"/></svg><span class="lb">Class Topper</span></div><div><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 14v34c0 20-16 34-38 42C28 86 12 72 12 52V18z" fill="#a8dcf0" stroke="#6bb6d6" stroke-width="3" stroke-linejoin="round"/><circle cx="50" cy="38" r="17" fill="#ffe27a" stroke="#f0b429" stroke-width="3"/><path d="M42 50h16v8a4 4 0 01-4 4h-8a4 4 0 01-4-4z" fill="#b8c2cc" stroke="#8d99a6" stroke-width="2"/><path d="M44 34q6-5 12 0M50 30v14" fill="none" stroke="#f0b429" stroke-width="2.500" stroke-linecap="round"/><path d="M50 12v-5M28 22l-4-4M72 22l4-4M22 40h-5M78 40h5" stroke="#fff" stroke-width="3.500" stroke-linecap="round"/><text x="50" y="93" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" stroke="#4aa3c9" stroke-width="5" paint-order="stroke" stroke-linejoin="round" font-family="Space Grotesk,Inter,Arial,sans-serif">100</text></svg><span class="lb">Brainiac</span></div><div><svg class="b" viewBox="0 0 100 100"><path d="M50 4l38 14v34c0 20-16 34-38 42C28 86 12 72 12 52V18z" fill="#ffb020" stroke="#e08a00" stroke-width="3" stroke-linejoin="round"/><rect x="44" y="12" width="12" height="7" rx="2" fill="#7a3a00"/><circle cx="50" cy="40" r="18" fill="#fff" stroke="#c0392b" stroke-width="3.500"/><path d="M50 40V28M50 40l9 6" fill="none" stroke="#c0392b" stroke-width="3.500" stroke-linecap="round"/><circle cx="50" cy="40" r="2.500" fill="#c0392b"/><path d="M50 24v3M66 40h-3M34 40h3" stroke="#e8a090" stroke-width="2.500" stroke-linecap="round"/><path d="M66 24l5-5" stroke="#7a3a00" stroke-width="4" stroke-linecap="round"/><text x="50" y="93" text-anchor="middle" font-size="32" font-weight="800" fill="#fff" stroke="#d97a00" stroke-width="5" paint-order="stroke" stroke-linejoin="round" font-family="Space Grotesk,Inter,Arial,sans-serif">25</text></svg><span class="lb">Deep Focus</span></div></div></div></div><div class="pfbar" data-bar><button class="pfx" type="button" data-pfx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button><div class="hname">Aisha Rahman</div><button class="gear" type="button" data-gear aria-label="Settings">${GEAR}</button></div><div class="navh">${nav('profile')}</div></div></div>`;
 
 /* QR drawn with rounded modules */
 const qrSvg=()=>{const n=QM.length,q=1,s=n+q*2;let d='';const fin=(r,c)=>(r<7&&c<7)||(r<7&&c>=n-7)||(r>=n-7&&c<7);
@@ -634,7 +646,7 @@ const bindRows=()=>{
     cb.classList.toggle('ck',!wasDone);cb.innerHTML=wasDone?'':CHECK;
     cb.animate([{transform:'scale(.7)'},{transform:'scale(1.15)'},{transform:'none'}],{duration:260});
     hap(wasDone?'tick':'success');
-    if(!wasDone&&!D.guest)toast('+10 XP');
+    if(!wasDone&&!D.guest)toast(xpToast(10));
     if(CB.toggleTask)CB.toggleTask(id);
   },true);
 };
@@ -673,7 +685,7 @@ const tasksPlay=()=>{
     const row=$('.trow',sw),id=sw.dataset.sw;let x0=0,y0=0,dx=0,drag=false,locked=false;
     row.style.touchAction='pan-y';
     row.addEventListener('pointerdown',e=>{if(e.target.closest('[data-cb],[data-edit]'))return;x0=e.clientX;y0=e.clientY;dx=0;drag=true;locked=false;row.style.transition='none'});
-    row.addEventListener('pointermove',e=>{if(!drag)return;const K=(host.clientWidth||360)/360;const mx=(e.clientX-x0)/K,my=(e.clientY-y0)/K;if(!locked){if(Math.abs(my)>10&&Math.abs(my)>Math.abs(mx)){drag=false;row.style.transform='';return}if(Math.abs(mx)>8){locked=true;try{row.setPointerCapture(e.pointerId)}catch(_){}}}if(locked){dx=Math.max(-130,Math.min(130,mx));row.style.transform='translateX('+dx+'px)'}});
+    row.addEventListener('pointermove',e=>{if(!drag)return;const K=(host.__dzK||(host.clientWidth||360)/360);const mx=(e.clientX-x0)/K,my=(e.clientY-y0)/K;if(!locked){if(Math.abs(my)>10&&Math.abs(my)>Math.abs(mx)){drag=false;row.style.transform='';return}if(Math.abs(mx)>8){locked=true;try{row.setPointerCapture(e.pointerId)}catch(_){}}}if(locked){dx=Math.max(-130,Math.min(130,mx));row.style.transform='translateX('+dx+'px)'}});
     const end=()=>{if(!drag&&!locked)return;drag=false;row.style.transition='transform .22s cubic-bezier(.2,.9,.3,1)';
       if(dx>80){hap('success');row.style.transform='';if(CB.toggleTask)CB.toggleTask(id,true);return}
       if(dx<-80){hap('press');const t=(D.tasks||[]).find(z=>String(z.id)===String(id));lastDel=t?{...t}:null;sw.animate([{opacity:1},{opacity:0,height:'0px'}],{duration:220,fill:'forwards'});const pend=CB.deleteTask?CB.deleteTask(id):null;if(DZ.undoOffer&&lastDel)DZ.undoOffer('task',lastDel,pend);else showSnack();return}
@@ -849,7 +861,7 @@ SCREENS[IDX('Friends')].html=friendsHtml;SCREENS[IDX('Friends')].play=friendsPla
         const s=e.target.closest('[data-save]');
         if(s){const title=$('[data-f=title]',R).value.trim(),body=$('[data-f=body]',R).value.trim();if(!title&&!body){toast('Write something first');return}
           s.disabled=true;hap('press');const ok=CB.addNote?await CB.addNote({title:title||body.slice(0,40),subject:pick('[data-subj]')||SUBJR()[0],content:body}):false;s.disabled=false;
-          if(ok){hap('success');toast(D.guest?'Note saved':'Note saved · +5 XP');go('Home')}else toast('Could not save the note. Try again.');return}
+          if(ok){hap('success');toast(D.guest?'Note saved':'Note saved · '+xpToast(5));go('Home')}else toast('Could not save the note. Try again.');return}
         old(e)};
     };
     p.t='Add note';return p;
@@ -931,7 +943,7 @@ function finish(){
   hap('success');
   if(was==='focus'){
     if(CB.saveSession)CB.saveSession({minutes:F.len,subject:F.subj});
-    if(!D.guest&&F.len>0)toast('+'+F.len+' XP');
+    if(!D.guest&&F.len>0)toast(xpToast(F.len));
     if(F.round>=roundsN())setMode('long',longMin());else setMode('short',shortMin());
   }else{
     if(was==='long')F.round=1;else F.round++;
@@ -1655,7 +1667,7 @@ const chCard=k=>{
   }
   if(st.s==='open')act=`<button type="button" class="ch-go" data-chest="${k}" aria-label="Open the ${d.t}">OPEN CHEST</button>`;
   else if(st.s==='locked')act=`<span class="ch-lk">${st.done?'OPENED':'LOCKED'}</span>`;
-  return `<div class="ch-card ${st.s}"><span class="ch-ic"><img src="${CHI[k]}" alt="" draggable="false"></span><div class="ch-tx"><b class="ch-n">${d.t}</b><p>${txt}</p>${act}</div></div>`;
+  return `<div class="ch-card ${st.s}"><span class="ch-ic"><img src="${CHI[k]}" alt="" draggable="false" decoding="async"></span><div class="ch-tx"><b class="ch-n">${d.t}</b><p>${txt}</p>${act}</div></div>`;
 };
 const chSection=()=>D.guest?'':`<section class="sh2-sec ch-sec"><div class="sh2-h"><b>Special Offers</b><span>Chests for study time</span></div>${chCard('early')}${chCard('night')}</section>`;
 let CHT=0,CHBUSY=false;
@@ -1666,66 +1678,17 @@ const chTick=()=>{
   if(due&&!CHBUSY)go('Gem Shop',true);
 };
 const chWait=ms=>new Promise(r=>setTimeout(r,ms));
-const chOpenFx=async k=>{
-  if(CHBUSY||D.guest)return;
-  CHBUSY=true;hap('light');
-  const def=CHD[k],calm=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const ov=document.createElement('div');ov.className='cho '+k;
-  ov.innerHTML=`<div class="cho-bg"></div><div class="cho-in"><div class="cho-t">${def.t}</div><div class="cho-s">Tap to open</div><div class="cho-stage"><div class="cho-rays"></div><div class="cho-glow"></div>${CHS[k]}</div><div class="cho-rw"></div><button type="button" class="cho-btn">COLLECT</button></div>`;
-  host.appendChild(ov);
-  const q=s=>ov.querySelector(s);
-  const ch=q('.cho-ch'),lid=q('.c-lid'),flash=q('.cho-flash'),rays=q('.cho-rays'),glow=q('.cho-glow'),sub=q('.cho-s'),rw=q('.cho-rw'),btn=q('.cho-btn'),stage=q('.cho-stage');
-  let ready=false;
-  const close=()=>{if(!ov.isConnected)return;DZ.chestClose=null;ov.classList.remove('on');setTimeout(()=>ov.remove(),280);CHBUSY=false;if(CB.shopRefresh)CB.shopRefresh();if(SCREENS[CUR]&&SCREENS[CUR].t==='Gem Shop')go('Gem Shop',true)};
-  DZ.chestClose=()=>{if(!ov.isConnected)return false;if(ready)close();return true};
-  btn.onclick=close;q('.cho-bg').onclick=()=>{if(ready)close()};
-  requestAnimationFrame(()=>ov.classList.add('on'));
-  if(!calm)ch.animate([{transform:'translateY(46px) scale(.3)',opacity:0},{transform:'translateY(-8px) scale(1.07)',opacity:1,offset:.7},{transform:'none',opacity:1}],{duration:520,easing:'cubic-bezier(.2,.9,.3,1)',fill:'both'});
-  await chWait(calm?60:540);
-  let wob=null;
-  if(!calm)wob=ch.animate([{transform:'rotate(0)'},{transform:'rotate(-6deg) translateY(-3px)'},{transform:'rotate(5deg)'},{transform:'rotate(-4deg) translateY(-2px)'},{transform:'rotate(0)'}],{duration:640,iterations:Infinity});
-  sub.textContent='Opening...';hap('medium');
-  let r=null;const t0=Date.now();
-  try{r=CB.chestOpen?await CB.chestOpen(k):{ok:false,message:'Chests are not available right now.'}}catch(_){r={ok:false,message:'Could not open the chest. Try again.'}}
-  const rest=1100-(Date.now()-t0);if(rest>0)await chWait(rest);
-  if(wob)wob.cancel();
-  if(!r||!r.ok){
-    toast((r&&r.message)||'Could not open the chest.');
-    if(r&&/already|just opened/i.test(r.message||''))chSetLocal(k);
-    ready=true;ov.classList.remove('on');setTimeout(()=>ov.remove(),280);DZ.chestClose=null;CHBUSY=false;if(CB.shopRefresh)CB.shopRefresh();
-    if(SCREENS[CUR]&&SCREENS[CUR].t==='Gem Shop')go('Gem Shop',true);return;
-  }
-  chSetLocal(k);hap('success');
-  const rd=r.reward||{gems:0};
-  if(!calm){
-    lid.animate([{transform:'none'},{transform:'translate(-3px,6px) rotate(2deg)',offset:.18},{transform:'translate(-12px,-58px) rotate(-26deg)'}],{duration:620,easing:'cubic-bezier(.2,.9,.3,1)',fill:'forwards'});
-    flash.animate([{opacity:0},{opacity:1,offset:.3},{opacity:.9}],{duration:520,fill:'forwards'});
-    glow.animate([{opacity:0,transform:'scale(.4)'},{opacity:1,transform:'scale(1)'}],{duration:700,fill:'forwards'});
-    rays.animate([{opacity:0},{opacity:.95}],{duration:800,fill:'forwards'});
-    ch.animate([{transform:'scale(1)'},{transform:'scale(1.1)',offset:.35},{transform:'scale(1)'}],{duration:480});
-    const cols=['#ffd23f','#ff7a45','#4fb3e8','#ff4a6d','#6bdc9a','#ffffff','#b18cff'];
-    for(let i=0;i<34;i++){
-      const p=document.createElement('i');p.className='cho-p'+(i%4===0?' st':'');p.style.background=cols[i%cols.length];stage.appendChild(p);
-      const an=Math.random()*Math.PI*2,di=90+Math.random()*150,dx=Math.cos(an)*di,dy=Math.sin(an)*di-70,sp=Math.random()*720-360;
-      const an2=p.animate([{transform:'translate(-50%,-50%) scale(.3) rotate(0deg)',opacity:1},{transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1) rotate(${sp/2}deg)`,opacity:1,offset:.55},{transform:`translate(calc(-50% + ${dx*1.12}px),calc(-50% + ${dy+150}px)) scale(.7) rotate(${sp}deg)`,opacity:0}],{duration:1200+Math.random()*800,delay:Math.random()*140,easing:'cubic-bezier(.2,.7,.4,1)',fill:'forwards'});
-      an2.onfinish=()=>p.remove();
-    }
-  }else{lid.style.transform='translate(-12px,-58px) rotate(-26deg)';flash.style.opacity='.9';glow.style.opacity='1';rays.style.opacity='.9'}
-  sub.textContent=def.t+' opened!';
-  const items=[{ic:SHI.gem,big:'+'+(rd.gems||0),lab:'Gems',n:rd.gems||0}];
-  if(rd.freeze)items.push({ic:SI.freeze,big:'+'+rd.freeze,lab:'Streak Freeze'});
-  if(rd.doubleMin)items.push({ic:SHI.gem,big:'2x',lab:'Double Gems · '+(rd.doubleMin>=60?(rd.doubleMin/60)+'h':rd.doubleMin+'m'),x2:1});
-  rw.innerHTML=items.map(it=>`<div class="cho-r"><span class="cho-ri">${it.ic}</span><b>${it.big}</b><small>${esc(it.lab)}</small></div>`).join('')+`<p class="cho-tip">${def.tip}</p>`;
-  const cards=[...rw.querySelectorAll('.cho-r')];
-  cards.forEach((c,i)=>{
-    c.style.opacity=calm?1:0;
-    if(!calm)c.animate([{opacity:0,transform:'translateY(34px) scale(.6)'},{opacity:1,transform:'translateY(-6px) scale(1.07)',offset:.7},{opacity:1,transform:'none'}],{duration:520,delay:520+i*190,easing:'cubic-bezier(.2,.9,.3,1)',fill:'forwards'});
-  });
-  const tip=rw.querySelector('.cho-tip');if(tip&&!calm)tip.animate([{opacity:0},{opacity:1}],{duration:400,delay:700+items.length*190,fill:'backwards'});
-  if(items[0].n&&!calm){const nb=cards[0].querySelector('b'),n=items[0].n,s=Date.now()+520;const tk=()=>{const k2=Math.min(1,(Date.now()-s)/800);if(k2>0)nb.textContent='+'+Math.round(n*(1-Math.pow(1-k2,3)));if(k2<1&&ov.isConnected)requestAnimationFrame(tk)};requestAnimationFrame(tk)}
-  setTimeout(()=>{ready=true;btn.classList.add('on');hap('light')},calm?200:900+items.length*190);
-};
+const CHX=createChestFx({host,hap:t=>hap(t),esc,
+  call:k=>CB.chestOpen?CB.chestOpen(k):Promise.resolve({ok:false,message:'Chests are not available right now.'}),
+  icons:()=>({gem:SHI.gem,freeze:SI.freeze}),
+  toast:t=>toast(t),
+  setBack:fn=>{DZ.chestBack=fn},
+  opened:k=>{chSetLocal(k)},
+  failed:(k,r)=>{if(r&&/already|just opened/i.test(r.message||''))chSetLocal(k)},
+  done:()=>{CHBUSY=false;if(CB.shopRefresh)CB.shopRefresh();if(SCREENS[CUR]&&SCREENS[CUR].t==='Gem Shop')go('Gem Shop',true)}});
+const chOpenFx=k=>{if(D.guest||CHBUSY||CHX.busy())return;CHBUSY=true;CHX.open(k)};
 DZ.openChest=chOpenFx;
+DZ.chestClose=()=>CHX.busy()?(DZ.chestBack?DZ.chestBack():true):false;
 
 const shopHtml=()=>{
   const pr=PR(),sh=D.shop||{},fr=sh.freezes||0,until=sh.doubleUntil||0,on=until>Date.now();
@@ -1884,7 +1847,7 @@ host.addEventListener('click',e=>{
 /* ---- League: weekly trophies, and your friends' XP, gems, tasks and subjects ---- */
 {
   const DEM=200;
-  const LG={data:null,loading:false,err:'',at:0,user:'',note:null,noteAt:0,sheet:false,sheetNew:false};
+  const LG={data:null,loading:false,err:'',at:0,user:'',note:null,noteAt:0,sheet:false,sheetNew:false,nf:false};
   const lgKey=()=>'studyos.league.v1:'+(D.email||'me');
   const seenKey=()=>'studyos.league.seen:'+(D.email||'me');
   const lgCache=()=>{const u=D.email||'me';if(LG.user===u)return;LG.user=u;LG.data=null;LG.at=0;try{const j=JSON.parse(localStorage.getItem(lgKey())||'null');if(j&&Array.isArray(j.rows))LG.data=j}catch(_){}};
@@ -1906,7 +1869,8 @@ host.addEventListener('click',e=>{
     ['review','Review a flashcard','1 XP each, up to 30 a day',()=>DZ.QI.quiz],
     ['grades','Log a grade','5 XP each, up to 3 a day',()=>DZ.QI.progress],
     ['days','Study every day','10 XP for each day you study or finish a task',()=>flameIconHtml(26)],
-    ['goal','Reach your daily goal','20 XP each day you reach your daily focus goal',()=>DZ.QI.ach]
+    ['goal','Reach your daily goal','20 XP each day you reach your daily focus goal',()=>DZ.QI.ach],
+    ['boost','XP boost from a chest','Extra XP while a chest boost is running',()=>`<img src="${potionUrl}" alt="" draggable="false">`]
   ];
   const leftTxt=ms=>{const H=36e5,D1=864e5;if(ms>=D1){const n=Math.ceil(ms/D1);return n+(n===1?' DAY':' DAYS')}if(ms>=H){const n=Math.ceil(ms/H);return n+(n===1?' HOUR':' HOURS')}return Math.max(1,Math.ceil(ms/6e4))+' MIN'};
   const nm=n=>Number(n||0).toLocaleString();
@@ -1914,9 +1878,11 @@ host.addEventListener('click',e=>{
   const row=(r,i,zone)=>{
     const col=DZ.fxCol?DZ.fxCol(r.name||'?'):'#c9b8c3';
     const face=DZ.pfFace?DZ.pfFace(r.me?'me':r.id,r.me?(D.avatar||r.avatar):r.avatar,r.me?(D.picture||r.picture||''):r.picture):'';
-    return `<div class="lq-r${r.me?' me':''}${zone?' zn':''}"${r.me?'':` data-fid="${esc(r.id)}" role="button"`} style="--k:${Math.min(i,12)}"><span class="lq-rk${zone?' red':''}">${i<3?medal(i+1):i+1}</span><span class="lq-av" style="background:${col}">${face}</span><span class="lq-nm"><b>${esc(r.name)}${r.me?'<em class="lq-you">You</em>':''}</b><small><span><i>${CUBE}</i>${nm(r.gems)}</span><span><i>${TSKI}</i>${nm(r.tasks)}</span><span><i>${SUBI}</i>${nm(r.subjects)}</span></small></span><span class="lq-xp">${nm(r.xp)} XP</span></div>`;
+    return `<div class="lq-r${r.me?' me':''}${zone?' zn':''}${LG.nf?' nf':''}" data-rid="${esc(r.id)}" data-xp="${r.xp|0}"${r.me?'':` data-fid="${esc(r.id)}" role="button"`} style="--k:${Math.min(i,12)}"><span class="lq-rk${zone?' red':''}">${i<3?medal(i+1):i+1}</span><span class="lq-av" style="background:${col}">${face}</span><span class="lq-nm"><b>${esc(r.name)}${r.me?'<em class="lq-you">You</em>':''}</b><small><span><i>${CUBE}</i>${nm(r.gems)}</span><span><i>${TSKI}</i>${nm(r.tasks)}</span><span><i>${SUBI}</i>${nm(r.subjects)}</span></small></span><span class="lq-xp"><u>${nm(r.xp)}</u> XP</span></div>`;
   };
-  const skel=()=>[0,1,2,3,4].map(i=>`<div class="lq-r sk" style="--k:${i}"><span class="lq-rk"></span><span class="lq-av"></span><span class="lq-nm"><b></b><small></small></span></div>`).join('');
+  // loading screen: the real title, then soft grey shapes where the trophies and the friends will appear
+  const sb=(w,h,x)=>`<i class="lq-sb" style="width:${w};height:${h};${x||''}"></i>`;
+  const skel=()=>`<div class="lq-skt">${[0,1,2,3,4].map(i=>`<i class="lq-sb lq-skc${i===1?' big':''}"></i>`).join('')}</div><div class="lq-skd">${sb('100%','7px','border-radius:4px')}</div><div class="lq-l">${[0,1,2,3,4,5].map(i=>`<div class="lq-r lq-skr" style="--k:${i}">${sb('22px','22px','border-radius:50%;flex:none')}${sb('46px','46px','border-radius:50%;flex:none')}<span class="lq-nm">${sb((58-i*4)+'%','14px')}${sb('36%','11px')}</span>${sb('40px','13px','flex:none')}</div>`).join('')}</div>`;
   const xpSheet=()=>{
     const d=LG.data,me=d&&d.rows.find(r=>r.me),b=(me&&me.b)||{};
     const rows=XPR.map(([k,t,x,ic])=>{const v=b[k]||0;return `<div class="lq-xr"><span class="lq-xi">${ic()}</span><div><b>${t}</b><small>${x}</small></div>${v?`<span class="lq-xv">+${nm(v)}</span>`:''}</div>`}).join('');
@@ -1926,6 +1892,7 @@ host.addEventListener('click',e=>{
   const lgHtml=()=>{
     lgCache();
     const d=LG.data,tier=d?Math.max(0,Math.min(9,d.tier|0)):0;
+    if(!d&&!LG.err&&!D.guest)return wrapD(`<div class="pg pgs lq" data-lgsc><div class="lq-h"><h1>League</h1><div class="lq-sub">${sb('86px','12px')}</div></div>${skel()}<div class="lq-pad"></div></div>${nav('league')}`);
     const rows=d?d.rows:[];
     const dem=d&&d.demotionXp||DEM;
     // the red zone starts below the top 3 (those places are the promotion places)
@@ -1933,9 +1900,9 @@ host.addEventListener('click',e=>{
     let list='';
     if(D.guest)list='<div class="lq-msg">Create your profile to join the league.</div>';
     else if(!d&&LG.err)list=`<div class="lq-msg">${esc(LG.err)}<button type="button" class="lq-btn" data-lgretry>TRY AGAIN</button></div>`;
-    else if(!d)list=skel();
+    else if(!d)list='';
     else list=rows.map((r,i)=>(zoneAt>=0&&i===zoneAt?`<div class="lq-dz"><i>${ADN}</i><b>DEMOTION ZONE</b><i>${ADN}</i></div>`:'')+row(r,i,zoneAt>=0&&i>=zoneAt)).join('');
-    const trophies=TROPHIES.map((t,i)=>`<div class="lq-t ${i<tier?'done':i===tier?'cur':'fut'}" data-lgt="${i}" role="img" aria-label="${t.n}"><img src="${t.src}" width="${t.w}" height="${t.h}" alt="" draggable="false"><i class="lq-sh"></i></div>`).join('');
+    const trophies=TROPHIES.map((t,i)=>`<div class="lq-t ${i<tier?'done':i===tier?'cur':'fut'}" data-lgt="${i}" role="img" aria-label="${t.n}"><img src="${t.src}" width="${t.w}" height="${t.h}" alt="" draggable="false" decoding="async"><i class="lq-sh"></i></div>`).join('');
     const day=d?Math.max(1,Math.min(7,Math.floor((Date.now()-d.start)/864e5)+1)):1;
     const dots=d?`<div class="lq-days" role="img" aria-label="Day ${day} of 7">${[1,2,3,4,5,6,7].map(n=>`<i class="${n<day?'on':n===day?'cur':''}"></i>`).join('')}</div>`:'';
     const info=d?(tier<9?`<p class="lq-info">Finish in the top ${d.top||3} with at least ${d.minXp||50} XP to reach the ${tierName(tier+1)} League.</p>`:'<p class="lq-info">You are in the highest league. Keep studying to stay on top!</p>'):'';
@@ -1945,7 +1912,25 @@ host.addEventListener('click',e=>{
     const cta=d&&rows.length<2&&!D.guest?`<div class="lq-add"><p>Add friends to compete in your league.</p><button type="button" class="lq-btn" data-lgfind>FIND FRIENDS</button></div>`:'';
     return wrapD(`<div class="pg pgs lq" data-lgsc><div class="lq-h"><h1>${tierName(tier)} League</h1><div class="lq-sub"><i>${CLK2}</i><span data-lgleft>${d?leftTxt(Math.max(0,d.end-Date.now())):'7 DAYS'}</span></div></div><div class="lq-ts" data-lgts>${trophies}</div>${dots}${info}${how}${note}<div class="lq-l">${list}</div>${cta}<div class="lq-pad"></div></div>${nav('league')}${LG.sheet?xpSheet():''}`);
   };
-  const lgRedraw=()=>{if(!SCREENS[CUR]||SCREENS[CUR].t!=='League')return;const sc=R&&R.querySelector('[data-lgsc]'),ts=R&&R.querySelector('[data-lgts]'),y=sc?sc.scrollTop:0,x=ts?ts.scrollLeft:0;go('League',true);const n=R&&R.querySelector('[data-lgsc]'),t2=R&&R.querySelector('[data-lgts]');if(n)n.scrollTop=y;if(t2)t2.scrollLeft=x};
+  const lgRedraw=()=>{
+    if(!SCREENS[CUR]||SCREENS[CUR].t!=='League')return;
+    const sc=R&&R.querySelector('[data-lgsc]'),ts=R&&R.querySelector('[data-lgts]'),y=sc?sc.scrollTop:0,x=ts?ts.scrollLeft:0;
+    // where every row (and its XP) is now, so the new picture can slide from there
+    const old={};let had=false;
+    if(R)R.querySelectorAll('.lq-r[data-rid]').forEach(el=>{had=true;old[el.dataset.rid]={top:el.getBoundingClientRect().top,xp:+el.dataset.xp||0}});
+    LG.nf=had;go('League',true);LG.nf=false;
+    const n=R&&R.querySelector('[data-lgsc]'),t2=R&&R.querySelector('[data-lgts]');if(n)n.scrollTop=y;if(t2)t2.scrollLeft=x;
+    if(!had||!R||SOFT)return;
+    const K=host.__dzK||1;let moved=0;
+    R.querySelectorAll('.lq-r[data-rid]').forEach(el=>{
+      const o=old[el.dataset.rid];if(!o)return;
+      const dy=(o.top-el.getBoundingClientRect().top)/K;
+      if(Math.abs(dy)>2){moved++;el.style.zIndex=el.classList.contains('me')?'2':'1';el.animate([{transform:`translateY(${dy}px)`},{transform:'none'}],{duration:680,easing:'cubic-bezier(.3,1.15,.4,1)'})}
+      const nx=+el.dataset.xp||0,u=el.querySelector('.lq-xp u');
+      if(u&&nx!==o.xp){const t0=performance.now();const tk=(now)=>{const k=Math.min(1,(now-t0)/700),v=Math.round(o.xp+(nx-o.xp)*(1-Math.pow(1-k,3)));u.textContent=nm(v);if(k<1&&u.isConnected)requestAnimationFrame(tk)};requestAnimationFrame(tk)}
+    });
+    if(moved){hap('medium');playSfx('league',.8)}
+  };
   const lgCenter=()=>{const ts=R&&R.querySelector('[data-lgts]'),c=ts&&ts.querySelector('.lq-t.cur');if(!c)return;ts.scrollLeft=c.offsetLeft-(ts.clientWidth-c.offsetWidth)/2};
   const lgConfetti=()=>{const ts=R&&R.querySelector('[data-lgts]'),c=ts&&ts.querySelector('.lq-t.cur');if(!c)return;const cols=['#ffd23f','#ff7a45','#4fb3e8','#ff4a6d','#6bdc9a','#ffffff','#b18cff'];
     const box=document.createElement('div');box.className='lq-cf';c.appendChild(box);
@@ -1957,13 +1942,35 @@ host.addEventListener('click',e=>{
     if(!force&&LG.data&&Date.now()-LG.at<20000)return;
     LG.loading=true;LG.err='';let r=null;try{r=await CB.leagueLoad()}catch(_){r=null}LG.loading=false;
     if(r&&r.ok&&r.data&&Array.isArray(r.data.rows)){
-      LG.data=r.data;LG.at=Date.now();try{localStorage.setItem(lgKey(),JSON.stringify(r.data))}catch(_){}
+      LG.data=r.data;LG.at=Date.now();DZ.preGen=(DZ.preGen||0)+1;try{localStorage.setItem(lgKey(),JSON.stringify(r.data))}catch(_){}
       const L=r.data.last;let seen='';try{seen=localStorage.getItem(seenKey())||''}catch(_){}
       if(L&&String(L.at)!==seen){try{localStorage.setItem(seenKey(),String(L.at))}catch(_){}LG.note=L;LG.noteAt=Date.now();
         if(SCREENS[CUR]&&SCREENS[CUR].t==='League')hap(L.up?'success':'light')}
     }else LG.err=(r&&r.message)||'Could not load the league. Try again.';
     lgRedraw();
     if(LG.note&&LG.note.up&&SCREENS[CUR]&&SCREENS[CUR].t==='League'&&Date.now()-LG.noteAt<2e3)setTimeout(lgConfetti,450);
+  };
+  /* what changed since the last streak page: did you climb the list? (used by the League update page) */
+  DZ.leagueDelta=async()=>{
+    if(D.guest||!CB.leagueLoad)return null;
+    lgCache();
+    let r=null;
+    try{r=await Promise.race([CB.leagueLoad(),new Promise(res=>setTimeout(()=>res(null),3500))])}catch(_){r=null}
+    if(!r||!r.ok||!r.data||!Array.isArray(r.data.rows)||!r.data.rows.length)return null;
+    const d=r.data;LG.data=d;LG.at=Date.now();DZ.preGen=(DZ.preGen||0)+1;
+    try{localStorage.setItem(lgKey(),JSON.stringify(d))}catch(_){}
+    const key='studyos.league.snap:'+(D.email||'me');let prev=null;try{prev=JSON.parse(localStorage.getItem(key)||'null')}catch(_){prev=null}
+    const rank=d.rows.findIndex(x=>x.me)+1,xp={};d.rows.forEach(x=>{xp[x.id]=x.xp});
+    try{localStorage.setItem(key,JSON.stringify({start:d.start,tier:d.tier|0,rank,xp}))}catch(_){}
+    if(!prev||!rank)return null;
+    const dem=d.demotionXp||DEM,me=d.rows.find(x=>x.me);
+    if((d.tier|0)>(prev.tier|0))return {show:true,promoted:true,animate:false,tier:d.tier|0,end:d.end,dem,before:d.rows,after:d.rows};
+    if(prev.start!==d.start||rank>=prev.rank)return null;
+    const before=d.rows.map(x=>Object.assign({},x,{xp:Math.max(0,prev.xp&&prev.xp[x.id]!=null?prev.xp[x.id]:0)}));
+    before.sort((a,b)=>b.xp-a.xp||b.tasks-a.tasks||(a.id<b.id?-1:1));
+    if(before.findIndex(x=>x.me)<=d.rows.findIndex(x=>x.me))return null;
+    void me;
+    return {show:true,promoted:false,animate:true,tier:d.tier|0,end:d.end,dem,before,after:d.rows};
   };
   DZ.lqClose=()=>{if(LG.sheet&&SCREENS[CUR]&&SCREENS[CUR].t==='League'){LG.sheet=false;lgRedraw();return true}return false};
   const lgPlay=()=>{
@@ -2333,6 +2340,7 @@ ${q?`<svg x="90" y="90" width="460" height="460" viewBox="${q.vb}">${q.body}</sv
 <div style="margin-top:20px">${bar('30%',18)}</div><div style="margin-top:12px">${rowsS(3)}</div></div>${nav('home')}`,
       Tasks:()=>`<div class="pg">${tb()}${bar('32%',26,'margin-top:14px')}${bar('62%',13,'margin-top:10px')}${bar('100%',40,'margin-top:16px;border-radius:20px')}<div style="margin-top:16px">${rowsS(5)}</div></div>${nav('tasks')}`,
       Study:()=>`<div class="pg">${tb()}${bar('32%',26,'margin-top:14px')}${bar('58%',13,'margin-top:10px')}<div style="margin-top:16px;display:grid;gap:10px">${[0,1,2,3].map(()=>`<div class="skc" style="padding:18px;display:grid;gap:10px">${bar('46%',16)}${bar('72%',12)}</div>`).join('')}</div></div>${nav('study')}`,
+      Profile:()=>`<div class="pg pfsk">${bar('44%',26,'margin-top:14px')}<div style="margin-top:18px;display:flex;align-items:center;gap:16px"><div class="sk" style="width:92px;height:92px;border-radius:50%;flex:none"></div><div style="flex:1;display:grid;gap:10px">${bar('62%',18)}${bar('40%',12)}</div></div>${bar('100%',50,'margin-top:20px;border-radius:16px')}<div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px">${[0,1,2,3].map(()=>`<div class="skc" style="padding:16px;display:grid;gap:8px">${bar('44%',12)}${bar('70%',18)}</div>`).join('')}</div><div style="margin-top:20px">${rowsS(3)}</div></div>${nav('profile')}`,
       Friends:()=>`<div class="pg">${tb()}${bar('38%',26,'margin-top:14px')}<div style="margin-top:18px">${Array.from({length:5},(_,i)=>`<div class="skc" style="margin-top:${i?10:0}px;display:flex;align-items:center;gap:12px"><div class="sk" style="width:40px;height:40px;border-radius:50%;flex:none"></div><div style="flex:1;display:grid;gap:8px">${bar('50%',14)}${bar('28%',10)}</div>${bar('34px',14)}</div>`).join('')}</div></div>${nav('profile')}`
     };
     Object.keys(SK).forEach(t=>{const k=IDX(t);if(k<0)return;const oh=SCREENS[k].html,op=SCREENS[k].play;
@@ -2387,8 +2395,10 @@ host.addEventListener('click',e=>{
   const n=e.target.closest('.nv[data-k]');if(!n)return;
   const k=n.dataset.k;hap('tick');
   if(k==='more'){e.stopPropagation();if(MOREON)closeMore();else openMore();return}
-  if(k==='league'){if(MOREON)closeMore();if(SCREENS[CUR]&&SCREENS[CUR].t!=='League')go('League');return}
-  if(MOREON)closeMore();
+  if(k==='league'){if(MOREON)closeMore(true);if(SCREENS[CUR]&&SCREENS[CUR].t!=='League'&&!(DZ.slideTo&&DZ.slideTo('League')))go('League');return}
+  if(MOREON)closeMore(true);
+  const tabName={home:'Home',tasks:'Tasks',focus:'Focus',study:'Study'}[k];
+  if(tabName&&DZ.slideTo&&DZ.slideTo(tabName))return;
   if(opts.onTab)opts.onTab(k);
   const m={home:'Home',tasks:'Tasks',focus:'Focus',study:'Study'}[k];
   if(m&&SCREENS[CUR].t!==m)go(m);
@@ -2687,39 +2697,256 @@ ${q?`<svg x="420" y="410" width="136" height="136" viewBox="${q.vb}">${q.body}</
     DZ.fpFrom=from||'Profile';hap('light');go('Friend profile');load();
   };
 }
-// Swipe left/right on Home, Tasks, Focus and Study to move to the next/previous tab.
+// Swipe between pages (the page follows your finger and settles with a spring).
+//  - Home, Tasks, Focus, Study, League and Streak (Personal / Friends): drag sideways, the next page slides in beside it.
+//  - Every other page: drag from the left edge to go back; the page slides away and the page behind is revealed.
+// All the numbers you may want to tune are in TUNE.
+const TUNE={
+  stiff:560,        // spring stiffness: higher = snappier
+  damp:47,          // spring damping: about 2 x the square root of the stiffness is exactly no bounce
+  commit:.22,       // share of the screen you must drag to change page when you let go slowly
+  fling:.24,        // or a flick faster than this (screen widths per second / 1000) always changes page
+  edge:56,          // width of the left-edge strip that starts "swipe back" (screen pixels)
+  backCommit:.36,   // share of the screen for swipe back
+  rubber:.26        // how far the page stretches past the first or last page (share of the finger's movement)
+};
 (function(){
-  const TABS=['home','tasks','focus','study'],TITLE={home:'Home',tasks:'Tasks',focus:'Focus',study:'Study'};
-  let sw=null;
-  const SVPAIR={'Streak':{l:'Streak friends'},'Streak friends':{r:'Streak'}};
+  const ORDER=['Home','Tasks','Focus','Study','League'],KEYOF={Home:'home',Tasks:'tasks',Focus:'focus',Study:'study',League:'league'};
+  const PAIR=['Streak','Streak friends'];
+  let g=null,ACT=null;
+  const PRE={R:null,els:{},gen:-1};   // finished copies of the neighbouring pages, made while the phone is idle
+  const nbOf=(cur,dir)=>{
+    let i=ORDER.indexOf(cur);if(i>=0){const j=i+dir;return j>=0&&j<ORDER.length?ORDER[j]:null}
+    i=PAIR.indexOf(cur);if(i>=0){const j=i+dir;return j>=0&&j<PAIR.length?PAIR[j]:null}
+    return null;
+  };
+  const OVERLAY='.cx,.cho,.lq-sheet,.svsheet,.sh2-sheet,.fp-sh,.fp-ov,.qsheet,.pk-ov,.more-menu,.more-sc,.sq-sheet,.dz-layer';
   const blocked=t=>{
     if(!t||!t.closest)return true;
-    if(t.closest('input,textarea,select,[contenteditable],.swipe,[data-noswipe],.sh2-sheet,.qsheet,.pk-ov,.dz-layer,.more,[data-moresc]'))return true;
+    if(t.closest('input,textarea,select,[contenteditable],.swipe,[data-noswipe],'+OVERLAY+',[data-tid]'))return true;
     for(let el=t;el&&el!==host;el=el.parentElement){
       if(el.scrollWidth>el.clientWidth+4){const o=getComputedStyle(el).overflowX;if(o==='auto'||o==='scroll')return true}
     }
     return false;
   };
+  const movers=r=>Array.from(r.children).filter(el=>!el.matches('.nav,.dz-nb,.more-sc,.more-menu,.lamp,.lq-sheet,.sh2-sheet,.cho'));
+  const makePage=(name)=>{
+    if(PRE.R!==R||PRE.gen!==(DZ.preGen||0)){PRE.R=R;PRE.els={};PRE.gen=DZ.preGen||0}
+    if(PRE.els[name])return PRE.els[name];
+    const i=IDX(name);if(i<0)return null;
+    let h='';try{h=ltFix(qhFix(SCREENS[i].html()))}catch(_){return null}
+    const w=document.createElement('div');w.className='dz-nb';w.setAttribute('aria-hidden','true');w.innerHTML=h;
+    const sc=w.firstElementChild;if(!sc)return null;
+    sc.querySelectorAll('.nav,.more-menu,.more-sc,.lq-sheet,.sh2-sheet,.cho').forEach(n=>n.remove());
+    PRE.els[name]=w;return w;
+  };
+  // build the two neighbouring pages a moment after a page is shown, when nothing else is going on
+  DZ.prebuild=()=>{
+    const r0=R,t0=SCREENS[CUR]&&SCREENS[CUR].t;
+    if(!r0||!t0||(ORDER.indexOf(t0)<0&&PAIR.indexOf(t0)<0))return;
+    const go1=()=>{if(R!==r0||g||DZ.dragging||!R.isConnected)return;[-1,1].forEach(d=>{const n=nbOf(t0,d);if(n)makePage(n)})};
+    setTimeout(()=>{if(window.requestIdleCallback)requestIdleCallback(go1,{timeout:1500});else go1()},500);
+  };
+  const mix=(t)=>{const a=[235,232,234],b=[27,30,37];return 'rgb('+a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(',')+')'};
+  const setX=(G,x)=>{
+    if(G.kind==='back'){
+      G.R0.style.transform='translate3d('+x+'px,0,0)';
+      if(G.ul){const p=Math.max(0,Math.min(1,x/G.W));G.ul.style.transform='translate3d('+(-(1-p)*G.W*.26)+'px,0,0)';G.ul.style.setProperty('--sc',(.42*(1-p)).toFixed(3))}
+      return;
+    }
+    const w=G.W,nbx=G.dir===1?x+w:x-w;
+    for(const m of G.mv)m.style.transform='translate3d('+x+'px,0,0)';
+    if(G.nb)G.nb.style.transform='translate3d('+nbx+'px,0,0)';
+    if(G.lamp&&G.l1){const p=Math.min(1,Math.abs(x)/w);
+      G.lamp.style.transform='translateX('+(G.l0.x+(G.l1.x-G.l0.x)*p)+'px)';G.lamp.style.width=(G.l0.w+(G.l1.w-G.l0.w)*p)+'px';
+      if(G.tabA&&G.tabB){G.tabA.style.color=mix(1-p);G.tabB.style.color=mix(p)}}
+  };
+  // both neighbours are put in place (hidden, parked beside the screen) the moment the finger starts to move
+  const park=(G)=>{
+    G.cand={};
+    [-1,1].forEach(d=>{
+      const n=nbOf(G.cur,d);if(!n)return;
+      const w=makePage(n);if(!w)return;
+      w.style.visibility='hidden';w.style.transform='translate3d('+(d*G.W)+'px,0,0)';w.classList.toggle('left',d<0);
+      if(w.parentNode!==R){const nav=R.querySelector('.nav');R.insertBefore(w,nav||null)}
+      G.cand[d]=w;
+    });
+  };
+  const unpark=(G)=>{
+    if(G.cand)Object.keys(G.cand).forEach(k=>{const w=G.cand[k];if(w){w.style.visibility='hidden';w.style.transform='';w.style.willChange='';if(w.parentNode)w.remove()}});
+    G.cand=null;
+  };
+  const place=(dir)=>{
+    if(g.nb&&g.nb!==(g.cand&&g.cand[dir])){g.nb.style.visibility='hidden'}
+    g.dir=dir;g.name=nbOf(g.cur,dir);
+    const w=g.cand&&g.cand[dir];
+    if(w){g.nb=w;w.style.willChange='transform';w.style.visibility='visible'}else{g.nb=null;g.name=null}
+    g.lamp=null;g.l1=null;
+    if(g.tabA)g.tabA.style.color='';if(g.tabB)g.tabB.style.color='';
+    g.tabA=g.tabB=null;
+    const nav=R.querySelector('.nav'),lamp=nav&&nav.querySelector('.lamp'),on=nav&&nav.querySelector('.nv.on');
+    const key=g.name&&KEYOF[g.name],tb=key&&nav&&nav.querySelector('.nv[data-k="'+key+'"]');
+    if(lamp&&on&&tb&&g.name){g.lamp=lamp;g.tabA=on;g.tabB=tb;g.l0={x:on.offsetLeft,w:on.offsetWidth};g.l1={x:tb.offsetLeft,w:tb.offsetWidth};on.style.color=mix(1)}
+    setX(g,g.x);          // right away, so the page is never seen for even one frame in the wrong place
+  };
+  const spring=(from,to,v0,frame,done)=>{
+    let x=from,v=v0,last=performance.now(),dead=false;
+    const K=TUNE.stiff,C=TUNE.damp;
+    const st={cancel(){dead=true}};
+    const step=now=>{
+      if(dead)return;
+      let rem=Math.min(.034,Math.max(.001,(now-last)/1000));last=now;
+      while(rem>0){const h=Math.min(rem,.004);v+=(-K*(x-to)-C*v)*h;x+=v*h;rem-=h}
+      if(Math.abs(x-to)<.35&&Math.abs(v)<12){frame(to);done();return}
+      frame(x);requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    return st;
+  };
+  const stopClick=()=>{
+    const st=ev=>{ev.stopPropagation();ev.preventDefault()};
+    host.addEventListener('click',st,{capture:true,once:true});
+    setTimeout(()=>host.removeEventListener('click',st,true),380);
+  };
+  const tidy=(G)=>{
+    if(G.kind==='back'){
+      G.R0.style.transform='';G.R0.style.boxShadow='';G.R0.style.willChange='';
+      if(G.ul){G.ul.style.visibility='hidden';G.ul.classList.remove('ul');if(G.ul.parentNode)G.ul.remove()}
+      return;
+    }
+    for(const m of G.mv){m.style.transform='';m.style.willChange=''}
+    unpark(G);
+    if(G.tabA)G.tabA.style.color='';if(G.tabB)G.tabB.style.color='';
+  };
+  const end=(commit,G)=>{
+    const gg=G||g;if(!G)g=null;
+    DZ.dragging=false;
+    const finish=()=>{
+      ACT=null;
+      const live=gg.R0===R&&R&&R.isConnected;
+      if(commit&&live){
+        if(gg.kind==='back'){tidy(gg);hap('light');back(true)}
+        else if(gg.name){
+          const name=gg.name,k=KEYOF[name];
+          if(gg.lamp&&gg.l1)LAMPX=gg.l1.x;
+          tidy(gg);
+          hap('tick');
+          if(opts.onTab&&k&&name!=='League')opts.onTab(k);
+          go(name,true);
+        }else tidy(gg);
+      }else{
+        tidy(gg);
+        if(gg.kind!=='back'&&gg.lamp&&gg.l0){gg.lamp.style.width='';gg.lamp.style.transform='translateX('+gg.l0.x+'px)'}
+      }
+      if(DZ.pend){DZ.pend=false;refresh()}
+    };
+    const to=commit?(gg.kind==='back'?gg.W:-gg.dir*gg.W):0;
+    const clampX=commit?(gg.kind==='back'?(x=>Math.max(0,Math.min(gg.W,x))):(x=>Math.max(-gg.W,Math.min(gg.W,x)))):(gg.kind==='back'?(x=>Math.max(0,x)):(x=>x));
+    const sp=spring(gg.x,to,gg.v,x=>{if(gg.R0!==R||!R.isConnected)return;setX(gg,clampX(x))},finish);
+    ACT={finish:()=>{sp.cancel();finish()}};
+  };
+  const abandon=()=>{   // the touch was a tap or a scroll, not a swipe: put everything back
+    if(g){if(g.kind==='fwd'){(g.mv||[]).forEach(m=>{m.style.willChange=''});unpark(g)}else if(g.ul){g.ul.style.visibility='hidden';g.ul.classList.remove('ul');if(g.ul.parentNode)g.ul.remove()}}
+    g=null;
+  };
   host.addEventListener('pointerdown',e=>{
+    if(ACT){const a=ACT;ACT=null;a.finish()}
+    abandon();
     const cur=SCREENS[CUR]&&SCREENS[CUR].t;
-    sw=(!MOREON&&cur&&(TABS.some(k=>TITLE[k]===cur)||SVPAIR[cur])&&e.isPrimary!==false&&!blocked(e.target))?{x:e.clientX,y:e.clientY,t:Date.now(),cur}:null;
+    if(MOREON||!cur||e.isPrimary===false||host.classList.contains('dz-kb')||!R)return;
+    if(host.querySelector(OVERLAY.replace(',.more-menu,.more-sc',',.cho')))return;
+    const inFwd=ORDER.indexOf(cur)>=0||PAIR.indexOf(cur)>=0;
+    const edge=(e.clientX-host.getBoundingClientRect().left)<=TUNE.edge;
+    let kind=null;
+    if(edge&&cur!=='Home'&&(ORDER.indexOf(cur)<0)&&cur!=='Streak friends'&&!blocked(e.target))kind='back';
+    else if(inFwd&&!blocked(e.target))kind='fwd';
+    if(!kind)return;
+    const K=host.__dzK||(host.clientWidth||360)/360;
+    g={id:e.pointerId,x0:e.clientX,y0:e.clientY,K,cur,kind,phase:'wait',R0:R,W:R.offsetWidth||360,mv:[],nb:null,ul:null,cand:null,dir:0,name:null,x:0,v:0,base:0,smp:[[performance.now(),e.clientX]],raf:0,lamp:null,prepped:false};
   },true);
-  host.addEventListener('pointercancel',()=>{sw=null},true);
-  host.addEventListener('pointerup',e=>{
-    const s=sw;sw=null;if(!s||(SCREENS[CUR]&&SCREENS[CUR].t)!==s.cur)return;
-    const dx=e.clientX-s.x,dy=e.clientY-s.y,ms=Date.now()-s.t;
-    if(Math.abs(dx)<70||Math.abs(dy)>Math.abs(dx)*0.6||ms>900)return;
-    if(SVPAIR[s.cur]){const nt=dx<0?SVPAIR[s.cur].l:SVPAIR[s.cur].r;if(!nt)return;hap('tick');go(nt);DZ.slide(dx<0?1:-1);const st=ev=>{ev.stopPropagation();ev.preventDefault()};host.addEventListener('click',st,{capture:true,once:true});setTimeout(()=>host.removeEventListener('click',st,true),350);return}
-    const from=TABS.findIndex(k=>TITLE[k]===s.cur),to=from+(dx<0?1:-1);
-    if(to<0||to>=TABS.length)return;
-    const k=TABS[to];hap('tick');
-    if(opts.onTab)opts.onTab(k);
-    go(TITLE[k]);
-    try{if(R&&R.animate)R.animate([{transform:`translateX(${dx<0?28:-28}px)`},{transform:'none'}],{duration:170,easing:'cubic-bezier(.22,.9,.28,1)'})}catch(_){}
-    // the tap that ends a swipe must not press a button
-    const stop=ev=>{ev.stopPropagation();ev.preventDefault()};
-    host.addEventListener('click',stop,{capture:true,once:true});setTimeout(()=>host.removeEventListener('click',stop,true),350);
+  host.addEventListener('pointermove',e=>{
+    if(!g||e.pointerId!==g.id)return;
+    if(g.R0!==R||!R||!R.isConnected){DZ.dragging=false;abandon();return}
+    const dx=e.clientX-g.x0,dy=e.clientY-g.y0;
+    if(g.phase==='wait'){
+      if(Math.abs(dy)>10&&Math.abs(dy)>Math.abs(dx)){abandon();return}
+      if(!g.prepped&&Math.abs(dx)>3&&Math.abs(dx)>Math.abs(dy)){
+        g.prepped=true;
+        if(g.kind==='back'){const d=backDest(g.cur,false);g.ulEl=d?makePage(d):null}
+        else{g.mv=movers(R);g.mv.forEach(m=>{m.style.willChange='transform'});park(g)}
+      }
+      if(Math.abs(dx)>9&&Math.abs(dx)>Math.abs(dy)*1.15){
+        if(g.kind==='back'&&dx<0){abandon();return}
+        g.phase='drag';g.base=dx;DZ.dragging=true;
+        try{host.setPointerCapture(e.pointerId)}catch(_){}
+        if(g.kind==='back'){
+          if(!g.ulEl){DZ.dragging=false;abandon();return}
+          const ul=g.ulEl;ul.classList.add('ul');ul.style.transform='translate3d('+(-g.W*.26)+'px,0,0)';ul.style.setProperty('--sc','.42');
+          ul.style.willChange='transform';
+          stage.insertBefore(ul,R);ul.style.visibility='visible';g.ul=ul;
+          R.style.willChange='transform';R.style.boxShadow='-14px 0 30px rgba(0,0,0,.38)';
+        }else{
+          if(!g.mv.length){g.mv=movers(R);g.mv.forEach(m=>{m.style.willChange='transform'})}
+          if(!g.cand)park(g);
+          place(dx<0?1:-1);
+        }
+      }else return;
+    }
+    const now=performance.now();g.smp.push([now,e.clientX]);while(g.smp.length>2&&now-g.smp[0][0]>110)g.smp.shift();
+    let x=(dx-g.base)/g.K;
+    if(g.kind==='back'){
+      x=Math.max(0,Math.min(g.W,x));
+    }else{
+      const want=x<0?1:x>0?-1:g.dir;
+      if(Math.abs(x)>6&&want!==g.dir){g.x=x;place(want)}     // dragging back over the middle: the page on the other side takes over
+      if(!g.name)x=Math.sign(x)*Math.min(g.W*.2,Math.abs(x)*TUNE.rubber);   // nothing on that side: soft stretch
+      x=Math.max(-g.W,Math.min(g.W,x));
+    }
+    g.x=x;
+    const G=g;if(!G.raf)G.raf=requestAnimationFrame(()=>{G.raf=0;if(g===G&&G.R0===R)setX(G,G.x)});
   },true);
+  const up=e=>{
+    if(!g||e.pointerId!==g.id)return;
+    if(g.phase!=='drag'){abandon();return}
+    if(g.raf){cancelAnimationFrame(g.raf);g.raf=0}
+    try{host.releasePointerCapture(e.pointerId)}catch(_){}
+    if(g.R0!==R||!R||!R.isConnected){DZ.dragging=false;tidy(g);g=null;return}
+    const s=g.smp,l=s[s.length-1],f=s[0];
+    const dt=Math.max(16,l[0]-f[0]);let v=(l[1]-f[1])/dt/g.K;
+    if(e.type==='pointercancel')v=0;
+    v=Math.max(-3.5,Math.min(3.5,v));
+    g.v=v*1000;
+    stopClick();
+    if(g.kind==='back'){
+      const prog=g.x/g.W;
+      end(prog>TUNE.backCommit||(v>TUNE.fling&&prog>.03));
+      return;
+    }
+    const sgn=-g.dir;
+    const prog=(g.x*sgn)/g.W,vv=v*sgn;
+    end(!!g.name&&((prog>TUNE.commit&&vv>-TUNE.fling)||(vv>TUNE.fling&&prog>.03)));
+  };
+  host.addEventListener('pointerup',up,true);
+  host.addEventListener('pointercancel',up,true);
+  // Tapping a tab in the bar: the pages slide with exactly the same spring as a swipe (and the pill and labels move with them)
+  DZ.slideTo=(name)=>{
+    const cur=SCREENS[CUR]&&SCREENS[CUR].t,ci=ORDER.indexOf(cur),ti=ORDER.indexOf(name);
+    if(ci<0||ti<0||ci===ti||g||!R||!R.isConnected)return false;
+    if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return false;
+    if(ACT){const a=ACT;ACT=null;a.finish()}
+    const dir=ti>ci?1:-1,w=makePage(name);if(!w)return false;
+    const G={kind:'fwd',R0:R,W:R.offsetWidth||360,cur,dir,name,mv:movers(R),nb:w,cand:{},x:0,v:0,lamp:null};
+    G.cand[dir]=w;
+    w.classList.toggle('left',dir<0);w.style.transform='translate3d('+(dir*G.W)+'px,0,0)';w.style.willChange='transform';w.style.visibility='visible';
+    const nav=R.querySelector('.nav');R.insertBefore(w,nav||null);
+    G.mv.forEach(m=>{m.style.willChange='transform'});
+    const lamp=nav&&nav.querySelector('.lamp'),on=nav&&nav.querySelector('.nv.on'),tb=nav&&nav.querySelector('.nv[data-k="'+KEYOF[name]+'"]');
+    if(lamp&&on&&tb){G.lamp=lamp;G.tabA=on;G.tabB=tb;G.l0={x:on.offsetLeft,w:on.offsetWidth};G.l1={x:tb.offsetLeft,w:tb.offsetWidth};on.style.color=mix(1)}
+    DZ.dragging=true;
+    setX(G,0);
+    end(true,G);
+    return true;
+  };
 })();
 function navOnly(active){
   RUN++;timers.forEach(clearTimeout);timers.length=0;
@@ -2736,7 +2963,7 @@ function placeLamp(glide){
   const x=on.offsetLeft,w=on.offsetWidth;
   lamp.style.width=w+'px';lamp.style.transform='translateX('+x+'px)';
   if(glide&&LAMPX!==null&&LAMPX!==x&&lamp.animate){
-    try{lamp.animate([{transform:'translateX('+LAMPX+'px)'},{transform:'translateX('+x+'px)'}],{duration:190,easing:'cubic-bezier(.22,.9,.28,1)'})}catch(_){}
+    try{lamp.animate([{transform:'translateX('+LAMPX+'px)'},{transform:'translateX('+x+'px)'}],{duration:260,easing:'cubic-bezier(.22,.9,.28,1)'})}catch(_){}
   }
   LAMPX=x;
 }
@@ -2764,17 +2991,30 @@ function go0(i,soft){
   if(keepMore)openMore(true);
   restoreToggles();
   TABSW=false;
+  if(host.__dzSide)paintSides();
+  if(DZ.prebuild)DZ.prebuild();
   if(opts.onScreen)opts.onScreen(SCREENS[i].t);
 }
+// The 360 px wide design is scaled to the screen. On phones it fills the width exactly. On tablets, foldables and
+// phones turned sideways it is capped, so it never becomes huge (or too short to use) and sits in the middle.
 function layout(){
-  const w=host.clientWidth||360,h=host.clientHeight||760,K=w/360;
+  const w=host.clientWidth||360,h=host.clientHeight||760;
+  let K=w/360;
+  if(K>1.5)K=1.5;
+  if(w>h*1.05)K=Math.min(K,Math.max(.6,h/640));
+  host.__dzK=K;
+  const left=Math.max(0,(w-360*K)/2);
   stage.style.width='360px';stage.style.height=(h/K)+'px';
-  stage.style.transform='scale('+K+')';stage.style.transformOrigin='0 0';
+  stage.style.transform=left?'translate3d('+left+'px,0,0) scale('+K+')':'scale('+K+')';stage.style.transformOrigin='0 0';
+  host.__dzSide=left>1;paintSides();
+}
+function paintSides(){
+  try{host.style.background=host.__dzSide&&R?getComputedStyle(R).backgroundColor:''}catch(_){}
 }
 const ro=new ResizeObserver(layout);ro.observe(host);layout();
 const KEEP=['Home','Tasks','Friends','Study','My subjects','Sync and offline','Gem Shop','Gift gems'];
 let LASTH='',LASTI=-1;
-function refresh(){if(CUR>=0&&KEEP.includes(SCREENS[CUR].t)){
+function refresh(){if(DZ.dragging){DZ.pend=true;return}if(CUR>=0&&KEEP.includes(SCREENS[CUR].t)){
   // On the shop pages, only redraw when something on screen really changed. A redraw while a finger is
   // down replaces the button under it, and the tap is lost.
   if(/^(Gem Shop|Gift gems)$/.test(SCREENS[CUR].t)){let h='';try{h=SCREENS[CUR].html()}catch(_){}if(h&&LASTI===CUR&&h===LASTH)return;LASTH=h;LASTI=CUR}
@@ -2907,7 +3147,7 @@ const svPersonal=()=>{
   const n=Math.max(0,D.streak||0),nx=GOALS.find(g=>g>n)||(Math.ceil((n+1)/100)*100),pct=Math.min(100,n/nx*100);
   const fz=(D.shop&&D.shop.freezes)||0,lock=nx;
   return wrapD(`<div class="svp">${svHead('p')}<div class="svs">
-<div class="svhero"><div class="svhl"><span class="svchip">${svTier(n)}</span><div class="svbig${n?'':' z'}">${n}</div><div class="svdl">day streak${n?'!':''}</div></div><div class="svfl" data-svfl></div></div>
+<div class="svhero"><div class="svhl"><span class="svchip${n>0&&!stkOn()?' off':''}">${n>0&&!stkOn()?'Complete something today':svTier(n)}</span><div class="svbig${n&&stkOn()?'':' z'}">${n}</div><div class="svdl">day streak${n?'!':''}</div></div><div class="svfl" data-svfl></div></div>
 <h3 class="svt">Streak Calendar</h3><div class="svcard svcal">${svCal()}</div>
 <h3 class="svt">Streak Goal</h3><div class="svcard svgoal"><div class="svgb"><span class="svgi">${SV_FL('#fff',26)}</span><div class="svtr"><i style="width:${pct.toFixed(1)}%"></i></div><span class="svgn"><b>${nx}</b><small>days</small></span></div><div class="svgt">${n} / ${nx} days</div></div>
 <h3 class="svt">Streak Perks</h3>
@@ -2959,7 +3199,7 @@ const svPlay=tab=>()=>{
   if(DZ.flame){DZ.flame.destroy();DZ.flame=null}
   const n=Math.max(0,D.streak||0);
   const hostEl=tab==='p'?$('[data-svfl]',R):$('[data-svfl2]',R);
-  if(hostEl){DZ.flame=createFlame(hostEl,{state:n===0?'inactive':'idle'});hostEl.onclick=()=>{hap('streakIgnite');DZ.flame&&DZ.flame.increase();playStreakClip(.8)}}
+  if(hostEl){DZ.flame=createFlame(hostEl,{state:(n===0||!stkOn())?'inactive':'idle'});hostEl.onclick=()=>{hap('streakIgnite');DZ.flame&&DZ.flame.increase();playStreakClip(.8)}}
   const swapCal=()=>{const c=$('.svcal',R);if(c){c.innerHTML=svCal();c.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:220,easing:'ease-out'})}};
   if(!SOFT){SVM=0;SVP=null}
   const svEnsure=async()=>{
@@ -3341,7 +3581,7 @@ ${suggBlock(12)}`);
   let AC=null;const ac=()=>{try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();return AC}catch(_){return null}};
   const tone=(f,d,o={})=>{const c=ac();if(!c)return;const t=c.currentTime+(o.t||0),os=c.createOscillator(),g=c.createGain();os.type=o.type||'sine';os.frequency.setValueAtTime(f,t);if(o.f2)os.frequency.exponentialRampToValueAtTime(o.f2,t+d);
     g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(o.g||.2,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+d);os.connect(g);g.connect(c.destination);os.start(t);os.stop(t+d+.05)};
-  const NB=new Map();const noise=(d,o={})=>{const c=ac();if(!c)return;const t=c.currentTime+(o.t||0),n=Math.floor(c.sampleRate*d),nk=d+'|'+(o.p||2)+'|'+c.sampleRate;let b=NB.get(nk);if(!b){b=c.createBuffer(1,n,c.sampleRate);const a=b.getChannelData(0);for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*Math.pow(1-i/n,o.p||2);NB.set(nk,b)}
+  const noise=(d,o={})=>{const c=ac();if(!c)return;const t=c.currentTime+(o.t||0),n=Math.floor(c.sampleRate*d),b=c.createBuffer(1,n,c.sampleRate),a=b.getChannelData(0);for(let i=0;i<n;i++)a[i]=(Math.random()*2-1)*Math.pow(1-i/n,o.p||2);
     const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=b;f.type=o.type||'lowpass';f.frequency.setValueAtTime(o.f1||1200,t);if(o.f2)f.frequency.exponentialRampToValueAtTime(o.f2,t+d);g.gain.value=o.g||.3;s.connect(f);f.connect(g);g.connect(c.destination);s.start(t)};
   const SND={
     ignite(){noise(.35,{f1:600,f2:4000,type:'bandpass',g:.35});tone(220,.3,{f2:660,type:'triangle',g:.12})},
@@ -3351,10 +3591,8 @@ ${suggBlock(12)}`);
     day(i){tone(880+i*70,.1,{type:'triangle',g:.13});tone(1760+i*140,.06,{t:.03,g:.05})},
     win(){[784,988,1175,1568].forEach((f,i)=>{tone(f,.28,{t:i*.09,type:'triangle',g:.14});tone(f*2,.16,{t:i*.09,g:.03})})}
   };
-  // ---- the flame (same shape as the reference: rounded red flame, orange body, white drop) ----
-  const FLAME=(id,grey)=>`<svg viewBox="0 0 100 120" class="sc-fl${grey?' grey':''}" aria-hidden="true">${flameInner(grey?FLAME_PAL.grey:FLAME_PAL.red,id,{shadow:false,cls:true})}</svg>`;
   const CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.400" stroke-linecap="round" stroke-linejoin="round"><path d="M5.500 12.500l4.500 4.500L18.500 7.500"/></svg>';
-  const CHEST=()=>`<img class="sc-chest" src="${(DZ.CHI||{}).early||''}" alt="" draggable="false">`;
+  const CHEST=()=>`<img class="sc-chest" src="${chestGreyUrl}" alt="" draggable="false" decoding="async">`;
   const SH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7.500 7.500L12 3l4.500 4.500M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>';
   const info=()=>{const n=Math.max(0,D.streak||0),now=new Date(),dow=(now.getDay()+6)%7,S0=studied(),tk=dayKey(now),today=S0.has(tk)||(D.todayMin||0)>0;
     const days=[];for(let i=0;i<7;i++){const d=new Date(now);d.setDate(now.getDate()+i-dow);const k=dayKey(d);days.push(i<dow?S0.has(k):i===dow?today:false)}
@@ -3364,70 +3602,259 @@ ${suggBlock(12)}`);
   const html=()=>{const I=info(),L=['Mo','Tu','We','Th','Fr','Sa','Su'],first=String(D.first||'').split(' ')[0];
     const lo=I.days.indexOf(true),hi=I.days.lastIndexOf(true);
     return wrapD(`<div class="scx"><button class="sc-x" type="button" data-scback aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-<div class="sc-stage"><div class="sc-arc"></div><div class="sc-sh"></div><div class="sc-fw">${FLAME('scg',true)}${FLAME('scf',false)}</div><div class="sc-pill"></div><div class="sc-emb"></div></div>
+<div class="sc-stage"><div class="sc-arc"></div><div class="sc-sh"></div><div class="sc-fw"></div><div class="sc-pill"></div><div class="sc-emb"></div></div>
 <div class="sc-num" aria-label="${I.n} day streak">${digits(String(I.n))}</div><div class="sc-lb">day streak</div>
 <div class="sc-wk"><div class="sc-wl">${L.map((d,i)=>`<span class="${i===I.dow?'t':''}">${d}</span>`).join('')}</div>
 <div class="sc-wr"><i class="sc-cap" style="--lo:${lo<0?0:lo};--hi:${hi<0?0:hi}"></i>${L.map((d,i)=>`<span class="sc-dot${I.days[i]?' on':''}${i===I.dow?' t':''}${i>I.dow?' fu':''}" style="--k:${i}">${i===6&&!I.days[i]?CHEST():I.days[i]?CHK:''}</span>`).join('')}</div>
 <div class="sc-wn">${I.dates.map((d,i)=>`<span class="${I.days[i]?'on':''}${i===I.dow?' t':''}${i>I.dow?' fu':''}">${d}</span>`).join('')}</div></div>
 <p class="sc-msg">${I.n===0?'Study today to light your first flame!':I.today?`Keep learning tomorrow to make it ${I.n+1}!`:`Study today to keep your ${I.n} day streak!`}</p>
 <div class="sc-bt"><button class="sc-shb" type="button" data-scshare aria-label="Share my streak">${SH}</button><button class="sc-go" type="button" data-scgo>${I.n} ${I.n===1?'DAY':'DAYS'}. GO ${esc(first.toUpperCase()||'YOU')}</button></div></div>`)};
-  const play=()=>{const TK=.8,atk=(ms,fn)=>at(Math.round(ms*TK),fn);const I=info(),reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* ---- timing: every moment below is a time in the sound file (design/assets/streak_fire.mp3), in seconds.
+     The file starts with 0.28 s of silence, so playback starts at SKIP and MS() turns file time into ms after the sound starts.
+       0.30  quiet rising hum            -> the grey flame is on screen, it squashes into the pill
+       0.72  crackle                     -> ignition
+       0.82  whoosh begins               -> the flame shoots up (upright) and swirls
+       1.05  whoosh swells               -> the number starts to roll
+       1.40  low thud                    -> top of the jump, number lands on 228 and turns hot
+       1.50  whistle                     -> the flame comes straight down
+       1.79  loudest hit                 -> splash on the ground
+       2.30  quiet crackle               -> it keeps burning
+       2.95  soft hit                    -> the week slides in
+       3.10  whisper                     -> the days light up, smoke
+       3.85  small tick                  -> today lights up
+       4.00  fade out                    -> message and button */
+  const SKIP=.28,MS=t=>Math.max(0,Math.round((t-SKIP)*1000));
+  setTimeout(()=>{try{preloadStreakSound()}catch(_){}},1200);
+  const play=()=>{const I=info(),reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
     const to=String(I.n),from=I.today&&I.n>0?String(I.n-1).padStart(to.length,' '):to;
     const cols=$$('.sc-c',R),set=(c,ch)=>{c.style.transform=`translateY(${-(ch===' '?0:+ch)*10}%)`;c.parentNode.classList.toggle('blank',ch===' ')};
+    if(DZ.scFire){DZ.scFire.destroy();DZ.scFire=null}
+    if(DZ.scSnd){DZ.scSnd.stop(.08);DZ.scSnd=null}
+    if(DZ.leaguePrefetch)DZ.leaguePrefetch();
+    const root=$('.scx',R),fw=$('.sc-fw',R),arc=$('.sc-arc',R),num=$('.sc-num',R),pill=$('.sc-pill',R),sh=$('.sc-sh',R);
+    // the streak fire: vector frames traced from the design sheets + one particle canvas over the screen (see streakfire.js)
+    const fire=root&&fw?(DZ.scFire=createStreakFire({host:fw,root,reduce:!!(reduce||SOFT),shadow:sh})):null;
     R.onclick=e=>{if(e.target.closest('[data-scback]')){back();return}
       if(e.target.closest('[data-scshare]')){hap('light');if(CB.share)CB.share(I.n+' day study streak on StudyOS! Can you beat it?');return}
-      if(e.target.closest('[data-scgo]')){hap('success');back();return}
-      if(e.target.closest('.sc-fw')){hap('streakIgnite');SND.ignite();const w=$('.sc-fw',R);w&&w.animate([{transform:'none'},{transform:'translateY(-30px) rotate(-12deg) scale(1.08)'},{transform:'none'}],{duration:460,easing:'cubic-bezier(.3,1.4,.5,1)'});embers(10)}};
-    const root=$('.scx',R),stage=$('.sc-stage',R),fw=$('.sc-fw',R),grey=$('.sc-fl.grey',R),fl=$$('.sc-fl',R)[1],pill=$('.sc-pill',R),arc=$('.sc-arc',R),num=$('.sc-num',R);
-    if(!fw||!fl||!grey||!num){cols.forEach((c,i)=>set(c,to[i]));return}
-    const POOL=[];let PI=0;
-    const embers=(n)=>{const box=$('.sc-emb',R);if(!box||reduce)return;if(!POOL.length){for(let i=0;i<30;i++){const p=document.createElement('i');p.style.opacity='0';box.appendChild(p);POOL.push(p)}}
-      for(let i=0;i<n;i++){const p=POOL[PI++%POOL.length],c=['#ffb02e','#ff6a3d','#ffe680','#ff3b3b'][i%4],x=(Math.random()-.5)*120,y=-90-Math.random()*120,s=4+Math.random()*6;
-        p.style.width=p.style.height=s+'px';p.style.setProperty('--c',c);
-        p.animate([{transform:'translate3d(-50%,0,0) scale(1)',opacity:1},{transform:`translate3d(calc(-50% + ${x}px),${y}px,0) scale(.2)`,opacity:0}],{duration:900+Math.random()*900,easing:'cubic-bezier(.2,.7,.3,1)',fill:'both'})}};
-    // the 18 sparks that swirl out at the ignition are made once, before anything moves
-    const SPK=[];if(!reduce&&stage){for(let i=0;i<18;i++){const sp=document.createElement('i');sp.className='sc-spk';sp.style.setProperty('--c',['#ffb02e','#ff6a3d','#ffe680'][i%3]);sp.style.opacity='0';stage.appendChild(sp);SPK.push(sp)}}
-    ac();   // wake the audio engine now, so the first sound does not stall the animation
-    const finalState=()=>{cols.forEach((c,i)=>set(c,to[i]));root.classList.add('lit');grey.style.opacity=0;fl.style.opacity=1};
-    if(SOFT||reduce||!(I.today&&I.n>0)){finalState();root.classList.add('done');if(!SOFT&&!reduce){$$('.sc-num,.sc-lb,.sc-wk,.sc-msg,.sc-bt',R).forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:420,delay:200+i*90,fill:'backwards'}))}
-      if(!reduce&&I.n>0){const t=setInterval(()=>{if(!R||!R.isConnected||SCREENS[CUR].t!=='Streak celebration'){clearInterval(t);return}embers(2)},420)}return}
-    // 0 — yesterday: grey flame, grey number
-    cols.forEach((c,i)=>set(c,from[i]));fl.style.opacity=0;
-    const A=(el,k,o)=>{o=Object.assign({},o);if(o.duration)o.duration*=TK;if(o.delay)o.delay*=TK;return el&&el.animate(k,Object.assign({fill:'both',easing:'cubic-bezier(.2,.9,.3,1)'},o))};
-    A(fw,[{transform:'scale(.6)',opacity:0},{transform:'none',opacity:1}],{duration:380});
+      if(e.target.closest('[data-scgo]')){hap('success');if(DZ.afterStreak)DZ.afterStreak();else back();return}
+      if(e.target.closest('.sc-fw')){hap('streakIgnite');if(fire)fire.burst(18)}};
+    if(!fw||!num||!fire){cols.forEach((c,i)=>set(c,to[i]));return}
+    const finalState=()=>{cols.forEach((c,i)=>set(c,to[i]));if(I.n>0&&!I.today){root.classList.remove('lit');if(sh)sh.style.opacity=.5;return}root.classList.add('lit');if(reduce||SOFT)fire.still();else fire.burn();if(sh)sh.style.opacity=.95};
+    if(SOFT||reduce||!(I.today&&I.n>0)){finalState();root.classList.add('done');if(!SOFT&&!reduce){$$('.sc-num,.sc-lb,.sc-wk,.sc-msg,.sc-bt',R).forEach((el,i)=>el.animate([{opacity:0,transform:'translateY(14px)'},{opacity:1,transform:'none'}],{duration:420,delay:200+i*90,fill:'backwards'}))}return}
+    // the first picture, shown at once: grey flame, grey number, everything else waiting
+    cols.forEach((c,i)=>set(c,from[i]));
+    const A=(el,k,o)=>el&&el.animate(k,Object.assign({fill:'both',easing:'cubic-bezier(.2,.9,.3,1)'},o));
+    const wk=$('.sc-wk',R),lb=$('.sc-lb',R),msg=$('.sc-msg',R),bt=$('.sc-bt',R),cap=$('.sc-cap',R),dots=$$('.sc-dot.on',R),td=$('.sc-dot.t',R);
+    [wk,lb,msg,bt,sh,pill].forEach(el=>{if(el)el.style.opacity=0});dots.forEach(d=>{d.style.opacity=0});if(cap)cap.style.clipPath='inset(0 100% 0 0 round 99px)';
+    A(fw,[{transform:'scale(.6)',opacity:0},{transform:'none',opacity:1}],{duration:380,fill:'backwards'});
     A(num,[{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'none'}],{duration:380,delay:120});
-    atk(80,()=>hap('streakBuild'));
-    // 1 — the grey flame squashes into a glowing pill and ignites
-    atk(620,()=>{A(fw,[{transform:'none'},{transform:'scaleY(.35) scaleX(1.25) translateY(40px)'}],{duration:180,easing:'ease-in'});A(pill,[{opacity:0,transform:'translate(-50%,-50%) scale(.5)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:180,delay:120})});
-    atk(900,()=>{SND.ignite();hap('streakIgnite');grey.style.opacity=0;fl.style.opacity=1;A(pill,[{opacity:1},{opacity:0,transform:'translate(-50%,-50%) scale(1.6)'}],{duration:260});
-      // sparks swirl out
-      SPK.forEach((sp,i)=>{const a=i/18*Math.PI*2,r=70+(i%4)*26;
-        sp.animate([{transform:'translate3d(-50%,-50%,0) rotate(0) scale(1)',opacity:1},{transform:`translate3d(calc(-50% + ${Math.cos(a)*r}px),calc(-50% + ${Math.sin(a)*r-40}px),0) rotate(${200+i*20}deg) scale(.2)`,opacity:0}],{duration:800+(i%5)*80,easing:'cubic-bezier(.1,.8,.3,1)',fill:'both'})})});
-    // 2 — the flame leaps up, spins a full turn
-    atk(980,()=>{SND.whoosh();A(fw,[{transform:'scaleY(.35) scaleX(1.25) translateY(40px)'},{transform:'translateY(-150px) rotate(180deg) scale(.9)',offset:.55},{transform:'translateY(-170px) rotate(360deg) scale(1)'}],{duration:560,easing:'cubic-bezier(.2,.8,.3,1)'});embers(10)});
-    // 3 — and slams down onto the ground: shock arc, screen shake, heavy haptic, thud
-    atk(1540,()=>{A(fw,[{transform:'translateY(-170px) rotate(360deg)'},{transform:'translateY(6px) rotate(360deg) scaleY(.78) scaleX(1.18)',offset:.55},{transform:'translateY(-8px) rotate(360deg) scaleY(1.06) scaleX(.96)',offset:.8},{transform:'rotate(360deg)'}],{duration:420,easing:'cubic-bezier(.55,0,.6,1)'})});
-    atk(1770,()=>{SND.slam();hap('streakLand');setTimeout(()=>hap('heavy'),60);
-      A(arc,[{opacity:.9,transform:'translate(-50%,0) scale(.4)'},{opacity:0,transform:'translate(-50%,0) scale(1.5)'}],{duration:700,easing:'ease-out'});
-      A(root,[{transform:'translateY(0)'},{transform:'translateY(7px)'},{transform:'translateY(-4px)'},{transform:'translateY(2px)'},{transform:'none'}],{duration:340,fill:'none'});
-      A($('.sc-sh',R),[{transform:'translateX(-50%) scale(1.5)',opacity:.6},{transform:'translateX(-50%) scale(1)',opacity:.35}],{duration:420});
-      embers(14);root.classList.add('lit')});
-    // 4 — the number rolls up and turns orange
-    atk(1860,()=>{cols.forEach((c,i)=>{if(from[i]===to[i])return;const f0=from[i]===' '?0:+from[i];c.parentNode.classList.remove('blank');
-        c.animate([{transform:`translateY(${-f0*10}%)`},{transform:`translateY(${-to[i]*10}%)`}],{duration:700,delay:i*90,easing:'cubic-bezier(.3,1.5,.45,1)',fill:'forwards'});setTimeout(()=>SND.count(i),i*90+300)});
-      A(num,[{transform:'scale(1)'},{transform:'scale(1.16)',offset:.45},{transform:'scale(1)'}],{duration:620,delay:200,fill:'none'});hap('streakRoll')});
-    A($('.sc-lb',R),[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:400,delay:2100});
-    // 5 — this week fills in with the gradient, one day after another
-    A($('.sc-wk',R),[{opacity:0,transform:'translateY(18px)'},{opacity:1,transform:'none'}],{duration:400,delay:2300});
-    const cap=$('.sc-cap',R),dots=$$('.sc-dot.on',R);
-    if(cap&&dots.length)A(cap,[{clipPath:'inset(0 100% 0 0 round 99px)'},{clipPath:'inset(0 0 0 0 round 99px)'}],{duration:220*Math.max(1,dots.length),delay:2550,easing:'cubic-bezier(.5,0,.3,1)'});
-    dots.forEach((d,i)=>{A(d,[{transform:'scale(.3)',opacity:0},{transform:'scale(1.3)',opacity:1,offset:.6},{transform:'scale(1)',opacity:1}],{duration:360,delay:2550+i*220});atk(2550+i*220,()=>{SND.day(i);hap('tick')})});
-    const td=$('.sc-dot.t',R);if(td)atk(2600+dots.length*220,()=>{A(td,[{transform:'scale(1)'},{transform:'scale(1.45)',offset:.4},{transform:'scale(1)'}],{duration:520,easing:'ease-out',fill:'none'});SND.win();hap('celebrate');embers(10)});
-    A($('.sc-msg',R),[{opacity:0},{opacity:1}],{duration:420,delay:2800+dots.length*220});
-    A($('.sc-bt',R),[{opacity:0,transform:'translateY(40px)'},{opacity:1,transform:'none'}],{duration:480,delay:2900+dots.length*220});
-    atk(3100+dots.length*220,()=>{root.classList.add('done');const t=setInterval(()=>{if(!R||!R.isConnected||SCREENS[CUR].t!=='Streak celebration'){clearInterval(t);return}embers(2)},420)});
+    let sqA=null;const alive=()=>R&&R.isConnected&&SCREENS[CUR]&&SCREENS[CUR].t==='Streak celebration';
+    const run=snd=>{
+      const lead=snd?snd.lead:0,ev=(t,fn)=>at(MS(fileToReal(t))+lead,()=>{if(alive())fn()});   // t = a moment of the sound file; fileToReal() moves it to where that moment is heard, because the sound is stretched during the slow-motion jump
+      // 0.30 the quiet hum: the flame squashes down into the pill
+      ev(.30,()=>hap('streakBuild'));
+      ev(.40,()=>{sqA=A(fw,[{transform:'none',opacity:1},{transform:'scaleY(.4) scaleX(1.2) translateY(34px)',opacity:0}],{duration:290,easing:'ease-in'});
+        A(pill,[{opacity:0,transform:'scale(.5)'},{opacity:1,transform:'scale(1)'}],{duration:240,delay:70})});
+      ev(.55,()=>A(pill,[{transform:'scale(1)'},{transform:'scale(1.07,.94)'},{transform:'scale(1)'}],{duration:170,iterations:2,fill:'none'}));
+      // 0.72 crackle: the pill goes hot, heat flash, sparks, the flame floods from grey to fire colours
+      ev(.72,()=>{pill.classList.add('hot');hap('streakIgnite');fire.ignite();if(!snd)SND.ignite()});
+      // 0.82 whoosh: take-off. The flame leaves the pill and goes up on a curved arc in SLOW MOTION (the air time is stretched to 1.9 s and the
+      // sound is stretched with it). In the air it bends and tilts left, centre, right and back (the 12-frame sheet), crescents come out of the
+      // flame, smoke trails behind it, then it lands where it started, squashes, dims, springs back and burns.
+      // The top of the jump (the 1.40 thud) and the landing (the 1.79 loudest hit) are fired by the jump itself so picture and sound stay together.
+      ev(.82,()=>{if(sqA){sqA.cancel();sqA=null}if(!snd)SND.whoosh();
+        A(pill,[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(1.5,.35)'}],{duration:260});
+        A(sh,[{opacity:0},{opacity:.95}],{duration:300});
+        fire.jump({
+          onApex:()=>{root.classList.add('lit');hap('celebrate');A(num,[{transform:'scale(1)'},{transform:'scale(1.16)',offset:.4},{transform:'scale(1)'}],{duration:520,fill:'none'})},
+          onLand:()=>{if(!snd)SND.slam();hap('streakLand');setTimeout(()=>hap('heavy'),60);
+            A(root,[{transform:'translateY(0)'},{transform:'translateY(7px)'},{transform:'translateY(-4px)'},{transform:'translateY(2px)'},{transform:'none'}],{duration:340,fill:'none'})}})});
+      // 1.05 the number rolls: grey 7 slides up, 8 comes in with a bounce and lands on the 1.40 thud
+      ev(1.05,()=>{hap('streakRoll');cols.forEach((c,i)=>{if(from[i]===to[i])return;const f0=from[i]===' '?0:+from[i];c.parentNode.classList.remove('blank');
+          c.animate([{transform:`translateY(${-f0*10}%)`},{transform:`translateY(${-to[i]*10}%)`}],{duration:640,delay:i*70,easing:'cubic-bezier(.3,1.5,.45,1)',fill:'forwards'});if(!snd)setTimeout(()=>SND.count(i),i*70+300)});
+        A(lb,[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:400,delay:200})});
+      // 2.30 to 2.80 quiet crackle: it keeps burning (the fire module goes from its landing frames to the burn by itself)
+      // 2.88 the soft hit at 2.95: this week slides in
+      ev(2.88,()=>A(wk,[{opacity:0,transform:'translateY(28px)'},{opacity:1,transform:'none'}],{duration:420}));
+      // 3.10 the week fills in (copied from the reference): the earlier days light up one after another along the orange bar,
+      // then today's coin rises out of its slot, flips in 3D, drops back in, the bar closes over it, a check pops in and fire runs along the bar.
+      const lo=I.days.indexOf(true),hi=I.days.lastIndexOf(true),tdOn=!!(td&&td.classList.contains('on'));
+      const early=dots.filter(d=>d!==td),nE=early.length,iv=Math.min(.14,Math.max(.05,.42/Math.max(1,nE)));
+      const pre=tdOn&&hi===I.dow&&hi>lo?(hi-lo)/(hi-lo+1):tdOn&&hi===lo?0:1;      // share of the bar that belongs to the earlier days
+      const clip=f=>`inset(0 ${((1-f)*100).toFixed(2)}% 0 0 round 99px)`;
+      const popKF=[{transform:'scale(.3)',opacity:0},{transform:'scale(1.3)',opacity:1,offset:.6},{transform:'scale(1)',opacity:1}];
+      ev(3.10,()=>{if(cap&&nE)A(cap,[{clipPath:clip(0)},{clipPath:clip(pre)}],{duration:Math.round(iv*1000*nE),easing:'cubic-bezier(.5,0,.3,1)'})});
+      early.forEach((d,i)=>ev(3.10+i*iv,()=>{A(d,popKF,{duration:340});const q=fire.at(d);fire.wisp(q.x,q.y+2,4);hap('tick');if(!snd)SND.day(i)}));
+      const lick=()=>{
+        if(!cap||!cap.parentNode)return;const wr=cap.parentNode,w=cap.offsetWidth;
+        const el=document.createElement('div');el.className='sc-lick';el.style.left=cap.offsetLeft+'px';el.style.width=w+'px';
+        el.innerHTML='<svg viewBox="0 0 160 30" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="sclk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a2b"/><stop offset="1" stop-color="#ff3b1f"/></linearGradient></defs><path fill="url(#sclk)" d="M0 30V25C8 23 10 13 16 4C19 14 24 16 27 22C30 11 36 3 45 0C44 12 52 16 57 22C62 12 67 8 75 6C74 16 80 19 85 25C90 14 97 8 107 4C106 14 112 18 117 22C123 14 131 12 139 14C143 19 151 21 160 25V30Z"/><path fill="#ffd25a" opacity=".85" d="M0 30V27C12 25 14 20 20 15C22 21 27 23 30 27C34 19 38 15 45 14C46 21 52 24 58 28C63 21 68 18 74 17C74 23 80 26 86 29V30Z"/></svg>';
+        wr.appendChild(el);
+        el.animate([{transform:'translateX(-62%)',opacity:0},{opacity:1,offset:.22},{opacity:1,offset:.7},{transform:'translateX(62%)',opacity:0}],{duration:950,easing:'cubic-bezier(.4,0,.3,1)',fill:'forwards'}).onfinish=()=>el.remove();
+      };
+      const coinDrop=(slot)=>{
+        const wr=slot.parentNode,cr=wr.getBoundingClientRect(),sr=slot.getBoundingClientRect();
+        const Ks=(cr.width/(wr.offsetWidth||cr.width))||1;
+        const x=(sr.left-cr.left+sr.width/2)/Ks,y=(sr.top-cr.top+sr.height/2)/Ks;
+        const coin=document.createElement('div');coin.className='sc-coin';coin.style.left=x+'px';coin.style.top=y+'px';
+        coin.innerHTML='<i class="sc-cd"></i><i class="sc-cf"></i>';wr.appendChild(coin);
+        const cf=coin.querySelector('.sc-cf'),cd=coin.querySelector('.sc-cd'),dur=620,T='translate(-50%,-50%) ';
+        coin.animate([{transform:T+'translateY(-4px) scale(.5)',opacity:0},{transform:T+'translateY(-30px) scale(1.3)',opacity:1,offset:.16},{transform:T+'translateY(-38px) scale(1.3)',offset:.34},{transform:T+'translateY(-31px) scale(1.25)',offset:.58},{transform:T+'translateY(-12px) scale(1.12)',offset:.8},{transform:T+'translateY(0) scale(.96)',opacity:1}],{duration:dur,easing:'cubic-bezier(.3,.7,.4,1)',fill:'both'});
+        cf.animate([{transform:'scaleY(1)'},{transform:'scaleY(1)',offset:.16},{transform:'scaleY(.26)',offset:.36},{transform:'scaleY(.58)',offset:.5},{transform:'scaleY(1)',offset:.7},{transform:'scaleY(1)'}],{duration:dur,fill:'both'});
+        cd.animate([{opacity:0},{opacity:0,offset:.16},{opacity:1,offset:.34},{opacity:1,offset:.52},{opacity:0,offset:.7},{opacity:0}],{duration:dur,fill:'both'});
+        setTimeout(()=>{
+          if(!alive())return;
+          coin.animate([{opacity:1},{opacity:0}],{duration:140,fill:'forwards'}).onfinish=()=>coin.remove();
+          hap('streakLand');
+          if(cap)A(cap,[{clipPath:clip(pre)},{clipPath:clip(1)}],{duration:260,easing:'cubic-bezier(.4,0,.2,1)'});
+          A(slot,popKF,{duration:380});
+          const q=fire.at(slot);fire.wisp(q.x,q.y,12);fire.burst(10);lick();
+          const ch=$('.sc-chest',R);if(ch)A(ch,[{transform:'rotate(0)'},{transform:'rotate(-9deg) translateY(-3px)'},{transform:'rotate(6deg)'},{transform:'rotate(-3deg)'},{transform:'none'}],{duration:520,fill:'none'});
+        },dur-40);
+      };
+      if(tdOn)ev(3.27,()=>coinDrop(td));
+      ev(3.85,()=>{if(!snd)SND.win();hap('celebrate');if(!tdOn&&td){const q=fire.at(td);fire.wisp(q.x,q.y,8)}fire.burst(12)});
+      // 3.90 onwards the sound fades out: message and button come in
+      ev(3.90,()=>A(msg,[{opacity:0},{opacity:1}],{duration:420}));
+      ev(3.95,()=>A(bt,[{opacity:0,transform:'translateY(40px)'},{opacity:1,transform:'none'}],{duration:480}));
+      ev(4.40,()=>root.classList.add('done'));
+    };
+    // the sound decides when everything starts: when it is decoded and the audio is running, play it and start the timeline together.
+    // If it is not ready in time (or the phone blocks audio) the same timeline runs with the built-in synth sounds instead.
+    let started=false;const start=snd=>{if(started)return;started=true;DZ.scSnd=snd;run(snd);
+      const chk=setInterval(()=>{if(!alive()){if(DZ.scSnd){DZ.scSnd.stop(.1);DZ.scSnd=null}clearInterval(chk)}},200);setTimeout(()=>clearInterval(chk),7000)};
+    streakSoundReady(420).then(ok=>{if(started||!alive())return;start(ok?playStreakSound(SKIP):null)}).catch(()=>{if(!started&&alive())start(null)});
+    at(900,()=>{if(!started&&alive())start(null)});
   };
   const k=IDX('Streak celebration');if(k>=0){SCREENS[k].html=html;SCREENS[k].play=play}
+}
+
+/* ==== v149: after the streak page: "Friend Streaks in need!" (nudge) and the League update (copied from the reference video) ==== */
+{
+  const nf=n=>Number(n||0).toLocaleString();
+  const AN=(el,k,o)=>el&&el.animate(k,Object.assign({fill:'both',easing:'cubic-bezier(.2,.9,.3,1)'},o));
+  const origin=()=>DZ.celFrom||'Home';
+  /* ---------- Friend Streaks in need ---------- */
+  const FN={list:[],sent:false,busy:false};
+  const need=()=>(D.friends||[]).filter(f=>(f.streak||0)>0&&f.today===false).sort((a,b)=>(b.streak||0)-(a.streak||0)).slice(0,5);
+  const pair=()=>`<span class="fn-fl" aria-hidden="true"><i>${flameIconHtml(22,'grey')}</i><i>${flameIconHtml(22,'grey')}</i></span>`;
+  const avatar=(f)=>`<span class="fn-aw"><span class="fn-av" style="background:${DZ.fxCol?DZ.fxCol(f.name||'?'):'#c9b8c3'}">${DZ.pfFace?DZ.pfFace(f.id,f.avatar,f.picture):''}</span><i class="fn-hd" data-notr aria-hidden="true">👋</i></span>`;
+  const nHtml=()=>`<div class="scr n nd fn" style="--pg:#0f1c1f"><div class="fn-in"><h1 class="fn-t">Friend Streaks in need!</h1>
+<div class="fn-l">${FN.list.map((f,i)=>`<div class="fn-r" style="--k:${i}">${avatar(f)}<b>${esc(f.name||'Friend')}</b>${pair()}<em>${f.streak||0}</em></div>`).join('')}</div>
+<div class="fn-bt"><button type="button" class="fn-nd" data-fnnudge><span class="fn-hand" data-notr aria-hidden="true">👋</span><span>NUDGE</span></button><button type="button" class="fn-go" data-fngo>CONTINUE</button></div></div></div>`;
+  const nPlay=()=>{
+    S.mute=false;preloadSfx('nudge');
+    if(!SOFT){
+      AN($('.fn-t',R),[{opacity:0,transform:'translateY(-12px)'},{opacity:1,transform:'none'}],{duration:420});
+      $$('.fn-r',R).forEach((r,i)=>AN(r,[{opacity:0,transform:'translateY(16px)'},{opacity:1,transform:'none'}],{duration:420,delay:200+i*120,fill:'backwards'}));
+      AN($('.fn-bt',R),[{opacity:0,transform:'translateY(30px)'},{opacity:1,transform:'none'}],{duration:420,delay:260+FN.list.length*100,fill:'backwards'});
+    }
+    R.onclick=async e=>{
+      if(e.target.closest('[data-fngo]')){if(FN.busy)return;hap('light');DZ.afterNudge();return}
+      const nb=e.target.closest('[data-fnnudge]');
+      if(!nb||FN.sent||FN.busy)return;
+      FN.busy=true;hap('success');playSfx('nudge');
+      nb.classList.add('off');const g=$('[data-fngo]',R);if(g)g.classList.add('off');
+      const ids=FN.list.map(f=>f.id);
+      const req=CB.nudge?Promise.resolve(CB.nudge(ids)).catch(()=>null):Promise.resolve(null);
+      const hd=$('.fn-hand',R);if(hd)AN(hd,[{transform:'rotate(0)'},{transform:'rotate(24deg)'},{transform:'rotate(-18deg)'},{transform:'rotate(20deg)'},{transform:'rotate(-10deg)'},{transform:'rotate(0)'}],{duration:900,fill:'none'});
+      $$('.fn-aw',R).forEach((aw,i)=>setTimeout(()=>{
+        if(!R||!R.isConnected)return;
+        aw.classList.add('hi');AN(aw,[{transform:'translateY(0)'},{transform:'translateY(-10px)',offset:.42},{transform:'translateY(0)'}],{duration:440,easing:'cubic-bezier(.3,1.4,.5,1)',fill:'none'});hap('tick');
+      },320+i*260));
+      const r=await req;
+      if(r&&r.ok===false&&r.message)toast(r.message);
+      await new Promise(res=>setTimeout(res,350+ids.length*260+800));
+      FN.sent=true;FN.busy=false;
+      if(SCREENS[CUR]&&SCREENS[CUR].t==='Friend nudge')DZ.afterNudge();
+    };
+  };
+  SCREENS.push({t:'Friend nudge',d:'Friends whose streak needs a nudge',spec:{m:'Friends who have not studied today, with a NUDGE button.',h:'Success on the nudge, a light tap for every friend.',s:'A short chime.'},html:nHtml,play:nPlay});
+  /* ---------- League update ---------- */
+  const LU={d:null};
+  const ROW=62,ZH=44;
+  const luFace=r=>`<span class="lu-av" style="background:${DZ.fxCol?DZ.fxCol(r.name||'?'):'#c9b8c3'}">${DZ.pfFace?DZ.pfFace(r.me?'me':r.id,r.me?(D.avatar||r.avatar):r.avatar,r.me?(D.picture||r.picture||''):r.picture):''}</span>`;
+  const place=(rows,dem)=>{let y=0,dz=-1;const pos={};rows.forEach((r,i)=>{if(dz<0&&i>=3&&r.xp<dem){dz=y;y+=ZH}pos[r.id]=y;y+=ROW});return {pos,dz,h:y}};
+  const lTime=ms=>{const H=36e5,D1=864e5;if(ms>=D1){const n=Math.ceil(ms/D1);return n+(n===1?' day':' days')}if(ms>=H){const n=Math.ceil(ms/H);return n+(n===1?' hour':' hours')}return Math.max(1,Math.ceil(ms/6e4))+' min'};
+  const CLKI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  const ADNI='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.500 3h5v8H19l-7 9-7-9h4.500z"/></svg>';
+  const uHtml=()=>{
+    const d=LU.d;if(!d)return `<div class="scr n nd lu" style="--pg:#0f1c1f"></div>`;
+    const tr=TROPHIES[Math.max(0,Math.min(9,d.tier|0))]||TROPHIES[0];
+    const first=String(D.first||'').split(' ')[0];
+    const title=d.promoted?`You moved up to the ${tr.n} League!`:`You moved up in the ${tr.n} League!`;
+    const lay=place(d.before,d.dem);
+    const rows=d.before.map((r,i)=>`<div class="lu-r${r.me?' me':''}" data-luid="${esc(r.id)}" style="transform:translateY(${lay.pos[r.id]}px)"><span class="lu-rk">${i+1}</span>${luFace(r)}<b>${esc(r.name)}${r.me?'<em class="lq-you">You</em>':''}</b><span class="lu-xp"><u>${nf(r.xp)}</u> XP</span></div>`).join('');
+    return `<div class="scr n nd lu" style="--pg:#0f1c1f"><div class="lu-in">
+<div class="lu-tr"><img src="${tr.src}" alt="" draggable="false"><i class="lq-sh"></i></div>
+<h1 class="lu-t">${esc(title)}</h1><div class="lu-time"><i>${CLKI}</i><span>${esc(lTime(Math.max(0,d.end-Date.now())))}</span></div>
+<div class="lu-card"><div class="lu-list" style="height:${lay.h}px">${rows}<div class="lu-dz" style="transform:translateY(${lay.dz<0?0:lay.dz}px);opacity:${lay.dz<0?0:1}"><i>${ADNI}</i><b>DEMOTION ZONE</b><i>${ADNI}</i></div></div></div>
+<button type="button" class="lu-go" data-lugo>NICE ONE, ${esc((first||'YOU').toUpperCase())}</button></div></div>`;
+  };
+  const uPlay=()=>{
+    const d=LU.d;S.mute=false;
+    R.onclick=e=>{if(e.target.closest('[data-lugo]')){hap('success');go(origin())}};
+    if(!d)return;
+    const list=$('.lu-list',R),card=$('.lu-card',R),dz=$('.lu-dz',R);
+    const rowsEl=()=>$$('.lu-r',R);
+    const byId=id=>rowsEl().find(x=>x.dataset.luid===id);
+    const centre=(y,h)=>Math.max(0,Math.min(Math.max(0,h-card.clientHeight+12),y-card.clientHeight/2+ROW/2));
+    const before=place(d.before,d.dem),after=place(d.after,d.dem);
+    const me=d.after.find(r=>r.me),meB=d.before.find(r=>r.me);
+    list.style.transform=`translateY(${-centre(before.pos[me.id],before.h)}px)`;
+    list.style.transition='none';
+    if(SOFT||!d.animate){
+      // no climb to show (a new trophy): the list is simply drawn in its final order
+      const fin=()=>{d.after.forEach((r,i)=>{const el=byId(r.id);if(el){el.style.transform=`translateY(${after.pos[r.id]}px)`;el.querySelector('.lu-rk').textContent=i+1;el.querySelector('.lu-xp u').textContent=nf(r.xp)}});list.style.transform=`translateY(${-centre(after.pos[me.id],after.h)}px)`;if(dz){dz.style.transform=`translateY(${after.dz<0?0:after.dz}px)`;dz.style.opacity=after.dz<0?0:1}};
+      fin();
+      if(!SOFT){AN($('.lu-tr',R),[{transform:'scale(.6)',opacity:0},{transform:'scale(1.12)',opacity:1,offset:.6},{transform:'scale(1)',opacity:1}],{duration:560});hap('success');if(playSfx)playSfx('league')}
+      return;
+    }
+    AN($('.lu-tr',R),[{transform:'translateY(-14px) scale(.7)',opacity:0},{transform:'none',opacity:1}],{duration:520});
+    AN($('.lu-t',R),[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:420,delay:160});
+    AN($('.lu-card',R),[{opacity:0,transform:'translateY(24px)'},{opacity:1,transform:'none'}],{duration:480,delay:260});
+    AN($('.lu-go',R),[{opacity:0,transform:'translateY(36px)'},{opacity:1,transform:'none'}],{duration:440,delay:420});
+    preloadSfx('league');
+    const T=[];const at2=(ms,fn)=>T.push(setTimeout(()=>{if(R&&R.isConnected&&SCREENS[CUR]&&SCREENS[CUR].t==='League update')fn()},ms));
+    // 1. your XP counts up
+    at2(1000,()=>{
+      playSfx('league');hap('light');
+      const el=byId(me.id),u=el&&el.querySelector('.lu-xp u');if(!el||!u)return;
+      el.classList.add('hot');
+      const x0=meB?meB.xp:0,x1=me.xp,t0=performance.now(),dur=700;
+      const tk=(now)=>{const k=Math.min(1,(now-t0)/dur),v=Math.round(x0+(x1-x0)*(1-Math.pow(1-k,3)));u.textContent=nf(v);if(k<1&&u.isConnected)requestAnimationFrame(tk)};
+      requestAnimationFrame(tk);
+    });
+    // 2. the whole list moves: you climb past the people you have overtaken and settle in your new place
+    at2(1850,()=>{
+      hap('medium');
+      rowsEl().forEach(el=>{el.style.transition='transform .72s cubic-bezier(.3,1.2,.4,1)'});
+      list.style.transition='transform .72s cubic-bezier(.3,1.2,.4,1)';
+      if(dz)dz.style.transition='transform .72s cubic-bezier(.3,1.2,.4,1),opacity .4s';
+      d.after.forEach((r,i)=>{const el=byId(r.id);if(!el)return;el.style.transform=`translateY(${after.pos[r.id]}px)`;if(r.me)el.style.zIndex='3'});
+      list.style.transform=`translateY(${-centre(after.pos[me.id],after.h)}px)`;
+      if(dz){dz.style.transform=`translateY(${after.dz<0?0:after.dz}px)`;dz.style.opacity=after.dz<0?0:1}
+      setTimeout(()=>{if(!R||!R.isConnected)return;d.after.forEach((r,i)=>{const el=byId(r.id),k=el&&el.querySelector('.lu-rk');if(k)k.textContent=i+1;const u=el&&el.querySelector('.lu-xp u');if(u&&!r.me)u.textContent=nf(r.xp)})},330);
+    });
+    at2(2650,()=>{hap('success');const el=byId(me.id);if(el)AN(el,[{filter:'brightness(1)'},{filter:'brightness(1.35)',offset:.4},{filter:'brightness(1)'}],{duration:620,fill:'none'})});
+  };
+  SCREENS.push({t:'League update',d:'Your climb in the weekly league',spec:{m:'The league list, with your row climbing past the friends you overtook.',h:'Light tap while the XP counts, success when you settle in.',s:'A short climb sound.'},html:uHtml,play:uPlay});
+  /* ---------- the chain: streak page -> friends in need -> league update -> back to where you came from ---------- */
+  DZ.afterStreak=()=>{
+    FN.list=need();FN.sent=false;FN.busy=false;
+    if(FN.list.length&&!D.guest){go('Friend nudge');return}
+    DZ.afterNudge();
+  };
+  DZ.afterNudge=async()=>{
+    const from=origin();
+    const p=DZ.ldP||(DZ.leagueDelta?DZ.leagueDelta():null);DZ.ldP=null;
+    let d=null;try{d=p?await p:null}catch(_){d=null}
+    const t=SCREENS[CUR]&&SCREENS[CUR].t;
+    if(t&&t!=='Streak celebration'&&t!=='Friend nudge')return;     // the player already went somewhere else
+    if(d&&d.show){LU.d=d;go('League update');return}
+    go(from);
+  };
+  DZ.leaguePrefetch=()=>{if(!D.guest&&DZ.leagueDelta&&!DZ.ldP)DZ.ldP=DZ.leagueDelta()};
 }
 
 /* ==== v111: Friend Streaks banner — characters around the fire having real conversations ==== */
@@ -3511,13 +3938,8 @@ ${suggBlock(12)}`);
   const k=IDX('Streak friends');if(k>=0){const op=SCREENS[k].play;SCREENS[k].play=function(){op.call(this);play()}}
 }
 const RUN_DEAD=()=>!host.isConnected;
-function back(){
-  const t=SCREENS[CUR]&&SCREENS[CUR].t;if(!t)return false;
-  if(DZ.chestClose&&DZ.chestClose())return true;
-  if(DZ.lqClose&&DZ.lqClose())return true;
-  if(closeMore())return true;
-  if(t==='Home')return false;
-  if(host.classList.contains('dz-kb')&&document.activeElement&&document.activeElement.blur){document.activeElement.blur();return true}
+// Where "back" goes from a page. commit=true also clears the little pieces of state the old code cleared.
+function backDest(t,commit){
   const Q=['Add note','Planner','Add subject','Quiz','Progress','Achievement','Reminder','Upload file'];
   let to='Settings';
   if(['Tasks','Focus','Study','Profile','Quick add','League'].includes(t))to='Home';
@@ -3526,21 +3948,33 @@ function back(){
   else if(Q.includes(t))to='Quick add';
   else if(t==='Delete account')to='Privacy settings';
   else if(t==='Edit avatar')to='Edit profile';
-  else if(['Weekly report','Badges','Exam mode'].includes(t)){to=(t==='Badges'&&DZ.badgesFrom==='Profile')?'Profile':'Study';DZ.badgesFrom=null}
+  else if(['Weekly report','Badges','Exam mode'].includes(t)){to=(t==='Badges'&&DZ.badgesFrom==='Profile')?'Profile':'Study';if(commit)DZ.badgesFrom=null}
   else if(['Friends','Edit profile','Settings'].includes(t))to='Profile';
   else if(t==='Friend share')to=DZ.fsBack||'Friend profile';
   else if(t==='Friend profile')to=(DZ.fpFrom&&DZ.fpFrom!=='Friend profile')?DZ.fpFrom:'Profile';
   else if(t==='Search')to=DZ.searchFrom||'Home';
   else if(t==='Find friends'||t==='Streak invite')to='Profile';
   else if(['Contacts on StudyOS','Search friends','Friend suggestions'].includes(t))to='Find friends';
-  else if(t==='Gem Shop'){if(DZ.closeSheet&&DZ.closeSheet())return true;to=DZ.shopFrom||'Home'}
+  else if(t==='Gem Shop')to=DZ.shopFrom||'Home';
   else if(t==='Gift gems')to='Gem Shop';
   else if(t==='Streak'||t==='Streak friends')to=DZ.streakFrom||'Home';
-  else if(t==='Streak celebration')to=DZ.celFrom||'Home';
-  hap('light');go(to);return true;
+  else if(t==='Streak celebration'||t==='Friend nudge'||t==='League update')to=DZ.celFrom||'Home';
+  return to;
+}
+DZ.backDest=backDest;
+function back(soft){
+  const t=SCREENS[CUR]&&SCREENS[CUR].t;if(!t)return false;
+  if(DZ.chestClose&&DZ.chestClose())return true;
+  if(DZ.lqClose&&DZ.lqClose())return true;
+  if(closeMore())return true;
+  if(t==='Home')return false;
+  if(host.classList.contains('dz-kb')&&document.activeElement&&document.activeElement.blur){document.activeElement.blur();return true}
+  if(t==='Gem Shop'&&DZ.closeSheet&&DZ.closeSheet())return true;
+  const to=backDest(t,true);
+  if(!soft)hap('light');go(to,soft===true);return true;
 }
 const api={openShop(){DZ.openShop('Study')},startFocus(){go('Focus');if(!F.running&&F.mode==='focus'&&F.left>0){start();go('Focus',true)}},navOnly,refresh,go,back,screen:()=>SCREENS[CUR]&&SCREENS[CUR].t,names:()=>SCREENS.map(s=>s.t),
-  update(d){const was=D.streakPop||0;Object.assign(D,d);refresh();if((D.streakPop||0)>was&&DZ.celebrate)setTimeout(()=>{if(!RUN_DEAD())DZ.celebrate()},650)},
+  update(d){const was=D.streakPop||0;Object.assign(D,d);DZ.preGen=(DZ.preGen||0)+1;refresh();if((D.streakPop||0)>was&&DZ.celebrate)setTimeout(()=>{if(!RUN_DEAD())DZ.celebrate()},650)},
   destroy(){if(DZ.undoHide)DZ.undoHide();if(DZ.stopSound)DZ.stopSound();RUN++;timers.forEach(clearTimeout);ro.disconnect();host.innerHTML='';host.classList.remove('dz')}};
 go(opts.start||'Home');
 return api;

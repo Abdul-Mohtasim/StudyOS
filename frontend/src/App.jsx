@@ -102,7 +102,7 @@ import {
   useFlashcards,
   useGrades,
 } from "./StudyTools";
-import { fetchAuth, flushOfflineQueue, readCachedMe, useOfflineStatus, getOfflineInfo, clearSavedCopy } from "./offline";
+import { fetchAuth, flushOfflineQueue, readCachedMe, readCachedApi, useOfflineStatus, getOfflineInfo, clearSavedCopy } from "./offline";
 import {
   forgetOfflineAccounts,
   offlineAccounts,
@@ -1295,6 +1295,15 @@ useEffect(() => {
       setTasksLoading(true);
       setTasksError("");
 
+      // Show the copy saved on this phone straight away (no skeleton wait); the fresh answer replaces it a moment later.
+      if (!firstLoadDoneRef.current) {
+        const saved = readCachedApi(authToken, "/api/tasks");
+        if (saved && Array.isArray(saved.tasks)) {
+          setTasks(saved.tasks.map(normalizeTask));
+          firstLoadDoneRef.current = true;
+        }
+      }
+
       try {
         const response = await fetch(`${API_BASE_URL}/api/tasks`, {
           headers: { Authorization: `Bearer ${authToken}` },
@@ -1342,6 +1351,11 @@ useEffect(() => {
     async function fetchNotes() {
       setNotesLoading(true);
       setNotesError("");
+
+      {
+        const saved = readCachedApi(authToken, "/api/notes");
+        if (saved && Array.isArray(saved.notes)) setSubjectNotes((cur) => (cur.length ? cur : saved.notes.map(normalizeNote)));
+      }
 
       try {
         const response = await fetch(`${API_BASE_URL}/api/notes`, {
@@ -1641,6 +1655,17 @@ useEffect(() => {
     async function fetchFocusSessions() {
       setFocusSessionsLoading(true);
       setFocusSessionsError("");
+
+      // Saved copy first, so the streak, hours and today's minutes are right the moment the app opens.
+      {
+        const saved = readCachedApi(authToken, "/api/focus-sessions");
+        if (saved && Array.isArray(saved.sessions)) {
+          setFocusSessions((cur) => (cur.length ? cur : saved.sessions.map(normalizeFocusSession)));
+          setFocusSessionsHasMore(saved.hasMore === true);
+          if (Number.isFinite(saved.totalFocusMinutes)) setTotalFocusMinutes(saved.totalFocusMinutes);
+          if (Number.isInteger(saved.totalFocusSessionCount)) setTotalFocusSessionCount(saved.totalFocusSessionCount);
+        }
+      }
 
       try {
         const response = await fetch(`${API_BASE_URL}/api/focus-sessions`, {
@@ -2269,6 +2294,22 @@ useEffect(() => {
 
   // ---------- Native app: gems and friends (stored on the server) ----------
   const [accountPrefs, setAccountPrefs] = useState({});
+  // A new day starts at midnight on this phone: the screens redraw by themselves, so a streak that was not
+  // continued today turns grey at 12:00 am, and lights up again as soon as a task or focus session is done.
+  const [dayStamp, setDayStamp] = useState(() => getLocalDateKey(new Date()));
+  useEffect(() => {
+    let timer = 0;
+    const arm = () => {
+      clearTimeout(timer);
+      const n = new Date();
+      const next = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 1);
+      timer = setTimeout(() => { setDayStamp(getLocalDateKey(new Date())); arm(); }, Math.max(1000, next - n));
+    };
+    const onVisible = () => { if (document.visibilityState === "visible") { setDayStamp(getLocalDateKey(new Date())); arm(); } };
+    arm();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearTimeout(timer); document.removeEventListener("visibilitychange", onVisible); };
+  }, []);
   // Paid colour themes (Ocean, Forest, Sunset, Mono) sit on top of Light mode. Only a key from this list is ever applied.
   const activePalette = (() => {
     const key = accountPrefs && typeof accountPrefs.palette === "string" ? accountPrefs.palette : "";
@@ -2355,6 +2396,8 @@ useEffect(() => {
       live: data.live && typeof data.live === "object" ? data.live : prev?.live || null,
       // When each Special Offers chest was last opened (milliseconds, 0 = never).
       chestAt: data.chestAt && typeof data.chestAt === "object" ? { early: Number(data.chestAt.early) || 0, night: Number(data.chestAt.night) || 0 } : prev?.chestAt || { early: 0, night: 0 },
+      // A running XP boost won in a chest ({ mult, until } or null).
+      xpBoost: data.xpBoost && typeof data.xpBoost === "object" && Number(data.xpBoost.until) > Date.now() ? { mult: Number(data.xpBoost.mult) || 2, until: Number(data.xpBoost.until) } : data.xpBoost === null ? null : prev?.xpBoost || null,
     };
   }
 
@@ -2425,6 +2468,17 @@ useEffect(() => {
     if (status === 0) return { ok: false, message: "No internet connection. Check it and try again." };
     if (status === 404) return { ok: false, message: "Chests are not on your server yet. Deploy the latest backend." };
     return { ok: false, message: `The server could not open the chest (code ${status}). Please try again.` };
+  }
+
+  // "Nudge": tells friends whose streak is at risk to study today (once a day per friend).
+  async function nudgeFriends(ids) {
+    const token = localStorage.getItem("studyos_auth_token") || authToken;
+    if (!token) return { ok: false, message: "Create your profile to nudge friends." };
+    const { ok, data, status } = await nativeApi("/api/friends/nudge", "POST", { ids: Array.isArray(ids) ? ids.slice(0, 10) : [] }, token);
+    if (ok) return { ok: true, sent: data.sent || [] };
+    if (status === 0) return { ok: false, message: "No internet connection. Check it and try again." };
+    if (status === 404) return { ok: false, message: "Nudges are not on your server yet. Deploy the latest backend." };
+    return { ok: false, message: data?.message || "Could not send the nudge. Try again." };
   }
 
   // Weekly League: your trophy and everyone's XP, gems, tasks and subjects for the current 7 day round.
@@ -4729,6 +4783,9 @@ async function undoDeleteTask() {
       joinedYear: Number.isFinite(joined) ? joined : new Date().getFullYear(),
       score: Math.round(todayFocusMinutes),
       streak: stillLoading && useCache ? PCACHE.streak || 0 : studyStreak,
+      // Did the student do something that counts (a finished task or a focus session) today? undefined while loading.
+      streakToday: stillLoading ? undefined : sessionDateKeys.has(todayKey),
+      dayKey: dayStamp,
       streakPop,
       streakDays: Array.from(sessionDateKeys).sort().slice(-800),
       // True while older focus sessions can still be loaded (the streak calendar asks for them when you go back a month).
@@ -4791,7 +4848,7 @@ async function undoDeleteTask() {
           dueDate: t.dueDate ? String(t.dueDate).slice(0, 10) : "",
         };
       }),
-      friends: (social?.friends || []).map((u) => ({ id: u.id, name: u.name, gems: u.gems || 0, picture: u.picture || "", streak: u.streak || 0, avatar: typeof u.avatar === "string" ? u.avatar : "" })),
+      friends: (social?.friends || []).map((u) => ({ id: u.id, name: u.name, gems: u.gems || 0, picture: u.picture || "", streak: u.streak || 0, today: typeof u.today === "boolean" ? u.today : undefined, avatar: typeof u.avatar === "string" ? u.avatar : "" })),
       incoming: (social?.incoming || []).map((u) => ({ id: u.id, name: u.name, picture: u.picture || "", avatar: typeof u.avatar === "string" ? u.avatar : "" })),
       // People you asked to follow who have not accepted yet (they count in Following, not in Followers).
       outgoing: (social?.outgoing || []).map((u) => u.id),
@@ -4920,6 +4977,7 @@ async function undoDeleteTask() {
     shopGift,
     chestOpen,
     leagueLoad,
+    nudge: (ids) => nudgeFriends(ids),
     loadOlderSessions: () => loadMoreFocusSessions(),
     friendProfile,
     removeFriend,
